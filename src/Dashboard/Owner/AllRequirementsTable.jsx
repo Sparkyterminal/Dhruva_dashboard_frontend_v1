@@ -10,19 +10,35 @@ import {
   Select,
   Space,
   message,
-  Typography,
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Tag,
 } from "antd";
-import { EditOutlined, CheckOutlined } from "@ant-design/icons";
+import {
+  EditOutlined,
+  CheckOutlined,
+  SearchOutlined,
+  ReloadOutlined,
+  FileTextOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+} from "@ant-design/icons";
 import dayjs from "dayjs";
+import Lottie from "lottie-react";
+import homeIcon from "../../assets/home.json";
+import completed from "../../assets/completed.json";
+import total from "../../assets/total.json";
+import pending from "../../assets/pending.json";
+
 import { API_BASE_URL } from "../../../config";
 
-const { Title } = Typography;
 const { Option } = Select;
 
-// Dummy departments list for dropdown
 const departmentsList = [
   { name: "Hennur Godown", id: "68fdf1cfe66ed5069ddb9f25" },
-  // Add more departments as needed
 ];
 
 const AllRequirementsTable = () => {
@@ -37,6 +53,13 @@ const AllRequirementsTable = () => {
 
   const config = {
     headers: { Authorization: user?.access_token },
+  };
+
+  // Calculate statistics
+  const stats = {
+    total: requirements.length,
+    pending: requirements.filter((r) => r.status === "PENDING").length,
+    completed: requirements.filter((r) => r.status === "COMPLETED").length,
   };
 
   const fetchRequirementsData = async (params = {}) => {
@@ -60,10 +83,8 @@ const AllRequirementsTable = () => {
     }
   };
 
-  // Fetch table on mount
   useEffect(() => {
     fetchRequirementsData();
-    // eslint-disable-next-line
   }, []);
 
   const handleSearch = (e) => setSearch(e.target.value);
@@ -77,7 +98,6 @@ const AllRequirementsTable = () => {
   const handleDateChange = (date) => setSelectedDate(date);
   const handleDeptChange = (value) => setSelectedDept(value);
 
-  // PATCH amount_paid update
   const handleAmountPaidSave = async (row) => {
     if (editAmountPaid == null || isNaN(editAmountPaid)) {
       message.error("Please enter a valid number for amount paid");
@@ -95,13 +115,12 @@ const AllRequirementsTable = () => {
         search,
         due_date: selectedDate,
         department: selectedDept,
-      }); // Refresh list after PATCH
+      });
     } catch (err) {
       message.error("Failed to update amount paid");
     }
   };
 
-  // PATCH full payment done (status: COMPLETED)
   const handleFullPaymentDone = async (row) => {
     try {
       await axios.patch(
@@ -114,13 +133,12 @@ const AllRequirementsTable = () => {
         search,
         due_date: selectedDate,
         department: selectedDept,
-      }); // Refresh list after PATCH
+      });
     } catch (err) {
       message.error("Failed to mark as completed");
     }
   };
 
-  // PATCH status REJECTED for Invalid Reason button
   const handleReject = async (row) => {
     try {
       await axios.patch(
@@ -133,244 +151,586 @@ const AllRequirementsTable = () => {
         search,
         due_date: selectedDate,
         department: selectedDept,
-      }); // Refresh list after PATCH
+      });
     } catch (err) {
       message.error("Failed to reject request");
     }
   };
 
-  // Edit amount paid click
   const handleAmountPaidEdit = (row) => {
     setEditRowId(row.id);
     setEditAmountPaid(row.amount_paid);
   };
   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
 
-  // Columns
   const columns = [
     {
       title: "Sl. No",
       key: "slno",
-      render: (_, __, idx) => idx + 1,
+      width: 70,
+      fixed: "left",
+      render: (_, __, idx) => (
+        <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+          {idx + 1}
+        </span>
+      ),
     },
     {
-      title: "First Name",
+      title: "Requester",
       dataIndex: ["requested_by", "first_name"],
       key: "first_name",
-      render: (_, record) => record.requested_by?.first_name || "",
+      width: 120,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record.requested_by?.first_name || "-"}
+        </span>
+      ),
     },
     {
       title: "Department",
       dataIndex: ["department", "name"],
       key: "department",
-      render: (_, record) => record.department?.name || "",
+      width: 150,
+      render: (_, record) => (
+        <Tag
+          color="blue"
+          style={{ borderRadius: 6, fontWeight: 700, fontSize: 14 }}
+        >
+          {record.department?.name || "-"}
+        </Tag>
+      ),
     },
     {
       title: "Purpose",
       dataIndex: "purpose",
       key: "purpose",
+      width: 200,
+      // ellipsis: true,
+      render: (text) => (
+        <span
+          style={{
+            fontWeight: 700,
+            fontSize: 18,
+            color: "#000",
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            display: "inline-block",
+            maxWidth: 200,
+          }}
+        >
+          {text}
+        </span>
+      ),
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-      render: (amt) =>
-        amt?.toLocaleString("en-IN", {
-          style: "currency",
-          currency: "INR",
-        }),
+      width: 120,
+      render: (amt) => (
+        <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+          {amt?.toLocaleString("en-IN", {
+            style: "currency",
+            currency: "INR",
+          })}
+        </span>
+      ),
     },
     {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
+      width: 100,
       render: (priority) => (
-        <span
+        <Tag
+          color={
+            priority === "HIGH"
+              ? "#fee2e2"
+              : priority === "MEDIUM"
+              ? "#fef3c7"
+              : "#d1fae5"
+          }
           style={{
             color:
               priority === "HIGH"
-                ? "red"
+                ? "#991b1b"
                 : priority === "MEDIUM"
-                ? "orange"
-                : "green",
+                ? "#92400e"
+                : "#065f46",
+            borderRadius: 6,
+            border: "none",
+            fontWeight: 700,
+            fontSize: 16,
           }}
         >
           {priority}
-        </span>
+        </Tag>
       ),
     },
     {
       title: "Due Date",
       dataIndex: "due_date",
       key: "due_date",
-      render: (date) => (date ? dayjs(date).format("DD-MM-YYYY") : ""),
+      width: 120,
+      render: (date, record) => {
+        const isOverdue =
+          date &&
+          dayjs(date).isBefore(dayjs(), "day") &&
+          record.status === "PENDING";
+        return date ? (
+          <span
+            style={{
+              color: isOverdue ? "#dc2626" : "#555",
+              fontWeight: 600,
+              fontSize: 18,
+            }}
+          >
+            {dayjs(date).format("DD-MM-YYYY")}
+          </span>
+        ) : (
+          "-"
+        );
+      },
     },
     {
       title: "Updated At",
       dataIndex: "updatedAt",
       key: "updatedAt",
-      render: (date) => (date ? dayjs(date).format("DD-MM-YYYY HH:mm") : ""),
+      width: 150,
+      render: (date) => (
+        <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
+          {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
+        </span>
+      ),
     },
     {
       title: "Amount Paid",
       dataIndex: "amount_paid",
       key: "amount_paid",
+      width: 180,
       render: (amount_paid, row) =>
         row.status === "COMPLETED" || row.status === "REJECTED" ? (
-          <span style={{ color: "#999" }}>
+          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
             {amount_paid?.toLocaleString("en-IN", {
               style: "currency",
               currency: "INR",
-            }) || 0}
+            }) || "₹0"}
           </span>
         ) : row.id === editRowId ? (
           <Space>
             <Input
-              style={{ width: 100 }}
+              style={{ width: 100, fontWeight: 600, fontSize: 18 }}
               value={editAmountPaid}
               onChange={handleAmountPaidChange}
               size="small"
-              disabled={row.status === "COMPLETED" || row.status === "REJECTED"}
             />
             <Button
               type="primary"
               icon={<CheckOutlined />}
               size="small"
               onClick={() => handleAmountPaidSave(row)}
-              disabled={row.status === "COMPLETED" || row.status === "REJECTED"}
+              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
             />
           </Space>
         ) : (
           <Space>
-            <span>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
               {amount_paid?.toLocaleString("en-IN", {
                 style: "currency",
                 currency: "INR",
-              }) || 0}
+              }) || "₹0"}
             </span>
             <Button
               icon={<EditOutlined />}
               size="small"
               onClick={() => handleAmountPaidEdit(row)}
-              disabled={row.status === "COMPLETED" || row.status === "REJECTED"}
             />
           </Space>
         ),
     },
     {
-      title: "Full Payment",
-      key: "full_payment",
-      render: (_, row) =>
-        row.status === "PENDING" ? (
+      title: "Actions",
+      key: "actions",
+      width: 250,
+      fixed: "right",
+      render: (_, row) => (
+        <Space>
           <Button
             type="primary"
-            disabled={row.amount_paid >= row.amount}
+            size="small"
+            disabled={row.status !== "PENDING" || row.amount_paid >= row.amount}
             onClick={() => handleFullPaymentDone(row)}
+            icon={<CheckCircleOutlined />}
+            style={{
+              background:
+                row.status === "PENDING" && row.amount_paid < row.amount
+                  ? "#10b981"
+                  : undefined,
+              borderColor:
+                row.status === "PENDING" && row.amount_paid < row.amount
+                  ? "#10b981"
+                  : undefined,
+              fontWeight: 600,
+              fontSize: 16,
+            }}
           >
-            Full Payment Done
+            Complete
           </Button>
-        ) : (
-          <Button type="primary" disabled>
-            Full Payment Done
+          <Button
+            danger
+            size="small"
+            disabled={row.status !== "PENDING"}
+            onClick={() => handleReject(row)}
+            icon={<CloseCircleOutlined />}
+            style={{ fontWeight: 700, fontSize: 18 }}
+          >
+            Reject
           </Button>
-        ),
-    },
-    {
-      title: "Invalid Reason",
-      key: "invalid_reason",
-      render: (_, row) =>
-        row.status === "PENDING" ? (
-          <Button danger onClick={() => handleReject(row)}>
-            Mark as Rejected
-          </Button>
-        ) : (
-          <Button danger disabled>
-            Mark as Rejected
-          </Button>
-        ),
+        </Space>
+      ),
     },
   ];
 
-  // Highlight overdue rows and disabled style for completed/rejected
   const rowClassName = (record) => {
-    if (record.status === "COMPLETED" || record.status === "REJECTED") {
-      return "disabled-row";
-    }
+    if (record.status === "COMPLETED") return "completed-row";
+    if (record.status === "REJECTED") return "rejected-row";
     if (record.due_date && dayjs(record.due_date).isBefore(dayjs(), "day")) {
-      return "due-date-passed";
+      return "overdue-row";
     }
     return "";
   };
 
   return (
-    <>
+    <div className="min-h-screen w-full bg-[#fefcff] relative">
+      {/* Dreamy Sky Pink Glow */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: `
+            radial-gradient(circle at 30% 70%, rgba(173, 216, 230, 0.35), transparent 60%),
+            radial-gradient(circle at 70% 30%, rgba(255, 182, 193, 0.4), transparent 60%)`,
+        }}
+      />
+
       <style>{`
-        .due-date-passed {
-          background-color: #ffe6e6 !important;
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          font-family: 'Cormorant Garamond', serif;
         }
-        .disabled-row {
-          background-color: #f5f5f5 !important;
-          opacity: 0.6;
-          pointer-events: none;
+        
+        .overdue-row {
+          background: #fef2f2 !important;
+          border-left: 3px solid #fca5a5 !important;
+        }
+        .completed-row {
+          background: #f0fdf4 !important;
+          opacity: 0.85;
+        }
+        .rejected-row {
+          background: #fef2f2 !important;
+          opacity: 0.75;
+        }
+        .stat-card {
+          transition: all 0.3s ease;
+          border-radius: 16px;
+          border: 1px solid transparent;
+          background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);
+          color: #1f2937;
+          font-weight: 700;
+          font-size: 20px;
+        }
+        .stat-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(255, 175, 189, 0.5);
+        }
+        .back-button {
+          transition: all 0.3s ease;
+          border-radius: 12px;
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .back-button:hover {
+          transform: translateX(-4px);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          border-color: #3b82f6;
+        }
+        .ant-table-thead > tr > th {
+          background: #1d174c !important;
+          color: #fff !important;
+          font-size: 18px !important;
+          font-weight: 700 !important;
+          border-bottom: 2px solid #e5e7eb !important;
+        }
+        .ant-table-tbody > tr > td {
+          color: #000 !important;
+          font-size: 18px !important;
+          font-weight: 700 !important;
+        }
+        .filter-section {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 24px;
+          border: 1px solid #e5e7eb;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
       `}</style>
-      <div style={{ padding: 24, background: "#fff", borderRadius: 8 }}>
-        <Title level={3} style={{ marginBottom: 16 }}>
-          All Requirements
-        </Title>
-        <Space style={{ marginBottom: 16 }} wrap>
-          <Input
-            placeholder="Search requirements"
-            value={search}
-            onChange={handleSearch}
-            onPressEnter={handleSearchSubmit}
-            style={{ width: 200 }}
-          />
-          <DatePicker
-            placeholder="Due date"
-            value={selectedDate}
-            onChange={handleDateChange}
-            allowClear
-          />
-          <Select
-            placeholder="Department"
-            value={selectedDept}
-            onChange={handleDeptChange}
-            allowClear
-            style={{ width: 160 }}
-          >
-            {departmentsList.map((dept) => (
-              <Option value={dept.id} key={dept.id}>
-                {dept.name}
-              </Option>
-            ))}
-          </Select>
-          <Button type="primary" onClick={handleSearchSubmit}>
-            Search
-          </Button>
+
+      <div
+        style={{
+          padding: "32px",
+          background: "transparent",
+          minHeight: "100vh",
+          position: "relative",
+          zIndex: 10,
+        }}
+      >
+        {/* Back Button */}
+        <div>
           <Button
-            onClick={() => {
-              setSearch("");
-              setSelectedDate(null);
-              setSelectedDept(null);
-              fetchRequirementsData();
+            className="back-button"
+            onClick={() => (window.location.href = "/")}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              height: 48,
+              padding: "0 20px",
+              fontSize: 16,
             }}
           >
-            Reset
+            <div style={{ width: 32, height: 32, marginRight: 8 }}>
+              <Lottie animationData={homeIcon} loop={true} />
+            </div>
+            <span style={{ fontWeight: 500 }}>Back</span>
           </Button>
-        </Space>
-        <Table
-          rowKey="id"
-          loading={loading}
-          columns={columns}
-          dataSource={requirements}
-          pagination={{ pageSize: 10 }}
-          bordered
-          size="middle"
-          rowClassName={rowClassName}
-        />
+        </div>
+
+        {/* Centered Heading */}
+        <h1
+          style={{
+            textAlign: "center",
+            fontSize: 48,
+            fontWeight: 600,
+            color: "#1f2937",
+            marginBottom: 24,
+            letterSpacing: "-0.02em",
+          }}
+        >
+          Requirements Dashboard
+        </h1>
+
+        {/* Statistics Cards - Smaller width and colorful */}
+        <Row
+          gutter={[24, 24]}
+          style={{
+            marginBottom: 32,
+            maxWidth: 900,
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <Col xs={24} sm={8}>
+            <Card
+              className="stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                borderColor: "transparent",
+                color: "#ffffff",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
+                <div style={{ width: 40, height: 40, flexShrink: 0 }}>
+                  <Lottie animationData={total} loop={true} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#ffffff",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Total Requests
+                  </div>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
+                    {stats.total}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card
+              className="stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                borderColor: "transparent",
+                color: "#ffffff",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
+                <div style={{ width: 40, height: 40, flexShrink: 0 }}>
+                  <Lottie animationData={pending} loop={true} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#ffffff",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Pending
+                  </div>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
+                    {stats.pending}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={8}>
+            <Card
+              className="stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                borderColor: "transparent",
+                color: "#ffffff",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
+                <div style={{ width: 40, height: 40, flexShrink: 0 }}>
+                  <Lottie animationData={completed} loop={true} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: 20,
+                      fontWeight: 700,
+                      color: "#ffffff",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Completed
+                  </div>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
+                    {stats.completed}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Filters */}
+        <div className="filter-section" style={{ marginBottom: 24 }}>
+          <Space size="middle" wrap style={{ width: "100%" }}>
+            <Input
+              placeholder="Search requirements..."
+              value={search}
+              onChange={handleSearch}
+              onPressEnter={handleSearchSubmit}
+              prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
+              style={{ width: 240, borderRadius: 8 }}
+              size="large"
+            />
+            <DatePicker
+              placeholder="Due date"
+              value={selectedDate}
+              onChange={handleDateChange}
+              allowClear
+              style={{ width: 180, borderRadius: 8 }}
+              size="large"
+            />
+            <Select
+              placeholder="Department"
+              value={selectedDept}
+              onChange={handleDeptChange}
+              allowClear
+              style={{ width: 180, borderRadius: 8 }}
+              size="large"
+            >
+              {departmentsList.map((dept) => (
+                <Option value={dept.id} key={dept.id}>
+                  {dept.name}
+                </Option>
+              ))}
+            </Select>
+            <Button
+              type="primary"
+              size="large"
+              onClick={handleSearchSubmit}
+              icon={<SearchOutlined />}
+              style={{
+                borderRadius: 8,
+                background: "#3b82f6",
+                borderColor: "#3b82f6",
+              }}
+            >
+              Search
+            </Button>
+            <Button
+              size="large"
+              onClick={() => {
+                setSearch("");
+                setSelectedDate(null);
+                setSelectedDept(null);
+                fetchRequirementsData();
+              }}
+              icon={<ReloadOutlined />}
+              style={{ borderRadius: 8 }}
+            >
+              Reset
+            </Button>
+          </Space>
+        </div>
+
+        {/* Table */}
+        <Card
+          variant={false}
+          style={{
+            borderRadius: 16,
+            overflow: "hidden",
+            border: "1px solid #e5e7eb",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+          }}
+        >
+          <Table
+            rowKey="id"
+            loading={loading}
+            columns={columns}
+            dataSource={requirements}
+            pagination={{
+              pageSize: 10,
+              showTotal: (total) => `Total ${total} requirements`,
+              showSizeChanger: true,
+            }}
+            scroll={{ x: 1500 }}
+            variant
+            size="middle"
+            rowClassName={rowClassName}
+          />
+        </Card>
       </div>
-    </>
+    </div>
   );
 };
 
