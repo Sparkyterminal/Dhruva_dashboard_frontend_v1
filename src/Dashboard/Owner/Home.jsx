@@ -57,7 +57,7 @@ const HomeOwner = () => {
   };
 
   const handleChangePassword = () => {
-    navigate("/owner/change-password");
+    navigate("/owner/changepassword");
   };
 
   const formatTime = (date) =>
@@ -74,6 +74,40 @@ const HomeOwner = () => {
       month: "long",
       day: "numeric",
     });
+
+  // Navigation menu items
+  const navigationMenus = [
+    {
+      label: "Requirements",
+      route: "/owner/allrequirements",
+      animation: requirementsAnimation,
+    },
+    {
+      label: "PlayBook",
+      route: "/owner/playbook",
+      animation: requirementsAnimation, // Replace with playbook animation
+    },
+    {
+      label: "Vendors",
+      route: "/owner/viewvendors",
+      animation: requirementsAnimation, // Replace with Vendors animation
+    },
+    {
+      label: "Client Bookings",
+      route: "/owner/viewclientbookings",
+      animation: requirementsAnimation, // Replace with bookings animation
+    },
+    {
+      label: "Bills",
+      route: "/owner/viewbills",
+      animation: requirementsAnimation, // Replace with bills animation
+    },
+    {
+      label: "Departments",
+      route: "/owner/departments",
+      animation: requirementsAnimation, // Replace with departments animation
+    },
+  ];
 
   const menuItems = [
     {
@@ -134,102 +168,111 @@ const HomeOwner = () => {
           className="max-w-7xl w-full mx-auto"
         >
           {/* Glassmorphism Header */}
-          <div className="glass-header flex flex-col sm:flex-row justify-between items-center gap-8 px-5 py-6 md:p-10 mb-8 focus-in-expand-normal shadow-lg">
-            {/* Left Welcome */}
-            <div className="flex items-center gap-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
-                  Welcome Mr. Dhruva
-                </h1>
-                <div className="text-gray-600 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6">
-                  <motion.div
-                    className="text-lg md:text-xl font-semibold"
-                    animate={{ scale: [1, 1.02, 1] }}
-                    transition={{
-                      repeat: Infinity,
-                      duration: 2,
-                      ease: "easeInOut",
-                    }}
-                  >
-                    {formatTime(currentTime)}
-                  </motion.div>
-                  <div className="text-sm md:text-base text-gray-700 font-medium">
-                    {formatDate(currentTime)}
+          <div className="glass-header flex flex-col gap-6 px-5 py-6 md:p-10 mb-8 focus-in-expand-normal shadow-lg">
+            {/* Top Row: Welcome & User Profile */}
+            <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+              {/* Left Welcome */}
+              <div className="flex items-center gap-4">
+                <div>
+                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
+                    Welcome Mr. Dhruva
+                  </h1>
+                  <div className="text-gray-600 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6">
+                    <motion.div
+                      className="text-lg md:text-xl font-semibold"
+                      animate={{ scale: [1, 1.02, 1] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: 2,
+                        ease: "easeInOut",
+                      }}
+                    >
+                      {formatTime(currentTime)}
+                    </motion.div>
+                    <div className="text-sm md:text-base text-gray-700 font-medium">
+                      {formatDate(currentTime)}
+                    </div>
                   </div>
                 </div>
+                {/* Elephant Image */}
+                <motion.div
+                  className="hidden sm:block"
+                  animate={{ y: [0, -10, 0] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 3,
+                    ease: "easeInOut",
+                  }}
+                >
+                  <img
+                    src="assets/dhruvalogo-removed.png"
+                    alt="Elephant"
+                    className="w-16 h-16 md:w-20 md:h-20"
+                  />
+                </motion.div>
               </div>
-              {/* Elephant Image */}
-              <motion.div
-                className="hidden sm:block"
-                animate={{ y: [0, -10, 0] }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 3,
-                  ease: "easeInOut",
-                }}
-              >
-                <img
-                  src="assets/elephant.png"
-                  alt="Elephant"
-                  className="w-16 h-16 md:w-20 md:h-20"
-                />
+              {/* User actions */}
+              <motion.div className="flex items-center gap-4 shrink-0">
+                <Dropdown
+                  menu={{ items: menuItems }}
+                  trigger={["click"]}
+                  placement="bottomRight"
+                >
+                  <div className="cursor-pointer flex items-center justify-center">
+                    <Lottie
+                      animationData={profile}
+                      style={{ width: 56, height: 56, borderRadius: "50%" }}
+                      loop={true}
+                      autoplay={true}
+                    />
+                  </div>
+                </Dropdown>
               </motion.div>
             </div>
-            {/* REQUIREMENTS as Menu */}
-            <motion.div
-              className="shrink-0 select-none"
-              whileHover="hover"
-              whileTap={{ scale: 0.96 }}
-            >
-              <motion.a
-                href="#"
-                onClick={(e) => {
-                  e.preventDefault();
-                  navigate("/owner/allrequirements");
-                }}
-                className="font-semibold text-lg md:text-xl tracking-wide relative cursor-pointer transition-all duration-200"
-                initial={false}
-                variants={{
-                  hover: {
-                    color: "#ff7300",
-                    textDecoration: "underline",
-                    textUnderlineOffset: 5,
-                    letterSpacing: "0.1em",
-                  },
-                }}
-                style={{
-                  color: "#000000",
-                  textDecoration: "none",
-                }}
-              >
-                <span className="focus-in-expand-normal flex items-center gap-2">
-                  <Lottie
-                    animationData={requirementsAnimation}
-                    style={{ width: 24, height: 24, marginBottom: 2 }}
-                    loop={true}
-                    autoplay={true}
-                  />
-                  Requirements
-                </span>
-              </motion.a>
-            </motion.div>
-            {/* User actions */}
-            <motion.div className="flex items-center gap-4 shrink-0">
-              <Dropdown
-                menu={{ items: menuItems }}
-                trigger={["click"]}
-                placement="bottomRight"
-              >
-                <div className="cursor-pointer flex items-center justify-center">
-                  <Lottie
-                    animationData={profile}
-                    style={{ width: 56, height: 56, borderRadius: "50%" }}
-                    loop={true}
-                    autoplay={true}
-                  />
-                </div>
-              </Dropdown>
-            </motion.div>
+
+            {/* Bottom Row: Navigation Menu */}
+            <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 pt-4 border-t border-gray-200">
+              {navigationMenus.map((menu, index) => (
+                <motion.div
+                  key={index}
+                  className="shrink-0 select-none"
+                  whileHover="hover"
+                  whileTap={{ scale: 0.96 }}
+                >
+                  <motion.a
+                    href="#"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      navigate(menu.route);
+                    }}
+                    className="font-semibold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-200"
+                    initial={false}
+                    variants={{
+                      hover: {
+                        color: "#ff7300",
+                        textDecoration: "underline",
+                        textUnderlineOffset: 5,
+                        letterSpacing: "0.1em",
+                      },
+                    }}
+                    style={{
+                      color: "#000000",
+                      textDecoration: "none",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Lottie
+                        animationData={menu.animation}
+                        style={{ width: 20, height: 20, marginBottom: 2 }}
+                        loop={true}
+                        autoplay={true}
+                      />
+                      {menu.label}
+                    </span>
+                  </motion.a>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </motion.div>
         {/* Below Header: Meetings */}

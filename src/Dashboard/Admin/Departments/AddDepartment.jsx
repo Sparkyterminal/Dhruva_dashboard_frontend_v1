@@ -18,7 +18,7 @@ const AddDepartment = () => {
 
   const onFinish = async (values) => {
     try {
-      const payload = { name: values.name };
+      const payload = {  name: values.name.toUpperCase() };
       const res = await axios.post(
         `${API_BASE_URL}department`,
         payload,

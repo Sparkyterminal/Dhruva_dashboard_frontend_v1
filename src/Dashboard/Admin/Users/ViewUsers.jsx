@@ -29,6 +29,26 @@ const ViewUsers = () => {
   });
   const navigate = useNavigate();
 
+  // const fetchUserData = async (page = 1, pageSize = 10) => {
+  //   setLoading(true);
+  //   try {
+  //     const res = await axios.get(
+  //       `${API_BASE_URL}user?page=${page}&limit=${pageSize}`,
+  //       config
+  //     );
+  //     setUsers(res.data.items || []);
+  //     setPagination({
+  //       current: page,
+  //       pageSize: pageSize,
+  //       total: res.data.totalItems || 0,
+  //     });
+  //   } catch (err) {
+  //     message.error("Failed to fetch user details.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   const fetchUserData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
@@ -36,7 +56,15 @@ const ViewUsers = () => {
         `${API_BASE_URL}user?page=${page}&limit=${pageSize}`,
         config
       );
-      setUsers(res.data.items || []);
+      const usersData = res.data.items || [];
+      const mappedUsers = usersData.map((user) => {
+        const departmentInfo =
+          user.department_details && user.department_details.length > 0
+            ? user.department_details[0].name
+            : "-";
+        return { ...user, department_name: departmentInfo };
+      });
+      setUsers(mappedUsers);
       setPagination({
         current: page,
         pageSize: pageSize,
@@ -112,6 +140,14 @@ const ViewUsers = () => {
       dataIndex: "designation",
       key: "designation",
       align: "center",
+      render: (text) => text || "-",
+    },
+    {
+      title: "Department",
+      dataIndex: "department_name",
+      key: "department_name",
+      align: "center",
+      // ellipsis: true,
       render: (text) => text || "-",
     },
     {

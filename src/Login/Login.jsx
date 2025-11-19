@@ -40,6 +40,7 @@ export default function Login() {
             email_id,
             access_token,
             is_logged_in: true,
+            departments: response.data.data.departments || [],
           })
         );
         if (role === ROLES.ADMIN) {
@@ -76,16 +77,16 @@ export default function Login() {
         >
           {/* Header Section */}
           <div className="px-8 pt-8 pb-6 text-center text-white">
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <div className="mx-auto h-32 w-32 flex items-center justify-center">
-                {/* Logo Image */}
+                
                 <img
                   src="/assets/dhruvalogo.png"
                   alt="Logo"
                   className="h-full w-full object-contain"
                 />
               </div>
-            </div>
+            </div> */}
             <h1
               className="text-4xl font-bold mb-2"
               style={{ letterSpacing: "0.5px" }}

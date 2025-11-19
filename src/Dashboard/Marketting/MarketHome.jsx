@@ -5,12 +5,13 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import { logout } from "../../reducers/users";
-import ViewRequirements from "./ViewRequirements";
+// import ViewRequirements from "./ViewRequirements";
 import logouticon from "../../assets/userlogout.json";
 import welcome from "../../assets/userwelcome.json";
 import audience from "../../assets/Target Audience.json";
 import password from "../../assets/passworduser.json";
 import rainbow from "../../assets/Rainbow.json";
+import ViewRequirements from "../User/ViewRequirements";
 
 // CSS for Glassmorphism and Animations
 const customStyles = `
@@ -52,7 +53,7 @@ const customStyles = `
   }
 `;
 
-const Home = () => {
+const MarketHome = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state) => state.user.value);
@@ -213,19 +214,19 @@ const Home = () => {
                 </motion.button>
               </motion.div>
 
-              {/* Add Vendor Button */}
+              {/* Client Bookings Button */}
               <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
                 <motion.button
-                  onClick={() => navigate("/user/addvendor")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
+                  onClick={() => navigate("/user/viewclient")}
+                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100"
                   variants={{
                     hover: {
-                      color: "#059669",
+                      color: "#e11d48",
                       scale: 1.05,
                     },
                   }}
                   style={{
-                    color: "#0d9488",
+                    color: "#f43f5e",
                   }}
                 >
                   <span className="flex items-center gap-2">
@@ -239,13 +240,13 @@ const Home = () => {
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                       />
                     </svg>
-                    Add Vendor
+                    Client Bookings
                   </span>
                   <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
                     initial={{ scaleX: 0 }}
                     variants={{
                       hover: { scaleX: 1 },
@@ -296,6 +297,48 @@ const Home = () => {
                   />
                 </motion.button>
               </motion.div>
+
+              {/* Checklists Button */}
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+                <motion.button
+                  onClick={() => navigate("/user/checklists")}
+                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100"
+                  variants={{
+                    hover: {
+                      color: "#059669",
+                      scale: 1.05,
+                    },
+                  }}
+                  style={{
+                    color: "#10b981",
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 md:w-5 md:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                      />
+                    </svg>
+                    Checklists
+                  </span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
+                    initial={{ scaleX: 0 }}
+                    variants={{
+                      hover: { scaleX: 1 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.button>
+              </motion.div>
             </div>
 
             {/* Right Section - Avatar/Menu Dropdown */}
@@ -336,7 +379,7 @@ const Home = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-16 md:top-20 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
+                    className="absolute right-0 lg:right-0 top-14 lg:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
                   >
                     <motion.button
                       whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
@@ -346,14 +389,14 @@ const Home = () => {
                       }}
                       className="w-full text-left px-5 py-3 transition-all duration-200 text-gray-700 font-semibold flex items-center gap-3 cursor-pointer"
                     >
-                      <div className="w-8 h-8 flex items-center justify-center">
+                      <div className="w-8 h-8 flex items-center justify-center shrink-0">
                         <Lottie
                           animationData={password}
                           loop={true}
                           className="w-full h-full"
                         />
                       </div>
-                      Change Password
+                      <span className="text-sm md:text-base">Change Password</span>
                     </motion.button>
 
                     <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-1" />
@@ -366,14 +409,14 @@ const Home = () => {
                       }}
                       className="w-full text-left px-5 py-3 transition-all duration-200 text-red-600 font-semibold flex items-center gap-3 cursor-pointer"
                     >
-                      <div className="w-5 h-5 flex items-center justify-center">
+                      <div className="w-5 h-5 flex items-center justify-center shrink-0">
                         <Lottie
                           animationData={logouticon}
                           loop={true}
                           className="w-full h-full"
                         />
                       </div>
-                      Logout
+                      <span className="text-sm md:text-base">Logout</span>
                     </motion.button>
                   </motion.div>
                 )}
@@ -397,4 +440,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default MarketHome;

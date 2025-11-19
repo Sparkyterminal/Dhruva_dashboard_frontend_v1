@@ -17,6 +17,8 @@
     "axios": "^1.12.2",
     "dayjs": "^1.11.18",
     "file-saver": "^2.0.5",
+    "jspdf": "^3.0.3",
+    "jspdf-autotable": "^5.0.2",
     "lenis": "^1.3.13",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.548.0",

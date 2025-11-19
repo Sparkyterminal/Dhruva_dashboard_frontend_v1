@@ -25,7 +25,7 @@ const EditDepartments = () => {
       try {
         const res = await axios.get(`${API_BASE_URL}department/${id}`, config);
         const data = res.data.data;
-        form.setFieldsValue({ name: data.name });
+        form.setFieldsValue({ name: data.name.toUpperCase() });
       } catch (err) {
         message.error("Failed to fetch department details.");
       } finally {

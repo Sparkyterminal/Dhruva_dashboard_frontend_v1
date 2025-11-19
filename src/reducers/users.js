@@ -9,6 +9,7 @@ const initialValue = {
   refresh_token: "",
   is_change_password: false,
   is_logged_in: false,
+  departments: [],
 };
 
 export const userSlice = createSlice({

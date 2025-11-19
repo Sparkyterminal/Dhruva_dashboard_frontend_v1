@@ -19,7 +19,7 @@ const lottieMap = {
   "Design Team": designteam,
   BOOKINGS: bookings,
   "Any meetings For Out Side": outsidemeeting,
-  LUNCH: lunch,
+  Lunch: lunch,
   "Tenders and Documentation": tender,
   "Visiting Offices": office,
   "New Design team Meeting": designteam,
@@ -69,7 +69,7 @@ const Meetings = () => {
     {
       id: 5,
       time: "1:00 PM - 2:00 PM",
-      title: "LUNCH",
+      title: "Lunch",
       items: [],
       color: "#FFFBEB",
     },
@@ -163,14 +163,14 @@ const Meetings = () => {
 
                   {/* Time - with static clock icon */}
                   <div className="flex items-center gap-2 mb-3">
-                    <div className="w-5 h-5 flex items-center justify-center">
+                    <div className="w-8 h-8 flex items-center justify-center">
                       <Lottie
                         animationData={clockanimation}
                         loop={true}
                         style={{ width: 20, height: 20 }}
                       />
                     </div>
-                    <span className="text-base font-semibold text-gray-700">
+                    <span className="text-lg font-semibold text-gray-700">
                       {meeting.time}
                     </span>
                   </div>

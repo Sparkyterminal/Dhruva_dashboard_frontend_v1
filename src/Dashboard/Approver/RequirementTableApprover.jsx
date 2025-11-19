@@ -6,32 +6,23 @@
 //   Table,
 //   Input,
 //   Button,
-//   DatePicker,
 //   Select,
 //   Space,
 //   message,
 //   Card,
 //   Row,
 //   Col,
-//   Statistic,
 //   Tag,
 // } from "antd";
 // import {
 //   EditOutlined,
 //   CheckOutlined,
-//   SearchOutlined,
-//   ReloadOutlined,
-//   FileTextOutlined,
-//   ClockCircleOutlined,
-//   CheckCircleOutlined,
 //   CloseCircleOutlined,
+//   CheckCircleOutlined,
+//   ReloadOutlined,
+//   SearchOutlined,
 // } from "@ant-design/icons";
 // import dayjs from "dayjs";
-// import Lottie from "lottie-react";
-// import homeIcon from "../../assets/home.json";
-// import completed from "../../assets/completed.json";
-// import total from "../../assets/total.json";
-// import pending from "../../assets/pending.json";
 
 // import { API_BASE_URL } from "../../../config";
 
@@ -41,13 +32,14 @@
 //   { name: "Hennur Godown", id: "68fdf1cfe66ed5069ddb9f25" },
 // ];
 
-// const AllRequirementsTable = () => {
+// const RequirementTableApprover = () => {
 //   const user = useSelector((state) => state.user.value);
 //   const [requirements, setRequirements] = useState([]);
 //   const [loading, setLoading] = useState(false);
 //   const [search, setSearch] = useState("");
-//   const [selectedDate, setSelectedDate] = useState(null);
 //   const [selectedDept, setSelectedDept] = useState(null);
+
+//   // Editable row IDs and values for planned_amount and amount_paid
 //   const [editRowId, setEditRowId] = useState(null);
 //   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
 //   const [editAmountPaid, setEditAmountPaid] = useState(null);
@@ -59,8 +51,8 @@
 //   // Calculate statistics
 //   const stats = {
 //     total: requirements.length,
-//     pending: requirements.filter((r) => r.owner_check === "PENDING").length,
-//     completed: requirements.filter((r) => r.owner_check === "APPROVED").length,
+//     pending: requirements.filter((r) => r.status === "PENDING").length,
+//     completed: requirements.filter((r) => r.status === "COMPLETED").length,
 //   };
 
 //   const fetchRequirementsData = async (params = {}) => {
@@ -89,111 +81,86 @@
 //   const sortedRequirements = [...requirements].sort((a, b) => {
 //     const statusOrder = {
 //       PENDING: 0,
-//       APPROVED: 1,
+//       COMPLETED: 1,
 //       REJECTED: 1,
 //     };
-
-//     const statusA = statusOrder[a.owner_check] !== undefined ? statusOrder[a.owner_check] : 0;
-//     const statusB = statusOrder[b.owner_check] !== undefined ? statusOrder[b.owner_check] : 0;
-
+//     const statusA = statusOrder[a.status] ?? 0;
+//     const statusB = statusOrder[b.status] ?? 0;
 //     return statusA - statusB;
 //   });
 
+//   // Handlers for search and filters
 //   const handleSearch = (e) => setSearch(e.target.value);
 //   const handleSearchSubmit = () =>
 //     fetchRequirementsData({
 //       search,
 //       department: selectedDept,
 //     });
-
 //   const handleDeptChange = (value) => setSelectedDept(value);
 
-//   const handlePlannedAmountSave = async (row) => {
-//     if (editPlannedAmount == null || isNaN(editPlannedAmount)) {
-//       message.error("Please enter a valid number for planned amount");
+//   // Start editing planned_amount and amount_paid for a row
+//   const handleEditClick = (row) => {
+//     setEditRowId(row.id);
+//     setEditPlannedAmount(row.planned_amount ?? "");
+//     setEditAmountPaid(row.amount_paid ?? "");
+//   };
+//   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
+//   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
+
+//   // Save the editable fields: planned_amount and amount_paid
+//   const handleSaveClick = async (row) => {
+//     const planned = Number(editPlannedAmount);
+//     const paid = Number(editAmountPaid);
+//     if (isNaN(planned) || planned < 0) {
+//       message.error("Please enter a valid planned amount");
 //       return;
 //     }
+//     if (isNaN(paid) || paid < 0) {
+//       message.error("Please enter a valid amount paid");
+//       return;
+//     }
+
 //     try {
 //       await axios.patch(
 //         `${API_BASE_URL}request/${row.id}`,
-//         { planned_amount: Number(editPlannedAmount) },
+//         { planned_amount: planned, amount_paid: paid },
 //         config
 //       );
-//       message.success("Planned amount updated");
+//       message.success("Updated successfully");
 //       setEditRowId(null);
-//       fetchRequirementsData({
-//         search,
-//         department: selectedDept,
-//       });
+//       fetchRequirementsData({ search, department: selectedDept });
 //     } catch (err) {
-//       message.error("Failed to update planned amount");
+//       message.error("Failed to update amounts");
 //     }
 //   };
 
-//   const handleAmountPaidSave = async (row) => {
-//     if (editAmountPaid == null || isNaN(editAmountPaid)) {
-//       message.error("Please enter a valid number for amount paid");
-//       return;
-//     }
-//     try {
-//       await axios.patch(
-//         `${API_BASE_URL}request/${row.id}`,
-//         { amount_paid: Number(editAmountPaid) },
-//         config
-//       );
-//       message.success("Amount paid updated");
-//       setEditRowId(null);
-//       fetchRequirementsData({
-//         search,
-//         department: selectedDept,
-//       });
-//     } catch (err) {
-//       message.error("Failed to update amount paid");
-//     }
-//   };
-
-//   const handleOwnerApprove = async (row) => {
+//   const handleComplete = async (row) => {
 //     try {
 //       await axios.patch(
 //         `${API_BASE_URL}request/${row.id}`,
 //         { status: "COMPLETED" },
 //         config
 //       );
-//       message.success("Request approved");
-//       fetchRequirementsData({
-//         search,
-//         department: selectedDept,
-//       });
+//       message.success("Request marked as completed");
+//       fetchRequirementsData({ search, department: selectedDept });
 //     } catch (err) {
-//       message.error("Failed to approve request");
+//       message.error("Failed to mark as completed");
 //     }
 //   };
 
-//   const handleOwnerReject = async (row) => {
+//   const handleReject = async (row) => {
 //     try {
 //       await axios.patch(
 //         `${API_BASE_URL}request/${row.id}`,
 //         { status: "REJECTED" },
 //         config
 //       );
-//       message.success("Request rejected");
-//       fetchRequirementsData({
-//         search,
-//         department: selectedDept,
-//       });
+//       message.success("Request marked as rejected");
+//       fetchRequirementsData({ search, department: selectedDept });
 //     } catch (err) {
 //       message.error("Failed to reject request");
 //     }
 //   };
-
-//   const handlePlannedAmountEdit = (row) => {
-//     setEditRowId(row.id);
-//     setEditPlannedAmount(row.planned_amount);
-//     setEditAmountPaid(row.amount_paid);
-//   };
-
-//   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
-//   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
 
 //   const columns = [
 //     {
@@ -237,7 +204,7 @@
 //       render: (_, record) => (
 //         <Tag
 //           color="blue"
-//           style={{ borderRadius: 6, fontWeight: 700, fontSize: 14 }}
+//           style={{ borderRadius: 6, fontWeight: 700, fontSize: 12 }}
 //         >
 //           {record.department?.name || "-"}
 //         </Tag>
@@ -310,158 +277,6 @@
 //       ),
 //     },
 //     {
-//       title: "Planned Amount",
-//       dataIndex: "planned_amount",
-//       key: "planned_amount",
-//       width: 180,
-//       render: (planned_amount, row) =>
-//         row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
-//           <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-//             {planned_amount?.toLocaleString("en-IN", {
-//               style: "currency",
-//               currency: "INR",
-//             }) || "₹0"}
-//           </span>
-//         ) : row.id === editRowId ? (
-//           <Space>
-//             <Input
-//               style={{ width: 100, fontWeight: 600, fontSize: 18 }}
-//               value={editPlannedAmount}
-//               onChange={handlePlannedAmountChange}
-//               size="small"
-//             />
-//             <Button
-//               type="primary"
-//               icon={<CheckOutlined />}
-//               size="small"
-//               onClick={() => handlePlannedAmountSave(row)}
-//               style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
-//             />
-//           </Space>
-//         ) : (
-//           <Space>
-//             <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-//               {planned_amount?.toLocaleString("en-IN", {
-//                 style: "currency",
-//                 currency: "INR",
-//               }) || "₹0"}
-//             </span>
-//             <Button
-//               icon={<EditOutlined />}
-//               size="small"
-//               onClick={() => handlePlannedAmountEdit(row)}
-//             />
-//           </Space>
-//         ),
-//     },
-//     {
-//       title: "Amount Paid",
-//       dataIndex: "amount_paid",
-//       key: "amount_paid",
-//       width: 180,
-//       render: (amount_paid, row) =>
-//         row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
-//           <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-//             {amount_paid?.toLocaleString("en-IN", {
-//               style: "currency",
-//               currency: "INR",
-//             }) || "₹0"}
-//           </span>
-//         ) : row.id === editRowId ? (
-//           <Space>
-//             <Input
-//               style={{ width: 100, fontWeight: 600, fontSize: 18 }}
-//               value={editAmountPaid}
-//               onChange={handleAmountPaidChange}
-//               size="small"
-//             />
-//             <Button
-//               type="primary"
-//               icon={<CheckOutlined />}
-//               size="small"
-//               onClick={() => handleAmountPaidSave(row)}
-//               style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
-//             />
-//           </Space>
-//         ) : (
-//           <Space>
-//             <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-//               {amount_paid?.toLocaleString("en-IN", {
-//                 style: "currency",
-//                 currency: "INR",
-//               }) || "₹0"}
-//             </span>
-//             <Button
-//               icon={<EditOutlined />}
-//               size="small"
-//               onClick={() => handlePlannedAmountEdit(row)}
-//             />
-//           </Space>
-//         ),
-//     },
-//     {
-//       title: "Accounts Check",
-//       dataIndex: "accounts_check",
-//       key: "accounts_check",
-//       width: 140,
-//       render: (status) => (
-//         <Tag
-//           color={
-//             status === "APPROVED"
-//               ? "#d1fae5"
-//               : status === "REJECTED"
-//               ? "#fee2e2"
-//               : "#fef3c7"
-//           }
-//           style={{
-//             color:
-//               status === "APPROVED"
-//                 ? "#065f46"
-//                 : status === "REJECTED"
-//                 ? "#991b1b"
-//                 : "#92400e",
-//             borderRadius: 6,
-//             border: "none",
-//             fontWeight: 700,
-//             fontSize: 14,
-//           }}
-//         >
-//           {status || "PENDING"}
-//         </Tag>
-//       ),
-//     },
-//     {
-//       title: "Approver Check",
-//       dataIndex: "approver_check",
-//       key: "approver_check",
-//       width: 140,
-//       render: (status) => (
-//         <Tag
-//           color={
-//             status === "APPROVED"
-//               ? "#d1fae5"
-//               : status === "REJECTED"
-//               ? "#fee2e2"
-//               : "#fef3c7"
-//           }
-//           style={{
-//             color:
-//               status === "APPROVED"
-//                 ? "#065f46"
-//                 : status === "REJECTED"
-//                 ? "#991b1b"
-//                 : "#92400e",
-//             borderRadius: 6,
-//             border: "none",
-//             fontWeight: 700,
-//             fontSize: 14,
-//           }}
-//         >
-//           {status || "PENDING"}
-//         </Tag>
-//       ),
-//     },
-//     {
 //       title: "Updated At",
 //       dataIndex: "updatedAt",
 //       key: "updatedAt",
@@ -473,101 +288,171 @@
 //       ),
 //     },
 //     {
-//       title: "Actions",
-//       key: "actions",
-//       width: 250,
-//       fixed: "right",
+//       title: "Planned Amount",
+//       dataIndex: "planned_amount",
+//       key: "planned_amount",
+//       width: 180,
+//       render: (planned_amount, row) =>
+//         row.id === editRowId ? (
+//           <Space>
+//             <Input
+//               style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+//               value={editPlannedAmount}
+//               onChange={handlePlannedAmountChange}
+//               size="small"
+//             />
+//           </Space>
+//         ) : (
+//           <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+//             {planned_amount?.toLocaleString("en-IN", {
+//               style: "currency",
+//               currency: "INR",
+//             }) || "₹0"}
+//           </span>
+//         ),
+//     },
+//     {
+//       title: "Amount Paid",
+//       dataIndex: "amount_paid",
+//       key: "amount_paid",
+//       width: 180,
+//       render: (amount_paid, row) =>
+//         row.id === editRowId ? (
+//           <Space>
+//             <Input
+//               style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+//               value={editAmountPaid}
+//               onChange={handleAmountPaidChange}
+//               size="small"
+//             />
+//           </Space>
+//         ) : (
+//           <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+//             {amount_paid?.toLocaleString("en-IN", {
+//               style: "currency",
+//               currency: "INR",
+//             }) || "₹0"}
+//           </span>
+//         ),
+//     },
+//     {
+//       title: "Accounts Check",
+//       dataIndex: "accounts_check",
+//       key: "accounts_check",
+//       width: 140,
+//       render: (val) => (
+//         <Tag
+//           color={
+//             val === "APPROVED"
+//               ? "#34d399"
+//               : val === "PENDING"
+//               ? "#fbbf24"
+//               : "#f87171"
+//           }
+//           style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+//         >
+//           {val || "-"}
+//         </Tag>
+//       ),
+//     },
+//     {
+//       title: "Approver Check",
+//       dataIndex: "approver_check",
+//       key: "approver_check",
+//       width: 200,
 //       render: (_, row) => {
-//         if (row.owner_check === "APPROVED") {
+//         if (row.approver_check === "PENDING") {
+//           return (
+//             <Space>
+//               <Button
+//                 type="primary"
+//                 size="small"
+//                 onClick={() => handleComplete(row)}
+//                 icon={<CheckCircleOutlined />}
+//                 style={{ background: "#10b981", borderColor: "#10b981" }}
+//               >
+//                 Complete
+//               </Button>
+//               <Button
+//                 danger
+//                 size="small"
+//                 onClick={() => handleReject(row)}
+//                 icon={<CloseCircleOutlined />}
+//               >
+//                 Reject
+//               </Button>
+//             </Space>
+//           );
+//         } else if (row.approver_check === "APPROVED") {
 //           return (
 //             <Tag
-//               color="#d1fae5"
-//               style={{
-//                 color: "#065f46",
-//                 borderRadius: 6,
-//                 border: "none",
-//                 fontWeight: 700,
-//                 fontSize: 16,
-//                 padding: "4px 12px",
-//               }}
+//               color="#34d399"
+//               style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
 //             >
 //               Completed
 //             </Tag>
 //           );
-//         }
-//         if (row.owner_check === "REJECTED") {
+//         } else if (row.approver_check === "REJECTED") {
 //           return (
 //             <Tag
-//               color="#fee2e2"
-//               style={{
-//                 color: "#991b1b",
-//                 borderRadius: 6,
-//                 border: "none",
-//                 fontWeight: 700,
-//                 fontSize: 16,
-//                 padding: "4px 12px",
-//               }}
+//               color="#f87171"
+//               style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
 //             >
 //               Rejected
 //             </Tag>
 //           );
 //         }
-//         return (
-//           <Space>
+//         return "-";
+//       },
+//     },
+//     {
+//       title: "Actions",
+//       key: "actions",
+//       width: 150,
+//       fixed: "right",
+//       render: (_, row) => {
+//         if (row.id === editRowId) {
+//           return (
+//             <Space>
+//               <Button
+//                 type="primary"
+//                 size="small"
+//                 onClick={() => handleSaveClick(row)}
+//                 icon={<CheckOutlined />}
+//               >
+//                 Save
+//               </Button>
+//             </Space>
+//           );
+//         } else {
+//           return (
 //             <Button
-//               type="primary"
+//               icon={<EditOutlined />}
 //               size="small"
-//               onClick={() => handleOwnerApprove(row)}
-//               icon={<CheckCircleOutlined />}
-//               style={{
-//                 background: "#10b981",
-//                 borderColor: "#10b981",
-//                 fontWeight: 600,
-//                 fontSize: 16,
-//               }}
-//             >
-//               Complete
-//             </Button>
-//             <Button
-//               danger
-//               size="small"
-//               onClick={() => handleOwnerReject(row)}
-//               icon={<CloseCircleOutlined />}
-//               style={{ fontWeight: 700, fontSize: 18 }}
-//             >
-//               Reject
-//             </Button>
-//           </Space>
-//         );
+//               onClick={() => handleEditClick(row)}
+//             />
+//           );
+//         }
 //       },
 //     },
 //   ];
 
 //   const rowClassName = (record) => {
-//     if (record.owner_check === "APPROVED") return "completed-row";
-//     if (record.owner_check === "REJECTED") return "rejected-row";
+//     if (record.status === "COMPLETED") return "completed-row";
+//     if (record.status === "REJECTED") return "rejected-row";
 //     return "";
 //   };
 
 //   return (
-//     <div className="min-h-screen w-full bg-[#fefcff] relative">
-//       {/* Dreamy Sky Pink Glow */}
-//       <div
-//         className="absolute inset-0 z-0"
-//         style={{
-//           backgroundImage: `
-//             radial-gradient(circle at 30% 70%, rgba(173, 216, 230, 0.35), transparent 60%),
-//             radial-gradient(circle at 70% 30%, rgba(255, 182, 193, 0.4), transparent 60%)`,
-//         }}
-//       />
-
+//     <div
+//       className="min-h-screen w-full relative"
+//       style={{ background: "transparent" }}
+//     >
 //       <style>{`
 //         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
-        
 //         * {
 //           font-family: 'Cormorant Garamond', serif;
 //         }
-        
 //         .completed-row {
 //           background: #f0fdf4 !important;
 //           opacity: 0.85;
@@ -575,31 +460,6 @@
 //         .rejected-row {
 //           background: #fef2f2 !important;
 //           opacity: 0.75;
-//         }
-//         .stat-card {
-//           transition: all 0.3s ease;
-//           border-radius: 16px;
-//           border: 1px solid transparent;
-//           background: linear-gradient(135deg, #ffafbd 0%, #ffc3a0 100%);
-//           color: #1f2937;
-//           font-weight: 700;
-//           font-size: 20px;
-//         }
-//         .stat-card:hover {
-//           transform: translateY(-2px);
-//           box-shadow: 0 4px 12px rgba(255, 175, 189, 0.5);
-//         }
-//         .back-button {
-//           transition: all 0.3s ease;
-//           border-radius: 12px;
-//           background: #ffffff;
-//           border: 1px solid #e5e7eb;
-//           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-//         }
-//         .back-button:hover {
-//           transform: translateX(-4px);
-//           box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-//           border-color: #3b82f6;
 //         }
 //         .ant-table-thead > tr > th {
 //           background: #1d174c !important;
@@ -613,13 +473,6 @@
 //           font-size: 18px !important;
 //           font-weight: 700 !important;
 //         }
-//         .filter-section {
-//           background: #ffffff;
-//           border-radius: 16px;
-//           padding: 24px;
-//           border: 1px solid #e5e7eb;
-//           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-//         }
 //       `}</style>
 
 //       <div
@@ -631,26 +484,6 @@
 //           zIndex: 10,
 //         }}
 //       >
-//         {/* Back Button */}
-//         <div>
-//           <Button
-//             className="back-button"
-//             onClick={() => (window.location.href = "/")}
-//             style={{
-//               display: "inline-flex",
-//               alignItems: "center",
-//               height: 48,
-//               padding: "0 20px",
-//               fontSize: 16,
-//             }}
-//           >
-//             <div style={{ width: 32, height: 32, marginRight: 8 }}>
-//               <Lottie animationData={homeIcon} loop={true} />
-//             </div>
-//             <span style={{ fontWeight: 500 }}>Back</span>
-//           </Button>
-//         </div>
-
 //         {/* Centered Heading */}
 //         <h1
 //           style={{
@@ -688,9 +521,6 @@
 //               <div
 //                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
 //               >
-//                 <div style={{ width: 40, height: 40, flexShrink: 0 }}>
-//                   <Lottie animationData={total} loop={true} />
-//                 </div>
 //                 <div style={{ flex: 1 }}>
 //                   <div
 //                     style={{
@@ -702,9 +532,7 @@
 //                   >
 //                     Total Requests
 //                   </div>
-//                   <div
-//                     style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-//                   >
+//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
 //                     {stats.total}
 //                   </div>
 //                 </div>
@@ -724,9 +552,6 @@
 //               <div
 //                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
 //               >
-//                 <div style={{ width: 40, height: 40, flexShrink: 0 }}>
-//                   <Lottie animationData={pending} loop={true} />
-//                 </div>
 //                 <div style={{ flex: 1 }}>
 //                   <div
 //                     style={{
@@ -738,9 +563,7 @@
 //                   >
 //                     Pending
 //                   </div>
-//                   <div
-//                     style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-//                   >
+//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
 //                     {stats.pending}
 //                   </div>
 //                 </div>
@@ -760,9 +583,6 @@
 //               <div
 //                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
 //               >
-//                 <div style={{ width: 40, height: 40, flexShrink: 0 }}>
-//                   <Lottie animationData={completed} loop={true} />
-//                 </div>
 //                 <div style={{ flex: 1 }}>
 //                   <div
 //                     style={{
@@ -774,9 +594,7 @@
 //                   >
 //                     Completed
 //                   </div>
-//                   <div
-//                     style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-//                   >
+//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
 //                     {stats.completed}
 //                   </div>
 //                 </div>
@@ -786,7 +604,15 @@
 //         </Row>
 
 //         {/* Filters */}
-//         <div className="filter-section" style={{ marginBottom: 24 }}>
+//         <div
+//           className="filter-section"
+//           style={{
+//             marginBottom: 24,
+//             background: "#fff",
+//             padding: 24,
+//             borderRadius: 16,
+//           }}
+//         >
 //           <Space size="middle" wrap style={{ width: "100%" }}>
 //             <Input
 //               placeholder="Search requirements..."
@@ -841,7 +667,6 @@
 
 //         {/* Table */}
 //         <Card
-//           variant={false}
 //           style={{
 //             borderRadius: 16,
 //             overflow: "hidden",
@@ -859,8 +684,7 @@
 //               showTotal: (total) => `Total ${total} requirements`,
 //               showSizeChanger: true,
 //             }}
-//             scroll={{ x: 1800 }}
-//             variant
+//             scroll={{ x: 1600 }}
 //             size="middle"
 //             rowClassName={rowClassName}
 //           />
@@ -870,7 +694,7 @@
 //   );
 // };
 
-// export default AllRequirementsTable;
+// export default RequirementTableApprover;
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -879,7 +703,6 @@ import {
   Table,
   Input,
   Button,
-  Select,
   Space,
   message,
   Card,
@@ -894,23 +717,22 @@ import {
   CheckOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
 import { API_BASE_URL } from "../../../config";
 
-const { Option } = Select;
 const { Panel } = Collapse;
 
-const AllRequirementsTable = () => {
+const RequirementTableApprover = () => {
   const user = useSelector((state) => state.user.value);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState("");
-    const [selectedDate, setSelectedDate] = useState(dayjs());
-  const [selectedDept, setSelectedDept] = useState(null);
+  const [search, setSearch] = useState("");
+  const [selectedDate, setSelectedDate] = useState(dayjs());
+
+  // Editable row IDs and values for planned_amount and amount_paid
   const [editRowId, setEditRowId] = useState(null);
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
@@ -922,8 +744,8 @@ const AllRequirementsTable = () => {
   // Calculate statistics
   const stats = {
     total: requirements.length,
-    pending: requirements.filter((r) => r.owner_check === "PENDING").length,
-    completed: requirements.filter((r) => r.owner_check === "APPROVED").length,
+    pending: requirements.filter((r) => r.status === "PENDING").length,
+    completed: requirements.filter((r) => r.status === "COMPLETED").length,
   };
 
   const fetchRequirementsData = async (searchQuery = "", date = null) => {
@@ -968,112 +790,81 @@ const AllRequirementsTable = () => {
     return [...list].sort((a, b) => {
       const statusOrder = {
         PENDING: 0,
-        APPROVED: 1,
+        COMPLETED: 1,
         REJECTED: 1,
       };
-      const statusA = statusOrder[a.owner_check] !== undefined ? statusOrder[a.owner_check] : 0;
-      const statusB = statusOrder[b.owner_check] !== undefined ? statusOrder[b.owner_check] : 0;
+      const statusA = statusOrder[a.status] ?? 0;
+      const statusB = statusOrder[b.status] ?? 0;
       return statusA - statusB;
     });
   };
 
-  const handleSearch = (e) => setSearch(e.target.value);
-  const handleSearchSubmit = () =>
-    fetchRequirementsData({
-      search,
-      department: selectedDept,
-    });
-  const handleDeptChange = (value) => setSelectedDept(value);
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
 
-  const handlePlannedAmountSave = async (row) => {
-    if (editPlannedAmount == null || isNaN(editPlannedAmount)) {
-      message.error("Please enter a valid number for planned amount");
+  // Start editing planned_amount and amount_paid for a row
+  const handleEditClick = (row) => {
+    setEditRowId(row.id);
+    setEditPlannedAmount(row.planned_amount ?? "");
+    setEditAmountPaid(row.amount_paid ?? "");
+  };
+  const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
+  const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
+
+  // Save the editable fields: planned_amount and amount_paid
+  const handleSaveClick = async (row) => {
+    const planned = Number(editPlannedAmount);
+    const paid = Number(editAmountPaid);
+    if (isNaN(planned) || planned < 0) {
+      message.error("Please enter a valid planned amount");
       return;
     }
+    if (isNaN(paid) || paid < 0) {
+      message.error("Please enter a valid amount paid");
+      return;
+    }
+
     try {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
-        { planned_amount: Number(editPlannedAmount) },
+        { planned_amount: planned, amount_paid: paid },
         config
       );
-      message.success("Planned amount updated");
+      message.success("Updated successfully");
       setEditRowId(null);
-      fetchRequirementsData({
-        search,
-        department: selectedDept,
-      });
+      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
     } catch (err) {
-      message.error("Failed to update planned amount");
+      message.error("Failed to update amounts");
     }
   };
 
-  const handleAmountPaidSave = async (row) => {
-    if (editAmountPaid == null || isNaN(editAmountPaid)) {
-      message.error("Please enter a valid number for amount paid");
-      return;
-    }
-    try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
-        { amount_paid: Number(editAmountPaid) },
-        config
-      );
-      message.success("Amount paid updated");
-      setEditRowId(null);
-      fetchRequirementsData({
-        search,
-        department: selectedDept,
-      });
-    } catch (err) {
-      message.error("Failed to update amount paid");
-    }
-  };
-
-  const handleOwnerApprove = async (row) => {
+  const handleComplete = async (row) => {
     try {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "COMPLETED" },
         config
       );
-      message.success("Request approved");
-      fetchRequirementsData({
-        search,
-        department: selectedDept,
-      });
+      message.success("Request marked as completed");
+      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
     } catch (err) {
-      message.error("Failed to approve request");
+      message.error("Failed to mark as completed");
     }
   };
 
-  const handleOwnerReject = async (row) => {
+  const handleReject = async (row) => {
     try {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "REJECTED" },
         config
       );
-      message.success("Request rejected");
-      fetchRequirementsData({
-        search,
-        department: selectedDept,
-      });
+      message.success("Request marked as rejected");
+      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
     } catch (err) {
       message.error("Failed to reject request");
     }
-  };
-
-  const handlePlannedAmountEdit = (row) => {
-    setEditRowId(row.id);
-    setEditPlannedAmount(row.planned_amount);
-    setEditAmountPaid(row.amount_paid);
-  };
-
-  const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
-  const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
-
-    const handleDateChange = (date) => {
-    setSelectedDate(date);
   };
 
   const columns = [
@@ -1118,7 +909,7 @@ const AllRequirementsTable = () => {
       render: (_, record) => (
         <Tag
           color="blue"
-          style={{ borderRadius: 6, fontWeight: 700, fontSize: 14 }}
+          style={{ borderRadius: 6, fontWeight: 700, fontSize: 12 }}
         >
           {record.department?.name || "-"}
         </Tag>
@@ -1191,158 +982,6 @@ const AllRequirementsTable = () => {
       ),
     },
     {
-      title: "Planned Amount",
-      dataIndex: "planned_amount",
-      key: "planned_amount",
-      width: 180,
-      render: (planned_amount, row) =>
-        row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
-          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-            {planned_amount?.toLocaleString("en-IN", {
-              style: "currency",
-              currency: "INR",
-            }) || "₹0"}
-          </span>
-        ) : row.id === editRowId ? (
-          <Space>
-            <Input
-              style={{ width: 100, fontWeight: 600, fontSize: 18 }}
-              value={editPlannedAmount}
-              onChange={handlePlannedAmountChange}
-              size="small"
-            />
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              size="small"
-              onClick={() => handlePlannedAmountSave(row)}
-              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
-            />
-          </Space>
-        ) : (
-          <Space>
-            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-              {planned_amount?.toLocaleString("en-IN", {
-                style: "currency",
-                currency: "INR",
-              }) || "₹0"}
-            </span>
-            <Button
-              icon={<EditOutlined />}
-              size="small"
-              onClick={() => handlePlannedAmountEdit(row)}
-            />
-          </Space>
-        ),
-    },
-    {
-      title: "Amount Paid",
-      dataIndex: "amount_paid",
-      key: "amount_paid",
-      width: 180,
-      render: (amount_paid, row) =>
-        row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
-          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-            {amount_paid?.toLocaleString("en-IN", {
-              style: "currency",
-              currency: "INR",
-            }) || "₹0"}
-          </span>
-        ) : row.id === editRowId ? (
-          <Space>
-            <Input
-              style={{ width: 100, fontWeight: 600, fontSize: 18 }}
-              value={editAmountPaid}
-              onChange={handleAmountPaidChange}
-              size="small"
-            />
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              size="small"
-              onClick={() => handleAmountPaidSave(row)}
-              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
-            />
-          </Space>
-        ) : (
-          <Space>
-            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-              {amount_paid?.toLocaleString("en-IN", {
-                style: "currency",
-                currency: "INR",
-              }) || "₹0"}
-            </span>
-            <Button
-              icon={<EditOutlined />}
-              size="small"
-              onClick={() => handlePlannedAmountEdit(row)}
-            />
-          </Space>
-        ),
-    },
-    {
-      title: "Accounts Check",
-      dataIndex: "accounts_check",
-      key: "accounts_check",
-      width: 140,
-      render: (status) => (
-        <Tag
-          color={
-            status === "APPROVED"
-              ? "#d1fae5"
-              : status === "REJECTED"
-              ? "#fee2e2"
-              : "#fef3c7"
-          }
-          style={{
-            color:
-              status === "APPROVED"
-                ? "#065f46"
-                : status === "REJECTED"
-                ? "#991b1b"
-                : "#92400e",
-            borderRadius: 6,
-            border: "none",
-            fontWeight: 700,
-            fontSize: 14,
-          }}
-        >
-          {status || "PENDING"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Approver Check",
-      dataIndex: "approver_check",
-      key: "approver_check",
-      width: 140,
-      render: (status) => (
-        <Tag
-          color={
-            status === "APPROVED"
-              ? "#d1fae5"
-              : status === "REJECTED"
-              ? "#fee2e2"
-              : "#fef3c7"
-          }
-          style={{
-            color:
-              status === "APPROVED"
-                ? "#065f46"
-                : status === "REJECTED"
-                ? "#991b1b"
-                : "#92400e",
-            borderRadius: 6,
-            border: "none",
-            fontWeight: 700,
-            fontSize: 14,
-          }}
-        >
-          {status || "PENDING"}
-        </Tag>
-      ),
-    },
-    {
       title: "Updated At",
       dataIndex: "updatedAt",
       key: "updatedAt",
@@ -1354,88 +993,168 @@ const AllRequirementsTable = () => {
       ),
     },
     {
-      title: "Actions",
-      key: "actions",
-      width: 250,
-      fixed: "right",
+      title: "Planned Amount",
+      dataIndex: "planned_amount",
+      key: "planned_amount",
+      width: 180,
+      render: (planned_amount, row) =>
+        row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+              value={editPlannedAmount}
+              onChange={handlePlannedAmountChange}
+              size="small"
+            />
+          </Space>
+        ) : (
+          <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+            {planned_amount?.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            }) || "₹0"}
+          </span>
+        ),
+    },
+    {
+      title: "Amount Paid",
+      dataIndex: "amount_paid",
+      key: "amount_paid",
+      width: 180,
+      render: (amount_paid, row) =>
+        row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+              value={editAmountPaid}
+              onChange={handleAmountPaidChange}
+              size="small"
+            />
+          </Space>
+        ) : (
+          <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+            {amount_paid?.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            }) || "₹0"}
+          </span>
+        ),
+    },
+    {
+      title: "Accounts Check",
+      dataIndex: "accounts_check",
+      key: "accounts_check",
+      width: 140,
+      render: (val) => (
+        <Tag
+          color={
+            val === "APPROVED"
+              ? "#34d399"
+              : val === "PENDING"
+              ? "#fbbf24"
+              : "#f87171"
+          }
+          style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+        >
+          {val || "-"}
+        </Tag>
+      ),
+    },
+    {
+      title: "Approver Check",
+      dataIndex: "approver_check",
+      key: "approver_check",
+      width: 200,
       render: (_, row) => {
-        if (row.owner_check === "APPROVED") {
+        if (row.approver_check === "PENDING") {
+          return (
+            <Space>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => handleComplete(row)}
+                icon={<CheckCircleOutlined />}
+                style={{ background: "#10b981", borderColor: "#10b981" }}
+              >
+                Complete
+              </Button>
+              <Button
+                danger
+                size="small"
+                onClick={() => handleReject(row)}
+                icon={<CloseCircleOutlined />}
+              >
+                Reject
+              </Button>
+            </Space>
+          );
+        } else if (row.approver_check === "APPROVED") {
           return (
             <Tag
-              color="#d1fae5"
-              style={{
-                color: "#065f46",
-                borderRadius: 6,
-                border: "none",
-                fontWeight: 700,
-                fontSize: 16,
-                padding: "4px 12px",
-              }}
+              color="#34d399"
+              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
             >
               Completed
             </Tag>
           );
-        }
-        if (row.owner_check === "REJECTED") {
+        } else if (row.approver_check === "REJECTED") {
           return (
             <Tag
-              color="#fee2e2"
-              style={{
-                color: "#991b1b",
-                borderRadius: 6,
-                border: "none",
-                fontWeight: 700,
-                fontSize: 16,
-                padding: "4px 12px",
-              }}
+              color="#f87171"
+              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
             >
               Rejected
             </Tag>
           );
         }
-        return (
-          <Space>
+        return "-";
+      },
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      width: 150,
+      fixed: "right",
+      render: (_, row) => {
+        if (row.id === editRowId) {
+          return (
+            <Space>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => handleSaveClick(row)}
+                icon={<CheckOutlined />}
+              >
+                Save
+              </Button>
+            </Space>
+          );
+        } else {
+          return (
             <Button
-              type="primary"
+              icon={<EditOutlined />}
               size="small"
-              onClick={() => handleOwnerApprove(row)}
-              icon={<CheckCircleOutlined />}
-              style={{
-                background: "#10b981",
-                borderColor: "#10b981",
-                fontWeight: 600,
-                fontSize: 16,
-              }}
-            >
-              Complete
-            </Button>
-            <Button
-              danger
-              size="small"
-              onClick={() => handleOwnerReject(row)}
-              icon={<CloseCircleOutlined />}
-              style={{ fontWeight: 700, fontSize: 18 }}
-            >
-              Reject
-            </Button>
-          </Space>
-        );
+              onClick={() => handleEditClick(row)}
+            />
+          );
+        }
       },
     },
   ];
 
   const rowClassName = (record) => {
-    if (record.owner_check === "APPROVED") return "completed-row";
-    if (record.owner_check === "REJECTED") return "rejected-row";
+    if (record.status === "COMPLETED") return "completed-row";
+    if (record.status === "REJECTED") return "rejected-row";
     return "";
   };
 
-  // Accordion header with department name + counts of APPROVED, PENDING, REJECTED
+  // Header for each accordion panel with counts
   const getPanelHeader = (deptObj) => {
     const items = deptObj.items;
-    const approvedCount = items.filter((r) => r.owner_check === "APPROVED").length;
-    const pendingCount = items.filter((r) => r.owner_check === "PENDING").length;
-    const rejectedCount = items.filter((r) => r.owner_check === "REJECTED").length;
+    const approvedCount = items.filter((r) => r.approver_check === "APPROVED")
+      .length;
+    const pendingCount = items.filter((r) => r.approver_check === "PENDING").length;
+    const rejectedCount = items.filter((r) => r.approver_check === "REJECTED").length;
 
     return (
       <div
@@ -1507,14 +1226,6 @@ const AllRequirementsTable = () => {
         }
         .ant-collapse-arrow svg {
           fill: white;
-        }
-        .filter-section {
-          background: #fff;
-          border-radius: 16px;
-          padding: 24px;
-          border: 1px solid #e5e7eb;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-          margin-bottom: 24px;
         }
       `}</style>
 
@@ -1640,8 +1351,8 @@ const AllRequirementsTable = () => {
           </Col>
         </Row>
 
-        {/* Filters */}
-       <div
+        {/* Search and Date Filter */}
+        <div
           className="filter-section"
           style={{
             marginBottom: 24,
@@ -1686,7 +1397,7 @@ const AllRequirementsTable = () => {
                 columns={columns}
                 dataSource={sortedRequirements(deptObj.items)}
                 pagination={false} // No pagination as requested
-                scroll={{ x: 1800 }}
+                scroll={{ x: 1600 }}
                 size="middle"
                 rowClassName={rowClassName}
               />
@@ -1698,4 +1409,4 @@ const AllRequirementsTable = () => {
   );
 };
 
-export default AllRequirementsTable;
+export default RequirementTableApprover;
