@@ -160,7 +160,7 @@ const ViewUsers = () => {
             type="primary"
             size="small"
             style={{ marginRight: 8 }}
-            onClick={() => handleEdit(record.id)}
+            onClick={() => handleEdit(record._id)}
           >
             Edit
           </Button>
