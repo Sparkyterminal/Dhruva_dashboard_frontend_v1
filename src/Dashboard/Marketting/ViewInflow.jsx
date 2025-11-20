@@ -1,169 +1,51 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { message, Table, Button, Card, Typography, Space, Row, Col, Tag, Tooltip } from "antd";
-import { ArrowLeftOutlined, PlusOutlined, EditOutlined, CalendarOutlined, EnvironmentOutlined, DollarOutlined, ClockCircleOutlined } from "@ant-design/icons";
-import { motion } from "framer-motion";
+import { 
+  message, 
+  Table, 
+  Button, 
+  Card, 
+  Typography, 
+  Space, 
+  Row, 
+  Col, 
+  Tag, 
+  Modal,
+  Descriptions,
+  Divider,
+  Badge
+} from "antd";
+import { 
+  ArrowLeftOutlined, 
+  PlusOutlined, 
+  EditOutlined, 
+  EyeOutlined,
+  CalendarOutlined, 
+  EnvironmentOutlined, 
+  DollarOutlined,
+  UserOutlined,
+  PhoneOutlined,
+  HeartOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined
+} from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 
 const { Title, Text } = Typography;
 
-// Custom styles with cormoreg font and enhanced glassmorphism
-const customStyles = `
-  .glass-card {
-    background: rgba(255, 255, 255, 0.85);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-  }
-
-  .glass-summary-card {
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 1.2rem;
-    box-shadow: 0 4px 24px 0 rgba(31, 38, 135, 0.12);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.45);
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    overflow: hidden;
-    position: relative;
-  }
-
-  .glass-summary-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #4f46e5, #7c3aed, #ec4899);
-    opacity: 0;
-    transition: opacity 0.4s ease;
-  }
-
-  .glass-summary-card:hover::before {
-    opacity: 1;
-  }
-
-  .glass-summary-card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 12px 40px 0 rgba(79, 70, 229, 0.25);
-  }
-
-  .advance-card {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
-    border-radius: 0.75rem;
-    padding: 12px 16px;
-    border: 1px solid rgba(99, 102, 241, 0.2);
-    transition: all 0.3s ease;
-  }
-
-  .advance-card:hover {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.12));
-    border-color: rgba(99, 102, 241, 0.4);
-    transform: translateX(4px);
-  }
-
-  .ant-table-thead > tr > th {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(124, 58, 237, 0.12)) !important;
-    font-weight: 700 !important;
-    color: #4f46e5 !important;
-    border-bottom: 2px solid #6366f1 !important;
-    font-size: 15px !important;
-    font-family: 'cormoreg', serif !important;
-  }
-
-  .ant-table-tbody > tr {
-    transition: all 0.25s ease;
-    font-family: 'cormoreg', serif !important;
-  }
-
-  .ant-table-tbody > tr:hover {
-    background: rgba(99, 102, 241, 0.06) !important;
-    transform: scale(1.005);
-    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1);
-  }
-
-  .table-row-light {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-
-  .table-row-dark {
-    background-color: rgba(239, 246, 255, 0.7);
-  }
-
-  .ant-table-tbody > tr > td {
-    color: #1e293b;
-    font-weight: 500;
-    font-family: 'cormoreg', serif !important;
-  }
-
-  .ant-table-wrapper {
-    border-radius: 1rem;
-    overflow: hidden;
-  }
-
-  .ant-table {
-    background: transparent;
-  }
-
-  .ant-pagination-item-active {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-    border-color: #4f46e5 !important;
-  }
-
-  .ant-pagination-item-active a {
-    color: white !important;
-  }
-
-  .ant-pagination-item:hover {
-    border-color: #7c3aed;
-  }
-
-  .ant-pagination-item:hover a {
-    color: #7c3aed;
-  }
-
-  .gradient-text {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed, #ec4899);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: 'cormoreg', serif !important;
-  }
-
-  .icon-wrapper {
-    font-size: 56px;
-    margin-bottom: 12px;
-    filter: drop-shadow(0 4px 8px rgba(79, 70, 229, 0.2));
-  }
-
-  .stat-number {
-    font-family: 'cormoreg', serif !important;
-    font-size: 42px;
-    font-weight: 700;
-    line-height: 1.2;
-  }
-
-  * {
-    font-family: 'cormoreg', serif !important;
-  }
-`;
 
 const ViewInflow = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
-
-  // Fetch bookings data with pagination
   const fetchRequirementsData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
@@ -192,7 +74,7 @@ const ViewInflow = () => {
     fetchRequirementsData(paginationConfig.current, paginationConfig.pageSize);
   };
 
-  // Format date in "DD MMM YYYY" format
+
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -203,335 +85,452 @@ const ViewInflow = () => {
     });
   };
 
-  // Format amounts with rupee symbol and thousands separator
   const formatAmount = (amount) => {
-    if (!amount) return "₹0";
+    if (!amount && amount !== 0) return "₹0";
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
-  // Calculate total expected advances
-  const calculateTotalExpected = (advances) => {
-    if (!advances || advances.length === 0) return 0;
-    return advances.reduce((sum, adv) => sum + (adv.expectedAmount || 0), 0);
+  const showEventDetailsModal = (record) => {
+    setSelectedEvent(record);
+    setModalVisible(true);
   };
 
-  // Define table columns
   const columns = [
     {
-      title: "Client Details",
-      key: "clientDetails",
-      width: 220,
-      render: (_, record) => (
-        <Space direction="vertical" size={4}>
-          <Text strong style={{ fontSize: 18, color: "#1e293b" }}>
-            {record.clientName}
-          </Text>
-          <Text style={{ fontSize: 18, color: "#64748b" }}>
-            {record.brideName} & {record.groomName}
-          </Text>
-        </Space>
-      ),
-    },
-    {
-      title: "Event Date",
-      dataIndex: "eventDate",
-      key: "eventDate",
-      width: 140,
-      sorter: (a, b) => new Date(a.eventDate) - new Date(b.eventDate),
-      render: (date) => (
-        <Tag
-          icon={<CalendarOutlined />}
-          color="blue"
-          style={{ fontSize: 15, padding: "4px 12px", fontWeight: 600 }}
-        >
-          {formatDate(date)}
+      title: "Event Name",
+      dataIndex: "eventName",
+      key: "eventName",
+      width: 160,
+      render: (text) => (
+        <Tag color="purple" className="text-sm font-semibold px-3 py-1">
+          {text}
         </Tag>
       ),
     },
     {
-      title: "Venue",
-      dataIndex: "venueLocation",
-      key: "venueLocation",
-      width: 180,
-      ellipsis: true,
-      render: (venue) => (
-        <Space>
-          <EnvironmentOutlined style={{ color: "#ec4899" }} />
-          <Text style={{ fontSize: 16 }}>{venue}</Text>
-        </Space>
-      ),
-    },
-    {
-      title: "Agreed Amount",
-      dataIndex: "agreedAmount",
-      key: "agreedAmount",
-      width: 150,
-      align: "right",
-      sorter: (a, b) => a.agreedAmount - b.agreedAmount,
-      render: (amount) => (
-        <Text strong style={{ fontSize: 15, color: "#059669" }}>
-          {formatAmount(amount)}
-        </Text>
-      ),
-    },
-    {
-      title: "Advance Schedule",
-      dataIndex: "advances",
-      key: "advances",
-      width: 400,
-      render: (advances) => {
-        if (!advances || advances.length === 0) return <Text type="secondary">No advances</Text>;
-        
-        const totalExpected = calculateTotalExpected(advances);
-        
-        return (
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            {advances.map((adv, index) => (
-              <div key={index} className="advance-card">
-                <Row gutter={12} align="middle">
-                  <Col span={14}>
-                    <Space direction="vertical" size={2}>
-                      <Text strong style={{ color: "#4f46e5", fontSize: 14 }}>
-                        Advance {adv.advanceNumber}
-                      </Text>
-                      <Space size={4}>
-                        <ClockCircleOutlined style={{ color: "#64748b", fontSize: 12 }} />
-                        <Text style={{ fontSize: 14, color: "#000", }}>
-                          {formatDate(adv.advanceDate)}
-                        </Text>
-                      </Space>
-                    </Space>
-                  </Col>
-                  <Col span={10} style={{ textAlign: 'right' }}>
-                    <Text strong style={{ color: "#059669", fontSize: 14 }}>
-                      {formatAmount(adv.expectedAmount)}
-                    </Text>
-                  </Col>
-                </Row>
-              </div>
-            ))}
-            <div style={{ 
-              marginTop: 4, 
-              paddingTop: 8, 
-              borderTop: '2px solid rgba(99, 102, 241, 0.2)',
-              textAlign: 'right'
-            }}>
-              <Text strong style={{ color: "#4f46e5", fontSize: 14 }}>
-                Total Expected: {formatAmount(totalExpected)}
+      title: "Client Details",
+      key: "clientDetails",
+      width: 200,
+      render: (_, record) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <UserOutlined className="text-blue-500" />
+            <Text strong className="text-base">{record.clientName}</Text>
+          </div>
+          {record.brideName && record.groomName && (
+            <div className="flex items-center gap-2">
+              <HeartOutlined className="text-pink-500" />
+              <Text className="text-sm text-gray-600">
+                {record.brideName} & {record.groomName}
               </Text>
             </div>
-          </Space>
-        );
-      },
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Contact",
+      key: "contact",
+      width: 140,
+      render: (_, record) => (
+        <div className="space-y-1">
+          <div className="flex items-center gap-1">
+            <PhoneOutlined className="text-green-500 text-xs" />
+            <Text className="text-sm">{record.contactNumber}</Text>
+          </div>
+          {record.altContactNumber && record.altContactNumber !== record.contactNumber && (
+            <div className="flex items-center gap-1">
+              <PhoneOutlined className="text-orange-500 text-xs" />
+              <Text className="text-sm text-gray-500">{record.altContactNumber}</Text>
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Event Types",
+      key: "eventTypes",
+      width: 100,
+      align: "center",
+      render: (_, record) => (
+        <Button
+          type="primary"
+          icon={<EyeOutlined />}
+          onClick={() => showEventDetailsModal(record)}
+          className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
+        >
+          View ({record.eventTypes?.length || 0})
+        </Button>
+      ),
     },
     {
       title: "Actions",
       key: "actions",
       fixed: "right",
-      width: 120,
+      width: 100,
+      align: "center",
       render: (_, record) => (
-        <Tooltip title="Edit booking details">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => navigate(`/user/editclient/${record._id}`)}
-            style={{
-              borderRadius: 10,
-              background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
-              border: "none",
-              fontWeight: 600,
-              boxShadow: "0 4px 12px rgba(79, 70, 229, 0.3)",
-              height: 40,
-            }}
-          >
-            Edit
-          </Button>
-        </Tooltip>
+        <Button
+          type="default"
+          icon={<EditOutlined />}
+          onClick={() => navigate(`/user/editclient/${record._id}`)}
+          className="border-blue-400 text-blue-600 hover:bg-blue-50"
+        >
+          Edit
+        </Button>
       ),
     },
   ];
 
-  // Summary calculations
-  const totalBookings = pagination.total || bookings.length;
-  const totalAdvances = bookings.reduce((acc, curr) => acc + (curr.advances?.length || 0), 0);
-  const totalRevenue = bookings.reduce((acc, curr) => acc + (curr.agreedAmount || 0), 0);
+  // Calculate statistics
+  const totalBookings = bookings.length;
+  const totalRevenue = bookings.reduce((acc, curr) => {
+    return acc + (curr.eventTypes?.reduce((sum, et) => sum + (et.agreedAmount || 0), 0) || 0);
+  }, 0);
+  const totalEventTypes = bookings.reduce((acc, curr) => acc + (curr.eventTypes?.length || 0), 0);
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #eff6ff 0%, #e0e7ff 30%, #ede9fe 60%, #fce7f3 100%)",
-        padding: "28px",
-        position: "relative",
-      }}
-    >
-      <style>{customStyles}</style>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-10">
+        {/* Header */}
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl">
+          <Row justify="space-between" align="middle" gutter={[16, 16]}>
+            <Col xs={24} sm={8}>
+              <Button
+                icon={<ArrowLeftOutlined />}
+                onClick={() => navigate("/user")}
+                size="large"
+                className="border-gray-300 hover:border-blue-500 hover:text-blue-500"
+              >
+                Back Home
+              </Button>
+            </Col>
 
-      {/* Animated Background Orbs */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          opacity: 0.5,
-          backgroundImage:
-            `radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),` +
-            `radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 45%),` +
-            `radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),` +
-            `radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.12) 0%, transparent 40%)`,
-        }}
-      />
+            <Col xs={24} sm={8} className="text-center">
+              <Title level={2} className="!mb-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                📋 Bookings Dashboard
+              </Title>
+            </Col>
 
-      <div style={{ position: "relative", zIndex: 10, maxWidth: "1600px", margin: "0 auto" }}>
-        <motion.div
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        >
-          {/* Header Card */}
-          <div className="glass-card" style={{ padding: "32px 40px", marginBottom: "32px" }}>
-            <Row justify="space-between" align="middle" gutter={[16, 16]}>
-              <Col xs={24} sm={8} md={6}>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    icon={<ArrowLeftOutlined />}
-                    onClick={() => navigate("/user")}
-                    size="large"
-                    style={{
-                      borderRadius: 12,
-                      background: "linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.1))",
-                      border: "1px solid rgba(79, 70, 229, 0.3)",
-                      color: "#4f46e5",
-                      fontWeight: 600,
-                      height: 50,
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      paddingLeft: 20,
-                      paddingRight: 20,
-                    }}
-                  >
-                    Back Home
-                  </Button>
-                </motion.div>
-              </Col>
+            <Col xs={24} sm={8} className="text-right">
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                size="large"
+                onClick={() => navigate("/user/addclient")}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 border-none shadow-lg hover:shadow-xl"
+              >
+                New Booking
+              </Button>
+            </Col>
+          </Row>
+        </Card>
 
-              <Col xs={24} sm={8} md={12} style={{ textAlign: "center" }}>
-                <Title
-                  level={1}
-                  className="gradient-text"
-                  style={{
-                    margin: 0,
-                    fontSize: "clamp(28px, 4vw, 44px)",
-                    fontWeight: 700,
-                    letterSpacing: "-0.5px",
-                  }}
-                >
-                  💍 Client Bookings Dashboard
-                </Title>
-              </Col>
+        {/* Statistics Cards */}
+        <Row gutter={[24, 24]} className="mt-4" align="middle">
+          <Col xs={24} sm={8}>
+            <Card
+              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all"
+              style={{ padding: 24, minHeight: 140, background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', color: 'white' }}
+            >
+              <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ fontSize: 36 }}>📊</div>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Total Bookings</Text>
+                <Title level={2} style={{ color: 'white', margin: 0 }}>{totalBookings}</Title>
+              </div>
+            </Card>
+          </Col>
 
-              <Col xs={24} sm={8} md={6} style={{ textAlign: "right" }}>
-                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                  <Button
-                    type="primary"
-                    icon={<PlusOutlined />}
-                    size="large"
-                    onClick={() => navigate("/user/addclient")}
-                    style={{
-                      borderRadius: 12,
-                      background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                      border: "none",
-                      fontWeight: 600,
-                      height: 50,
-                      boxShadow: "0 6px 20px rgba(79, 70, 229, 0.35)",
-                      paddingLeft: 24,
-                      paddingRight: 24,
-                    }}
-                  >
-                    New Booking
-                  </Button>
-                </motion.div>
-              </Col>
-            </Row>
-          </div>
+          <Col xs={24} sm={8}>
+            <Card
+              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all"
+              style={{ padding: 24, minHeight: 140, background: 'linear-gradient(135deg,#7c3aed,#a78bfa)', color: 'white' }}
+            >
+              <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ fontSize: 36 }}>💰</div>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Total Revenue</Text>
+                <Title level={2} style={{ color: 'white', margin: 0 }}>{formatAmount(totalRevenue)}</Title>
+              </div>
+            </Card>
+          </Col>
 
-          {/* Summary Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-          >
-            <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-              <Col xs={24} sm={8}>
-                <div className="glass-summary-card" style={{ padding: "32px 24px", textAlign: "center" }}>
-                  <div className="icon-wrapper">📊</div>
-                  <Title level={4} style={{ margin: "8px 0 12px", color: "#64748b", fontSize: 16 }}>
-                    Total Bookings
-                  </Title>
-                  <Text className="gradient-text stat-number">
-                    {totalBookings}
-                  </Text>
-                </div>
-              </Col>
+          <Col xs={24} sm={8}>
+            <Card
+              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all"
+              style={{ padding: 24, minHeight: 140, background: 'linear-gradient(135deg,#fb7185,#fb923c)', color: 'white' }}
+            >
+              <div className="text-center" style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ fontSize: 36 }}>🎉</div>
+                <Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 13 }}>Total Events</Text>
+                <Title level={2} style={{ color: 'white', margin: 0 }}>{totalEventTypes}</Title>
+              </div>
+            </Card>
+          </Col>
+        </Row>
 
-              <Col xs={24} sm={8}>
-                <div className="glass-summary-card" style={{ padding: "32px 24px", textAlign: "center" }}>
-                  <div className="icon-wrapper">💰</div>
-                  <Title level={4} style={{ margin: "8px 0 12px", color: "#64748b", fontSize: 16 }}>
-                    Total Revenue
-                  </Title>
-                  <Text className="gradient-text stat-number">
-                    {formatAmount(totalRevenue)}
-                  </Text>
-                </div>
-              </Col>
-
-              <Col xs={24} sm={8}>
-                <div className="glass-summary-card" style={{ padding: "32px 24px", textAlign: "center" }}>
-                  <div className="icon-wrapper">📝</div>
-                  <Title level={4} style={{ margin: "8px 0 12px", color: "#64748b", fontSize: 16 }}>
-                    Total Advances
-                  </Title>
-                  <Text className="gradient-text stat-number">
-                    {totalAdvances}
-                  </Text>
-                </div>
-              </Col>
-            </Row>
-          </motion.div>
-
-          {/* Table Card */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.6 }}
-          >
-            <div className="glass-card" style={{ padding: 28 }}>
-              <Table
-                columns={columns}
-                dataSource={bookings}
-                loading={loading}
-                rowKey="_id"
-                pagination={{
-                  ...pagination,
-                  showSizeChanger: true,
-                  showTotal: (total) => `Total ${total} bookings`,
-                  pageSizeOptions: ["10", "20", "50", "100"],
-                  style: { marginTop: 24 }
-                }}
-                onChange={handleTableChange}
-                scroll={{ x: 1400 }}
-                bordered
-                rowClassName={(record, index) =>
-                  index % 2 === 0 ? "table-row-light" : "table-row-dark"
-                }
-              />
-            </div>
-          </motion.div>
-        </motion.div>
+        {/* Table */}
+        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl overflow-hidden">
+          <Table
+            columns={columns}
+            dataSource={bookings}
+            loading={loading}
+            rowKey="_id"
+            pagination={{
+              ...pagination,
+              showSizeChanger: true,
+              showTotal: (total) => `Total ${total} bookings`,
+              pageSizeOptions: ["10", "20", "50"],
+            }}
+            onChange={handleTableChange}
+            scroll={{ x: 900 }}
+            className="custom-table"
+          />
+        </Card>
       </div>
+
+      {/* Event Details Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎯</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              Event Details - {selectedEvent?.eventName}
+            </span>
+          </div>
+        }
+        open={modalVisible}
+        onCancel={() => setModalVisible(false)}
+        footer={null}
+        width={900}
+        className="event-details-modal"
+        bodyStyle={{ padding: 24, maxHeight: '70vh', overflowY: 'auto' }}
+      >
+        {selectedEvent && (
+          <div className="space-y-6" style={{ paddingRight: 8 }}>
+            {/* Client Info */}
+            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200" style={{ padding: 18 }}>
+              <Descriptions column={2} size="small">
+                <Descriptions.Item label={<span className="font-semibold">Client Name</span>}>
+                  <Text strong>{selectedEvent.clientName}</Text>
+                </Descriptions.Item>
+                {selectedEvent.brideName && selectedEvent.groomName && (
+                  <>
+                    <Descriptions.Item label={<span className="font-semibold">Bride</span>}>
+                      {selectedEvent.brideName}
+                    </Descriptions.Item>
+                    <Descriptions.Item label={<span className="font-semibold">Groom</span>}>
+                      {selectedEvent.groomName}
+                    </Descriptions.Item>
+                  </>
+                )}
+                <Descriptions.Item label={<span className="font-semibold">Contact</span>}>
+                  {selectedEvent.contactNumber}
+                </Descriptions.Item>
+                {selectedEvent.altContactNumber && (
+                  <Descriptions.Item label={<span className="font-semibold">Alt Contact</span>}>
+                    {selectedEvent.altContactNumber}
+                  </Descriptions.Item>
+                )}
+              </Descriptions>
+            </Card>
+
+            {/* Event Types */}
+            {selectedEvent.eventTypes?.map((eventType, index) => (
+              <Card
+                key={index}
+                className="border-2 border-purple-200 hover:border-purple-400 transition-all"
+                title={
+                  <div className="flex items-center justify-between">
+                    <span className="text-lg font-bold text-purple-700">
+                      {eventType.eventType}
+                    </span>
+                    <Tag color="purple" className="text-sm">
+                      Event {index + 1}
+                    </Tag>
+                  </div>
+                }
+                style={{ marginBottom: 16, padding: 18 }}
+              >
+                <div className="space-y-4">
+                  {/* Event Basic Info */}
+                  <Row gutter={[16, 16]}>
+                    <Col span={12}>
+                      <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                        <CalendarOutlined className="text-blue-600 text-lg" />
+                        <div>
+                          <Text className="text-xs text-gray-500 block">Event Date</Text>
+                          <Text strong>{formatDate(eventType.eventDate)}</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={12}>
+                      <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
+                        <EnvironmentOutlined className="text-pink-600 text-lg" />
+                        <div>
+                          <Text className="text-xs text-gray-500 block">Venue</Text>
+                          <Text strong>{eventType.venueLocation}</Text>
+                        </div>
+                      </div>
+                    </Col>
+                    <Col span={24}>
+                      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                        <DollarOutlined className="text-green-600 text-lg" />
+                        <div>
+                          <Text className="text-xs text-gray-500 block">Agreed Amount</Text>
+                          <Text strong className="text-lg text-green-700">
+                            {formatAmount(eventType.agreedAmount)}
+                          </Text>
+                        </div>
+                      </div>
+                    </Col>
+                  </Row>
+
+                  <Divider className="my-4">Advance Payments</Divider>
+
+                  {/* Advances */}
+                  {eventType.advances?.map((advance, advIndex) => (
+                    <Card
+                      key={advIndex}
+                      size="small"
+                      className="bg-gray-50 border border-gray-200"
+                      title={
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold">Advance #{advance.advanceNumber}</span>
+                          {advance.receivedAmount > 0 ? (
+                            <Badge 
+                              status="success" 
+                              text={<span className="font-semibold text-green-600">Received</span>} 
+                            />
+                          ) : (
+                            <Badge 
+                              status="warning" 
+                              text={<span className="font-semibold text-orange-600">Pending</span>} 
+                            />
+                          )}
+                        </div>
+                      }
+                      style={{ marginBottom: 12, padding: 12 }}
+                    >
+                      <Row gutter={[8, 8]}>
+                        <Col span={12}>
+                          <Text className="text-xs text-gray-500">Expected Amount</Text>
+                          <div className="font-semibold text-blue-600">
+                            {formatAmount(advance.expectedAmount)}
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <Text className="text-xs text-gray-500">Received Amount</Text>
+                          <div className="font-semibold text-green-600">
+                            {formatAmount(advance.receivedAmount)}
+                          </div>
+                        </Col>
+                        <Col span={12}>
+                          <Text className="text-xs text-gray-500">Expected Date</Text>
+                          <div className="font-medium">{formatDate(advance.advanceDate)}</div>
+                        </Col>
+                        <Col span={12}>
+                          <Text className="text-xs text-gray-500">Received Date</Text>
+                          <div className="font-medium">
+                            {advance.receivedDate ? formatDate(advance.receivedDate) : "-"}
+                          </div>
+                        </Col>
+                      </Row>
+
+                      {/* Remarks */}
+                      {(advance.remarks?.accounts || advance.remarks?.owner || advance.remarks?.approver) && (
+                        <div className="mt-3 pt-3 border-t border-gray-200">
+                          <Text className="text-xs text-gray-500 block mb-2">Remarks:</Text>
+                          <div className="space-y-1">
+                            {advance.remarks.accounts && (
+                              <div className="text-sm">
+                                <Text type="secondary">Accounts:</Text> {advance.remarks.accounts}
+                              </div>
+                            )}
+                            {advance.remarks.owner && (
+                              <div className="text-sm">
+                                <Text type="secondary">Owner:</Text> {advance.remarks.owner}
+                              </div>
+                            )}
+                            {advance.remarks.approver && (
+                              <div className="text-sm">
+                                <Text type="secondary">Approver:</Text> {advance.remarks.approver}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      <style>{`
+        .custom-table .ant-table-thead > tr > th {
+          background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+          font-weight: 600;
+          color: #6366f1;
+          border-bottom: 2px solid #a5b4fc;
+        }
+
+        .custom-table .ant-table-tbody > tr:hover > td {
+          background: #f0f4ff !important;
+        }
+
+        .custom-table .ant-pagination-item-active {
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          border-color: #6366f1;
+        }
+
+        .custom-table .ant-pagination-item-active a {
+          color: white;
+        }
+
+        .event-details-modal .ant-modal-header {
+          background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+          border-bottom: 2px solid #c7d2fe;
+        }
+
+        .event-details-modal .ant-modal-body {
+          padding: 24px !important;
+          max-height: 70vh;
+          overflow-y: auto;
+        }
+
+        .event-details-modal .ant-modal-content {
+          border-radius: 12px;
+        }
+
+        .event-details-modal .ant-modal-footer {
+          padding: 16px 24px;
+        }
+
+        .event-details-modal .ant-descriptions-item-label {
+          font-weight: 600;
+          color: #6366f1;
+        }
+
+        ::-webkit-scrollbar {
+          width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+        }
+      `}</style>
     </div>
   );
 };

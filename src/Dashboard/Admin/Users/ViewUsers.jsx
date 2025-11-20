@@ -29,26 +29,6 @@ const ViewUsers = () => {
   });
   const navigate = useNavigate();
 
-  // const fetchUserData = async (page = 1, pageSize = 10) => {
-  //   setLoading(true);
-  //   try {
-  //     const res = await axios.get(
-  //       `${API_BASE_URL}user?page=${page}&limit=${pageSize}`,
-  //       config
-  //     );
-  //     setUsers(res.data.items || []);
-  //     setPagination({
-  //       current: page,
-  //       pageSize: pageSize,
-  //       total: res.data.totalItems || 0,
-  //     });
-  //   } catch (err) {
-  //     message.error("Failed to fetch user details.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const fetchUserData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
