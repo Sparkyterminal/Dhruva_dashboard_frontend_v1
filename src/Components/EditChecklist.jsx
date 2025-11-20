@@ -48,7 +48,18 @@ const EditChecklist = () => {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [heading, setHeading] = useState('');
-  const [points, setPoints] = useState(['']);
+  const [eventReference, setEventReference] = useState('');
+  const emptyChecklistPoint = {
+    checklistPoint: '',
+    units: '',
+    length: '',
+    breadth: '',
+    depth: '',
+    quantity: '',
+    numbers: '',
+    rate: '',
+  };
+  const [points, setPoints] = useState([ { ...emptyChecklistPoint } ]);
   const [departmentId, setDepartmentId] = useState('');
 
   const config = {
@@ -64,9 +75,23 @@ const EditChecklist = () => {
         config
       );
       const { data } = res.data;
-      setHeading(data.heading);
-      setPoints(data.points);
-      setDepartmentId(data.department.id);
+      setHeading(data.heading || '');
+      setEventReference(data.eventReference || '');
+      // Ensure points are objects with expected keys
+      const fetchedPoints = Array.isArray(data.points) && data.points.length > 0
+        ? data.points.map(p => ({
+            checklistPoint: p.checklistPoint ?? '',
+            units: p.units ?? '',
+            length: p.length ?? '',
+            breadth: p.breadth ?? '',
+            depth: p.depth ?? '',
+            quantity: p.quantity ?? '',
+            numbers: p.numbers ?? '',
+            rate: p.rate ?? '',
+          }))
+        : [ { ...emptyChecklistPoint } ];
+      setPoints(fetchedPoints);
+      setDepartmentId(data.department?.id || '');
     } catch (err) {
       message.error("Failed to fetch checklist");
       navigate(-1);
@@ -80,17 +105,17 @@ const EditChecklist = () => {
   }, [id]);
 
   const addPoint = () => {
-    setPoints([...points, '']);
+    setPoints([...points, { ...emptyChecklistPoint }]);
   };
 
   const removePoint = (index) => {
     const newPoints = points.filter((_, i) => i !== index);
-    setPoints(newPoints.length === 0 ? [''] : newPoints);
+    setPoints(newPoints.length === 0 ? [ { ...emptyChecklistPoint } ] : newPoints);
   };
 
-  const updatePoint = (index, value) => {
+  const updatePoint = (index, field, value) => {
     const newPoints = [...points];
-    newPoints[index] = value;
+    newPoints[index] = { ...newPoints[index], [field]: value };
     setPoints(newPoints);
   };
 
@@ -101,7 +126,7 @@ const EditChecklist = () => {
       return;
     }
 
-    const validPoints = points.filter(p => p.trim() !== '');
+    const validPoints = points.filter(p => p.checklistPoint && p.checklistPoint.trim() !== '');
     if (validPoints.length === 0) {
       message.error('Please add at least one checklist point');
       return;
@@ -116,6 +141,7 @@ const EditChecklist = () => {
     
     const payload = {
       heading: heading.trim(),
+      eventReference: eventReference?.trim() || undefined,
       points: validPoints,
       department: departmentId
     };
@@ -148,7 +174,7 @@ const EditChecklist = () => {
   return (
     <div className="min-h-screen bg-linear-to-br from-indigo-50 via-white to-purple-50 p-6">
       <style>{customStyles}</style>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6 flex items-center gap-4 slide-in-top">
           <button
@@ -177,31 +203,163 @@ const EditChecklist = () => {
             />
           </div>
 
+          {/* Event Reference Field */}
+          <div className="mb-6">
+            <label className="block text-base font-semibold mb-2 text-indigo-700">
+              Event Reference (Optional)
+            </label>
+            <input
+              type="text"
+              placeholder="e.g., Event #1234, Project XYZ"
+              value={eventReference}
+              onChange={(e) => setEventReference(e.target.value)}
+              className="w-full px-4 py-3 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+            />
+          </div>
+
           {/* Checklist Points */}
           <div className="mb-6">
             <label className="block text-base font-semibold mb-3 text-indigo-700">
               Checklist Points <span className="text-pink-500">*</span>
             </label>
-            
+
             {points.map((point, index) => (
-              <div key={index} className="flex gap-3 mb-3 items-start slide-in-top" style={{ animationDelay: `${0.1 + index * 0.05}s` }}>
-                <span className="text-indigo-600 font-medium pt-3 min-w-6">
-                  {index + 1}.
-                </span>
-                <textarea
-                  placeholder="Enter checklist point"
-                  value={point}
-                  onChange={(e) => updatePoint(index, e.target.value)}
-                  rows={2}
-                  className="flex-1 px-4 py-3 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-all duration-300"
-                />
-                <button
-                  onClick={() => removePoint(index)}
-                  className="p-3 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-300"
-                  disabled={points.length === 1}
-                >
-                  <Trash2 size={18} />
-                </button>
+              <div
+                key={index}
+                className="mb-4 p-4 bg-white/70 border border-indigo-100 rounded-xl shadow-sm slide-in-top"
+                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <span className="text-indigo-600 font-medium text-lg">
+                    {index + 1}.
+                  </span>
+                  <button
+                    onClick={() => removePoint(index)}
+                    className="p-2 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-300"
+                    disabled={points.length === 1}
+                    title="Remove Point"
+                  >
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Checklist Point (required) */}
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Checklist Point <span className="text-pink-500">*</span>
+                    </label>
+                    <textarea
+                      placeholder="Enter checklist point"
+                      value={point.checklistPoint}
+                      onChange={(e) => updatePoint(index, 'checklistPoint', e.target.value)}
+                      rows={2}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Units */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Units
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Units"
+                      value={point.units}
+                      onChange={(e) => updatePoint(index, 'units', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Length */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Length
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Length"
+                      value={point.length}
+                      onChange={(e) => updatePoint(index, 'length', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Breadth */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Breadth
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Breadth"
+                      value={point.breadth}
+                      onChange={(e) => updatePoint(index, 'breadth', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Depth */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Depth
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Depth"
+                      value={point.depth}
+                      onChange={(e) => updatePoint(index, 'depth', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Quantity */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Quantity
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Quantity"
+                      value={point.quantity}
+                      onChange={(e) => updatePoint(index, 'quantity', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Numbers */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Numbers
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Numbers"
+                      value={point.numbers}
+                      onChange={(e) => updatePoint(index, 'numbers', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+
+                  {/* Rate */}
+                  <div>
+                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                      Rate
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      placeholder="Rate"
+                      value={point.rate}
+                      onChange={(e) => updatePoint(index, 'rate', e.target.value)}
+                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
+                </div>
               </div>
             ))}
 

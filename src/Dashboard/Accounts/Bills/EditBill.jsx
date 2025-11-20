@@ -1,10 +1,11 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../../../config";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { message, Form, Input, DatePicker, InputNumber, Button } from "antd";
+import { message, Form, Input, DatePicker, InputNumber, Button, Select } from "antd";
+const { Option } = Select;
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
 import { FileTextOutlined } from "@ant-design/icons";
@@ -21,7 +22,8 @@ const customStyles = `
   
   .custom-input-bill .ant-input,
   .custom-input-bill .ant-input-number,
-  .custom-input-bill .ant-picker {
+  .custom-input-bill .ant-picker,
+  .custom-input-bill .ant-select-selector {
     background: rgba(255,255,255,0.6);
     border: 1px solid rgba(139,92,246,0.2);
     border-radius: 0.75rem;
@@ -45,6 +47,12 @@ const customStyles = `
   .custom-input-bill .ant-input-number:focus,
   .custom-input-bill .ant-picker:focus,
   .custom-input-bill .ant-picker-focused {
+    background: rgba(255,255,255,0.9);
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 2px rgba(139,92,246,0.1);
+  }
+
+  .custom-input-bill .ant-select-focused .ant-select-selector {
     background: rgba(255,255,255,0.9);
     border-color: #8b5cf6;
     box-shadow: 0 0 0 2px rgba(139,92,246,0.1);
@@ -80,36 +88,51 @@ const EditBill = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [form] = Form.useForm();
+  const [showOtherEmiType, setShowOtherEmiType] = useState(false);
 
-  const config = {
-    headers: { Authorization: user?.access_token },
-  };
+  const config = useMemo(() => ({ headers: { Authorization: user?.access_token } }), [user?.access_token]);
 
-  // Fetch bill data by id and prefill form
-  const fetchBill = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}bills/${id}`, config);
-      const data = res.data;
-
-      // Prefill form fields with fetched data
-      form.setFieldsValue({
-        name: data.name,
-        emiDate: dayjs(data.emiDate), // convert string to dayjs object
-        amount: data.amount,
-      });
-    } catch (err) {
-      message.error("Failed to fetch bill details");
+  const handleEmiTypeChange = (value) => {
+    if (value === "Others") {
+      setShowOtherEmiType(true);
+      form.setFieldsValue({ emiTypeOther: "" });
+    } else {
+      setShowOtherEmiType(false);
+      form.setFieldsValue({ emiTypeOther: undefined });
     }
   };
 
   useEffect(() => {
+    const fetchBill = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}bills/${id}`, config);
+        const data = res.data;
+
+        // Prefill form fields with fetched data
+        form.setFieldsValue({
+          name: data.name,
+          emiType: data.emiType,
+          emiTypeOther: data.emiType === "Others" ? data.emiTypeOther || "" : undefined,
+          emiDate: dayjs(data.emiDate), // convert string to dayjs object
+          amount: data.amount,
+        });
+
+        // show/hide Other EMI Type input
+        if (data.emiType === "Others") setShowOtherEmiType(true);
+        else setShowOtherEmiType(false);
+      } catch (err) {
+        message.error("Failed to fetch bill details");
+      }
+    };
+
     fetchBill();
-  }, [id]);
+  }, [id, config, form]);
 
   // On form submit, update the bill by id
   const onFinish = async (values) => {
     const payload = {
       name: values.name,
+      emiType: values.emiType === 'Others' ? values.emiTypeOther : values.emiType,
       emiDate: values.emiDate.format("YYYY-MM-DD"),
       amount: values.amount,
     };
@@ -175,6 +198,33 @@ const EditBill = () => {
               >
                 <Input size="large" placeholder="e.g., Electricity Bill" />
               </Form.Item>
+
+              <Form.Item
+                label="EMI Type"
+                name="emiType"
+                rules={[{ required: true, message: "Please select EMI type" }]}
+              >
+                <Select
+                  size="large"
+                  placeholder="Select EMI type"
+                  onChange={handleEmiTypeChange}
+                >
+                  <Option value="Rent">Rent</Option>
+                  <Option value="Utilities">Utilities</Option>
+                  <Option value="Insurance">Insurance</Option>
+                  <Option value="Others">Others</Option>
+                </Select>
+              </Form.Item>
+
+              {showOtherEmiType && (
+                <Form.Item
+                  label="Specify EMI Type"
+                  name="emiTypeOther"
+                  rules={[{ required: true, message: "Please specify EMI type" }]}
+                >
+                  <Input size="large" placeholder="Enter EMI type" />
+                </Form.Item>
+              )}
 
               <Form.Item
                 label="EMI Date"

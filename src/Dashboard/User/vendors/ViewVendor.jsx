@@ -4,7 +4,6 @@
 // import { useSelector } from "react-redux";
 // import { useNavigate } from "react-router-dom";
 // import { motion } from "framer-motion";
-// import { API_BASE_URL } from "../../../../config";
 // import { message, Modal, Table, Button, Card, Input } from "antd";
 // import {
 //   EyeOutlined,
@@ -13,7 +12,11 @@
 //   PlusOutlined,
 //   UserOutlined,
 //   SearchOutlined,
+//   FilePdfOutlined,
 // } from "@ant-design/icons";
+// import { jsPDF } from "jspdf";
+// import autoTable from "jspdf-autotable";
+// import { API_BASE_URL } from "../../../../config";
 
 // const customStyles = `
 //   .vendor-glass-card {
@@ -152,6 +155,126 @@
 //     // eslint-disable-next-line
 //   }, [deptId]);
 
+//   const exportToPDF = (vendor) => {
+//     const doc = new jsPDF();
+    
+//     // Company Header
+//     // doc.setFontSize(16);
+//     // doc.setFont("helvetica", "bold");
+//     // doc.text("COMB INDUSTRIES INC", 105, 15, { align: "center" });
+    
+//     doc.setFontSize(14);
+//     doc.setFont("helvetica", "bold");
+//     doc.text("Request Form For Opening New Vendor Code", 105, 22, { align: "center" });
+    
+//     // doc.setFontSize(11);
+//     // doc.setFont("helvetica", "bold");
+//     // doc.text("List of Data Particulars", 105, 29, { align: "center" });
+
+//     // Vendor Information Table
+//     const tableData = [
+//       ["Name of The Vendor", vendor.name || ""],
+//       ["Category of Person", vendor.person_category || ""],
+//       ["Company Name", vendor.company_name || ""],
+//       ["", ""],
+//       ["Complete Address with PIN code", ""],
+//       ["Address-1 (Temporary)", vendor.temp_address_1 || ""],
+//       ["City", vendor.temp_city || ""],
+//       ["PIN Code", vendor.temp_pin || ""],
+//       ["State", vendor.temp_state || ""],
+//       ["Country", vendor.temp_country || ""],
+//       ["", ""],
+//       ["Address-2 (Permanent)", vendor.perm_address_1 + " " + (vendor.perm_address_2 || "")],
+//       ["City", vendor.perm_city || ""],
+//       ["PIN Code", vendor.perm_pin || ""],
+//       ["State", vendor.perm_state || ""],
+//       ["Country", vendor.perm_country || ""],
+//       ["", ""],
+//       ["Contact Person", vendor.cont_person || ""],
+//       ["Designation", vendor.designation || ""],
+//       ["Contact Number", vendor.mobile_no || ""],
+//       ["Type Of Vendor", vendor.vendor_type || ""],
+//       ["Mobile Nnumber", vendor.alt_mobile_no || ""],
+//       ["GST NO*", vendor.gst_no || ""],
+//       ["E-Mail", vendor.email || ""],
+//       ["MSMED NO*", vendor.msmed_no || ""],
+//       ["PAN NO*", vendor.pan_no || ""],
+//       ["", ""],
+//       ["BANK DETAILS", ""],
+//       ["Bank Name", vendor.bank_name || ""],
+//       ["Address-1", vendor.bank_address_1 || ""],
+//       ["Address-2", vendor.bank_address_2 || ""],
+//       ["PIN Code", vendor.bank_pin || ""],
+//       ["Account Number", vendor.account_number || ""],
+//       ["IFSCODE", vendor.ifscode || ""],
+//       ["Branch", vendor.branch || ""],
+//       ["Beneficiary Name", vendor.beneficiary_name || ""],
+//       ["", ""],
+//       ["Payment Terms", vendor.payment_terms || ""],
+//       ["TDS Rate & Section", vendor.tds_details || ""],
+//     ];
+
+//     autoTable(doc, {
+//       startY: 35,
+//       head: [],
+//       body: tableData,
+//       theme: 'grid',
+//       styles: {
+//         fontSize: 9,
+//         cellPadding: 3,
+//       },
+//       columnStyles: {
+//         0: { fontStyle: 'bold', cellWidth: 70 },
+//         1: { cellWidth: 120 }
+//       },
+//       didParseCell: function(data) {
+//         if (data.row.index === 3 || data.row.index === 4 || data.row.index === 10 || 
+//             data.row.index === 16 || data.row.index === 26 || data.row.index === 27 || 
+//             data.row.index === 36) {
+//           data.cell.styles.fillColor = [230, 230, 230];
+//           data.cell.styles.fontStyle = 'bold';
+//         }
+//       }
+//     });
+
+//     // Footer Notes
+//     const finalY = doc.lastAutoTable.finalY + 10;
+//     doc.setFontSize(8);
+//     doc.setFont("helvetica", "italic");
+//     doc.text("*All the columns should be properly filled up. No column should be kept Blank.", 14, finalY);
+//     doc.text("*All registered certificates should be scanned and attached in system.", 14, finalY + 5);
+    
+//     doc.setFontSize(9);
+//     doc.setFont("helvetica", "bold");
+//     doc.text("Compulsory Documents to be Attached:", 14, finalY + 15);
+    
+//     doc.setFontSize(8);
+//     doc.setFont("helvetica", "normal");
+//     const docs = [
+//       "1) Copy of PAN Card",
+//       "2) Address proof- copy of voter card, Aadhar card, license, passport",
+//       "3) Copy of GST certificate as applicable",
+//       "4) Copy of cancelled cheque",
+//       "5) MSMED form"
+//     ];
+    
+//     let yPos = finalY + 20;
+//     docs.forEach(docItem => {
+//       doc.text(docItem, 14, yPos);
+//       yPos += 5;
+//     });
+
+//     // Signature line
+//     doc.setFontSize(10);
+//     doc.setFont("helvetica", "bold");
+//     doc.text("SIGNATURE", 14, yPos + 10);
+//     doc.line(14, yPos + 15, 80, yPos + 15);
+
+//     // Save the PDF
+//     doc.save(`Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+//     message.success("PDF exported successfully!");
+//   };
+
 //   const showModal = (vendor) => {
 //     setSelectedVendor(vendor);
 //     setIsModalVisible(true);
@@ -218,9 +341,9 @@
 //       title: "Actions",
 //       key: "actions",
 //       align: "center",
-//       width: 140,
+//       width: 200,
 //       render: (_, record) => (
-//         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
+//         <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
 //           <Button
 //             type="text"
 //             icon={<EyeOutlined />}
@@ -230,6 +353,17 @@
 //               borderRadius: "6px",
 //               transition: "all 0.3s",
 //             }}
+//           />
+//           <Button
+//             type="text"
+//             icon={<FilePdfOutlined />}
+//             onClick={() => exportToPDF(record)}
+//             style={{
+//               color: "#e74c3c",
+//               borderRadius: "6px",
+//               transition: "all 0.3s",
+//             }}
+//             title="Export to PDF"
 //           />
 //           <Button
 //             type="primary"
@@ -255,7 +389,7 @@
 //           animate={{ opacity: 1, y: 0 }}
 //           transition={{ duration: 0.3, delay: index * 0.05 }}
 //         >
-//           <Card className="vendor-mobile-card" bodyStyle={{ padding: "20px" }}>
+//           <Card className="vendor-mobile-card" styles={{ padding: "20px" }}>
 //             <div style={{ marginBottom: "16px" }}>
 //               <div
 //                 style={{
@@ -302,6 +436,7 @@
 //                 display: "flex",
 //                 gap: "10px",
 //                 justifyContent: "flex-end",
+//                 flexWrap: "wrap",
 //               }}
 //             >
 //               <Button
@@ -314,6 +449,17 @@
 //                 }}
 //               >
 //                 View
+//               </Button>
+//               <Button
+//                 icon={<FilePdfOutlined />}
+//                 onClick={() => exportToPDF(vendor)}
+//                 style={{
+//                   borderRadius: "8px",
+//                   border: "1.5px solid #e74c3c30",
+//                   color: "#e74c3c",
+//                 }}
+//               >
+//                 PDF
 //               </Button>
 //               <Button
 //                 type="primary"
@@ -456,7 +602,7 @@
 //           animate={{ opacity: 1, y: 0 }}
 //           transition={{ duration: 0.5, delay: 0.2 }}
 //         >
-//           <Card className="vendor-glass-card" bodyStyle={{ padding: isMobile ? "16px" : "28px" }}>
+//           <Card className="vendor-glass-card" styles={{ padding: isMobile ? "16px" : "28px" }}>
 //             {/* Search and Add Button */}
 //             <div
 //               style={{
@@ -575,6 +721,23 @@
 //         onCancel={handleCancel}
 //         footer={[
 //           <Button
+//             key="pdf"
+//             icon={<FilePdfOutlined />}
+//             onClick={() => {
+//               exportToPDF(selectedVendor);
+//               handleCancel();
+//             }}
+//             style={{
+//               background: "#e74c3c",
+//               color: "white",
+//               border: "none",
+//               borderRadius: "0.65rem",
+//               height: "40px",
+//             }}
+//           >
+//             Export PDF
+//           </Button>,
+//           <Button
 //             key="close"
 //             onClick={handleCancel}
 //             className="vendor-btn-primary"
@@ -599,14 +762,14 @@
 //           >
 //             {[
 //               { label: "Vendor Name", value: selectedVendor.name },
-//               { label: "Company Name", value: selectedVendor.company_name || "N/A" },
 //               { label: "Person Category", value: selectedVendor.person_category || "N/A" },
+//               { label: "Company Name", value: selectedVendor.company_name || "N/A" },
 //               { label: "Temporary Address", value: selectedVendor.temp_address_1 || "N/A" },
 //               { label: "Temporary City", value: selectedVendor.temp_city || "N/A" },
 //               { label: "Temporary PIN", value: selectedVendor.temp_pin || "N/A" },
 //               { label: "Temporary State", value: selectedVendor.temp_state || "N/A" },
 //               { label: "Temporary Country", value: selectedVendor.temp_country || "N/A" },
-//               { label: "Permanent Address 1", value: selectedVendor.perm_address_1 || "N/A" },
+//               // { label: "Permanent Address 1", value: selectedVendor.perm_address_1 || "N/A" },
 //               { label: "Permanent Address 2", value: selectedVendor.perm_address_2 || "N/A" },
 //               { label: "Permanent City", value: selectedVendor.perm_city || "N/A" },
 //               { label: "Permanent PIN", value: selectedVendor.perm_pin || "N/A" },
@@ -673,6 +836,7 @@
 // };
 
 // export default ViewVendor;
+
 /* eslint-disable no-unused-vars */
 import axios from "axios";
 import React, { useEffect, useState } from "react";
@@ -688,9 +852,12 @@ import {
   UserOutlined,
   SearchOutlined,
   FilePdfOutlined,
+  FileWordOutlined,
 } from "@ant-design/icons";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
+import { Document, Paragraph, TextRun, Table as DocxTable, TableCell, TableRow, WidthType, AlignmentType, BorderStyle, Packer } from "docx";
+import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../../../../config";
 
 const customStyles = `
@@ -833,61 +1000,98 @@ const ViewVendor = () => {
   const exportToPDF = (vendor) => {
     const doc = new jsPDF();
     
-    // Company Header
-    // doc.setFontSize(16);
-    // doc.setFont("helvetica", "bold");
-    // doc.text("COMB INDUSTRIES INC", 105, 15, { align: "center" });
-    
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
     doc.text("Request Form For Opening New Vendor Code", 105, 22, { align: "center" });
-    
-    // doc.setFontSize(11);
-    // doc.setFont("helvetica", "bold");
-    // doc.text("List of Data Particulars", 105, 29, { align: "center" });
 
-    // Vendor Information Table
-    const tableData = [
-      ["Name of The Vendor", vendor.name || ""],
-      ["Category of Person", vendor.person_category || ""],
-      ["Company Name", vendor.company_name || ""],
-      ["", ""],
-      ["Complete Address with PIN code", ""],
-      ["Address-1 (Temporary)", vendor.temp_address_1 || ""],
-      ["City", vendor.temp_city || ""],
-      ["PIN Code", vendor.temp_pin || ""],
-      ["State", vendor.temp_state || ""],
-      ["Country", vendor.temp_country || ""],
-      ["", ""],
-      ["Address-2 (Permanent)", vendor.perm_address_1 + " " + (vendor.perm_address_2 || "")],
-      ["City", vendor.perm_city || ""],
-      ["PIN Code", vendor.perm_pin || ""],
-      ["State", vendor.perm_state || ""],
-      ["Country", vendor.perm_country || ""],
-      ["", ""],
-      ["Contact Person", vendor.cont_person || ""],
-      ["Designation", vendor.designation || ""],
-      ["Contact Number", vendor.mobile_no || ""],
-      ["Type Of Vendor", vendor.vendor_type || ""],
-      ["Mobile Nnumber", vendor.alt_mobile_no || ""],
-      ["GST NO*", vendor.gst_no || ""],
-      ["E-Mail", vendor.email || ""],
-      ["MSMED NO*", vendor.msmed_no || ""],
-      ["PAN NO*", vendor.pan_no || ""],
-      ["", ""],
-      ["BANK DETAILS", ""],
-      ["Bank Name", vendor.bank_name || ""],
-      ["Address-1", vendor.bank_address_1 || ""],
-      ["Address-2", vendor.bank_address_2 || ""],
-      ["PIN Code", vendor.bank_pin || ""],
-      ["Account Number", vendor.account_number || ""],
-      ["IFSCODE", vendor.ifscode || ""],
-      ["Branch", vendor.branch || ""],
-      ["Beneficiary Name", vendor.beneficiary_name || ""],
-      ["", ""],
-      ["Payment Terms", vendor.payment_terms || ""],
-      ["TDS Rate & Section", vendor.tds_details || ""],
-    ];
+    // Build table data with only non-empty fields
+    const tableData = [];
+    
+    // Basic Information
+    if (vendor.name) tableData.push(["Name of The Vendor", vendor.name]);
+    if (vendor.person_category) tableData.push(["Category of Person", vendor.person_category]);
+    if (vendor.company_name) tableData.push(["Company Name", vendor.company_name]);
+    if (vendor.vendor_type) tableData.push(["Type Of Vendor", vendor.vendor_type]);
+    if (vendor.refered_by) tableData.push(["Referred By", vendor.refered_by]);
+    
+    // Permanent Address Section
+    const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || vendor.perm_city || 
+                                 vendor.perm_pin || vendor.perm_state || vendor.perm_country;
+    if (hasPermanentAddress) {
+      tableData.push(["", ""]);
+      tableData.push(["PERMANENT ADDRESS", ""]);
+      if (vendor.perm_address_1) tableData.push(["Address ", vendor.perm_address_1]);
+      if (vendor.perm_address_2) tableData.push(["Address ", vendor.perm_address_2]);
+      if (vendor.perm_city) tableData.push(["City", vendor.perm_city]);
+      if (vendor.perm_pin) tableData.push(["PIN Code", vendor.perm_pin]);
+      if (vendor.perm_state) tableData.push(["State", vendor.perm_state]);
+      if (vendor.perm_country) tableData.push(["Country", vendor.perm_country]);
+    }
+    
+    // Temporary Address Section
+    const hasTempAddress = vendor.temp_address_1 || vendor.temp_city || vendor.temp_pin || 
+                           vendor.temp_state || vendor.temp_country;
+    if (hasTempAddress) {
+      tableData.push(["", ""]);
+      tableData.push(["TEMPORARY ADDRESS", ""]);
+      if (vendor.temp_address_1) tableData.push(["Address ", vendor.temp_address_1]);
+      if (vendor.temp_city) tableData.push(["City", vendor.temp_city]);
+      if (vendor.temp_pin) tableData.push(["PIN Code", vendor.temp_pin]);
+      if (vendor.temp_state) tableData.push(["State", vendor.temp_state]);
+      if (vendor.temp_country) tableData.push(["Country", vendor.temp_country]);
+    }
+    
+    // Contact Information
+    tableData.push(["", ""]);
+    tableData.push(["CONTACT INFORMATION", ""]);
+    if (vendor.cont_person) tableData.push(["Contact Person", vendor.cont_person]);
+    if (vendor.designation) tableData.push(["Designation", vendor.designation]);
+    if (vendor.mobile_no) tableData.push(["Contact Number", vendor.mobile_no]);
+    if (vendor.alt_mobile_no) tableData.push(["Alternate Mobile Number", vendor.alt_mobile_no]);
+    if (vendor.email) tableData.push(["E-Mail", vendor.email]);
+    
+    // Tax & Registration Details
+    const hasTaxDetails = vendor.gst_no || vendor.msmed_no || vendor.pan_no;
+    if (hasTaxDetails) {
+      tableData.push(["", ""]);
+      tableData.push(["TAX & REGISTRATION DETAILS", ""]);
+      if (vendor.gst_no) tableData.push(["GST Number", vendor.gst_no]);
+      if (vendor.msmed_no) tableData.push(["MSMED Number", vendor.msmed_no]);
+      if (vendor.pan_no) tableData.push(["PAN Number", vendor.pan_no]);
+    }
+    
+    // Bank Details Section
+    const hasBankDetails = vendor.bank_name || vendor.bank_address_1 || vendor.bank_address_2 || 
+                          vendor.bank_pin || vendor.account_number || vendor.ifscode || 
+                          vendor.branch || vendor.beneficiary_name;
+    if (hasBankDetails) {
+      tableData.push(["", ""]);
+      tableData.push(["BANK DETAILS", ""]);
+      if (vendor.bank_name) tableData.push(["Bank Name", vendor.bank_name]);
+      if (vendor.beneficiary_name) tableData.push(["Beneficiary Name", vendor.beneficiary_name]);
+      if (vendor.account_number) tableData.push(["Account Number", vendor.account_number]);
+      if (vendor.ifscode) tableData.push(["IFSC Code", vendor.ifscode]);
+      if (vendor.branch) tableData.push(["Branch", vendor.branch]);
+      if (vendor.bank_address_1) tableData.push(["Bank Address 1", vendor.bank_address_1]);
+      if (vendor.bank_address_2) tableData.push(["Bank Address 2", vendor.bank_address_2]);
+      if (vendor.bank_pin) tableData.push(["Bank PIN Code", vendor.bank_pin]);
+    }
+    
+    // Payment Terms
+    if (vendor.payment_terms || vendor.tds_details) {
+      tableData.push(["", ""]);
+      tableData.push(["PAYMENT INFORMATION", ""]);
+      if (vendor.payment_terms) tableData.push(["Payment Terms", vendor.payment_terms]);
+      if (vendor.tds_details) tableData.push(["TDS Rate & Section", vendor.tds_details]);
+    }
+
+    // Track section header indices for styling
+    const sectionHeaders = [];
+    tableData.forEach((row, index) => {
+      if (row[0] && !row[1] && row[0] !== "") {
+        sectionHeaders.push(index);
+      }
+    });
 
     autoTable(doc, {
       startY: 35,
@@ -903,9 +1107,7 @@ const ViewVendor = () => {
         1: { cellWidth: 120 }
       },
       didParseCell: function(data) {
-        if (data.row.index === 3 || data.row.index === 4 || data.row.index === 10 || 
-            data.row.index === 16 || data.row.index === 26 || data.row.index === 27 || 
-            data.row.index === 36) {
+        if (sectionHeaders.includes(data.row.index) || data.row.index === 0) {
           data.cell.styles.fillColor = [230, 230, 230];
           data.cell.styles.fontStyle = 'bold';
         }
@@ -939,15 +1141,218 @@ const ViewVendor = () => {
       yPos += 5;
     });
 
-    // Signature line
     doc.setFontSize(10);
     doc.setFont("helvetica", "bold");
     doc.text("SIGNATURE", 14, yPos + 10);
     doc.line(14, yPos + 15, 80, yPos + 15);
 
-    // Save the PDF
     doc.save(`Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
     message.success("PDF exported successfully!");
+  };
+
+  const exportToWord = async (vendor) => {
+    try {
+      const tableRows = [];
+
+      // Helper function to create a row
+      const createRow = (label, value, isHeader = false) => {
+        return new TableRow({
+          children: [
+            new TableCell({
+              children: [new Paragraph({
+                children: [new TextRun({ text: label, bold: true, size: 20 })],
+              })],
+              width: { size: 35, type: WidthType.PERCENTAGE },
+              shading: isHeader ? { fill: "E6E6E6" } : undefined,
+            }),
+            new TableCell({
+              children: [new Paragraph({
+                children: [new TextRun({ text: value || "", size: 20 })],
+              })],
+              width: { size: 65, type: WidthType.PERCENTAGE },
+              shading: isHeader ? { fill: "E6E6E6" } : undefined,
+            }),
+          ],
+        });
+      };
+
+      // Basic Information
+      if (vendor.name) tableRows.push(createRow("Name of The Vendor", vendor.name));
+      if (vendor.person_category) tableRows.push(createRow("Category of Person", vendor.person_category));
+      if (vendor.company_name) tableRows.push(createRow("Company Name", vendor.company_name));
+      if (vendor.vendor_type) tableRows.push(createRow("Type Of Vendor", vendor.vendor_type));
+      if (vendor.refered_by) tableRows.push(createRow("Referred By", vendor.refered_by));
+
+      // Permanent Address
+      const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || vendor.perm_city || 
+                                   vendor.perm_pin || vendor.perm_state || vendor.perm_country;
+      if (hasPermanentAddress) {
+        tableRows.push(createRow("PERMANENT ADDRESS", "", true));
+        if (vendor.perm_address_1) tableRows.push(createRow("Address ", vendor.perm_address_1));
+        if (vendor.perm_address_2) tableRows.push(createRow("Address ", vendor.perm_address_2));
+        if (vendor.perm_city) tableRows.push(createRow("City", vendor.perm_city));
+        if (vendor.perm_pin) tableRows.push(createRow("PIN Code", vendor.perm_pin));
+        if (vendor.perm_state) tableRows.push(createRow("State", vendor.perm_state));
+        if (vendor.perm_country) tableRows.push(createRow("Country", vendor.perm_country));
+      }
+
+      // Temporary Address
+      const hasTempAddress = vendor.temp_address_1 || vendor.temp_city || vendor.temp_pin || 
+                             vendor.temp_state || vendor.temp_country;
+      if (hasTempAddress) {
+        tableRows.push(createRow("TEMPORARY ADDRESS", "", true));
+        if (vendor.temp_address_1) tableRows.push(createRow("Address ", vendor.temp_address_1));
+        if (vendor.temp_city) tableRows.push(createRow("City", vendor.temp_city));
+        if (vendor.temp_pin) tableRows.push(createRow("PIN Code", vendor.temp_pin));
+        if (vendor.temp_state) tableRows.push(createRow("State", vendor.temp_state));
+        if (vendor.temp_country) tableRows.push(createRow("Country", vendor.temp_country));
+      }
+
+      // Contact Information
+      tableRows.push(createRow("CONTACT INFORMATION", "", true));
+      if (vendor.cont_person) tableRows.push(createRow("Contact Person", vendor.cont_person));
+      if (vendor.designation) tableRows.push(createRow("Designation", vendor.designation));
+      if (vendor.mobile_no) tableRows.push(createRow("Contact Number", vendor.mobile_no));
+      if (vendor.alt_mobile_no) tableRows.push(createRow("Alternate Mobile Number", vendor.alt_mobile_no));
+      if (vendor.email) tableRows.push(createRow("E-Mail", vendor.email));
+
+      // Tax Details
+      const hasTaxDetails = vendor.gst_no || vendor.msmed_no || vendor.pan_no;
+      if (hasTaxDetails) {
+        tableRows.push(createRow("TAX & REGISTRATION DETAILS", "", true));
+        if (vendor.gst_no) tableRows.push(createRow("GST Number", vendor.gst_no));
+        if (vendor.msmed_no) tableRows.push(createRow("MSMED Number", vendor.msmed_no));
+        if (vendor.pan_no) tableRows.push(createRow("PAN Number", vendor.pan_no));
+      }
+
+      // Bank Details
+      const hasBankDetails = vendor.bank_name || vendor.bank_address_1 || vendor.bank_address_2 || 
+                            vendor.bank_pin || vendor.account_number || vendor.ifscode || 
+                            vendor.branch || vendor.beneficiary_name;
+      if (hasBankDetails) {
+        tableRows.push(createRow("BANK DETAILS", "", true));
+        if (vendor.bank_name) tableRows.push(createRow("Bank Name", vendor.bank_name));
+        if (vendor.beneficiary_name) tableRows.push(createRow("Beneficiary Name", vendor.beneficiary_name));
+        if (vendor.account_number) tableRows.push(createRow("Account Number", vendor.account_number));
+        if (vendor.ifscode) tableRows.push(createRow("IFSC Code", vendor.ifscode));
+        if (vendor.branch) tableRows.push(createRow("Branch", vendor.branch));
+        if (vendor.bank_address_1) tableRows.push(createRow("Bank Address 1", vendor.bank_address_1));
+        if (vendor.bank_address_2) tableRows.push(createRow("Bank Address 2", vendor.bank_address_2));
+        if (vendor.bank_pin) tableRows.push(createRow("Bank PIN Code", vendor.bank_pin));
+      }
+
+      // Payment Information
+      if (vendor.payment_terms || vendor.tds_details) {
+        tableRows.push(createRow("PAYMENT INFORMATION", "", true));
+        if (vendor.payment_terms) tableRows.push(createRow("Payment Terms", vendor.payment_terms));
+        if (vendor.tds_details) tableRows.push(createRow("TDS Rate & Section", vendor.tds_details));
+      }
+
+      const doc = new Document({
+        sections: [{
+          properties: {},
+          children: [
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Request Form For Opening New Vendor Code",
+                  bold: true,
+                  size: 28,
+                }),
+              ],
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 400 },
+            }),
+            new DocxTable({
+              rows: tableRows,
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              borders: {
+                top: { style: BorderStyle.SINGLE, size: 1 },
+                bottom: { style: BorderStyle.SINGLE, size: 1 },
+                left: { style: BorderStyle.SINGLE, size: 1 },
+                right: { style: BorderStyle.SINGLE, size: 1 },
+                insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+                insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+              },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "", size: 20 })],
+              spacing: { before: 400, after: 200 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "*All the columns should be properly filled up. No column should be kept Blank.",
+                  italics: true,
+                  size: 18,
+                }),
+              ],
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "*All registered certificates should be scanned and attached in system.",
+                  italics: true,
+                  size: 18,
+                }),
+              ],
+              spacing: { after: 300 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "Compulsory Documents to be Attached:",
+                  bold: true,
+                  size: 20,
+                }),
+              ],
+              spacing: { after: 200 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "1) Copy of PAN Card", size: 18 })],
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "2) Address proof- copy of voter card, Aadhar card, license, passport", size: 18 })],
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "3) Copy of GST certificate as applicable", size: 18 })],
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "4) Copy of cancelled cheque", size: 18 })],
+              spacing: { after: 100 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "5) MSMED form", size: 18 })],
+              spacing: { after: 400 },
+            }),
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: "SIGNATURE",
+                  bold: true,
+                  size: 22,
+                }),
+              ],
+              spacing: { after: 200 },
+            }),
+            new Paragraph({
+              children: [new TextRun({ text: "___________________________", size: 20 })],
+            }),
+          ],
+        }],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, `Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.docx`);
+      message.success("Word document exported successfully!");
+    } catch (error) {
+      console.error("Error exporting to Word:", error);
+      message.error("Failed to export Word document");
+    }
   };
 
   const showModal = (vendor) => {
@@ -967,8 +1372,10 @@ const ViewVendor = () => {
   const filteredVendors = vendors.filter(
     (v) =>
       v.name?.toLowerCase().includes(search.toLowerCase()) ||
-      v.vendor_category?.toLowerCase().includes(search.toLowerCase()) ||
-      v.person_category?.toLowerCase().includes(search.toLowerCase())
+      v.company_name?.toLowerCase().includes(search.toLowerCase()) ||
+      v.gst_no?.toLowerCase().includes(search.toLowerCase()) ||
+      v.vendor_type?.toLowerCase().includes(search.toLowerCase()) ||
+      v.refered_by?.toLowerCase().includes(search.toLowerCase())
   );
 
   const columns = [
@@ -982,15 +1389,23 @@ const ViewVendor = () => {
       ),
     },
     {
-      title: "Contact Person",
-      dataIndex: "cont_person",
-      key: "cont_person",
+      title: "Company Name",
+      dataIndex: "company_name",
+      key: "company_name",
       responsive: ["lg"],
+      render: (text) => <span>{text || "N/A"}</span>,
     },
     {
-      title: "Category",
-      dataIndex: "person_category",
-      key: "person_category",
+      title: "GST No",
+      dataIndex: "gst_no",
+      key: "gst_no",
+      responsive: ["lg"],
+      render: (text) => <span>{text || "N/A"}</span>,
+    },
+    {
+      title: "Vendor Type",
+      dataIndex: "vendor_type",
+      key: "vendor_type",
       responsive: ["md"],
       render: (text) => (
         <span
@@ -1002,21 +1417,22 @@ const ViewVendor = () => {
             fontWeight: 500,
           }}
         >
-          {text}
+          {text || "N/A"}
         </span>
       ),
     },
     {
-      title: "Type",
-      dataIndex: "vendor_type",
-      key: "vendor_type",
-      responsive: ["md"],
+      title: "Referred By",
+      dataIndex: "refered_by",
+      key: "refered_by",
+      responsive: ["lg"],
+      render: (text) => <span>{text || "N/A"}</span>,
     },
     {
       title: "Actions",
       key: "actions",
       align: "center",
-      width: 200,
+      width: 250,
       render: (_, record) => (
         <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
           <Button
@@ -1039,6 +1455,17 @@ const ViewVendor = () => {
               transition: "all 0.3s",
             }}
             title="Export to PDF"
+          />
+          <Button
+            type="text"
+            icon={<FileWordOutlined />}
+            onClick={() => exportToWord(record)}
+            style={{
+              color: "#2b579a",
+              borderRadius: "6px",
+              transition: "all 0.3s",
+            }}
+            title="Export to Word"
           />
           <Button
             type="primary"
@@ -1064,7 +1491,7 @@ const ViewVendor = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
         >
-          <Card className="vendor-mobile-card" bodyStyle={{ padding: "20px" }}>
+          <Card className="vendor-mobile-card" styles={{ padding: "20px" }}>
             <div style={{ marginBottom: "16px" }}>
               <div
                 style={{
@@ -1085,8 +1512,12 @@ const ViewVendor = () => {
                 }}
               >
                 <div style={{ color: "#5b5270" }}>
-                  <span style={{ fontWeight: 600, color: "#32255e" }}>Contact: </span>
-                  {vendor.cont_person}
+                  <span style={{ fontWeight: 600, color: "#32255e" }}>Company: </span>
+                  {vendor.company_name || "N/A"}
+                </div>
+                <div style={{ color: "#5b5270" }}>
+                  <span style={{ fontWeight: 600, color: "#32255e" }}>GST: </span>
+                  {vendor.gst_no || "N/A"}
                 </div>
                 <div>
                   <span
@@ -1099,10 +1530,14 @@ const ViewVendor = () => {
                       fontSize: "13px",
                     }}
                   >
-                    {vendor.person_category}
+                    {vendor.vendor_type || "N/A"}
                   </span>
-                  <span style={{ margin: "0 8px", color: "#d1c9e0" }}>•</span>
-                  <span style={{ color: "#5b5270" }}>{vendor.vendor_type}</span>
+                  {vendor.refered_by && (
+                    <>
+                      <span style={{ margin: "0 8px", color: "#d1c9e0" }}>•</span>
+                      <span style={{ color: "#5b5270" }}>Ref: {vendor.refered_by}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
@@ -1135,6 +1570,17 @@ const ViewVendor = () => {
                 }}
               >
                 PDF
+              </Button>
+              <Button
+                icon={<FileWordOutlined />}
+                onClick={() => exportToWord(vendor)}
+                style={{
+                  borderRadius: "8px",
+                  border: "1.5px solid #2b579a30",
+                  color: "#2b579a",
+                }}
+              >
+                Word
               </Button>
               <Button
                 type="primary"
@@ -1277,7 +1723,7 @@ const ViewVendor = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="vendor-glass-card" bodyStyle={{ padding: isMobile ? "16px" : "28px" }}>
+          <Card className="vendor-glass-card" styles={{ padding: isMobile ? "16px" : "28px" }}>
             {/* Search and Add Button */}
             <div
               style={{
@@ -1377,7 +1823,7 @@ const ViewVendor = () => {
                     showSizeChanger: true,
                     showTotal: (total) => `Total ${total} vendors`,
                   }}
-                  scroll={{ x: 800 }}
+                  scroll={{ x: 1200 }}
                 />
               </div>
             )}
@@ -1413,6 +1859,23 @@ const ViewVendor = () => {
             Export PDF
           </Button>,
           <Button
+            key="word"
+            icon={<FileWordOutlined />}
+            onClick={() => {
+              exportToWord(selectedVendor);
+              handleCancel();
+            }}
+            style={{
+              background: "#2b579a",
+              color: "white",
+              border: "none",
+              borderRadius: "0.65rem",
+              height: "40px",
+            }}
+          >
+            Export Word
+          </Button>,
+          <Button
             key="close"
             onClick={handleCancel}
             className="vendor-btn-primary"
@@ -1437,72 +1900,75 @@ const ViewVendor = () => {
           >
             {[
               { label: "Vendor Name", value: selectedVendor.name },
-              { label: "Person Category", value: selectedVendor.person_category || "N/A" },
-              { label: "Company Name", value: selectedVendor.company_name || "N/A" },
-              { label: "Temporary Address", value: selectedVendor.temp_address_1 || "N/A" },
-              { label: "Temporary City", value: selectedVendor.temp_city || "N/A" },
-              { label: "Temporary PIN", value: selectedVendor.temp_pin || "N/A" },
-              { label: "Temporary State", value: selectedVendor.temp_state || "N/A" },
-              { label: "Temporary Country", value: selectedVendor.temp_country || "N/A" },
-              { label: "Permanent Address 1", value: selectedVendor.perm_address_1 || "N/A" },
-              { label: "Permanent Address 2", value: selectedVendor.perm_address_2 || "N/A" },
-              { label: "Permanent City", value: selectedVendor.perm_city || "N/A" },
-              { label: "Permanent PIN", value: selectedVendor.perm_pin || "N/A" },
-              { label: "Permanent State", value: selectedVendor.perm_state || "N/A" },
-              { label: "Permanent Country", value: selectedVendor.perm_country || "N/A" },
-              { label: "Contact Person", value: selectedVendor.cont_person || "N/A" },
-              { label: "Designation", value: selectedVendor.designation || "N/A" },
-              { label: "Mobile Number", value: selectedVendor.mobile_no || "N/A" },
-              { label: "Alternate Mobile Number", value: selectedVendor.alt_mobile_no || "N/A" },
-              { label: "Email Address", value: selectedVendor.email || "N/A" },
-              { label: "Vendor Type", value: selectedVendor.vendor_type || "N/A" },
-              { label: "GST Number", value: selectedVendor.gst_no || "N/A" },
-              { label: "MSMED Number", value: selectedVendor.msmed_no || "N/A" },
-              { label: "PAN Number", value: selectedVendor.pan_no || "N/A" },
-              { label: "Bank Name", value: selectedVendor.bank_name || "N/A" },
-              { label: "Beneficiary Name", value: selectedVendor.beneficiary_name || "N/A" },
-              { label: "Bank Address 1", value: selectedVendor.bank_address_1 || "N/A" },
-              { label: "Bank Address 2", value: selectedVendor.bank_address_2 || "N/A" },
-              { label: "Bank PIN", value: selectedVendor.bank_pin || "N/A" },
-              { label: "Account Number", value: selectedVendor.account_number || "N/A" },
-              { label: "IFSC Code", value: selectedVendor.ifscode || "N/A" },
-              { label: "Branch", value: selectedVendor.branch || "N/A" },
-              { label: "Payment Terms", value: selectedVendor.payment_terms || "N/A" },
-              { label: "TDS Details", value: selectedVendor.tds_details || "N/A" },
-              { label: "Vendor Status", value: selectedVendor.vendor_status || "N/A" },
-            ].map((item, index) => (
-              <div
-                key={index}
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: isMobile ? "1fr" : "180px 1fr",
-                  gap: "12px",
-                  padding: "14px",
-                  background: index % 2 === 0 ? "#faf8fe" : "#fff",
-                  borderRadius: "10px",
-                  transition: "all 0.2s",
-                }}
-              >
-                <span
+              { label: "Person Category", value: selectedVendor.person_category },
+              { label: "Company Name", value: selectedVendor.company_name },
+              { label: "Vendor Type", value: selectedVendor.vendor_type },
+              { label: "Referred By", value: selectedVendor.refered_by },
+              { label: "Permanent Address 1", value: selectedVendor.perm_address_1 },
+              { label: "Permanent Address 2", value: selectedVendor.perm_address_2 },
+              { label: "Permanent City", value: selectedVendor.perm_city },
+              { label: "Permanent PIN", value: selectedVendor.perm_pin },
+              { label: "Permanent State", value: selectedVendor.perm_state },
+              { label: "Permanent Country", value: selectedVendor.perm_country },
+              { label: "Temporary Address", value: selectedVendor.temp_address_1 },
+              { label: "Temporary City", value: selectedVendor.temp_city },
+              { label: "Temporary PIN", value: selectedVendor.temp_pin },
+              { label: "Temporary State", value: selectedVendor.temp_state },
+              { label: "Temporary Country", value: selectedVendor.temp_country },
+              { label: "Contact Person", value: selectedVendor.cont_person },
+              { label: "Designation", value: selectedVendor.designation },
+              { label: "Mobile Number", value: selectedVendor.mobile_no },
+              { label: "Alternate Mobile Number", value: selectedVendor.alt_mobile_no },
+              { label: "Email Address", value: selectedVendor.email },
+              { label: "GST Number", value: selectedVendor.gst_no },
+              { label: "MSMED Number", value: selectedVendor.msmed_no },
+              { label: "PAN Number", value: selectedVendor.pan_no },
+              { label: "Bank Name", value: selectedVendor.bank_name },
+              { label: "Beneficiary Name", value: selectedVendor.beneficiary_name },
+              { label: "Account Number", value: selectedVendor.account_number },
+              { label: "IFSC Code", value: selectedVendor.ifscode },
+              { label: "Branch", value: selectedVendor.branch },
+              { label: "Bank Address 1", value: selectedVendor.bank_address_1 },
+              { label: "Bank Address 2", value: selectedVendor.bank_address_2 },
+              { label: "Bank PIN", value: selectedVendor.bank_pin },
+              { label: "Payment Terms", value: selectedVendor.payment_terms },
+              { label: "TDS Details", value: selectedVendor.tds_details },
+              { label: "Vendor Status", value: selectedVendor.vendor_status },
+            ]
+              .filter(item => item.value) // Only show fields with values
+              .map((item, index) => (
+                <div
+                  key={index}
                   style={{
-                    color: "#32255e",
-                    fontWeight: 700,
-                    fontSize: "15px",
+                    display: "grid",
+                    gridTemplateColumns: isMobile ? "1fr" : "180px 1fr",
+                    gap: "12px",
+                    padding: "14px",
+                    background: index % 2 === 0 ? "#faf8fe" : "#fff",
+                    borderRadius: "10px",
+                    transition: "all 0.2s",
                   }}
                 >
-                  {item.label}
-                </span>
-                <span
-                  style={{
-                    wordBreak: "break-word",
-                    color: "#5b5270",
-                    fontSize: "15px",
-                  }}
-                >
-                  {item.value}
-                </span>
-              </div>
-            ))}
+                  <span
+                    style={{
+                      color: "#32255e",
+                      fontWeight: 700,
+                      fontSize: "15px",
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                  <span
+                    style={{
+                      wordBreak: "break-word",
+                      color: "#5b5270",
+                      fontSize: "15px",
+                    }}
+                  >
+                    {item.value}
+                  </span>
+                </div>
+              ))}
           </div>
         )}
       </Modal>
