@@ -1,5 +1,6 @@
-import React, { useState } from "react";
-import { Form, Input, Button, Row, Col, Typography, Select } from 'antd';
+/* eslint-disable no-unused-vars */
+import React, { useEffect, useState } from "react";
+import { Form, Input, Button, Row, Col, Typography, Select, message } from 'antd';
 import { LeftOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { API_BASE_URL } from "../../../../config";
@@ -14,15 +15,38 @@ const AddVendor = () => {
   const navigate = useNavigate();
   const user = useSelector(state => state.user.value);
   const [showOtherVendorType, setShowOtherVendorType] = useState(false);
+  const [departments, setDepartments] = useState([]);
 
   const config = {
     headers: { Authorization: user?.access_token },
   };
 
+    const fetchDepartmentData = async () => {
+    // setLoading(true);
+    try {
+        const res = await axios.get(`${API_BASE_URL}department`, config);
+        // API may return array directly or under `items`
+        const items = res.data.items || res.data;
+        setDepartments(items || []);
+        // console.log('departments', items);
+      
+    } catch (err) {
+      message.error("Failed to fetch departments");
+    } finally {
+      // setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartmentData();
+    // eslint-disable-next-line
+  }, []);
+
   const onFinish = (values) => {
     // Prepare the JSON payload
     const payload = {
       name: values.name,
+      depId: values.depId || null,
       person_category: values.person_category,
       company_name: values.company_name || null,
       referred_by: values.referred_by || null,
@@ -102,6 +126,19 @@ const AddVendor = () => {
         onFinish={onFinish}
         size="large"
       >
+
+        {/* Department selector: which department the vendor belongs to */}
+        <Row gutter={16} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={12}>
+            <Form.Item name="depId" label="Vendor Belongs To" rules={[{ required: true, message: 'Please select department' }]}>
+              <Select placeholder="Select department" showSearch optionFilterProp="children">
+                {departments.map(d => (
+                  <Option key={d.id || d._id} value={d.id || d._id}>{d.name}</Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
 
         {/* Vendor Info */}
         <Title level={5}>Vendor Information</Title>

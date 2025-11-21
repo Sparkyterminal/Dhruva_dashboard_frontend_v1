@@ -134,7 +134,9 @@ const App = () => {
               <Route path="/user/departments/:id" element={<Departmentwise />} />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/playbook" element={<PlayBook />} />
-              <Route path="/user/viewvendors" element={<ViewVendors />} />
+               <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/viewvendors" element={<ViewVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route path="/user/viewclientbookings" element={<ViewClientsBookings />} />
               <Route path="/user/addbill" element={<AddBill />} />
               <Route path="/user/editbill/:id" element={<EditBill />} />
@@ -163,9 +165,9 @@ const App = () => {
               <Route path="/user/addclient" element={<AddInflow />} />
               <Route path="/user/editclient/:id" element={<EditInflow />} />
               <Route path="/user/viewclient" element={<ViewInflow />} />
-               <Route path="/user/addvendor" element={<AddVendor />} />
+               {/* <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
-              <Route path="/user/editvendor/:id" element={<EditVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} /> */}
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
@@ -178,9 +180,9 @@ const App = () => {
             <>
               <Route path="/user" element={<Home />} />
               <Route path="/user/viewrequests" element={<ViewRequirements />} />
-              <Route path="/user/addvendor" element={<AddVendor />} />
+              {/* <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
-              <Route path="/user/editvendor/:id" element={<EditVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} /> */}
               <Route path="/user/sendrequest" element={<AddRequirements />} />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
@@ -194,7 +196,9 @@ const App = () => {
               <Route path="/owner/departments/:id" element={<Departmentwise />} />
               <Route path="/owner/changepassword" element={<ChangePassword />} />
               <Route path="/owner/playbook" element={<PlayBook />} />
-              <Route path="/owner/viewvendors" element={<ViewVendors />} />
+               <Route path="/owner/addvendor" element={<AddVendor />} />
+              <Route path="/owner/viewvendors" element={<ViewVendor />} />
+              <Route path="/owner/editvendor/:id" element={<EditVendor />} />
               <Route path="/owner/viewclientbookings" element={<ViewClientsBookings />} />
               <Route path="/owner/addbill" element={<AddBill />} />
               <Route path="/owner/editbill/:id" element={<EditBill />} />
@@ -215,7 +219,9 @@ const App = () => {
               <Route path="/approver/departments/:id" element={<Departmentwise />} />
               <Route path="/approver/changepassword" element={<ChangePassword />} />
               <Route path="/approver/playbook" element={<PlayBook />} />
-              <Route path="/approver/viewvendors" element={<ViewVendors />} />
+               <Route path="/approver/addvendor" element={<AddVendor />} />
+              <Route path="/approver/viewvendors" element={<ViewVendor />} />
+              <Route path="/approver/editvendor/:id" element={<EditVendor />} />
               <Route path="/approver/viewclientbookings" element={<ViewClientsBookings />} />
               <Route path="/approver/addbill" element={<AddBill />} />
               <Route path="/approver/editbill/:id" element={<EditBill />} />

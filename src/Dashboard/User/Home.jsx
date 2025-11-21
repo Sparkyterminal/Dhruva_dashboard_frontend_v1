@@ -256,7 +256,7 @@ const Home = () => {
               </motion.div>
 
               {/* View Vendors Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
                 <motion.button
                   onClick={() => navigate("/user/viewvendors")}
                   className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-sky-50 hover:to-sky-100"
@@ -295,7 +295,7 @@ const Home = () => {
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>
-              </motion.div>
+              </motion.div> */}
             </div>
 
             {/* Right Section - Avatar/Menu Dropdown */}
