@@ -23,7 +23,6 @@ import {
 } from "antd";
 import {
   ArrowLeftOutlined,
-  PlusOutlined,
   EditOutlined,
   EyeOutlined,
   CalendarOutlined,
@@ -711,20 +710,7 @@ const ViewClientsBookings = () => {
               </Col>
 
               <Col xs={24} sm={8} className="text-right">
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  size="large"
-                  onClick={() => navigate("/user/addclient")}
-                  className="border-0 shadow-md hover:shadow-lg"
-                  style={{
-                    borderRadius: "10px",
-                    background:
-                      "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                  }}
-                >
-                  New Booking
-                </Button>
+                {/* Add Booking removed as requested */}
               </Col>
             </Row>
           </Card>

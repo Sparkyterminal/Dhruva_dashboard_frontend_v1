@@ -1,149 +1,490 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
-import { Calendar, ChevronLeft, ChevronRight, Printer } from "lucide-react";
-import { API_BASE_URL } from "../../config";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import {
+  Download,
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  Loader2,
+} from "lucide-react";
 import axios from "axios";
+import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [exporting, setExporting] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const calendarRef = useRef(null);
+  const exportRef = useRef(null);
   const user = useSelector((state) => state.user.value);
 
-  const config = {
-    headers: { Authorization: user?.access_token },
-  };
+  const fetchRequirementsData = useCallback(async () => {
+    if (!user?.access_token) {
+      message.error("Authentication required. Please login again.");
+      return;
+    }
 
-  useEffect(() => {
-    fetchRequirementsData();
-  }, []);
+    const config = {
+      headers: { Authorization: user?.access_token },
+    };
 
-  const fetchRequirementsData = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}events`, config);
-      setEvents(res.data.events || res.data.data || res.data || []);
+
+      // Handle different response structures
+      let eventsData = [];
+      if (res.data) {
+        if (Array.isArray(res.data.events)) {
+          eventsData = res.data.events;
+        } else if (Array.isArray(res.data.data)) {
+          eventsData = res.data.data;
+        } else if (Array.isArray(res.data)) {
+          eventsData = res.data;
+        }
+      }
+
+      // Validate and filter out invalid events
+      eventsData = eventsData.filter((event) => {
+        return (
+          event &&
+          event._id &&
+          event.eventName &&
+          Array.isArray(event.eventTypes) &&
+          event.eventTypes.length > 0
+        );
+      });
+
+      setEvents(eventsData);
+
+      if (eventsData.length === 0) {
+        message.info("No events found");
+      }
     } catch (err) {
-      message.error("Failed to fetch client bookings");
-      console.error(err);
+      console.error("Error fetching events:", err);
+      if (err.response?.status === 401) {
+        message.error("Session expired. Please login again.");
+      } else if (err.response?.status === 403) {
+        message.error("You don't have permission to view events.");
+      } else if (err.response?.data?.message) {
+        message.error(err.response.data.message);
+      } else {
+        message.error("Failed to fetch events. Please try again later.");
+      }
+      setEvents([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.access_token]);
 
-  const getDaysInMonth = (date) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startingDayOfWeek = firstDay.getDay();
+  useEffect(() => {
+    fetchRequirementsData();
+  }, [fetchRequirementsData]);
 
-    return { daysInMonth, startingDayOfWeek, year, month };
-  };
+  // Transform events for FullCalendar
+  const getCalendarEvents = () => {
+    const calendarEvents = [];
 
-  const getEventsForDate = (date) => {
-    const dateStr = date.toISOString().split("T")[0];
-    const eventsOnDate = [];
+    try {
+      events.forEach((event) => {
+        if (!event || !event.eventTypes || !Array.isArray(event.eventTypes)) {
+          return;
+        }
 
-    events.forEach((event) => {
-      // Check main event dates
-      const mainEventStart = new Date(event.eventTypes[0]?.startDate);
-      const mainEventEnd = new Date(event.eventTypes[0]?.endDate);
+        event.eventTypes.forEach((et, idx) => {
+          if (!et || !et.startDate) {
+            return;
+          }
 
-      if (
-        date >= new Date(mainEventStart.toDateString()) &&
-        date <= new Date(mainEventEnd.toDateString())
-      ) {
-        eventsOnDate.push({
-          id: event._id,
-          name: event.eventName,
-          client: event.clientName,
-          type: "main",
-          eventType: event.eventTypes[0]?.eventType,
-          venue: event.eventTypes[0]?.venueLocation,
-          amount: event.agreedAmount,
+          try {
+            const startDate = new Date(et.startDate);
+            const endDate = et.endDate
+              ? new Date(et.endDate)
+              : new Date(et.startDate);
+
+            // Validate dates
+            if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+              console.warn(`Invalid date for event ${event._id}-${idx}`);
+              return;
+            }
+
+            // Ensure end date is not before start date
+            const actualEndDate = endDate < startDate ? startDate : endDate;
+
+            calendarEvents.push({
+              id: `${event._id}-${idx}`,
+              title: event.eventName || "Untitled Event",
+              start: startDate.toISOString(),
+              end: new Date(
+                actualEndDate.getTime() + 24 * 60 * 60 * 1000
+              ).toISOString(), // Add 1 day for end date
+              extendedProps: {
+                clientName: event.clientName || "Unknown Client",
+                eventType: et.eventType || "Unknown Type",
+                venue: et.venueLocation || "TBD",
+                brideName: event.brideName,
+                groomName: event.groomName,
+                mainEvent: event.eventName || "Untitled Event",
+                hasMultipleTypes: event.eventTypes.length > 1,
+                agreedAmount: et.agreedAmount || event.agreedAmount || 0,
+              },
+              backgroundColor: getEventColor(event.eventName),
+              borderColor: getEventColor(event.eventName),
+              textColor: "#ffffff",
+            });
+          } catch (error) {
+            console.error(`Error processing event ${event._id}-${idx}:`, error);
+          }
         });
+      });
+    } catch (error) {
+      console.error("Error transforming events:", error);
+      message.error("Error processing events data");
+    }
+
+    return calendarEvents;
+  };
+
+  const getEventColor = (eventName) => {
+    const colors = {
+      Wedding: "#8b5cf6",
+      "Baby Shower": "#ec4899",
+      Birthday: "#3b82f6",
+      Reception: "#10b981",
+      Engagement: "#f59e0b",
+    };
+    return colors[eventName] || "#6366f1";
+  };
+
+  const handleExportPDF = async () => {
+    if (!exportRef.current) {
+      message.error("Calendar content not available for export");
+      return;
+    }
+
+    setExporting(true);
+    try {
+      message.loading({
+        content: "Generating PDF...",
+        key: "pdf-export",
+        duration: 0,
+      });
+
+      // Get the calendar container
+      const calendarElement = exportRef.current;
+      if (!calendarElement) {
+        throw new Error("Calendar element not found");
       }
 
-      // Check individual event types
-      event.eventTypes.forEach((et, idx) => {
-        const start = new Date(et.startDate);
-        const end = new Date(et.endDate);
+      // Find the parent container that holds both calendar and events
+      const parentContainer = calendarElement.parentElement;
+      const allSections = parentContainer.querySelectorAll(
+        ".bg-white.rounded-2xl"
+      );
 
-        if (
-          date >= new Date(start.toDateString()) &&
-          date <= new Date(end.toDateString())
-        ) {
-          // Avoid duplicate if already added as main event
-          if (idx > 0 || !eventsOnDate.some((e) => e.id === event._id)) {
-            eventsOnDate.push({
-              id: `${event._id}-${idx}`,
-              name: `${event.eventName} - ${et.eventType}`,
-              client: event.clientName,
-              type: "subEvent",
-              eventType: et.eventType,
-              venue: et.venueLocation,
-              amount: et.agreedAmount || event.agreedAmount,
-            });
-          }
+      // Create a container for export
+      const exportContainer = document.createElement("div");
+      exportContainer.style.position = "absolute";
+      exportContainer.style.left = "-9999px";
+      exportContainer.style.top = "0px";
+      exportContainer.style.width = calendarElement.offsetWidth + "px";
+      exportContainer.style.backgroundColor = "#ffffff";
+      exportContainer.style.padding = "20px";
+
+      // Find calendar section and events section
+      let calendarSection = null;
+      let eventsSection = null;
+
+      allSections.forEach((section) => {
+        const hasCalendar = section.querySelector(".fc");
+        const hasEventsHeading =
+          section.textContent?.includes("Events This Month");
+
+        if (hasCalendar) {
+          calendarSection = section;
+        } else if (hasEventsHeading) {
+          eventsSection = section;
         }
       });
-    });
 
-    return eventsOnDate;
+      // Clone calendar
+      if (calendarSection) {
+        const clonedCalendar = calendarSection.cloneNode(true);
+        clonedCalendar.style.marginBottom = "20px";
+        exportContainer.appendChild(clonedCalendar);
+      }
+
+      // Clone events section if it exists
+      if (eventsSection) {
+        const clonedEvents = eventsSection.cloneNode(true);
+        exportContainer.appendChild(clonedEvents);
+      }
+
+      document.body.appendChild(exportContainer);
+
+      // Use html2canvas to capture the content
+      const canvas = await html2canvas(exportContainer, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: "#ffffff",
+        width: exportContainer.offsetWidth,
+        height: exportContainer.scrollHeight,
+        windowWidth: exportContainer.scrollWidth,
+        windowHeight: exportContainer.scrollHeight,
+      });
+
+      // Remove export container
+      document.body.removeChild(exportContainer);
+
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      // Calculate PDF dimensions (A4 in pixels at 96 DPI)
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+      const mmToPx = 3.779527559; // Conversion factor
+      const maxPdfWidth = pdfWidth * mmToPx;
+      const maxPdfHeight = pdfHeight * mmToPx;
+
+      // Calculate dimensions to fit content
+      let finalWidth = imgWidth;
+      let finalHeight = imgHeight;
+
+      // Scale down if too large
+      if (imgWidth > maxPdfWidth || imgHeight > maxPdfHeight) {
+        const scale = Math.min(
+          maxPdfWidth / imgWidth,
+          maxPdfHeight / imgHeight
+        );
+        finalWidth = imgWidth * scale;
+        finalHeight = imgHeight * scale;
+      }
+
+      // Create PDF
+      const pdf = new jsPDF({
+        orientation: finalWidth > finalHeight ? "landscape" : "portrait",
+        unit: "mm",
+        format: [pdfWidth, pdfHeight],
+      });
+
+      // Calculate position to center if needed
+      const xPos = 0;
+      const yPos = 0;
+
+      // Convert pixels to mm for PDF
+      const widthMm = finalWidth / mmToPx;
+      const heightMm = finalHeight / mmToPx;
+
+      // Add image to PDF - scale to fit page
+      pdf.addImage(
+        imgData,
+        "PNG",
+        xPos,
+        yPos,
+        widthMm,
+        heightMm,
+        undefined,
+        "FAST"
+      );
+
+      // Add additional pages if content is taller than one page
+      const pageHeight = pdf.internal.pageSize.height;
+      if (heightMm > pageHeight) {
+        let position = heightMm - pageHeight;
+
+        while (position > 0) {
+          pdf.addPage();
+          pdf.addImage(
+            imgData,
+            "PNG",
+            xPos,
+            -position / mmToPx,
+            widthMm,
+            heightMm,
+            undefined,
+            "FAST"
+          );
+          position -= pageHeight;
+        }
+      }
+
+      // Generate filename with current month and year
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ];
+      const month = selectedMonth.getMonth();
+      const year = selectedMonth.getFullYear();
+      const filename = `Event_Calendar_${monthNames[month]}_${year}.pdf`;
+
+      // Save PDF
+      pdf.save(filename);
+
+      message.success({
+        content: "PDF exported successfully!",
+        key: "pdf-export",
+      });
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      message.error({
+        content: "Failed to export PDF. Please try again.",
+        key: "pdf-export",
+        duration: 5,
+      });
+    } finally {
+      setExporting(false);
+    }
   };
 
-  const changeMonth = (direction) => {
-    setCurrentMonth((prev) => {
-      const newDate = new Date(prev);
-      newDate.setMonth(prev.getMonth() + direction);
-      return newDate;
-    });
+  const renderEventContent = (eventInfo) => {
+    try {
+      const { clientName, eventType, venue, hasMultipleTypes } =
+        eventInfo.event.extendedProps || {};
+
+      return (
+        <div className="p-1 text-xs overflow-hidden">
+          <div className="font-semibold truncate">{clientName || "Event"}</div>
+          {hasMultipleTypes && eventType && (
+            <div className="truncate opacity-90">{eventType}</div>
+          )}
+          {venue && (
+            <div className="truncate opacity-75 flex items-center gap-1">
+              <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate">{venue}</span>
+            </div>
+          )}
+        </div>
+      );
+    } catch (error) {
+      console.error("Error rendering event content:", error);
+      return (
+        <div className="p-1 text-xs">
+          <div className="font-semibold">Event</div>
+        </div>
+      );
+    }
   };
 
-  const handlePrint = () => {
-    window.print();
+  const getMonthEvents = () => {
+    if (!selectedMonth || !events || events.length === 0) {
+      return [];
+    }
+
+    try {
+      const month = selectedMonth.getMonth();
+      const year = selectedMonth.getFullYear();
+
+      return events.filter((event) => {
+        if (!event || !event.eventTypes || !Array.isArray(event.eventTypes)) {
+          return false;
+        }
+
+        return event.eventTypes.some((et) => {
+          if (!et || !et.startDate) {
+            return false;
+          }
+
+          try {
+            const start = new Date(et.startDate);
+            const end = et.endDate
+              ? new Date(et.endDate)
+              : new Date(et.startDate);
+
+            // Validate dates
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+              return false;
+            }
+
+            const startMonth = start.getMonth();
+            const startYear = start.getFullYear();
+            const endMonth = end.getMonth();
+            const endYear = end.getFullYear();
+
+            // Check if event overlaps with the selected month
+            // Event can start before, during, or end during/after the month
+            const eventStart = new Date(startYear, startMonth, 1);
+            const eventEnd = new Date(endYear, endMonth + 1, 0);
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+
+            // Check if there's any overlap
+            return eventStart <= monthEnd && eventEnd >= monthStart;
+          } catch (error) {
+            console.error("Error processing event date:", error);
+            return false;
+          }
+        });
+      });
+    } catch (error) {
+      console.error("Error filtering month events:", error);
+      return [];
+    }
   };
 
-  const { daysInMonth, startingDayOfWeek, year, month } =
-    getDaysInMonth(currentMonth);
-  const monthNames = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const formatDate = (dateString) => {
+    try {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid Date";
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+    } catch (error) {
+      console.error("Error formatting date:", error);
+      return "N/A";
+    }
+  };
 
-  const calendarDays = [];
-  for (let i = 0; i < startingDayOfWeek; i++) {
-    calendarDays.push(null);
-  }
-  for (let day = 1; day <= daysInMonth; day++) {
-    calendarDays.push(day);
-  }
+  const formatTime = (dateString) => {
+    try {
+      if (!dateString) return "N/A";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "Invalid Time";
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (error) {
+      console.error("Error formatting time:", error);
+      return "N/A";
+    }
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-lg text-gray-600">Loading events...</div>
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="text-lg text-gray-600">Loading events...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
       <style>{`
         @media print {
           .no-print { display: none !important; }
@@ -153,205 +494,302 @@ const CalendarClients = () => {
             margin: 0 !important;
             padding: 20px !important;
           }
-          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+          body { 
+            print-color-adjust: exact; 
+            -webkit-print-color-adjust: exact;
+            background: white !important;
+          }
+        }
+        
+        .fc {
+          font-family: inherit;
+        }
+        
+        .fc .fc-toolbar-title {
+          font-size: 1.75rem;
+          font-weight: 700;
+          color: #1f2937;
+        }
+        
+        .fc-theme-standard td, .fc-theme-standard th {
+          border-color: #e5e7eb;
+        }
+        
+        .fc-theme-standard .fc-scrollgrid {
+          border-color: #e5e7eb;
+        }
+        
+        .fc .fc-daygrid-day-number {
+          padding: 8px;
+          font-weight: 600;
+          color: #374151;
+        }
+        
+        .fc .fc-daygrid-day.fc-day-today {
+          background-color: #dbeafe !important;
+        }
+        
+        .fc .fc-col-header-cell {
+          background-color: #f9fafb;
+          font-weight: 600;
+          color: #4b5563;
+          padding: 12px 0;
+        }
+        
+        .fc-event {
+          cursor: pointer;
+          margin: 2px 0;
+          border-radius: 4px;
+          border-width: 1px;
+        }
+        
+        .fc-event:hover {
+          opacity: 0.9;
+          transform: translateY(-1px);
+          transition: all 0.2s;
+        }
+        
+        .fc .fc-button {
+          background-color: #4f46e5;
+          border-color: #4f46e5;
+          text-transform: capitalize;
+          font-weight: 500;
+          padding: 8px 16px;
+        }
+        
+        .fc .fc-button:hover {
+          background-color: #4338ca;
+          border-color: #4338ca;
+        }
+        
+        .fc .fc-button-primary:disabled {
+          background-color: #9ca3af;
+          border-color: #9ca3af;
+        }
+        
+        .fc-daygrid-event {
+          white-space: normal !important;
+          overflow: visible !important;
+        }
+        
+        .fc-daygrid-day-frame {
+          overflow: visible !important;
+        }
+        
+        .fc-daygrid-day-events {
+          margin-bottom: 0 !important;
+        }
+        
+        .fc-more-link {
+          font-weight: 600 !important;
+          cursor: pointer !important;
+        }
+        
+        .fc-popover {
+          max-height: 400px !important;
+          overflow-y: auto !important;
+        }
+        
+        .fc-popover-body {
+          max-height: 350px !important;
+          overflow-y: auto !important;
         }
       `}</style>
 
       <div className="max-w-7xl mx-auto print-full">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow-sm p-6 mb-4 no-print">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Calendar className="w-8 h-8 text-blue-600" />
-              <h1 className="text-2xl font-bold text-gray-800">
-                Event Calendar
-              </h1>
-            </div>
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Printer className="w-5 h-5" />
-              Print Calendar
-            </button>
-          </div>
-        </div>
-
-        {/* Month Navigation */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => changeMonth(-1)}
-              className="no-print p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronLeft className="w-6 h-6 text-gray-600" />
-            </button>
-            <h2 className="text-2xl font-bold text-gray-800">
-              {monthNames[month]} {year}
-            </h2>
-            <button
-              onClick={() => changeMonth(1)}
-              className="no-print p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <ChevronRight className="w-6 h-6 text-gray-600" />
-            </button>
-          </div>
-        </div>
-
-        {/* Calendar Grid */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-          {/* Day Headers */}
-          <div className="grid grid-cols-7 bg-gray-100 border-b">
-            {dayNames.map((day) => (
-              <div
-                key={day}
-                className="p-3 text-center font-semibold text-gray-700 text-sm"
-              >
-                {day}
+        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 no-print border border-indigo-100">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
+              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
+                <Calendar className="w-8 h-8 text-white" />
               </div>
-            ))}
+              <div>
+                <h1 className="text-3xl font-bold text-gray-800">
+                  Event Calendar
+                </h1>
+                <p className="text-gray-600 mt-1">
+                  Manage and view all your events
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleExportPDF}
+              disabled={exporting || loading}
+              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+            >
+              {exporting ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Exporting...
+                </>
+              ) : (
+                <>
+                  <Download className="w-5 h-5" />
+                  Export to PDF
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* Calendar */}
+        <div
+          ref={exportRef}
+          className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100"
+        >
+          <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            headerToolbar={{
+              left: "prev,next today",
+              center: "title",
+              right: "dayGridMonth",
+            }}
+            events={getCalendarEvents()}
+            eventContent={renderEventContent}
+            height="auto"
+            dayMaxEvents={false} // Show all events, no "+X more" limit
+            moreLinkClick="popover" // Show all events in a popover if needed
+            datesSet={(dateInfo) => {
+              try {
+                // Use the first visible date to determine the month
+                if (dateInfo.start) {
+                  setSelectedMonth(new Date(dateInfo.start));
+                }
+              } catch (error) {
+                console.error("Error setting selected month:", error);
+              }
+            }}
+            eventDidMount={(info) => {
+              try {
+                const {
+                  clientName,
+                  eventType,
+                  venue,
+                  brideName,
+                  groomName,
+                  mainEvent,
+                  agreedAmount,
+                } = info.event.extendedProps;
+
+                let tooltip = `${mainEvent || "Event"}`;
+                if (eventType) tooltip += `\nType: ${eventType}`;
+                tooltip += `\nClient: ${clientName || "Unknown"}`;
+                if (brideName && groomName) {
+                  tooltip += `\n${brideName} & ${groomName}`;
+                }
+                tooltip += `\nVenue: ${venue || "TBD"}`;
+                if (agreedAmount) {
+                  tooltip += `\nAmount: ₹${agreedAmount.toLocaleString()}`;
+                }
+
+                info.el.setAttribute("title", tooltip);
+              } catch (error) {
+                console.error("Error mounting event:", error);
+              }
+            }}
+          />
+        </div>
+
+        {/* Event Details Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-6 border border-indigo-100">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg">
+              <Users className="w-6 h-6 text-white" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-800">
+              Events This Month
+            </h3>
           </div>
 
-          {/* Calendar Days */}
-          <div className="grid grid-cols-7">
-            {calendarDays.map((day, index) => {
-              const date = day ? new Date(year, month, day) : null;
-              const eventsOnDate = date ? getEventsForDate(date) : [];
-              const isToday =
-                date && date.toDateString() === new Date().toDateString();
-
-              return (
-                <div
-                  key={index}
-                  className={`min-h-32 border-b border-r p-2 ${
-                    !day ? "bg-gray-50" : "bg-white"
-                  } ${isToday ? "bg-blue-50" : ""}`}
-                >
-                  {day && (
-                    <>
-                      <div
-                        className={`text-sm font-semibold mb-2 ${
-                          isToday ? "text-blue-600" : "text-gray-700"
-                        }`}
-                      >
-                        {day}
-                      </div>
-                      <div className="space-y-1">
-                        {eventsOnDate.map((event, idx) => (
-                          <div
-                            key={idx}
-                            className={`text-xs p-1.5 rounded ${
-                              event.type === "main"
-                                ? "bg-blue-100 text-blue-800 border border-blue-200"
-                                : "bg-green-100 text-green-800 border border-green-200"
-                            }`}
-                            title={`${event.name}\nClient: ${
-                              event.client
-                            }\nVenue: ${event.venue || "N/A"}\nAmount: ₹${
-                              event.amount?.toLocaleString() || "N/A"
-                            }`}
-                          >
-                            <div className="font-semibold truncate">
-                              {event.client}
-                            </div>
-                            <div className="truncate opacity-90">
-                              {event.eventType}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
+          <div className="grid gap-4">
+            {getMonthEvents().length === 0 ? (
+              <div className="text-center py-12">
+                <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="w-10 h-10 text-gray-400" />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mt-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">Legend</h3>
-          <div className="flex flex-wrap gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-100 border border-blue-200 rounded"></div>
-              <span className="text-sm text-gray-600">Main Event</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-green-100 border border-green-200 rounded"></div>
-              <span className="text-sm text-gray-600">Event Type</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 bg-blue-50 rounded"></div>
-              <span className="text-sm text-gray-600">Today</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Event Summary */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mt-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
-            Events in {monthNames[month]} {year}
-          </h3>
-          <div className="space-y-3">
-            {events
-              .filter((event) => {
-                const hasEventInMonth = event.eventTypes.some((et) => {
-                  const start = new Date(et.startDate);
-                  const end = new Date(et.endDate);
-                  return (
-                    (start.getMonth() === month &&
-                      start.getFullYear() === year) ||
-                    (end.getMonth() === month && end.getFullYear() === year)
-                  );
-                });
-                return hasEventInMonth;
-              })
-              .map((event) => (
+                <p className="text-gray-500 text-lg">
+                  No events scheduled for this month
+                </p>
+              </div>
+            ) : (
+              getMonthEvents().map((event) => (
                 <div
                   key={event._id}
-                  className="border-l-4 border-blue-500 pl-4 py-2"
+                  className="border-l-4 rounded-lg p-6 bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-shadow"
+                  style={{ borderColor: getEventColor(event.eventName) }}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="font-semibold text-gray-800">
-                        {event.eventName}
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <span
+                          className="px-3 py-1 rounded-full text-sm font-semibold text-white"
+                          style={{
+                            backgroundColor: getEventColor(event.eventName),
+                          }}
+                        >
+                          {event.eventName}
+                        </span>
+                      </div>
+                      <h4 className="text-xl font-bold text-gray-800 mb-1">
+                        {event.clientName}
                       </h4>
-                      <p className="text-sm text-gray-600">
-                        Client: {event.clientName}
-                      </p>
-                      {event.brideName && (
-                        <p className="text-sm text-gray-600">
+                      {event.brideName && event.groomName && (
+                        <p className="text-gray-600 flex items-center gap-2">
+                          <Users className="w-4 h-4" />
                           {event.brideName} & {event.groomName}
                         </p>
                       )}
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-800">
-                        ₹{event.agreedAmount?.toLocaleString()}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {event.eventTypes.length} event
-                        {event.eventTypes.length > 1 ? "s" : ""}
-                      </p>
-                    </div>
                   </div>
-                  <div className="mt-2 space-y-1">
+
+                  <div className="space-y-3">
                     {event.eventTypes.map((et, idx) => (
                       <div
                         key={idx}
-                        className="text-xs text-gray-600 bg-gray-50 p-2 rounded"
+                        className="bg-white rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
                       >
-                        <span className="font-medium">{et.eventType}</span> -{" "}
-                        {et.venueLocation}
-                        <span className="ml-2">
-                          ({new Date(et.startDate).toLocaleDateString()} -{" "}
-                          {new Date(et.endDate).toLocaleDateString()})
-                        </span>
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                              <div
+                                className="w-2 h-2 rounded-full"
+                                style={{
+                                  backgroundColor: getEventColor(
+                                    event.eventName
+                                  ),
+                                }}
+                              ></div>
+                              {et.eventType}
+                            </div>
+                            <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
+                              <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-600" />
+                              <span>{et.venueLocation}</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="w-4 h-4 flex-shrink-0 text-indigo-600" />
+                              <span>
+                                {formatDate(et.startDate)} at{" "}
+                                {formatTime(et.startDate)}
+                                {et.startDate !== et.endDate && (
+                                  <>
+                                    {" "}
+                                    → {formatDate(et.endDate)} at{" "}
+                                    {formatTime(et.endDate)}
+                                  </>
+                                )}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              ))}
+              ))
+            )}
           </div>
         </div>
       </div>
