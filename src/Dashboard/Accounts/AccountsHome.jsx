@@ -101,7 +101,7 @@ const AccountsHome = () => {
       day: "numeric",
     });
 
-const navButtons = [
+  const navButtons = [
     {
       label: "EMI's and Interest",
       route: "/user/viewbills",
@@ -141,8 +141,8 @@ const navButtons = [
       ),
     },
     {
-      label: "View Playbook",
-      route: "/user/playbook",
+      label: "View Daybook",
+      route: "/user/daybook",
       icon: (
         <svg
           className="w-5 h-5"

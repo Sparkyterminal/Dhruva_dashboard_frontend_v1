@@ -123,8 +123,8 @@ const ApproverHome = () => {
   //     ),
   //   },
   //   {
-  //     label: "View Playbook",
-  //     route: "/approver/playbook",
+  //     label: "View Daybook",
+  //     route: "/approver/daybook",
   //     icon: (
   //       <svg
   //         className="w-5 h-5"
@@ -181,7 +181,7 @@ const ApproverHome = () => {
   //   },
   // ];
 
-    const navButtons = [
+  const navButtons = [
     {
       label: "EMI's and Interest",
       route: "/approver/viewbills",
@@ -221,8 +221,8 @@ const ApproverHome = () => {
       ),
     },
     {
-      label: "View Playbook",
-      route: "/approver/playbook",
+      label: "View Daybook",
+      route: "/approver/daybook",
       icon: (
         <svg
           className="w-5 h-5"

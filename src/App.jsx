@@ -50,7 +50,7 @@ import EditBill from "./Dashboard/Accounts/Bills/EditBill";
 import ViewBill from "./Dashboard/Accounts/Bills/ViewBill";
 import ViewClientsBookings from "./Dashboard/Accounts/ViewClientsBookings";
 import Departmentwise from "./Dashboard/Accounts/Departmentwise";
-import PlayBook from "./Dashboard/Accounts/PlayBook";
+import PlayBook from "./Dashboard/Accounts/playbook";
 import ViewVendors from "./Dashboard/Accounts/ViewVendors";
 import ViewChecklist from "./Components/ViewChecklist";
 import EditChecklist from "./Components/EditChecklist";
@@ -131,13 +131,19 @@ const App = () => {
             <>
               <Route path="/user" element={<AccountsHome />} />
               <Route path="/user/departments" element={<Departments />} />
-              <Route path="/user/departments/:id" element={<Departmentwise />} />
+              <Route
+                path="/user/departments/:id"
+                element={<Departmentwise />}
+              />
               <Route path="/user/changepassword" element={<ChangePassword />} />
-              <Route path="/user/playbook" element={<PlayBook />} />
-               <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
-              <Route path="/user/viewclientbookings" element={<ViewClientsBookings />} />
+              <Route
+                path="/user/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
               <Route path="/user/addbill" element={<AddBill />} />
               <Route path="/user/editbill/:id" element={<EditBill />} />
               <Route path="/user/viewbills" element={<ViewBill />} />
@@ -150,10 +156,7 @@ const App = () => {
                 path="/user/departments/:id"
                 element={<DepartmentsTable />}
               />
-              <Route
-                path="/user"
-                element={<Navigate to="/user" replace />}
-              />
+              <Route path="/user" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isMarketing ? (
@@ -165,13 +168,16 @@ const App = () => {
               <Route path="/user/addclient" element={<AddInflow />} />
               <Route path="/user/editclient/:id" element={<EditInflow />} />
               <Route path="/user/viewclient" element={<ViewInflow />} />
-               {/* <Route path="/user/addvendor" element={<AddVendor />} />
+              {/* <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} /> */}
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
-              <Route path="/user/editchecklists/:id" element={<EditChecklist />} />
+              <Route
+                path="/user/editchecklists/:id"
+                element={<EditChecklist />}
+              />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
@@ -193,13 +199,28 @@ const App = () => {
             <>
               <Route path="/owner" element={<HomeOwner />} />
               <Route path="/owner/departments" element={<Departments />} />
-              <Route path="/owner/departments/:id" element={<Departmentwise />} />
-              <Route path="/owner/changepassword" element={<ChangePassword />} />
-              <Route path="/owner/playbook" element={<PlayBook />} />
-               <Route path="/owner/addvendor" element={<AddVendor />} />
+              <Route
+                path="/owner/departments/:id"
+                element={<Departmentwise />}
+              />
+              <Route
+                path="/owner/changepassword"
+                element={<ChangePassword />}
+              />
+              <Route path="/owner/daybook" element={<PlayBook />} />
+              <Route path="/owner/addvendor" element={<AddVendor />} />
               <Route path="/owner/viewvendors" element={<ViewVendor />} />
               <Route path="/owner/editvendor/:id" element={<EditVendor />} />
-              <Route path="/owner/viewclientbookings" element={<ViewClientsBookings />} />
+              <Route
+                path="/owner/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
+              <Route path="/owner/checklists" element={<ViewChecklist />} />
+              <Route path="/owner/addchecklists" element={<AddChecklist />} />
+              <Route
+                path="/owner/editchecklists/:id"
+                element={<EditChecklist />}
+              />
               <Route path="/owner/addbill" element={<AddBill />} />
               <Route path="/owner/editbill/:id" element={<EditBill />} />
               <Route path="/owner/viewbills" element={<ViewBill />} />
@@ -208,7 +229,7 @@ const App = () => {
                 path="/owner/allrequirements"
                 element={<AllRequirementsTable />}
               />
-              
+
               <Route path="*" element={<Navigate to="/owner" replace />} />
             </>
           ) : isApprover ? (
@@ -216,13 +237,31 @@ const App = () => {
             <>
               <Route path="/approver/home" element={<ApproverHome />} />
               <Route path="/approver/departments" element={<Departments />} />
-              <Route path="/approver/departments/:id" element={<Departmentwise />} />
-              <Route path="/approver/changepassword" element={<ChangePassword />} />
-              <Route path="/approver/playbook" element={<PlayBook />} />
-               <Route path="/approver/addvendor" element={<AddVendor />} />
+              <Route
+                path="/approver/departments/:id"
+                element={<Departmentwise />}
+              />
+              <Route
+                path="/approver/changepassword"
+                element={<ChangePassword />}
+              />
+              <Route path="/approver/daybook" element={<PlayBook />} />
+              <Route path="/approver/addvendor" element={<AddVendor />} />
               <Route path="/approver/viewvendors" element={<ViewVendor />} />
+              <Route path="/approver/checklists" element={<ViewChecklist />} />
+              <Route
+                path="/approver/addchecklists"
+                element={<AddChecklist />}
+              />
+              <Route
+                path="/approver/editchecklists/:id"
+                element={<EditChecklist />}
+              />
               <Route path="/approver/editvendor/:id" element={<EditVendor />} />
-              <Route path="/approver/viewclientbookings" element={<ViewClientsBookings />} />
+              <Route
+                path="/approver/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
               <Route path="/approver/addbill" element={<AddBill />} />
               <Route path="/approver/editbill/:id" element={<EditBill />} />
               <Route path="/approver/viewbills" element={<ViewBill />} />
@@ -230,7 +269,7 @@ const App = () => {
                 path="/approver/allrequirements"
                 element={<AllRequirementsTable />}
               />
-              
+
               <Route
                 path="*"
                 element={<Navigate to="/approver/home" replace />}
