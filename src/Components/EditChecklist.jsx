@@ -1,11 +1,11 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { API_BASE_URL } from "../../config";
+import { useSelector } from "react-redux";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { message } from "antd";
-import { useSelector } from "react-redux";
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 
 // Custom styles for glassmorphism and animations
 const customStyles = `
@@ -17,11 +17,9 @@ const customStyles = `
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.35);
   }
-
   .slide-in-top {
     animation: slide-in-top 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
   }
-
   @keyframes slide-in-top {
     0% {
       transform: translateY(-50px);
@@ -32,7 +30,6 @@ const customStyles = `
       opacity: 1;
     }
   }
-
   .gradient-text {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     -webkit-background-clip: text;
@@ -41,26 +38,32 @@ const customStyles = `
   }
 `;
 
+const emptyChecklist = {
+  checklistName: "",
+  units: "",
+  quantity: "",
+  length: "",
+  breadth: "",
+  depth: "",
+  rate: "",
+};
+
 const EditChecklist = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const user = useSelector((state) => state.user.value);
+  const [heading, setHeading] = useState("");
+  const [eventReference, setEventReference] = useState("");
+  const [subHeadings, setSubHeadings] = useState([
+    {
+      subHeadingName: "",
+      checklists: [{ ...emptyChecklist }],
+    },
+  ]);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
-  const [heading, setHeading] = useState('');
-  const [eventReference, setEventReference] = useState('');
-  const emptyChecklistPoint = {
-    checklistPoint: '',
-    units: '',
-    length: '',
-    breadth: '',
-    depth: '',
-    quantity: '',
-    numbers: '',
-    rate: '',
-  };
-  const [points, setPoints] = useState([ { ...emptyChecklistPoint } ]);
-  const [departmentId, setDepartmentId] = useState('');
+
+  const user = useSelector((state) => state.user.value);
+  const departmentId = user.departments[0]?.id;
 
   const config = {
     headers: {
@@ -75,25 +78,38 @@ const EditChecklist = () => {
         config
       );
       const { data } = res.data;
-      setHeading(data.heading || '');
-      setEventReference(data.eventReference || '');
-      // Ensure points are objects with expected keys
-      const fetchedPoints = Array.isArray(data.points) && data.points.length > 0
-        ? data.points.map(p => ({
-            checklistPoint: p.checklistPoint ?? '',
-            units: p.units ?? '',
-            length: p.length ?? '',
-            breadth: p.breadth ?? '',
-            depth: p.depth ?? '',
-            quantity: p.quantity ?? '',
-            numbers: p.numbers ?? '',
-            rate: p.rate ?? '',
-          }))
-        : [ { ...emptyChecklistPoint } ];
-      setPoints(fetchedPoints);
-      setDepartmentId(data.department?.id || '');
+      
+      setHeading(data.heading || "");
+      setEventReference(data.eventReference || "");
+      
+      // Prefill subHeadings and checklists
+      if (data.subHeadings && Array.isArray(data.subHeadings) && data.subHeadings.length > 0) {
+        const fetchedSubHeadings = data.subHeadings.map((sh) => ({
+          subHeadingName: sh.subHeadingName || "",
+          checklists: Array.isArray(sh.checklists) && sh.checklists.length > 0
+            ? sh.checklists.map((c) => ({
+                checklistName: c.checklistName || "",
+                units: c.units || "",
+                quantity: c.quantity || "",
+                length: c.length || "",
+                breadth: c.breadth || "",
+                depth: c.depth || "",
+                rate: c.rate || "",
+              }))
+            : [{ ...emptyChecklist }],
+        }));
+        setSubHeadings(fetchedSubHeadings);
+      } else {
+        setSubHeadings([
+          {
+            subHeadingName: "",
+            checklists: [{ ...emptyChecklist }],
+          },
+        ]);
+      }
     } catch (err) {
       message.error("Failed to fetch checklist");
+      console.error("Error:", err);
       navigate(-1);
     } finally {
       setInitialLoading(false);
@@ -102,62 +118,113 @@ const EditChecklist = () => {
 
   useEffect(() => {
     fetchChecklistData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
-  const addPoint = () => {
-    setPoints([...points, { ...emptyChecklistPoint }]);
+  const addSubHeading = () => {
+    setSubHeadings([
+      ...subHeadings,
+      {
+        subHeadingName: "",
+        checklists: [{ ...emptyChecklist }],
+      },
+    ]);
   };
 
-  const removePoint = (index) => {
-    const newPoints = points.filter((_, i) => i !== index);
-    setPoints(newPoints.length === 0 ? [ { ...emptyChecklistPoint } ] : newPoints);
+  const removeSubHeading = (index) => {
+    const newSubHeadings = subHeadings.filter((_, i) => i !== index);
+    setSubHeadings(
+      newSubHeadings.length === 0
+        ? [
+            {
+              subHeadingName: "",
+              checklists: [{ ...emptyChecklist }],
+            },
+          ]
+        : newSubHeadings
+    );
   };
 
-  const updatePoint = (index, field, value) => {
-    const newPoints = [...points];
-    newPoints[index] = { ...newPoints[index], [field]: value };
-    setPoints(newPoints);
+  const updateSubHeadingName = (index, value) => {
+    const newSubHeadings = [...subHeadings];
+    newSubHeadings[index].subHeadingName = value;
+    setSubHeadings(newSubHeadings);
+  };
+
+  const addChecklist = (subHeadingIndex) => {
+    const newSubHeadings = [...subHeadings];
+    newSubHeadings[subHeadingIndex].checklists.push({ ...emptyChecklist });
+    setSubHeadings(newSubHeadings);
+  };
+
+  const removeChecklist = (subHeadingIndex, checklistIndex) => {
+    const newSubHeadings = [...subHeadings];
+    const checklists = newSubHeadings[subHeadingIndex].checklists.filter(
+      (_, i) => i !== checklistIndex
+    );
+    newSubHeadings[subHeadingIndex].checklists =
+      checklists.length === 0 ? [{ ...emptyChecklist }] : checklists;
+    setSubHeadings(newSubHeadings);
+  };
+
+  const updateChecklist = (subHeadingIndex, checklistIndex, field, value) => {
+    const newSubHeadings = [...subHeadings];
+    newSubHeadings[subHeadingIndex].checklists[checklistIndex][field] = value;
+    setSubHeadings(newSubHeadings);
   };
 
   const handleSubmit = async () => {
-    // Validation
+    // Validate heading
     if (!heading.trim()) {
-      message.error('Please enter a heading');
+      message.error("Please enter a checklist heading");
       return;
     }
 
-    const validPoints = points.filter(p => p.checklistPoint && p.checklistPoint.trim() !== '');
-    if (validPoints.length === 0) {
-      message.error('Please add at least one checklist point');
+    // Validate sub headings
+    const validSubHeadings = subHeadings.filter(
+      (sh) => sh.subHeadingName.trim() !== ""
+    );
+    if (validSubHeadings.length === 0) {
+      message.error("Please add at least one sub heading");
       return;
     }
 
-    if (!departmentId) {
-      message.error('Department ID not found');
-      return;
+    // Validate checklists for each sub heading
+    for (let i = 0; i < validSubHeadings.length; i++) {
+      const validChecklists = validSubHeadings[i].checklists.filter(
+        (c) => c.checklistName.trim() !== ""
+      );
+      if (validChecklists.length === 0) {
+        message.error(
+          `Please add at least one checklist for sub heading "${validSubHeadings[i].subHeadingName}"`
+        );
+        return;
+      }
+      validSubHeadings[i].checklists = validChecklists;
     }
 
     setLoading(true);
-    
+
     const payload = {
       heading: heading.trim(),
-      eventReference: eventReference?.trim() || undefined,
-      points: validPoints,
-      department: departmentId
+      eventReference: eventReference.trim() || undefined,
+      subHeadings: validSubHeadings,
     };
 
     try {
-      await axios.patch(
+      const response = await axios.patch(
         `${API_BASE_URL}checklist/${id}`,
         payload,
         config
       );
 
-      message.success('Checklist updated successfully!');
-      navigate(-1);
+      if (response.status === 200 || response.status === 201) {
+        message.success("Checklist updated successfully!");
+        navigate(-1);
+      }
     } catch (error) {
-      message.error('Failed to update checklist');
-      console.error('Error:', error);
+      message.error("Error updating checklist");
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -188,7 +255,10 @@ const EditChecklist = () => {
         </div>
 
         {/* Form Card */}
-        <div className="glass-card p-8 slide-in-top" style={{ animationDelay: '0.1s' }}>
+        <div
+          className="glass-card p-8 slide-in-top"
+          style={{ animationDelay: "0.1s" }}
+        >
           {/* Heading Field */}
           <div className="mb-6">
             <label className="block text-base font-semibold mb-2 text-indigo-700">
@@ -217,159 +287,254 @@ const EditChecklist = () => {
             />
           </div>
 
-          {/* Checklist Points */}
+          {/* Sub Headings */}
           <div className="mb-6">
             <label className="block text-base font-semibold mb-3 text-indigo-700">
-              Checklist Points <span className="text-pink-500">*</span>
+              Sub Headings <span className="text-pink-500">*</span>
             </label>
 
-            {points.map((point, index) => (
+            {subHeadings.map((subHeading, subHeadingIndex) => (
               <div
-                key={index}
-                className="mb-4 p-4 bg-white/70 border border-indigo-100 rounded-xl shadow-sm slide-in-top"
-                style={{ animationDelay: `${0.1 + index * 0.05}s` }}
+                key={subHeadingIndex}
+                className="mb-6 p-5 bg-white/80 border-2 border-indigo-200 rounded-xl shadow-md slide-in-top"
+                style={{ animationDelay: `${0.1 + subHeadingIndex * 0.05}s` }}
               >
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-indigo-600 font-medium text-lg">
-                    {index + 1}.
-                  </span>
+                {/* Sub Heading Header */}
+                <div className="flex justify-between items-center mb-4 pb-3 border-b border-indigo-100">
+                  <div className="flex-1 mr-4">
+                    <label className="block text-sm font-semibold mb-2 text-indigo-700">
+                      Sub Heading <span className="text-pink-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Enter sub heading name"
+                      value={subHeading.subHeadingName}
+                      onChange={(e) =>
+                        updateSubHeadingName(subHeadingIndex, e.target.value)
+                      }
+                      className="w-full px-4 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                    />
+                  </div>
                   <button
-                    onClick={() => removePoint(index)}
-                    className="p-2 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-300"
-                    disabled={points.length === 1}
-                    title="Remove Point"
+                    onClick={() => removeSubHeading(subHeadingIndex)}
+                    className="p-2 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-300 self-end"
+                    disabled={subHeadings.length === 1}
+                    title="Remove Sub Heading"
                   >
                     <Trash2 size={18} />
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {/* Checklist Point (required) */}
-                  <div className="col-span-1 md:col-span-2">
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Checklist Point <span className="text-pink-500">*</span>
-                    </label>
-                    <textarea
-                      placeholder="Enter checklist point"
-                      value={point.checklistPoint}
-                      onChange={(e) => updatePoint(index, 'checklistPoint', e.target.value)}
-                      rows={2}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent resize-y transition-all duration-300"
-                    />
-                  </div>
+                {/* Checklists for this Sub Heading */}
+                <div className="mb-4">
+                  <label className="block text-sm font-semibold mb-3 text-indigo-700">
+                    Checklists <span className="text-pink-500">*</span>
+                  </label>
 
-                  {/* Units */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Units
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Units"
-                      value={point.units}
-                      onChange={(e) => updatePoint(index, 'units', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                  {subHeading.checklists.map((checklist, checklistIndex) => (
+                    <div
+                      key={checklistIndex}
+                      className="mb-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl shadow-sm slide-in-top"
+                      style={{
+                        animationDelay: `${0.1 + checklistIndex * 0.03}s`,
+                      }}
+                    >
+                      <div className="flex justify-between items-center mb-3">
+                        <span className="text-indigo-600 font-medium">
+                          Checklist {checklistIndex + 1}
+                        </span>
+                        <button
+                          onClick={() =>
+                            removeChecklist(subHeadingIndex, checklistIndex)
+                          }
+                          className="p-2 text-pink-500 hover:bg-pink-50 rounded-xl transition-all duration-300"
+                          disabled={subHeading.checklists.length === 1}
+                          title="Remove Checklist"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
 
-                  {/* Length */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Length
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Length"
-                      value={point.length}
-                      onChange={(e) => updatePoint(index, 'length', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {/* Checklist Name (required) */}
+                        <div className="col-span-1 md:col-span-2 lg:col-span-3">
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Checklist Name{" "}
+                            <span className="text-pink-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Enter checklist name"
+                            value={checklist.checklistName}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "checklistName",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
 
-                  {/* Breadth */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Breadth
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Breadth"
-                      value={point.breadth}
-                      onChange={(e) => updatePoint(index, 'breadth', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                        {/* Units */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Units
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Units"
+                            value={checklist.units}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "units",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
 
-                  {/* Depth */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Depth
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="Depth"
-                      value={point.depth}
-                      onChange={(e) => updatePoint(index, 'depth', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                        {/* Quantity */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Quantity
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Quantity"
+                            value={checklist.quantity}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "quantity",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
 
-                  {/* Quantity */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Quantity
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Quantity"
-                      value={point.quantity}
-                      onChange={(e) => updatePoint(index, 'quantity', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                        {/* Length */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Length
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Length"
+                            value={checklist.length}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "length",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
 
-                  {/* Numbers */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Numbers
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="Numbers"
-                      value={point.numbers}
-                      onChange={(e) => updatePoint(index, 'numbers', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                        {/* Breadth */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Breadth
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Breadth"
+                            value={checklist.breadth}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "breadth",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
 
-                  {/* Rate */}
-                  <div>
-                    <label className="block text-sm font-semibold mb-1 text-indigo-700">
-                      Rate
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Rate"
-                      value={point.rate}
-                      onChange={(e) => updatePoint(index, 'rate', e.target.value)}
-                      className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
-                    />
-                  </div>
+                        {/* Depth */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Depth
+                          </label>
+                          <input
+                            type="text"
+                            placeholder="Depth"
+                            value={checklist.depth}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "depth",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
+
+                        {/* Rate */}
+                        <div>
+                          <label className="block text-sm font-semibold mb-1 text-indigo-700">
+                            Rate
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="Rate"
+                            value={checklist.rate}
+                            onChange={(e) =>
+                              updateChecklist(
+                                subHeadingIndex,
+                                checklistIndex,
+                                "rate",
+                                e.target.value
+                              )
+                            }
+                            className="w-full px-3 py-2 text-base bg-white/60 border border-indigo-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent transition-all duration-300"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    onClick={() => addChecklist(subHeadingIndex)}
+                    className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-300 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2 slide-in-top"
+                    style={{
+                      animationDelay: `${
+                        0.1 + subHeading.checklists.length * 0.03
+                      }s`,
+                    }}
+                  >
+                    <Plus size={18} />
+                    <span className="font-medium">Add Checklist</span>
+                  </button>
                 </div>
               </div>
             ))}
 
             <button
-              onClick={addPoint}
+              onClick={addSubHeading}
               className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2 slide-in-top"
-              style={{ animationDelay: `${0.1 + points.length * 0.05}s` }}
+              style={{
+                animationDelay: `${0.1 + subHeadings.length * 0.05}s`,
+              }}
             >
               <Plus size={18} />
-              <span className="font-medium">Add Point</span>
+              <span className="font-medium">Add Sub Heading</span>
             </button>
           </div>
 
@@ -378,9 +543,11 @@ const EditChecklist = () => {
             onClick={handleSubmit}
             disabled={loading}
             className="w-full px-6 py-4 bg-linear-to-r from-indigo-600 to-purple-600 text-white text-lg font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:from-indigo-300 disabled:to-purple-300 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl slide-in-top"
-            style={{ animationDelay: `${0.1 + (points.length + 1) * 0.05}s` }}
+            style={{
+              animationDelay: `${0.1 + (subHeadings.length + 1) * 0.05}s`,
+            }}
           >
-            {loading ? 'Updating...' : 'Update Checklist'}
+            {loading ? "Updating..." : "Update Checklist"}
           </button>
         </div>
       </div>

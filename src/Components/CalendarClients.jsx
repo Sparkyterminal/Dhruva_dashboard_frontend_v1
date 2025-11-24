@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -23,7 +24,6 @@ const CalendarClients = () => {
   const [exporting, setExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const calendarRef = useRef(null);
-  const exportRef = useRef(null);
   const user = useSelector((state) => state.user.value);
 
   const fetchRequirementsData = useCallback(async () => {
@@ -40,7 +40,6 @@ const CalendarClients = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}events`, config);
 
-      // Handle different response structures
       let eventsData = [];
       if (res.data) {
         if (Array.isArray(res.data.events)) {
@@ -52,7 +51,6 @@ const CalendarClients = () => {
         }
       }
 
-      // Validate and filter out invalid events
       eventsData = eventsData.filter((event) => {
         return (
           event &&
@@ -89,7 +87,6 @@ const CalendarClients = () => {
     fetchRequirementsData();
   }, [fetchRequirementsData]);
 
-  // Transform events for FullCalendar
   const getCalendarEvents = () => {
     const calendarEvents = [];
 
@@ -110,24 +107,32 @@ const CalendarClients = () => {
               ? new Date(et.endDate)
               : new Date(et.startDate);
 
-            // Validate dates
             if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
               console.warn(`Invalid date for event ${event._id}-${idx}`);
               return;
             }
 
-            // Ensure end date is not before start date
             const actualEndDate = endDate < startDate ? startDate : endDate;
+
+            // Display event name only if different from event type
+            const displayName = event.eventName === et.eventType 
+              ? event.eventName 
+              : `${event.eventName} - ${et.eventType}`;
+
+            // Check if start and end date are the same day
+            const isSameDay = startDate.toDateString() === actualEndDate.toDateString();
 
             calendarEvents.push({
               id: `${event._id}-${idx}`,
-              title: event.eventName || "Untitled Event",
+              title: displayName,
               start: startDate.toISOString(),
-              end: new Date(
-                actualEndDate.getTime() + 24 * 60 * 60 * 1000
-              ).toISOString(), // Add 1 day for end date
+              end: isSameDay 
+                ? startDate.toISOString() // Single day event
+                : new Date(actualEndDate.getTime() + 24 * 60 * 60 * 1000).toISOString(), // Multi-day event
+              allDay: true,
               extendedProps: {
                 clientName: event.clientName || "Unknown Client",
+                eventName: event.eventName || "Untitled Event",
                 eventType: et.eventType || "Unknown Type",
                 venue: et.venueLocation || "TBD",
                 brideName: event.brideName,
@@ -135,6 +140,8 @@ const CalendarClients = () => {
                 mainEvent: event.eventName || "Untitled Event",
                 hasMultipleTypes: event.eventTypes.length > 1,
                 agreedAmount: et.agreedAmount || event.agreedAmount || 0,
+                startDate: et.startDate,
+                endDate: et.endDate,
               },
               backgroundColor: getEventColor(event.eventName),
               borderColor: getEventColor(event.eventName),
@@ -154,22 +161,32 @@ const CalendarClients = () => {
   };
 
   const getEventColor = (eventName) => {
-    const colors = {
-      Wedding: "#8b5cf6",
-      "Baby Shower": "#ec4899",
-      Birthday: "#3b82f6",
-      Reception: "#10b981",
-      Engagement: "#f59e0b",
-    };
-    return colors[eventName] || "#6366f1";
+    // Light, pleasant colors for all events
+    const colors = [
+      "#60a5fa", // light blue
+      "#34d399", // light green
+      "#fbbf24", // light yellow
+      "#a78bfa", // light purple
+      "#f472b6", // light pink
+      "#fb923c", // light orange
+      "#4ade80", // light lime
+      "#38bdf8", // light sky
+      "#c084fc", // light violet
+      "#fb7185", // light rose
+      "#facc15", // light amber
+      "#22d3ee", // light cyan
+    ];
+    
+    // Generate consistent color based on event name
+    let hash = 0;
+    for (let i = 0; i < eventName.length; i++) {
+      hash = eventName.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const index = Math.abs(hash) % colors.length;
+    return colors[index];
   };
 
   const handleExportPDF = async () => {
-    if (!exportRef.current) {
-      message.error("Calendar content not available for export");
-      return;
-    }
-
     setExporting(true);
     try {
       message.loading({
@@ -178,166 +195,217 @@ const CalendarClients = () => {
         duration: 0,
       });
 
-      // Get the calendar container
-      const calendarElement = exportRef.current;
-      if (!calendarElement) {
-        throw new Error("Calendar element not found");
+      // Find all sections to export
+      const allSections = document.querySelectorAll('.pdf-export-section');
+      
+      if (!allSections || allSections.length === 0) {
+        throw new Error("No content found to export");
       }
-
-      // Find the parent container that holds both calendar and events
-      const parentContainer = calendarElement.parentElement;
-      const allSections = parentContainer.querySelectorAll(
-        ".bg-white.rounded-2xl"
-      );
-
+      
       // Create a container for export
       const exportContainer = document.createElement("div");
-      exportContainer.style.position = "absolute";
-      exportContainer.style.left = "-9999px";
-      exportContainer.style.top = "0px";
-      exportContainer.style.width = calendarElement.offsetWidth + "px";
-      exportContainer.style.backgroundColor = "#ffffff";
-      exportContainer.style.padding = "20px";
+      exportContainer.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0px;
+        width: 1200px;
+        background-color: #ffffff;
+        padding: 40px;
+      `;
 
-      // Find calendar section and events section
-      let calendarSection = null;
-      let eventsSection = null;
-
+      // Clone all sections
       allSections.forEach((section) => {
-        const hasCalendar = section.querySelector(".fc");
-        const hasEventsHeading =
-          section.textContent?.includes("Events This Month");
-
-        if (hasCalendar) {
-          calendarSection = section;
-        } else if (hasEventsHeading) {
-          eventsSection = section;
-        }
+        const clonedSection = section.cloneNode(true);
+        
+        // Remove any problematic colors and classes
+        const processElement = (element) => {
+          if (!element) return;
+          
+          // Remove Tailwind classes that might use oklch
+          if (element.className && typeof element.className === 'string') {
+            // Remove all Tailwind gradient and color classes
+            element.className = element.className
+              .replace(/bg-gradient-[^\s]*/g, '')
+              .replace(/from-[^\s]*/g, '')
+              .replace(/to-[^\s]*/g, '')
+              .replace(/via-[^\s]*/g, '')
+              .trim();
+          }
+          
+          // Process inline styles
+          if (element.style) {
+            const styleProps = ['backgroundColor', 'color', 'borderColor', 'background', 'backgroundImage'];
+            styleProps.forEach(prop => {
+              const value = element.style[prop];
+              if (value) {
+                if (value.includes('oklch') || value.includes('gradient')) {
+                  if (prop === 'backgroundColor' || prop === 'background' || prop === 'backgroundImage') {
+                    element.style[prop] = '#ffffff';
+                  } else if (prop === 'color') {
+                    element.style[prop] = '#000000';
+                  } else if (prop === 'borderColor') {
+                    element.style[prop] = '#e5e7eb';
+                  }
+                }
+              }
+            });
+          }
+          
+          // Process computed styles for elements that might have oklch
+          if (window.getComputedStyle && element.nodeType === 1) {
+            const computed = window.getComputedStyle(element);
+            const bgColor = computed.backgroundColor;
+            const color = computed.color;
+            const borderColor = computed.borderColor;
+            
+            if (bgColor && bgColor.includes('oklch')) {
+              element.style.backgroundColor = '#ffffff';
+            }
+            if (color && color.includes('oklch')) {
+              element.style.color = '#000000';
+            }
+            if (borderColor && borderColor.includes('oklch')) {
+              element.style.borderColor = '#e5e7eb';
+            }
+          }
+          
+          // Recursively process children
+          if (element.children) {
+            Array.from(element.children).forEach(child => processElement(child));
+          }
+        };
+        
+        processElement(clonedSection);
+        clonedSection.style.marginBottom = '30px';
+        clonedSection.style.backgroundColor = '#ffffff';
+        exportContainer.appendChild(clonedSection);
       });
-
-      // Clone calendar
-      if (calendarSection) {
-        const clonedCalendar = calendarSection.cloneNode(true);
-        clonedCalendar.style.marginBottom = "20px";
-        exportContainer.appendChild(clonedCalendar);
-      }
-
-      // Clone events section if it exists
-      if (eventsSection) {
-        const clonedEvents = eventsSection.cloneNode(true);
-        exportContainer.appendChild(clonedEvents);
-      }
 
       document.body.appendChild(exportContainer);
 
-      // Use html2canvas to capture the content
+      // Wait for fonts and rendering
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Capture with html2canvas
       const canvas = await html2canvas(exportContainer, {
         scale: 2,
         useCORS: true,
         logging: false,
         backgroundColor: "#ffffff",
-        width: exportContainer.offsetWidth,
-        height: exportContainer.scrollHeight,
-        windowWidth: exportContainer.scrollWidth,
-        windowHeight: exportContainer.scrollHeight,
+        allowTaint: false,
+        foreignObjectRendering: false,
+        imageTimeout: 0,
+        ignoreElements: (element) => {
+          // Skip any element that might have oklch colors
+          if (element.style) {
+            const style = window.getComputedStyle(element);
+            if (style.backgroundColor?.includes('oklch') || 
+                style.color?.includes('oklch') || 
+                style.borderColor?.includes('oklch')) {
+              return true;
+            }
+          }
+          return false;
+        },
+        onclone: (clonedDoc) => {
+          // Final pass to remove any remaining oklch colors in cloned document
+          const allElements = clonedDoc.querySelectorAll('*');
+          allElements.forEach(el => {
+            if (el.style) {
+              ['backgroundColor', 'color', 'borderColor', 'background', 'backgroundImage'].forEach(prop => {
+                const value = el.style[prop];
+                if (value && (value.includes('oklch') || value.includes('gradient'))) {
+                  el.style[prop] = prop === 'color' ? '#000000' : '#ffffff';
+                }
+              });
+            }
+          });
+        }
       });
 
-      // Remove export container
       document.body.removeChild(exportContainer);
 
-      const imgData = canvas.toDataURL("image/png", 1.0);
+      const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const imgWidth = canvas.width;
       const imgHeight = canvas.height;
 
-      // Calculate PDF dimensions (A4 in pixels at 96 DPI)
-      const pdfWidth = 210; // A4 width in mm
-      const pdfHeight = 297; // A4 height in mm
-      const mmToPx = 3.779527559; // Conversion factor
-      const maxPdfWidth = pdfWidth * mmToPx;
-      const maxPdfHeight = pdfHeight * mmToPx;
+      // A4 dimensions
+      const pdfWidth = 210;
+      const pdfHeight = 297;
+      const margin = 10;
+      const maxWidth = pdfWidth - (2 * margin);
+      const maxHeight = pdfHeight - (2 * margin);
 
-      // Calculate dimensions to fit content
-      let finalWidth = imgWidth;
-      let finalHeight = imgHeight;
+      // Calculate scaling
+      const widthRatio = maxWidth / (imgWidth / 3.779527559);
+      const heightRatio = maxHeight / (imgHeight / 3.779527559);
+      const scale = Math.min(widthRatio, heightRatio, 1);
 
-      // Scale down if too large
-      if (imgWidth > maxPdfWidth || imgHeight > maxPdfHeight) {
-        const scale = Math.min(
-          maxPdfWidth / imgWidth,
-          maxPdfHeight / imgHeight
-        );
-        finalWidth = imgWidth * scale;
-        finalHeight = imgHeight * scale;
-      }
+      const finalWidth = (imgWidth / 3.779527559) * scale;
+      const finalHeight = (imgHeight / 3.779527559) * scale;
 
       // Create PDF
       const pdf = new jsPDF({
-        orientation: finalWidth > finalHeight ? "landscape" : "portrait",
+        orientation: "portrait",
         unit: "mm",
-        format: [pdfWidth, pdfHeight],
+        format: "a4",
       });
 
-      // Calculate position to center if needed
-      const xPos = 0;
-      const yPos = 0;
+      let yPosition = margin;
+      let remainingHeight = imgHeight;
+      let pageCount = 0;
 
-      // Convert pixels to mm for PDF
-      const widthMm = finalWidth / mmToPx;
-      const heightMm = finalHeight / mmToPx;
-
-      // Add image to PDF - scale to fit page
-      pdf.addImage(
-        imgData,
-        "PNG",
-        xPos,
-        yPos,
-        widthMm,
-        heightMm,
-        undefined,
-        "FAST"
-      );
-
-      // Add additional pages if content is taller than one page
-      const pageHeight = pdf.internal.pageSize.height;
-      if (heightMm > pageHeight) {
-        let position = heightMm - pageHeight;
-
-        while (position > 0) {
+      while (remainingHeight > 0) {
+        if (pageCount > 0) {
           pdf.addPage();
-          pdf.addImage(
-            imgData,
-            "PNG",
-            xPos,
-            -position / mmToPx,
-            widthMm,
-            heightMm,
-            undefined,
-            "FAST"
-          );
-          position -= pageHeight;
+          yPosition = margin;
         }
+
+        const sourceY = pageCount * (maxHeight / scale) * 3.779527559;
+        const sourceHeight = Math.min(
+          remainingHeight,
+          (maxHeight / scale) * 3.779527559
+        );
+
+        // Create a temporary canvas for this page
+        const pageCanvas = document.createElement('canvas');
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sourceHeight;
+        const pageCtx = pageCanvas.getContext('2d');
+        
+        pageCtx.drawImage(
+          canvas,
+          0, sourceY, canvas.width, sourceHeight,
+          0, 0, canvas.width, sourceHeight
+        );
+
+        const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.95);
+
+        pdf.addImage(
+          pageImgData,
+          "JPEG",
+          margin,
+          yPosition,
+          finalWidth,
+          (sourceHeight / 3.779527559) * scale,
+          undefined,
+          "FAST"
+        );
+
+        remainingHeight -= sourceHeight;
+        pageCount++;
+
+        if (pageCount > 10) break; // Safety limit
       }
 
-      // Generate filename with current month and year
       const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
       ];
       const month = selectedMonth.getMonth();
       const year = selectedMonth.getFullYear();
       const filename = `Event_Calendar_${monthNames[month]}_${year}.pdf`;
 
-      // Save PDF
       pdf.save(filename);
 
       message.success({
@@ -347,7 +415,7 @@ const CalendarClients = () => {
     } catch (error) {
       console.error("Error exporting PDF:", error);
       message.error({
-        content: "Failed to export PDF. Please try again.",
+        content: `Failed to export PDF: ${error.message}`,
         key: "pdf-export",
         duration: 5,
       });
@@ -358,17 +426,24 @@ const CalendarClients = () => {
 
   const renderEventContent = (eventInfo) => {
     try {
-      const { clientName, eventType, venue, hasMultipleTypes } =
+      const { eventName, eventType, venue } =
         eventInfo.event.extendedProps || {};
 
+      // Show only event name if it's the same as event type
+      const showEventType = eventName !== eventType;
+
       return (
-        <div className="p-1 text-xs overflow-hidden">
-          <div className="font-semibold truncate">{clientName || "Event"}</div>
-          {hasMultipleTypes && eventType && (
-            <div className="truncate opacity-90">{eventType}</div>
+        <div className="p-1.5 text-xs overflow-hidden leading-tight">
+          <div className="font-semibold truncate text-white mb-0.5">
+            {eventName}
+          </div>
+          {showEventType && (
+            <div className="truncate text-white opacity-90 mb-0.5">
+              {eventType}
+            </div>
           )}
           {venue && (
-            <div className="truncate opacity-75 flex items-center gap-1">
+            <div className="truncate opacity-80 flex items-center gap-1 text-white">
               <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
               <span className="truncate">{venue}</span>
             </div>
@@ -391,26 +466,33 @@ const CalendarClients = () => {
     }
 
     try {
-      const month = selectedMonth.getMonth();
-      const year = selectedMonth.getFullYear();
+      // Get the first day of the calendar view (includes previous month days)
+      const calendarApi = calendarRef.current?.getApi();
+      if (!calendarApi) {
+        return [];
+      }
 
-      return events.filter((event) => {
+      const currentDate = calendarApi.getDate();
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear();
+
+      const filteredEvents = [];
+
+      events.forEach((event) => {
         if (!event || !event.eventTypes || !Array.isArray(event.eventTypes)) {
-          return false;
+          return;
         }
 
-        return event.eventTypes.some((et) => {
+        // Filter event types that fall EXACTLY in the current calendar month
+        const eventTypesInMonth = event.eventTypes.filter((et) => {
           if (!et || !et.startDate) {
             return false;
           }
 
           try {
             const start = new Date(et.startDate);
-            const end = et.endDate
-              ? new Date(et.endDate)
-              : new Date(et.startDate);
+            const end = et.endDate ? new Date(et.endDate) : new Date(et.startDate);
 
-            // Validate dates
             if (isNaN(start.getTime()) || isNaN(end.getTime())) {
               return false;
             }
@@ -420,21 +502,27 @@ const CalendarClients = () => {
             const endMonth = end.getMonth();
             const endYear = end.getFullYear();
 
-            // Check if event overlaps with the selected month
-            // Event can start before, during, or end during/after the month
-            const eventStart = new Date(startYear, startMonth, 1);
-            const eventEnd = new Date(endYear, endMonth + 1, 0);
-            const monthStart = new Date(year, month, 1);
-            const monthEnd = new Date(year, month + 1, 0);
+            // Event type must have start date OR end date in the current month/year
+            const startsInCurrentMonth = (startMonth === month && startYear === year);
+            const endsInCurrentMonth = (endMonth === month && endYear === year);
 
-            // Check if there's any overlap
-            return eventStart <= monthEnd && eventEnd >= monthStart;
+            return startsInCurrentMonth || endsInCurrentMonth;
           } catch (error) {
             console.error("Error processing event date:", error);
             return false;
           }
         });
+
+        // Only include event if it has event types in this month
+        if (eventTypesInMonth.length > 0) {
+          filteredEvents.push({
+            ...event,
+            eventTypes: eventTypesInMonth
+          });
+        }
       });
+
+      return filteredEvents;
     } catch (error) {
       console.error("Error filtering month events:", error);
       return [];
@@ -474,17 +562,17 @@ const CalendarClients = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
+      <div className="flex items-center justify-center h-screen" >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-600">Loading events...</div>
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+          <div className="text-lg text-white">Loading events...</div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-6">
+    <div className="min-h-screen p-6">
       <style>{`
         @media print {
           .no-print { display: none !important; }
@@ -539,27 +627,39 @@ const CalendarClients = () => {
         .fc-event {
           cursor: pointer;
           margin: 2px 0;
-          border-radius: 4px;
-          border-width: 1px;
+          border-radius: 6px;
+          border-width: 0;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          opacity: 1 !important;
         }
         
         .fc-event:hover {
-          opacity: 0.9;
+          opacity: 0.95 !important;
           transform: translateY(-1px);
           transition: all 0.2s;
+          box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        }
+        
+        .fc-event-main {
+          opacity: 1 !important;
+        }
+        
+        .fc-daygrid-event {
+          opacity: 1 !important;
         }
         
         .fc .fc-button {
-          background-color: #4f46e5;
-          border-color: #4f46e5;
+          background-color: #667eea;
+          border-color: #667eea;
           text-transform: capitalize;
           font-weight: 500;
           padding: 8px 16px;
+          border-radius: 8px;
         }
         
         .fc .fc-button:hover {
-          background-color: #4338ca;
-          border-color: #4338ca;
+          background-color: #5568d3;
+          border-color: #5568d3;
         }
         
         .fc .fc-button-primary:disabled {
@@ -573,35 +673,28 @@ const CalendarClients = () => {
         }
         
         .fc-daygrid-day-frame {
-          overflow: visible !important;
+          min-height: 120px !important;
         }
         
         .fc-daygrid-day-events {
           margin-bottom: 0 !important;
         }
         
-        .fc-more-link {
-          font-weight: 600 !important;
-          cursor: pointer !important;
+        .fc-event-main {
+          overflow: visible !important;
         }
         
-        .fc-popover {
-          max-height: 400px !important;
-          overflow-y: auto !important;
-        }
-        
-        .fc-popover-body {
-          max-height: 350px !important;
-          overflow-y: auto !important;
+        .fc-daygrid-event-harness {
+          margin-bottom: 3px !important;
         }
       `}</style>
 
       <div className="max-w-7xl mx-auto print-full">
         {/* Header */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 no-print border border-indigo-100">
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 no-print">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-xl">
+              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
                 <Calendar className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -616,7 +709,8 @@ const CalendarClients = () => {
             <button
               onClick={handleExportPDF}
               disabled={exporting || loading}
-              className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="flex items-center gap-2 px-6 py-3 text-white rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
             >
               {exporting ? (
                 <>
@@ -635,8 +729,7 @@ const CalendarClients = () => {
 
         {/* Calendar */}
         <div
-          ref={exportRef}
-          className="bg-white rounded-2xl shadow-lg p-6 mb-6 border border-indigo-100"
+          className="bg-white rounded-2xl shadow-xl p-6 mb-6 pdf-export-section"
         >
           <FullCalendar
             ref={calendarRef}
@@ -650,13 +743,17 @@ const CalendarClients = () => {
             events={getCalendarEvents()}
             eventContent={renderEventContent}
             height="auto"
-            dayMaxEvents={false} // Show all events, no "+X more" limit
-            moreLinkClick="popover" // Show all events in a popover if needed
+            dayMaxEvents={false}
+            eventMaxStack={10}
             datesSet={(dateInfo) => {
               try {
-                // Use the first visible date to determine the month
                 if (dateInfo.start) {
-                  setSelectedMonth(new Date(dateInfo.start));
+                  // Use the view's current date to get the actual displayed month
+                  const calendarApi = calendarRef.current?.getApi();
+                  if (calendarApi) {
+                    const currentDate = calendarApi.getDate();
+                    setSelectedMonth(currentDate);
+                  }
                 }
               } catch (error) {
                 console.error("Error setting selected month:", error);
@@ -666,16 +763,17 @@ const CalendarClients = () => {
               try {
                 const {
                   clientName,
+                  eventName,
                   eventType,
                   venue,
                   brideName,
                   groomName,
-                  mainEvent,
                   agreedAmount,
                 } = info.event.extendedProps;
 
-                let tooltip = `${mainEvent || "Event"}`;
-                if (eventType) tooltip += `\nType: ${eventType}`;
+                const showEventType = eventName !== eventType;
+                
+                let tooltip = showEventType ? `${eventName} - ${eventType}` : eventName;
                 tooltip += `\nClient: ${clientName || "Unknown"}`;
                 if (brideName && groomName) {
                   tooltip += `\n${brideName} & ${groomName}`;
@@ -694,9 +792,9 @@ const CalendarClients = () => {
         </div>
 
         {/* Event Details Section */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 border border-indigo-100">
+        <div className="bg-white rounded-2xl shadow-xl p-6 pdf-export-section">
           <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 p-2 rounded-lg">
+            <div className="p-2 rounded-lg" style={{ background: '#667eea' }}>
               <Users className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800">
@@ -718,8 +816,11 @@ const CalendarClients = () => {
               getMonthEvents().map((event) => (
                 <div
                   key={event._id}
-                  className="border-l-4 rounded-lg p-6 bg-gradient-to-r from-white to-gray-50 hover:shadow-md transition-shadow"
-                  style={{ borderColor: getEventColor(event.eventName) }}
+                  className="border-l-4 rounded-lg p-6 bg-white hover:shadow-lg transition-shadow"
+                  style={{ 
+                    borderColor: getEventColor(event.eventName),
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  }}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
@@ -746,46 +847,50 @@ const CalendarClients = () => {
                   </div>
 
                   <div className="space-y-3">
-                    {event.eventTypes.map((et, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-white rounded-lg p-4 border border-gray-200 hover:border-indigo-300 transition-colors"
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{
-                                  backgroundColor: getEventColor(
-                                    event.eventName
-                                  ),
-                                }}
-                              ></div>
-                              {et.eventType}
-                            </div>
-                            <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
-                              <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-indigo-600" />
-                              <span>{et.venueLocation}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-gray-600">
-                              <Clock className="w-4 h-4 flex-shrink-0 text-indigo-600" />
-                              <span>
-                                {formatDate(et.startDate)} at{" "}
-                                {formatTime(et.startDate)}
-                                {et.startDate !== et.endDate && (
-                                  <>
-                                    {" "}
-                                    → {formatDate(et.endDate)} at{" "}
-                                    {formatTime(et.endDate)}
-                                  </>
-                                )}
-                              </span>
+                    {event.eventTypes.map((et, idx) => {
+                      const showEventType = event.eventName !== et.eventType;
+                      
+                      return (
+                        <div
+                          key={idx}
+                          className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition-colors"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{
+                                    backgroundColor: getEventColor(
+                                      event.eventName
+                                    ),
+                                  }}
+                                ></div>
+                                {showEventType ? et.eventType : event.eventName}
+                              </div>
+                              <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
+                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#667eea' }} />
+                                <span>{et.venueLocation}</span>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm text-gray-600">
+                                <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#667eea' }} />
+                                <span>
+                                  {formatDate(et.startDate)} at{" "}
+                                  {formatTime(et.startDate)}
+                                  {et.startDate !== et.endDate && et.endDate && (
+                                    <>
+                                      {" "}
+                                      → {formatDate(et.endDate)} at{" "}
+                                      {formatTime(et.endDate)}
+                                    </>
+                                  )}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))

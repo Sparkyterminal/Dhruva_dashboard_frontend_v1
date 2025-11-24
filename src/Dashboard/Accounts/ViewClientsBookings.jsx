@@ -49,6 +49,7 @@ const ViewClientsBookings = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editingAdvances, setEditingAdvances] = useState([]);
   const [savingAdvance, setSavingAdvance] = useState(null);
+  const [editingAdvanceKey, setEditingAdvanceKey] = useState(null); // Track which advance is being edited
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -176,6 +177,7 @@ const ViewClientsBookings = () => {
 
   const showEventDetailsModal = (record) => {
     setSelectedEvent(record);
+    setEditingAdvanceKey(null); // Reset edit mode when opening modal
     // Initialize editing advances based on event type
     let advancesToEdit = [];
 
@@ -226,12 +228,33 @@ const ViewClientsBookings = () => {
     setSelectedEvent(null);
     setEditingAdvances([]);
     setSavingAdvance(null);
+    setEditingAdvanceKey(null);
   };
 
   const handleAdvanceChange = (index, field, value) => {
     const updated = [...editingAdvances];
     updated[index][field] = value;
     setEditingAdvances(updated);
+  };
+
+  // Generate unique key for advance (for tracking edit state)
+  const getAdvanceKey = (advance) => {
+    return `advance-${advance.advanceNumber}-${advance.eventTypeIndex ?? 'common'}`;
+  };
+
+  // Start editing an advance
+  const startEditingAdvance = (advance, index) => {
+    const key = getAdvanceKey(advance);
+    setEditingAdvanceKey(key);
+  };
+
+  // Cancel editing an advance
+  const cancelEditingAdvance = () => {
+    setEditingAdvanceKey(null);
+    // Reset the advance data to original values
+    if (selectedEvent) {
+      showEventDetailsModal(selectedEvent);
+    }
   };
 
   const saveAdvance = async (advanceIndex) => {
@@ -266,7 +289,7 @@ const ViewClientsBookings = () => {
           message.error("Event type not found");
           return;
         }
-        endpoint = `${API_BASE_URL}events/${selectedEvent._id}/eventTypes/${
+        endpoint = `${API_BASE_URL}events/${selectedEvent._id}/event-types/${
           eventType._id || advance.eventTypeIndex
         }/advances/${advance.advanceNumber}`;
       }
@@ -275,11 +298,18 @@ const ViewClientsBookings = () => {
 
       message.success(`Advance ${advance.advanceNumber} updated successfully`);
 
-      // Refresh data
+      // Exit edit mode
+      setEditingAdvanceKey(null);
+
+      // Refresh table data
       await fetchRequirementsData(pagination.current, pagination.pageSize);
 
-      // Update modal with fresh data
-      const updatedEvent = bookings.find((e) => e._id === selectedEvent._id);
+      // Fetch updated event data to refresh modal
+      const updatedEventResponse = await axios.get(
+        `${API_BASE_URL}events/${selectedEvent._id}`,
+        config
+      );
+      const updatedEvent = updatedEventResponse.data.event || updatedEventResponse.data.data || updatedEventResponse.data;
       if (updatedEvent) {
         showEventDetailsModal(updatedEvent);
       }
@@ -555,6 +585,42 @@ const ViewClientsBookings = () => {
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.25 }}
+              >
+                <Card
+                  className="border-0 h-full"
+                  style={{
+                    borderRadius: "14px",
+                    background: "white",
+                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+                    borderLeft: "4px solid #f59e0b",
+                  }}
+                  bodyStyle={{ padding: "20px" }}
+                >
+                  <Statistic
+                    title={
+                      <Text className="text-slate-500 text-sm font-medium">
+                        Pending Amount
+                      </Text>
+                    }
+                    value={totalPendingRevenue}
+                    valueStyle={{
+                      color: "#1e293b",
+                      fontSize: "28px",
+                      fontWeight: "700",
+                      marginTop: "8px",
+                    }}
+                    formatter={(value) => formatAmount(value)}
+                  />
+                </Card>
+              </motion.div>
+            </Col>
+
+            <Col xs={24} sm={12} md={6}>
+              <motion.div
+                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.2 }}
               >
                 <Card
@@ -586,41 +652,7 @@ const ViewClientsBookings = () => {
               </motion.div>
             </Col>
 
-            <Col xs={24} sm={12} md={6}>
-              <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
-              >
-                <Card
-                  className="border-0 h-full"
-                  style={{
-                    borderRadius: "14px",
-                    background: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    borderLeft: "4px solid #f59e0b",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Statistic
-                    title={
-                      <Text className="text-slate-500 text-sm font-medium">
-                        Pending Amount
-                      </Text>
-                    }
-                    value={totalPendingRevenue}
-                    valueStyle={{
-                      color: "#1e293b",
-                      fontSize: "28px",
-                      fontWeight: "700",
-                      marginTop: "8px",
-                    }}
-                    formatter={(value) => formatAmount(value)}
-                  />
-                </Card>
-              </motion.div>
-            </Col>
+           
           </Row>
 
           {/* Table */}
@@ -984,184 +1016,226 @@ const ViewClientsBookings = () => {
                   }
                   bodyStyle={{ padding: "20px" }}
                 >
-                  {editingAdvances.map((advance, advIndex) => (
-                    <Card
-                      key={advIndex}
-                      size="small"
-                      className="border-0 mb-3"
-                      style={{
-                        borderRadius: "10px",
-                        background: "#f8fafc",
-                        border: "1px solid #e2e8f0",
-                      }}
-                      title={
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-slate-800">
-                            Advance #{advance.advanceNumber}
-                          </span>
-                          {advance.receivedAmount > 0 ? (
-                            <Badge
-                              status="success"
-                              text={
-                                <span className="font-medium text-sm text-green-600">
-                                  Received
-                                </span>
-                              }
-                            />
-                          ) : (
-                            <Badge
-                              status="warning"
-                              text={
-                                <span className="font-medium text-sm text-orange-600">
-                                  Pending
-                                </span>
-                              }
-                            />
-                          )}
-                        </div>
-                      }
-                      bodyStyle={{ padding: "16px" }}
-                    >
-                      <Row gutter={[12, 12]}>
-                        <Col span={12}>
-                          <Text className="text-xs text-slate-500 font-medium block mb-1">
-                            Expected Amount
-                          </Text>
-                          <div className="font-semibold text-slate-800 text-sm">
-                            {formatAmount(advance.expectedAmount)}
-                          </div>
-                        </Col>
-                        <Col span={12}>
-                          <Text className="text-xs text-slate-500 font-medium block mb-1">
-                            Received Amount
-                          </Text>
-                          <div className="font-semibold text-green-600 text-sm">
-                            {formatAmount(advance.receivedAmount || 0)}
-                          </div>
-                        </Col>
-                        <Col span={12}>
-                          <Text className="text-xs text-slate-500 font-medium block mb-1">
-                            Expected Date
-                          </Text>
-                          <div className="font-medium text-slate-700 text-sm">
-                            {formatDate(advance.advanceDate)}
-                          </div>
-                        </Col>
-                        <Col span={12}>
-                          <Text className="text-xs text-slate-500 font-medium block mb-1">
-                            Received Date
-                          </Text>
-                          <div className="font-medium text-slate-700 text-sm">
-                            {advance.receivedDate
-                              ? formatDate(advance.receivedDate)
-                              : "-"}
-                          </div>
-                        </Col>
-                      </Row>
+                  {editingAdvances.map((advance, advIndex) => {
+                    const advanceKey = getAdvanceKey(advance);
+                    const isEditing = editingAdvanceKey === advanceKey;
 
-                      {/* Edit Section */}
-                      <Divider
-                        className="my-4"
-                        style={{ marginTop: "16px", marginBottom: "16px" }}
-                      >
-                        <span className="text-xs text-slate-500 font-medium">
-                          Edit Payment
-                        </span>
-                      </Divider>
-                      <Row gutter={[16, 16]}>
-                        <Col span={12}>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            Received Date
-                          </label>
-                          <DatePicker
-                            value={advance.receivedDate}
-                            onChange={(date) =>
-                              handleAdvanceChange(
-                                advIndex,
-                                "receivedDate",
-                                date
-                              )
-                            }
-                            format="DD-MM-YYYY"
-                            size="large"
-                            className="w-full"
-                            placeholder="Select date"
-                            style={{ borderRadius: "8px" }}
-                          />
-                        </Col>
-                        <Col span={12}>
-                          <label className="block text-sm font-semibold text-slate-700 mb-2">
-                            Received Amount
-                          </label>
-                          <InputNumber
-                            value={advance.receivedAmount}
-                            onChange={(value) =>
-                              handleAdvanceChange(
-                                advIndex,
-                                "receivedAmount",
-                                value
-                              )
-                            }
-                            size="large"
-                            className="w-full"
-                            min={0}
-                            formatter={(value) =>
-                              `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                            }
-                            parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
-                            placeholder="Enter received amount"
-                            style={{ borderRadius: "8px" }}
-                          />
-                        </Col>
-                      </Row>
-
-                      <motion.button
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        onClick={() => saveAdvance(advIndex)}
-                        disabled={savingAdvance === advIndex}
-                        className={`w-full mt-3 py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
-                          savingAdvance === advIndex
-                            ? "opacity-50 cursor-not-allowed"
-                            : ""
-                        }`}
+                    return (
+                      <Card
+                        key={advIndex}
+                        size="small"
+                        className="border-0 mb-3"
                         style={{
-                          background:
-                            savingAdvance === advIndex
-                              ? "#94a3b8"
-                              : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                          boxShadow:
-                            savingAdvance === advIndex
-                              ? "none"
-                              : "0 2px 4px rgba(16, 185, 129, 0.2)",
+                          borderRadius: "10px",
+                          background: "#f8fafc",
+                          border: "1px solid #e2e8f0",
                         }}
-                      >
-                        {savingAdvance === advIndex ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                            Saving...
-                          </span>
-                        ) : (
-                          <span className="flex items-center justify-center gap-2">
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M5 13l4 4L19 7"
+                        title={
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-slate-800">
+                              Advance #{advance.advanceNumber}
+                            </span>
+                            {advance.receivedAmount > 0 ? (
+                              <Badge
+                                status="success"
+                                text={
+                                  <span className="font-medium text-sm text-green-600">
+                                    Received
+                                  </span>
+                                }
                               />
-                            </svg>
-                            Save Advance #{advance.advanceNumber}
-                          </span>
+                            ) : (
+                              <Badge
+                                status="warning"
+                                text={
+                                  <span className="font-medium text-sm text-orange-600">
+                                    Pending
+                                  </span>
+                                }
+                              />
+                            )}
+                          </div>
+                        }
+                        bodyStyle={{ padding: "16px" }}
+                      >
+                        <Row gutter={[12, 12]}>
+                          <Col span={12}>
+                            <Text className="text-xs text-slate-500 font-medium block mb-1">
+                              Expected Amount
+                            </Text>
+                            <div className="font-semibold text-slate-800 text-sm">
+                              {formatAmount(advance.expectedAmount)}
+                            </div>
+                          </Col>
+                          <Col span={12}>
+                            <Text className="text-xs text-slate-500 font-medium block mb-1">
+                              Received Amount
+                            </Text>
+                            <div className="font-semibold text-green-600 text-sm">
+                              {formatAmount(advance.receivedAmount || 0)}
+                            </div>
+                          </Col>
+                          <Col span={12}>
+                            <Text className="text-xs text-slate-500 font-medium block mb-1">
+                              Expected Date
+                            </Text>
+                            <div className="font-medium text-slate-700 text-sm">
+                              {formatDate(advance.advanceDate)}
+                            </div>
+                          </Col>
+                          <Col span={12}>
+                            <Text className="text-xs text-slate-500 font-medium block mb-1">
+                              Received Date
+                            </Text>
+                            <div className="font-medium text-slate-700 text-sm">
+                              {advance.receivedDate
+                                ? formatDate(advance.receivedDate)
+                                : "-"}
+                            </div>
+                          </Col>
+                        </Row>
+
+                        {!isEditing ? (
+                          /* Edit Button */
+                          <div className="mt-4">
+                            <Button
+                              type="primary"
+                              icon={<EditOutlined />}
+                              onClick={() => startEditingAdvance(advance, advIndex)}
+                              className="w-full"
+                              size="large"
+                              style={{
+                                borderRadius: "8px",
+                                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                border: "none",
+                              }}
+                            >
+                              Edit Payment
+                            </Button>
+                          </div>
+                        ) : (
+                          /* Edit Section */
+                          <>
+                            <Divider
+                              className="my-4"
+                              style={{ marginTop: "16px", marginBottom: "16px" }}
+                            >
+                              <span className="text-xs text-slate-500 font-medium">
+                                Edit Payment
+                              </span>
+                            </Divider>
+                            <Row gutter={[16, 16]}>
+                              <Col span={12}>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                  Received Date
+                                </label>
+                                <DatePicker
+                                  value={advance.receivedDate}
+                                  onChange={(date) =>
+                                    handleAdvanceChange(
+                                      advIndex,
+                                      "receivedDate",
+                                      date
+                                    )
+                                  }
+                                  format="DD-MM-YYYY"
+                                  size="large"
+                                  className="w-full"
+                                  placeholder="Select date"
+                                  style={{ borderRadius: "8px" }}
+                                />
+                              </Col>
+                              <Col span={12}>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                  Received Amount
+                                </label>
+                                <InputNumber
+                                  value={advance.receivedAmount}
+                                  onChange={(value) =>
+                                    handleAdvanceChange(
+                                      advIndex,
+                                      "receivedAmount",
+                                      value
+                                    )
+                                  }
+                                  size="large"
+                                  className="w-full"
+                                  min={0}
+                                  formatter={(value) =>
+                                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                                  }
+                                  parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
+                                  placeholder="Enter received amount"
+                                  style={{ borderRadius: "8px" }}
+                                />
+                              </Col>
+                            </Row>
+
+                            <Row gutter={[12, 12]} className="mt-4">
+                              <Col span={12}>
+                                <Button
+                                  onClick={cancelEditingAdvance}
+                                  className="w-full"
+                                  size="large"
+                                  style={{ borderRadius: "8px" }}
+                                >
+                                  Cancel
+                                </Button>
+                              </Col>
+                              <Col span={12}>
+                                <motion.button
+                                  whileHover={{ scale: 1.01 }}
+                                  whileTap={{ scale: 0.99 }}
+                                  onClick={() => saveAdvance(advIndex)}
+                                  disabled={savingAdvance === advIndex}
+                                  className={`w-full py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
+                                    savingAdvance === advIndex
+                                      ? "opacity-50 cursor-not-allowed"
+                                      : ""
+                                  }`}
+                                  style={{
+                                    borderRadius: "8px",
+                                    background:
+                                      savingAdvance === advIndex
+                                        ? "#94a3b8"
+                                        : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                    boxShadow:
+                                      savingAdvance === advIndex
+                                        ? "none"
+                                        : "0 2px 4px rgba(16, 185, 129, 0.2)",
+                                  }}
+                                >
+                                  {savingAdvance === advIndex ? (
+                                    <span className="flex items-center justify-center gap-2">
+                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                      Saving...
+                                    </span>
+                                  ) : (
+                                    <span className="flex items-center justify-center gap-2">
+                                      <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          strokeWidth={2}
+                                          d="M5 13l4 4L19 7"
+                                        />
+                                      </svg>
+                                      Save
+                                    </span>
+                                  )}
+                                </motion.button>
+                              </Col>
+                            </Row>
+                          </>
                         )}
-                      </motion.button>
-                    </Card>
-                  ))}
+                      </Card>
+                    );
+                  })}
                 </Card>
               </>
             )}
@@ -1311,6 +1385,9 @@ const ViewClientsBookings = () => {
                               adv.advanceNumber === advance.advanceNumber &&
                               adv.eventTypeIndex === index
                           );
+                          const advanceKey = getAdvanceKey(advance);
+                          const isEditing = editingAdvanceKey === advanceKey;
+
                           return (
                             <Card
                               key={advIndex}
@@ -1387,115 +1464,152 @@ const ViewClientsBookings = () => {
                                 </Col>
                               </Row>
 
-                              {/* Edit Section */}
-                              <Divider
-                                className="my-4"
-                                style={{
-                                  marginTop: "16px",
-                                  marginBottom: "16px",
-                                }}
-                              >
-                                <span className="text-xs text-slate-500 font-medium">
-                                  Edit Payment
-                                </span>
-                              </Divider>
-                              <Row gutter={[16, 16]}>
-                                <Col span={12}>
-                                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Received Date
-                                  </label>
-                                  <DatePicker
-                                    value={advance.receivedDate}
-                                    onChange={(date) =>
-                                      handleAdvanceChange(
-                                        globalIndex,
-                                        "receivedDate",
-                                        date
-                                      )
-                                    }
-                                    format="DD-MM-YYYY"
-                                    size="large"
+                              {!isEditing ? (
+                                /* Edit Button */
+                                <div className="mt-4">
+                                  <Button
+                                    type="primary"
+                                    icon={<EditOutlined />}
+                                    onClick={() => startEditingAdvance(advance, globalIndex)}
                                     className="w-full"
-                                    placeholder="Select date"
-                                    style={{ borderRadius: "8px" }}
-                                  />
-                                </Col>
-                                <Col span={12}>
-                                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Received Amount
-                                  </label>
-                                  <InputNumber
-                                    value={advance.receivedAmount}
-                                    onChange={(value) =>
-                                      handleAdvanceChange(
-                                        globalIndex,
-                                        "receivedAmount",
-                                        value
-                                      )
-                                    }
                                     size="large"
-                                    className="w-full"
-                                    min={0}
-                                    formatter={(value) =>
-                                      `₹ ${value}`.replace(
-                                        /\B(?=(\d{3})+(?!\d))/g,
-                                        ","
-                                      )
-                                    }
-                                    parser={(value) =>
-                                      value.replace(/₹\s?|(,*)/g, "")
-                                    }
-                                    placeholder="Enter received amount"
-                                    style={{ borderRadius: "8px" }}
-                                  />
-                                </Col>
-                              </Row>
-
-                              <motion.button
-                                whileHover={{ scale: 1.01 }}
-                                whileTap={{ scale: 0.99 }}
-                                onClick={() => saveAdvance(globalIndex)}
-                                disabled={savingAdvance === globalIndex}
-                                className={`w-full mt-3 py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
-                                  savingAdvance === globalIndex
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
-                                style={{
-                                  background:
-                                    savingAdvance === globalIndex
-                                      ? "#94a3b8"
-                                      : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                  boxShadow:
-                                    savingAdvance === globalIndex
-                                      ? "none"
-                                      : "0 2px 4px rgba(16, 185, 129, 0.2)",
-                                }}
-                              >
-                                {savingAdvance === globalIndex ? (
-                                  <span className="flex items-center justify-center gap-2">
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                    Saving...
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center justify-center gap-2">
-                                    <svg
-                                      className="w-4 h-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M5 13l4 4L19 7"
+                                    style={{
+                                      borderRadius: "8px",
+                                      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                      border: "none",
+                                    }}
+                                  >
+                                    Edit Payment
+                                  </Button>
+                                </div>
+                              ) : (
+                                /* Edit Section */
+                                <>
+                                  <Divider
+                                    className="my-4"
+                                    style={{
+                                      marginTop: "16px",
+                                      marginBottom: "16px",
+                                    }}
+                                  >
+                                    <span className="text-xs text-slate-500 font-medium">
+                                      Edit Payment
+                                    </span>
+                                  </Divider>
+                                  <Row gutter={[16, 16]}>
+                                    <Col span={12}>
+                                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Received Date
+                                      </label>
+                                      <DatePicker
+                                        value={advance.receivedDate}
+                                        onChange={(date) =>
+                                          handleAdvanceChange(
+                                            globalIndex,
+                                            "receivedDate",
+                                            date
+                                          )
+                                        }
+                                        format="DD-MM-YYYY"
+                                        size="large"
+                                        className="w-full"
+                                        placeholder="Select date"
+                                        style={{ borderRadius: "8px" }}
                                       />
-                                    </svg>
-                                    Save Advance #{advance.advanceNumber}
-                                  </span>
-                                )}
-                              </motion.button>
+                                    </Col>
+                                    <Col span={12}>
+                                      <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Received Amount
+                                      </label>
+                                      <InputNumber
+                                        value={advance.receivedAmount}
+                                        onChange={(value) =>
+                                          handleAdvanceChange(
+                                            globalIndex,
+                                            "receivedAmount",
+                                            value
+                                          )
+                                        }
+                                        size="large"
+                                        className="w-full"
+                                        min={0}
+                                        formatter={(value) =>
+                                          `₹ ${value}`.replace(
+                                            /\B(?=(\d{3})+(?!\d))/g,
+                                            ","
+                                          )
+                                        }
+                                        parser={(value) =>
+                                          value.replace(/₹\s?|(,*)/g, "")
+                                        }
+                                        placeholder="Enter received amount"
+                                        style={{ borderRadius: "8px" }}
+                                      />
+                                    </Col>
+                                  </Row>
+
+                                  <Row gutter={[12, 12]} className="mt-4">
+                                    <Col span={12}>
+                                      <Button
+                                        onClick={cancelEditingAdvance}
+                                        className="w-full"
+                                        size="large"
+                                        style={{ borderRadius: "8px" }}
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </Col>
+                                    <Col span={12}>
+                                      <motion.button
+                                        whileHover={{ scale: 1.01 }}
+                                        whileTap={{ scale: 0.99 }}
+                                        onClick={() => saveAdvance(globalIndex)}
+                                        disabled={savingAdvance === globalIndex}
+                                        className={`w-full py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
+                                          savingAdvance === globalIndex
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : ""
+                                        }`}
+                                        style={{
+                                          borderRadius: "8px",
+                                          background:
+                                            savingAdvance === globalIndex
+                                              ? "#94a3b8"
+                                              : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                          boxShadow:
+                                            savingAdvance === globalIndex
+                                              ? "none"
+                                              : "0 2px 4px rgba(16, 185, 129, 0.2)",
+                                        }}
+                                      >
+                                        {savingAdvance === globalIndex ? (
+                                          <span className="flex items-center justify-center gap-2">
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                            Saving...
+                                          </span>
+                                        ) : (
+                                          <span className="flex items-center justify-center gap-2">
+                                            <svg
+                                              className="w-4 h-4"
+                                              fill="none"
+                                              stroke="currentColor"
+                                              viewBox="0 0 24 24"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M5 13l4 4L19 7"
+                                              />
+                                            </svg>
+                                            Save
+                                          </span>
+                                        )}
+                                      </motion.button>
+                                    </Col>
+                                  </Row>
+                                </>
+                              )}
                             </Card>
                           );
                         })}

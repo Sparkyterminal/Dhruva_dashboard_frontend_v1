@@ -45,15 +45,15 @@ const emptyChecklist = {
   rate: "",
 };
 
-const emptySubHeading = {
-  subHeadingName: "",
-  checklists: [{ ...emptyChecklist }],
-};
-
 const AddChecklist = () => {
   const [heading, setHeading] = useState("");
   const [eventReference, setEventReference] = useState("");
-  const [subHeadings, setSubHeadings] = useState([{ ...emptySubHeading }]);
+  const [subHeadings, setSubHeadings] = useState([
+    {
+      subHeadingName: "",
+      checklists: [{ ...emptyChecklist }],
+    },
+  ]);
   const [loading, setLoading] = useState(false);
 
   const user = useSelector((state) => state.user.value);
@@ -66,13 +66,26 @@ const AddChecklist = () => {
   };
 
   const addSubHeading = () => {
-    setSubHeadings([...subHeadings, { ...emptySubHeading }]);
+    setSubHeadings([
+      ...subHeadings,
+      {
+        subHeadingName: "",
+        checklists: [{ ...emptyChecklist }],
+      },
+    ]);
   };
 
   const removeSubHeading = (index) => {
     const newSubHeadings = subHeadings.filter((_, i) => i !== index);
     setSubHeadings(
-      newSubHeadings.length === 0 ? [{ ...emptySubHeading }] : newSubHeadings
+      newSubHeadings.length === 0
+        ? [
+            {
+              subHeadingName: "",
+              checklists: [{ ...emptyChecklist }],
+            },
+          ]
+        : newSubHeadings
     );
   };
 
@@ -134,10 +147,10 @@ const AddChecklist = () => {
       validSubHeadings[i].checklists = validChecklists;
     }
 
-    if (!departmentId) {
-      alert("Department ID not found");
-      return;
-    }
+    // if (!departmentId) {
+    //   alert("Department ID not found");
+    //   return;
+    // }
 
     setLoading(true);
 
@@ -145,7 +158,7 @@ const AddChecklist = () => {
       heading: heading.trim(),
       eventReference: eventReference.trim() || undefined,
       subHeadings: validSubHeadings,
-      department: departmentId,
+      // department: departmentId,
     };
 
     try {
@@ -159,7 +172,12 @@ const AddChecklist = () => {
         alert("Checklist added successfully!");
         setHeading("");
         setEventReference("");
-        setSubHeadings([{ ...emptySubHeading }]);
+        setSubHeadings([
+          {
+            subHeadingName: "",
+            checklists: [{ ...emptyChecklist }],
+          },
+        ]);
       }
     } catch (error) {
       alert("Error submitting checklist");

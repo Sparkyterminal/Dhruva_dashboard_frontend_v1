@@ -449,9 +449,44 @@ const ViewChecklist = () => {
     }
   };
 
-  const handleViewPoints = (record) => {
+  const handleViewDetails = (record) => {
     setSelectedRecord(record);
     setModalVisible(true);
+  };
+
+  // Helper function to get columns - always show all fields
+  const getChecklistColumns = (checklists) => {
+    const allFields = {
+      checklistName: "Checklist Name",
+      units: "Units",
+      quantity: "Quantity",
+      length: "Length",
+      breadth: "Breadth",
+      depth: "Depth",
+      rate: "Rate",
+    };
+
+    const columns = [
+      {
+        title: "#",
+        key: "index",
+        width: 50,
+        render: (_, __, index) => index + 1,
+      },
+    ];
+
+    // Always show all fields
+    Object.keys(allFields).forEach((field) => {
+      columns.push({
+        title: allFields[field],
+        dataIndex: field,
+        key: field,
+        width: field === "checklistName" ? 200 : 100,
+        render: (text) => (text && text.toString().trim() !== "" ? text : "-"),
+      });
+    });
+
+    return columns;
   };
 
   const exportToPDF = (record) => {
@@ -471,58 +506,82 @@ const ViewChecklist = () => {
       yPosition += 8;
     }
 
-    // Add department if exists
-    if (record.department?.name) {
-      doc.setFontSize(12);
-      doc.setFont(undefined, "normal");
-      doc.text(`Department: ${record.department.name}`, 14, yPosition);
-      yPosition += 10;
+    yPosition += 5;
+
+    // Process each sub heading
+    if (record.subHeadings && Array.isArray(record.subHeadings)) {
+      record.subHeadings.forEach((subHeading, subIndex) => {
+        // Check if we need a new page
+        if (yPosition > 250) {
+          doc.addPage();
+          yPosition = 20;
+        }
+
+        // Add sub heading
+        doc.setFontSize(14);
+        doc.setFont(undefined, "bold");
+        doc.text(
+          `${subIndex + 1}. ${subHeading.subHeadingName}`,
+          14,
+          yPosition
+        );
+        yPosition += 8;
+
+        if (
+          subHeading.checklists &&
+          Array.isArray(subHeading.checklists) &&
+          subHeading.checklists.length > 0
+        ) {
+          // Always show all fields
+          const allFields = ["checklistName", "units", "quantity", "length", "breadth", "depth", "rate"];
+          const fieldLabels = {
+            checklistName: "Checklist Name",
+            units: "Units",
+            quantity: "Quantity",
+            length: "Length",
+            breadth: "Breadth",
+            depth: "Depth",
+            rate: "Rate",
+          };
+
+          // Build table headers - always include all fields
+          const headers = ["#", ...allFields.map(field => fieldLabels[field])];
+
+          const tableData = subHeading.checklists.map((checklist, index) => {
+            const row = [index + 1];
+            allFields.forEach((field) => {
+              const value = checklist[field];
+              row.push(
+                value && value.toString().trim() !== "" ? value : "-"
+              );
+            });
+            return row;
+          });
+
+          // Add table
+          autoTable(doc, {
+            startY: yPosition,
+            head: [headers],
+            body: tableData,
+            theme: "grid",
+            headStyles: {
+              fillColor: [102, 126, 234],
+              fontStyle: "bold",
+              fontSize: 10,
+            },
+            bodyStyles: {
+              fontSize: 9,
+            },
+            margin: { left: 14, right: 14 },
+            didDrawPage: (data) => {
+              yPosition = data.cursor.y + 10;
+            },
+          });
+
+          yPosition = doc.lastAutoTable.finalY + 10;
+        }
+      });
     }
-
-    // Prepare table data
-    const tableData = record.points.map((point, index) => [
-      index + 1,
-      point.checklistPoint || "-",
-      point.units || "-",
-      point.length || "-",
-      point.breadth || "-",
-      point.depth || "-",
-      point.quantity || "-",
-      point.numbers || "-",
-      point.rate || "-",
-    ]);
-
-    // Add table using autoTable
-    autoTable(doc, {
-      startY: yPosition,
-      head: [
-        [
-          "#",
-          "Checkpoint",
-          "Units",
-          "Length",
-          "Breadth",
-          "Depth",
-          "Quantity",
-          "Numbers",
-          "Rate",
-        ],
-      ],
-      body: tableData,
-      theme: "grid",
-      headStyles: {
-        fillColor: [102, 126, 234],
-        fontStyle: "bold",
-        fontSize: 10,
-      },
-      bodyStyles: {
-        fontSize: 9,
-      },
-      columnStyles: {
-        0: { cellWidth: 10 },
-        1: { cellWidth: 35 },
-      },
-    });
 
     doc.save(`${record.heading}-checklist.pdf`);
     message.success("PDF exported successfully");
@@ -536,8 +595,9 @@ const ViewChecklist = () => {
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
             h1 { color: #667eea; margin-bottom: 10px; }
+            h2 { color: #667eea; margin-top: 30px; margin-bottom: 15px; font-size: 16px; }
             .metadata { margin-bottom: 20px; font-size: 14px; color: #666; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
             th { background-color: #667eea; color: white; font-weight: bold; }
             tr:nth-child(even) { background-color: #f8f7ff; }
@@ -551,48 +611,67 @@ const ViewChecklist = () => {
                 ? `<p><strong>Event Reference:</strong> ${record.eventReference}</p>`
                 : ""
             }
-            ${
-              record.department?.name
-                ? `<p><strong>Department:</strong> ${record.department.name}</p>`
-                : ""
-            }
           </div>
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Checkpoint</th>
-                <th>Units</th>
-                <th>Length</th>
-                <th>Breadth</th>
-                <th>Depth</th>
-                <th>Quantity</th>
-                <th>Numbers</th>
-                <th>Rate</th>
-              </tr>
-            </thead>
-            <tbody>
     `;
 
-    record.points.forEach((point, index) => {
-      htmlContent += `
-        <tr>
-          <td>${index + 1}</td>
-          <td>${point.checklistPoint || "-"}</td>
-          <td>${point.units || "-"}</td>
-          <td>${point.length || "-"}</td>
-          <td>${point.breadth || "-"}</td>
-          <td>${point.depth || "-"}</td>
-          <td>${point.quantity || "-"}</td>
-          <td>${point.numbers || "-"}</td>
-          <td>${point.rate || "-"}</td>
-        </tr>
-      `;
-    });
+    // Process each sub heading
+    if (record.subHeadings && Array.isArray(record.subHeadings)) {
+      record.subHeadings.forEach((subHeading, subIndex) => {
+        htmlContent += `<h2>${subIndex + 1}. ${subHeading.subHeadingName}</h2>`;
+
+        if (
+          subHeading.checklists &&
+          Array.isArray(subHeading.checklists) &&
+          subHeading.checklists.length > 0
+        ) {
+          // Always show all fields
+          const allFields = ["checklistName", "units", "quantity", "length", "breadth", "depth", "rate"];
+          const fieldLabels = {
+            checklistName: "Checklist Name",
+            units: "Units",
+            quantity: "Quantity",
+            length: "Length",
+            breadth: "Breadth",
+            depth: "Depth",
+            rate: "Rate",
+          };
+
+          // Build table headers - always include all fields
+          htmlContent += `<table>
+            <thead>
+              <tr>
+                <th>#</th>`;
+
+          allFields.forEach((field) => {
+            htmlContent += `<th>${fieldLabels[field]}</th>`;
+          });
+
+          htmlContent += `</tr>
+            </thead>
+            <tbody>`;
+
+          // Add table rows
+          subHeading.checklists.forEach((checklist, index) => {
+            htmlContent += `<tr>
+              <td>${index + 1}</td>`;
+
+            allFields.forEach((field) => {
+              const value = checklist[field];
+              htmlContent += `<td>${
+                value && value.toString().trim() !== "" ? value : "-"
+              }</td>`;
+            });
+
+            htmlContent += `</tr>`;
+          });
+
+          htmlContent += `</tbody>
+          </table>`;
+        }
+      });
+    }
 
     htmlContent += `
-            </tbody>
-          </table>
         </body>
       </html>
     `;
@@ -609,79 +688,7 @@ const ViewChecklist = () => {
     message.success("DOCX exported successfully");
   };
 
-  const pointsColumns = [
-    {
-      title: "#",
-      key: "index",
-      width: 50,
-      render: (_, __, index) => index + 1,
-    },
-    {
-      title: "Checkpoint",
-      dataIndex: "checklistPoint",
-      key: "checklistPoint",
-      render: (text) => text || "-",
-    },
-    {
-      title: "Units",
-      dataIndex: "units",
-      key: "units",
-      width: 80,
-      render: (text) => text || "-",
-    },
-    {
-      title: "Length",
-      dataIndex: "length",
-      key: "length",
-      width: 80,
-      render: (text) => text || "-",
-    },
-    {
-      title: "Breadth",
-      dataIndex: "breadth",
-      key: "breadth",
-      width: 80,
-      render: (text) => text || "-",
-    },
-    {
-      title: "Depth",
-      dataIndex: "depth",
-      key: "depth",
-      width: 80,
-      render: (text) => text || "-",
-    },
-    {
-      title: "Quantity",
-      dataIndex: "quantity",
-      key: "quantity",
-      width: 80,
-      render: (text) => text ?? "-",
-    },
-    {
-      title: "Numbers",
-      dataIndex: "numbers",
-      key: "numbers",
-      width: 80,
-      render: (text) => text ?? "-",
-    },
-    {
-      title: "Rate",
-      dataIndex: "rate",
-      key: "rate",
-      width: 80,
-      render: (text) => text ?? "-",
-    },
-  ];
-
   const columns = [
-    {
-      title: "Sl. No",
-      key: "index",
-      width: 80,
-      responsive: ["md"],
-      render: (_, __, index) =>
-        (pagination.current - 1) * pagination.pageSize + index + 1,
-    },
     {
       title: "Heading",
       dataIndex: "heading",
@@ -695,23 +702,17 @@ const ViewChecklist = () => {
       render: (text) => text || "-",
     },
     {
-      title: "Department",
-      dataIndex: "department",
-      key: "department",
-      render: (dept) => dept?.name || "-",
-    },
-    {
       title: "Actions",
       key: "actions",
-      width: 280,
+      width: 180,
       render: (_, record) => (
         <Space size="small" wrap>
           <Button
             type="text"
             icon={<EyeOutlined />}
-            onClick={() => handleViewPoints(record)}
+            onClick={() => handleViewDetails(record)}
             className="checklist-action-btn"
-            title="View Points"
+            title="View Details"
             style={{ color: "#667eea" }}
           />
           <Button
@@ -721,6 +722,30 @@ const ViewChecklist = () => {
             className="checklist-action-btn"
             title="Edit"
           />
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() =>
+              Modal.confirm({
+                title: "Delete Checklist",
+                content: "Are you sure you want to delete this checklist?",
+                okButtonProps: { className: "checklist-btn-primary" },
+                onOk: () => handleDelete(record.id),
+              })
+            }
+            className="checklist-action-btn"
+            title="Delete"
+          />
+        </Space>
+      ),
+    },
+    {
+      title: "Download",
+      key: "download",
+      width: 200,
+      render: (_, record) => (
+        <Space size="small" wrap>
           <Button
             type="primary"
             icon={<FilePdfOutlined />}
@@ -741,21 +766,6 @@ const ViewChecklist = () => {
           >
             DOCX
           </Button>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              Modal.confirm({
-                title: "Delete Checklist",
-                content: "Are you sure you want to delete this checklist?",
-                okButtonProps: { className: "checklist-btn-primary" },
-                onOk: () => handleDelete(record.id),
-              })
-            }
-            className="checklist-action-btn"
-            title="Delete"
-          />
         </Space>
       ),
     },
@@ -828,7 +838,7 @@ const ViewChecklist = () => {
             Close
           </Button>,
         ]}
-        width={1000}
+        width={1200}
         centered
       >
         {selectedRecord && (
@@ -844,23 +854,50 @@ const ViewChecklist = () => {
                   {selectedRecord.eventReference}
                 </div>
               )}
-              {selectedRecord.department?.name && (
-                <div className="modal-header-item">
-                  <span className="modal-header-label">Department:</span>
-                  {selectedRecord.department.name}
-                </div>
-              )}
             </div>
 
-            <Table
-              columns={pointsColumns}
-              dataSource={selectedRecord.points}
-              pagination={false}
-              rowKey={(record, index) => index}
-              className="points-modal-table"
-              scroll={{ x: "max-content" }}
-              size="small"
-            />
+            {/* Display Sub Headings with their Checklists */}
+            {selectedRecord.subHeadings &&
+              Array.isArray(selectedRecord.subHeadings) &&
+              selectedRecord.subHeadings.length > 0 &&
+              selectedRecord.subHeadings.map((subHeading, subIndex) => {
+                if (
+                  !subHeading.checklists ||
+                  !Array.isArray(subHeading.checklists) ||
+                  subHeading.checklists.length === 0
+                ) {
+                  return null;
+                }
+
+                const checklistColumns = getChecklistColumns(
+                  subHeading.checklists
+                );
+
+                return (
+                  <div key={subIndex} style={{ marginBottom: "2rem" }}>
+                    <h3
+                      style={{
+                        fontSize: "18px",
+                        fontWeight: "bold",
+                        color: "#667eea",
+                        marginBottom: "1rem",
+                        fontFamily: "'Cormorant Garamond', serif",
+                      }}
+                    >
+                      {subIndex + 1}. {subHeading.subHeadingName}
+                    </h3>
+                    <Table
+                      columns={checklistColumns}
+                      dataSource={subHeading.checklists}
+                      pagination={false}
+                      rowKey={(record, index) => `sub-${subIndex}-check-${index}`}
+                      className="points-modal-table"
+                      scroll={{ x: "max-content" }}
+                      size="small"
+                    />
+                  </div>
+                );
+              })}
           </div>
         )}
       </Modal>

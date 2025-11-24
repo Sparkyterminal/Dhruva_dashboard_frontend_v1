@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../../config";
 import { FileTextOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -90,6 +91,7 @@ const customStyles = `
 const AddBill = () => {
   const [form] = Form.useForm();
   const [showOtherEmiType, setShowOtherEmiType] = useState(false);
+  const navigate = useNavigate();
 
   const handleEmiTypeChange = (value) => {
     if (value === 'Others') {
@@ -125,6 +127,7 @@ const AddBill = () => {
         message.success("Bill added successfully");
         form.resetFields();
         setShowOtherEmiType(false);
+        navigate(-1);
       } else {
         message.error("Failed to add bill");
       }
@@ -158,6 +161,12 @@ const AddBill = () => {
           <div className="glass-card-bill p-8 md:p-10">
             {/* Header with Icon */}
             <div className="flex flex-col items-center mb-8">
+              <button
+                onClick={() => navigate(-1)}
+                className="self-start mb-4 px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:shadow-md transition-all duration-200"
+              >
+                Back
+              </button>
               <div className="w-20 h-20 bg-linear-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
                 <FileTextOutlined style={{ fontSize: '2.5rem', color: 'white' }} />
               </div>
