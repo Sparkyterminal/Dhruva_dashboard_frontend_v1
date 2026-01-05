@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { API_BASE_URL } from "../../../config";
 import {
   message,
-  Modal,
+  Drawer,
   DatePicker,
   Table,
   Button,
@@ -45,7 +45,7 @@ const ViewClientsBookings = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [editingAdvances, setEditingAdvances] = useState([]);
   const [savingAdvance, setSavingAdvance] = useState(null);
@@ -103,18 +103,27 @@ const ViewClientsBookings = () => {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
+  // Helper function to get event name (handles both string and object format)
+  const getEventName = (record) => {
+    if (!record) return "";
+    if (typeof record.eventName === "string") return record.eventName;
+    return record.eventName?.name || "";
+  };
+
   // Helper function to check if event is Wedding type with event-specific amounts
   const isWeddingWithEventSpecificAmounts = (record) => {
+    const eventName = getEventName(record);
     return (
-      record.eventName === "Wedding" &&
+      eventName === "Wedding" &&
       record.eventTypes?.some((et) => et.agreedAmount !== undefined)
     );
   };
 
   // Helper function to check if event is Wedding with common amounts
   const isWeddingWithCommonAmounts = (record) => {
+    const eventName = getEventName(record);
     return (
-      record.eventName === "Wedding" &&
+      eventName === "Wedding" &&
       record.eventTypes?.every((et) => et.agreedAmount === undefined)
     );
   };
@@ -175,9 +184,9 @@ const ViewClientsBookings = () => {
     return total;
   };
 
-  const showEventDetailsModal = (record) => {
+  const showEventDetailsDrawer = (record) => {
     setSelectedEvent(record);
-    setEditingAdvanceKey(null); // Reset edit mode when opening modal
+    setEditingAdvanceKey(null); // Reset edit mode when opening drawer
     // Initialize editing advances based on event type
     let advancesToEdit = [];
 
@@ -220,11 +229,11 @@ const ViewClientsBookings = () => {
     }
 
     setEditingAdvances(advancesToEdit);
-    setModalVisible(true);
+    setDrawerVisible(true);
   };
 
-  const closeModal = () => {
-    setModalVisible(false);
+  const closeDrawer = () => {
+    setDrawerVisible(false);
     setSelectedEvent(null);
     setEditingAdvances([]);
     setSavingAdvance(null);
@@ -239,7 +248,9 @@ const ViewClientsBookings = () => {
 
   // Generate unique key for advance (for tracking edit state)
   const getAdvanceKey = (advance) => {
-    return `advance-${advance.advanceNumber}-${advance.eventTypeIndex ?? 'common'}`;
+    return `advance-${advance.advanceNumber}-${
+      advance.eventTypeIndex ?? "common"
+    }`;
   };
 
   // Start editing an advance
@@ -253,7 +264,7 @@ const ViewClientsBookings = () => {
     setEditingAdvanceKey(null);
     // Reset the advance data to original values
     if (selectedEvent) {
-      showEventDetailsModal(selectedEvent);
+      showEventDetailsDrawer(selectedEvent);
     }
   };
 
@@ -304,14 +315,17 @@ const ViewClientsBookings = () => {
       // Refresh table data
       await fetchRequirementsData(pagination.current, pagination.pageSize);
 
-      // Fetch updated event data to refresh modal
+      // Fetch updated event data to refresh drawer
       const updatedEventResponse = await axios.get(
         `${API_BASE_URL}events/${selectedEvent._id}`,
         config
       );
-      const updatedEvent = updatedEventResponse.data.event || updatedEventResponse.data.data || updatedEventResponse.data;
+      const updatedEvent =
+        updatedEventResponse.data.event ||
+        updatedEventResponse.data.data ||
+        updatedEventResponse.data;
       if (updatedEvent) {
-        showEventDetailsModal(updatedEvent);
+        showEventDetailsDrawer(updatedEvent);
       }
     } catch (err) {
       message.error("Failed to update advance");
@@ -327,11 +341,14 @@ const ViewClientsBookings = () => {
       dataIndex: "eventName",
       key: "eventName",
       width: 140,
-      render: (text) => (
-        <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-          {text}
-        </Tag>
-      ),
+      render: (text, record) => {
+        const eventName = getEventName(record);
+        return (
+          <Tag color="purple" className="text-sm font-semibold px-3 py-1">
+            {eventName}
+          </Tag>
+        );
+      },
     },
     {
       title: "Client Details",
@@ -459,7 +476,7 @@ const ViewClientsBookings = () => {
         <Button
           type="primary"
           icon={<EyeOutlined />}
-          onClick={() => showEventDetailsModal(record)}
+          onClick={() => showEventDetailsDrawer(record)}
           className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
         >
           View ({record.eventTypes?.length || 0})
@@ -651,8 +668,6 @@ const ViewClientsBookings = () => {
                 </Card>
               </motion.div>
             </Col>
-
-           
           </Row>
 
           {/* Table */}
@@ -774,8 +789,8 @@ const ViewClientsBookings = () => {
         </motion.div>
       </div>
 
-      {/* Event Details Modal */}
-      <Modal
+      {/* Event Details Drawer */}
+      <Drawer
         title={
           <div className="flex items-center gap-3">
             <div
@@ -788,7 +803,7 @@ const ViewClientsBookings = () => {
             </div>
             <div>
               <div className="text-lg font-semibold text-slate-800">
-                {selectedEvent?.eventName}
+                {selectedEvent ? getEventName(selectedEvent) : ""}
               </div>
               <div className="text-xs text-slate-500 font-normal">
                 Event Details
@@ -796,12 +811,11 @@ const ViewClientsBookings = () => {
             </div>
           </div>
         }
-        open={modalVisible}
-        onCancel={closeModal}
-        footer={null}
-        width={1000}
-        className="event-details-modal"
-        bodyStyle={{ padding: 24, maxHeight: "70vh", overflowY: "auto" }}
+        open={drawerVisible}
+        onClose={closeDrawer}
+        width="80%"
+        className="event-details-drawer"
+        bodyStyle={{ padding: 24, background: "#f8fafc" }}
       >
         {selectedEvent && (
           <div className="space-y-6" style={{ paddingRight: 8 }}>
@@ -922,7 +936,9 @@ const ViewClientsBookings = () => {
                     title={
                       <div className="flex items-center justify-between">
                         <span className="text-base font-semibold text-slate-800">
-                          {eventType.eventType}
+                          {eventType.eventType?.name ||
+                            eventType.eventType ||
+                            "Event Type"}
                         </span>
                         <Tag
                           color="blue"
@@ -1001,7 +1017,7 @@ const ViewClientsBookings = () => {
                   </Card>
                 ))}
 
-                {/* Common Advances with Edit */}
+                {/* Common Advances with Edit - Table Format */}
                 <Card
                   className="border-0"
                   style={{
@@ -1016,232 +1032,215 @@ const ViewClientsBookings = () => {
                   }
                   bodyStyle={{ padding: "20px" }}
                 >
-                  {editingAdvances.map((advance, advIndex) => {
-                    const advanceKey = getAdvanceKey(advance);
-                    const isEditing = editingAdvanceKey === advanceKey;
-
-                    return (
-                      <Card
-                        key={advIndex}
-                        size="small"
-                        className="border-0 mb-3"
-                        style={{
-                          borderRadius: "10px",
-                          background: "#f8fafc",
-                          border: "1px solid #e2e8f0",
-                        }}
-                        title={
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold text-slate-800">
-                              Advance #{advance.advanceNumber}
-                            </span>
-                            {advance.receivedAmount > 0 ? (
-                              <Badge
-                                status="success"
-                                text={
-                                  <span className="font-medium text-sm text-green-600">
-                                    Received
-                                  </span>
+                  <Table
+                    dataSource={editingAdvances}
+                    rowKey={(record) => getAdvanceKey(record)}
+                    pagination={false}
+                    columns={[
+                      {
+                        title: "Advance #",
+                        dataIndex: "advanceNumber",
+                        key: "advanceNumber",
+                        width: 100,
+                        render: (text) => (
+                          <Text strong className="text-slate-800">
+                            #{text}
+                          </Text>
+                        ),
+                      },
+                      {
+                        title: "Expected Amount",
+                        dataIndex: "expectedAmount",
+                        key: "expectedAmount",
+                        width: 150,
+                        align: "right",
+                        render: (amount) => (
+                          <Text strong className="text-slate-800">
+                            {formatAmount(amount)}
+                          </Text>
+                        ),
+                      },
+                      {
+                        title: "Expected Date",
+                        dataIndex: "advanceDate",
+                        key: "advanceDate",
+                        width: 130,
+                        render: (date) => (
+                          <Text className="text-slate-700">
+                            {formatDate(date)}
+                          </Text>
+                        ),
+                      },
+                      {
+                        title: "Received Amount",
+                        key: "receivedAmount",
+                        width: 180,
+                        align: "right",
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          if (isEditing) {
+                            return (
+                              <InputNumber
+                                value={record.receivedAmount}
+                                onChange={(value) =>
+                                  handleAdvanceChange(
+                                    index,
+                                    "receivedAmount",
+                                    value
+                                  )
                                 }
-                              />
-                            ) : (
-                              <Badge
-                                status="warning"
-                                text={
-                                  <span className="font-medium text-sm text-orange-600">
-                                    Pending
-                                  </span>
+                                size="small"
+                                className="w-full"
+                                min={0}
+                                formatter={(value) =>
+                                  `₹ ${value}`.replace(
+                                    /\B(?=(\d{3})+(?!\d))/g,
+                                    ","
+                                  )
                                 }
+                                parser={(value) =>
+                                  value.replace(/₹\s?|(,*)/g, "")
+                                }
+                                placeholder="Enter amount"
                               />
-                            )}
-                          </div>
-                        }
-                        bodyStyle={{ padding: "16px" }}
-                      >
-                        <Row gutter={[12, 12]}>
-                          <Col span={12}>
-                            <Text className="text-xs text-slate-500 font-medium block mb-1">
-                              Expected Amount
+                            );
+                          }
+                          return (
+                            <Text
+                              strong
+                              className={
+                                record.receivedAmount > 0
+                                  ? "text-green-600"
+                                  : "text-slate-400"
+                              }
+                            >
+                              {formatAmount(record.receivedAmount || 0)}
                             </Text>
-                            <div className="font-semibold text-slate-800 text-sm">
-                              {formatAmount(advance.expectedAmount)}
-                            </div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-slate-500 font-medium block mb-1">
-                              Received Amount
-                            </Text>
-                            <div className="font-semibold text-green-600 text-sm">
-                              {formatAmount(advance.receivedAmount || 0)}
-                            </div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-slate-500 font-medium block mb-1">
-                              Expected Date
-                            </Text>
-                            <div className="font-medium text-slate-700 text-sm">
-                              {formatDate(advance.advanceDate)}
-                            </div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-slate-500 font-medium block mb-1">
-                              Received Date
-                            </Text>
-                            <div className="font-medium text-slate-700 text-sm">
-                              {advance.receivedDate
-                                ? formatDate(advance.receivedDate)
+                          );
+                        },
+                      },
+                      {
+                        title: "Received Date",
+                        key: "receivedDate",
+                        width: 180,
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          if (isEditing) {
+                            return (
+                              <DatePicker
+                                value={record.receivedDate}
+                                onChange={(date) =>
+                                  handleAdvanceChange(
+                                    index,
+                                    "receivedDate",
+                                    date
+                                  )
+                                }
+                                format="DD-MM-YYYY"
+                                size="small"
+                                className="w-full"
+                                placeholder="Select date"
+                              />
+                            );
+                          }
+                          return (
+                            <Text className="text-slate-700">
+                              {record.receivedDate
+                                ? formatDate(record.receivedDate)
                                 : "-"}
-                            </div>
-                          </Col>
-                        </Row>
-
-                        {!isEditing ? (
-                          /* Edit Button */
-                          <div className="mt-4">
-                            <Button
-                              type="primary"
-                              icon={<EditOutlined />}
-                              onClick={() => startEditingAdvance(advance, advIndex)}
-                              className="w-full"
-                              size="large"
-                              style={{
-                                borderRadius: "8px",
-                                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                                border: "none",
-                              }}
-                            >
-                              Edit Payment
-                            </Button>
-                          </div>
-                        ) : (
-                          /* Edit Section */
-                          <>
-                            <Divider
-                              className="my-4"
-                              style={{ marginTop: "16px", marginBottom: "16px" }}
-                            >
-                              <span className="text-xs text-slate-500 font-medium">
-                                Edit Payment
+                            </Text>
+                          );
+                        },
+                      },
+                      {
+                        title: "Status",
+                        key: "status",
+                        width: 120,
+                        render: (_, record) => (
+                          <Badge
+                            status={
+                              record.receivedAmount > 0 ? "success" : "warning"
+                            }
+                            text={
+                              <span
+                                className={
+                                  record.receivedAmount > 0
+                                    ? "text-green-600 text-sm"
+                                    : "text-orange-600 text-sm"
+                                }
+                              >
+                                {record.receivedAmount > 0
+                                  ? "Received"
+                                  : "Pending"}
                               </span>
-                            </Divider>
-                            <Row gutter={[16, 16]}>
-                              <Col span={12}>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                  Received Date
-                                </label>
-                                <DatePicker
-                                  value={advance.receivedDate}
-                                  onChange={(date) =>
-                                    handleAdvanceChange(
-                                      advIndex,
-                                      "receivedDate",
-                                      date
-                                    )
-                                  }
-                                  format="DD-MM-YYYY"
-                                  size="large"
-                                  className="w-full"
-                                  placeholder="Select date"
-                                  style={{ borderRadius: "8px" }}
-                                />
-                              </Col>
-                              <Col span={12}>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                  Received Amount
-                                </label>
-                                <InputNumber
-                                  value={advance.receivedAmount}
-                                  onChange={(value) =>
-                                    handleAdvanceChange(
-                                      advIndex,
-                                      "receivedAmount",
-                                      value
-                                    )
-                                  }
-                                  size="large"
-                                  className="w-full"
-                                  min={0}
-                                  formatter={(value) =>
-                                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                                  }
-                                  parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
-                                  placeholder="Enter received amount"
-                                  style={{ borderRadius: "8px" }}
-                                />
-                              </Col>
-                            </Row>
+                            }
+                          />
+                        ),
+                      },
+                      {
+                        title: "Actions",
+                        key: "actions",
+                        width: 150,
+                        fixed: "right",
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          const isSaving = savingAdvance === index;
 
-                            <Row gutter={[12, 12]} className="mt-4">
-                              <Col span={12}>
+                          if (isEditing) {
+                            return (
+                              <Space>
                                 <Button
+                                  size="small"
                                   onClick={cancelEditingAdvance}
-                                  className="w-full"
-                                  size="large"
-                                  style={{ borderRadius: "8px" }}
+                                  disabled={isSaving}
                                 >
                                   Cancel
                                 </Button>
-                              </Col>
-                              <Col span={12}>
-                                <motion.button
-                                  whileHover={{ scale: 1.01 }}
-                                  whileTap={{ scale: 0.99 }}
-                                  onClick={() => saveAdvance(advIndex)}
-                                  disabled={savingAdvance === advIndex}
-                                  className={`w-full py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
-                                    savingAdvance === advIndex
-                                      ? "opacity-50 cursor-not-allowed"
-                                      : ""
-                                  }`}
+                                <Button
+                                  type="primary"
+                                  size="small"
+                                  onClick={() => saveAdvance(index)}
+                                  loading={isSaving}
                                   style={{
-                                    borderRadius: "8px",
                                     background:
-                                      savingAdvance === advIndex
-                                        ? "#94a3b8"
-                                        : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                    boxShadow:
-                                      savingAdvance === advIndex
-                                        ? "none"
-                                        : "0 2px 4px rgba(16, 185, 129, 0.2)",
+                                      "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                    border: "none",
                                   }}
                                 >
-                                  {savingAdvance === advIndex ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                      Saving...
-                                    </span>
-                                  ) : (
-                                    <span className="flex items-center justify-center gap-2">
-                                      <svg
-                                        className="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                      >
-                                        <path
-                                          strokeLinecap="round"
-                                          strokeLinejoin="round"
-                                          strokeWidth={2}
-                                          d="M5 13l4 4L19 7"
-                                        />
-                                      </svg>
-                                      Save
-                                    </span>
-                                  )}
-                                </motion.button>
-                              </Col>
-                            </Row>
-                          </>
-                        )}
-                      </Card>
-                    );
-                  })}
+                                  Save
+                                </Button>
+                              </Space>
+                            );
+                          }
+                          return (
+                            <Button
+                              type="primary"
+                              icon={<EditOutlined />}
+                              size="small"
+                              onClick={() => startEditingAdvance(record, index)}
+                              style={{
+                                background:
+                                  "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                border: "none",
+                              }}
+                            >
+                              Edit
+                            </Button>
+                          );
+                        },
+                      },
+                    ]}
+                    scroll={{ x: 1000 }}
+                  />
                 </Card>
               </>
             )}
 
             {(isWeddingWithEventSpecificAmounts(selectedEvent) ||
-              !selectedEvent.eventName.includes("Wedding")) && (
+              getEventName(selectedEvent) !== "Wedding") && (
               <>
                 {selectedEvent.eventTypes?.map((eventType, index) => {
                   const eventTypeAdvances = editingAdvances.filter(
@@ -1260,7 +1259,9 @@ const ViewClientsBookings = () => {
                       title={
                         <div className="flex items-center justify-between">
                           <span className="text-base font-semibold text-slate-800">
-                            {eventType.eventType}
+                            {eventType.eventType?.name ||
+                              eventType.eventType ||
+                              "Event Type"}
                           </span>
                           <Tag
                             color="purple"
@@ -1378,241 +1379,235 @@ const ViewClientsBookings = () => {
                           </span>
                         </Divider>
 
-                        {/* Advances with Edit */}
-                        {eventTypeAdvances.map((advance, advIndex) => {
-                          const globalIndex = editingAdvances.findIndex(
-                            (adv) =>
-                              adv.advanceNumber === advance.advanceNumber &&
-                              adv.eventTypeIndex === index
-                          );
-                          const advanceKey = getAdvanceKey(advance);
-                          const isEditing = editingAdvanceKey === advanceKey;
-
-                          return (
-                            <Card
-                              key={advIndex}
-                              size="small"
-                              className="border-0"
-                              style={{
-                                borderRadius: "10px",
-                                background: "#f8fafc",
-                                border: "1px solid #e2e8f0",
-                                marginBottom: "12px",
-                              }}
-                              title={
-                                <div className="flex items-center justify-between">
-                                  <span className="font-semibold text-slate-800">
-                                    Advance #{advance.advanceNumber}
-                                  </span>
-                                  {advance.receivedAmount > 0 ? (
-                                    <Badge
-                                      status="success"
-                                      text={
-                                        <span className="font-medium text-sm text-green-600">
-                                          Received
-                                        </span>
+                        {/* Advances with Edit - Table Format */}
+                        <Table
+                          dataSource={eventTypeAdvances}
+                          rowKey={(record) => getAdvanceKey(record)}
+                          pagination={false}
+                          columns={[
+                            {
+                              title: "Advance #",
+                              dataIndex: "advanceNumber",
+                              key: "advanceNumber",
+                              width: 100,
+                              render: (text) => (
+                                <Text strong className="text-slate-800">
+                                  #{text}
+                                </Text>
+                              ),
+                            },
+                            {
+                              title: "Expected Amount",
+                              dataIndex: "expectedAmount",
+                              key: "expectedAmount",
+                              width: 150,
+                              align: "right",
+                              render: (amount) => (
+                                <Text strong className="text-slate-800">
+                                  {formatAmount(amount)}
+                                </Text>
+                              ),
+                            },
+                            {
+                              title: "Expected Date",
+                              dataIndex: "advanceDate",
+                              key: "advanceDate",
+                              width: 130,
+                              render: (date) => (
+                                <Text className="text-slate-700">
+                                  {formatDate(date)}
+                                </Text>
+                              ),
+                            },
+                            {
+                              title: "Received Amount",
+                              key: "receivedAmount",
+                              width: 180,
+                              align: "right",
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                if (isEditing) {
+                                  return (
+                                    <InputNumber
+                                      value={record.receivedAmount}
+                                      onChange={(value) =>
+                                        handleAdvanceChange(
+                                          globalIndex,
+                                          "receivedAmount",
+                                          value
+                                        )
                                       }
-                                    />
-                                  ) : (
-                                    <Badge
-                                      status="warning"
-                                      text={
-                                        <span className="font-medium text-sm text-orange-600">
-                                          Pending
-                                        </span>
+                                      size="small"
+                                      className="w-full"
+                                      min={0}
+                                      formatter={(value) =>
+                                        `₹ ${value}`.replace(
+                                          /\B(?=(\d{3})+(?!\d))/g,
+                                          ","
+                                        )
                                       }
+                                      parser={(value) =>
+                                        value.replace(/₹\s?|(,*)/g, "")
+                                      }
+                                      placeholder="Enter amount"
                                     />
-                                  )}
-                                </div>
-                              }
-                              bodyStyle={{ padding: "16px" }}
-                            >
-                              <Row gutter={[12, 12]}>
-                                <Col span={12}>
-                                  <Text className="text-xs text-slate-500 font-medium block mb-1">
-                                    Expected Amount
+                                  );
+                                }
+                                return (
+                                  <Text
+                                    strong
+                                    className={
+                                      record.receivedAmount > 0
+                                        ? "text-green-600"
+                                        : "text-slate-400"
+                                    }
+                                  >
+                                    {formatAmount(record.receivedAmount || 0)}
                                   </Text>
-                                  <div className="font-semibold text-slate-800 text-sm">
-                                    {formatAmount(advance.expectedAmount)}
-                                  </div>
-                                </Col>
-                                <Col span={12}>
-                                  <Text className="text-xs text-slate-500 font-medium block mb-1">
-                                    Received Amount
-                                  </Text>
-                                  <div className="font-semibold text-green-600 text-sm">
-                                    {formatAmount(advance.receivedAmount || 0)}
-                                  </div>
-                                </Col>
-                                <Col span={12}>
-                                  <Text className="text-xs text-slate-500 font-medium block mb-1">
-                                    Expected Date
-                                  </Text>
-                                  <div className="font-medium text-slate-700 text-sm">
-                                    {formatDate(advance.advanceDate)}
-                                  </div>
-                                </Col>
-                                <Col span={12}>
-                                  <Text className="text-xs text-slate-500 font-medium block mb-1">
-                                    Received Date
-                                  </Text>
-                                  <div className="font-medium text-slate-700 text-sm">
-                                    {advance.receivedDate
-                                      ? formatDate(advance.receivedDate)
+                                );
+                              },
+                            },
+                            {
+                              title: "Received Date",
+                              key: "receivedDate",
+                              width: 180,
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                if (isEditing) {
+                                  return (
+                                    <DatePicker
+                                      value={record.receivedDate}
+                                      onChange={(date) =>
+                                        handleAdvanceChange(
+                                          globalIndex,
+                                          "receivedDate",
+                                          date
+                                        )
+                                      }
+                                      format="DD-MM-YYYY"
+                                      size="small"
+                                      className="w-full"
+                                      placeholder="Select date"
+                                    />
+                                  );
+                                }
+                                return (
+                                  <Text className="text-slate-700">
+                                    {record.receivedDate
+                                      ? formatDate(record.receivedDate)
                                       : "-"}
-                                  </div>
-                                </Col>
-                              </Row>
-
-                              {!isEditing ? (
-                                /* Edit Button */
-                                <div className="mt-4">
-                                  <Button
-                                    type="primary"
-                                    icon={<EditOutlined />}
-                                    onClick={() => startEditingAdvance(advance, globalIndex)}
-                                    className="w-full"
-                                    size="large"
-                                    style={{
-                                      borderRadius: "8px",
-                                      background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-                                      border: "none",
-                                    }}
-                                  >
-                                    Edit Payment
-                                  </Button>
-                                </div>
-                              ) : (
-                                /* Edit Section */
-                                <>
-                                  <Divider
-                                    className="my-4"
-                                    style={{
-                                      marginTop: "16px",
-                                      marginBottom: "16px",
-                                    }}
-                                  >
-                                    <span className="text-xs text-slate-500 font-medium">
-                                      Edit Payment
+                                  </Text>
+                                );
+                              },
+                            },
+                            {
+                              title: "Status",
+                              key: "status",
+                              width: 120,
+                              render: (_, record) => (
+                                <Badge
+                                  status={
+                                    record.receivedAmount > 0
+                                      ? "success"
+                                      : "warning"
+                                  }
+                                  text={
+                                    <span
+                                      className={
+                                        record.receivedAmount > 0
+                                          ? "text-green-600 text-sm"
+                                          : "text-orange-600 text-sm"
+                                      }
+                                    >
+                                      {record.receivedAmount > 0
+                                        ? "Received"
+                                        : "Pending"}
                                     </span>
-                                  </Divider>
-                                  <Row gutter={[16, 16]}>
-                                    <Col span={12}>
-                                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Received Date
-                                      </label>
-                                      <DatePicker
-                                        value={advance.receivedDate}
-                                        onChange={(date) =>
-                                          handleAdvanceChange(
-                                            globalIndex,
-                                            "receivedDate",
-                                            date
-                                          )
-                                        }
-                                        format="DD-MM-YYYY"
-                                        size="large"
-                                        className="w-full"
-                                        placeholder="Select date"
-                                        style={{ borderRadius: "8px" }}
-                                      />
-                                    </Col>
-                                    <Col span={12}>
-                                      <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Received Amount
-                                      </label>
-                                      <InputNumber
-                                        value={advance.receivedAmount}
-                                        onChange={(value) =>
-                                          handleAdvanceChange(
-                                            globalIndex,
-                                            "receivedAmount",
-                                            value
-                                          )
-                                        }
-                                        size="large"
-                                        className="w-full"
-                                        min={0}
-                                        formatter={(value) =>
-                                          `₹ ${value}`.replace(
-                                            /\B(?=(\d{3})+(?!\d))/g,
-                                            ","
-                                          )
-                                        }
-                                        parser={(value) =>
-                                          value.replace(/₹\s?|(,*)/g, "")
-                                        }
-                                        placeholder="Enter received amount"
-                                        style={{ borderRadius: "8px" }}
-                                      />
-                                    </Col>
-                                  </Row>
+                                  }
+                                />
+                              ),
+                            },
+                            {
+                              title: "Actions",
+                              key: "actions",
+                              width: 150,
+                              fixed: "right",
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                const isSaving = savingAdvance === globalIndex;
 
-                                  <Row gutter={[12, 12]} className="mt-4">
-                                    <Col span={12}>
+                                if (isEditing) {
+                                  return (
+                                    <Space>
                                       <Button
+                                        size="small"
                                         onClick={cancelEditingAdvance}
-                                        className="w-full"
-                                        size="large"
-                                        style={{ borderRadius: "8px" }}
+                                        disabled={isSaving}
                                       >
                                         Cancel
                                       </Button>
-                                    </Col>
-                                    <Col span={12}>
-                                      <motion.button
-                                        whileHover={{ scale: 1.01 }}
-                                        whileTap={{ scale: 0.99 }}
+                                      <Button
+                                        type="primary"
+                                        size="small"
                                         onClick={() => saveAdvance(globalIndex)}
-                                        disabled={savingAdvance === globalIndex}
-                                        className={`w-full py-2.5 text-white rounded-lg font-medium transition-all duration-200 ${
-                                          savingAdvance === globalIndex
-                                            ? "opacity-50 cursor-not-allowed"
-                                            : ""
-                                        }`}
+                                        loading={isSaving}
                                         style={{
-                                          borderRadius: "8px",
                                           background:
-                                            savingAdvance === globalIndex
-                                              ? "#94a3b8"
-                                              : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                                          boxShadow:
-                                            savingAdvance === globalIndex
-                                              ? "none"
-                                              : "0 2px 4px rgba(16, 185, 129, 0.2)",
+                                            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                          border: "none",
                                         }}
                                       >
-                                        {savingAdvance === globalIndex ? (
-                                          <span className="flex items-center justify-center gap-2">
-                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                                            Saving...
-                                          </span>
-                                        ) : (
-                                          <span className="flex items-center justify-center gap-2">
-                                            <svg
-                                              className="w-4 h-4"
-                                              fill="none"
-                                              stroke="currentColor"
-                                              viewBox="0 0 24 24"
-                                            >
-                                              <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M5 13l4 4L19 7"
-                                              />
-                                            </svg>
-                                            Save
-                                          </span>
-                                        )}
-                                      </motion.button>
-                                    </Col>
-                                  </Row>
-                                </>
-                              )}
-                            </Card>
-                          );
-                        })}
+                                        Save
+                                      </Button>
+                                    </Space>
+                                  );
+                                }
+                                return (
+                                  <Button
+                                    type="primary"
+                                    icon={<EditOutlined />}
+                                    size="small"
+                                    onClick={() =>
+                                      startEditingAdvance(record, globalIndex)
+                                    }
+                                    style={{
+                                      background:
+                                        "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                      border: "none",
+                                    }}
+                                  >
+                                    Edit
+                                  </Button>
+                                );
+                              },
+                            },
+                          ]}
+                          scroll={{ x: 1000 }}
+                        />
                       </div>
                     </Card>
                   );
@@ -1621,7 +1616,7 @@ const ViewClientsBookings = () => {
             )}
           </div>
         )}
-      </Modal>
+      </Drawer>
 
       <style>{`
         .custom-table .ant-table-thead > tr > th {
@@ -1683,32 +1678,28 @@ const ViewClientsBookings = () => {
           border-radius: 3px 3px 0 0;
         }
 
-        .event-details-modal .ant-modal-header {
+        .event-details-drawer .ant-drawer-header {
           background: white;
           border-bottom: 1px solid #e2e8f0;
           padding: 20px 24px;
         }
 
-        .event-details-modal .ant-modal-body {
+        .event-details-drawer .ant-drawer-body {
           padding: 24px !important;
-          max-height: 70vh;
-          overflow-y: auto;
           background: #f8fafc;
         }
 
-        .event-details-modal .ant-modal-content {
-          border-radius: 16px;
-          overflow: hidden;
-          box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        .event-details-drawer .ant-drawer-content {
+          background: #f8fafc;
         }
 
-        .event-details-modal .ant-descriptions-item-label {
+        .event-details-drawer .ant-descriptions-item-label {
           font-weight: 600;
           color: #64748b;
           font-size: 13px;
         }
 
-        .event-details-modal .ant-descriptions-item-content {
+        .event-details-drawer .ant-descriptions-item-content {
           color: #1e293b;
           font-size: 13px;
         }

@@ -3,25 +3,15 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import {
-  Download,
-  Calendar,
-  MapPin,
-  Clock,
-  Users,
-  Loader2,
-} from "lucide-react";
+import { Calendar, MapPin, Clock, Users } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
   const calendarRef = useRef(null);
   const user = useSelector((state) => state.user.value);
@@ -114,37 +104,43 @@ const CalendarClients = () => {
 
             const actualEndDate = endDate < startDate ? startDate : endDate;
 
-            // Display event name only if different from event type
-            const displayName = event.eventName === et.eventType 
-              ? event.eventName 
-              : `${event.eventName} - ${et.eventType}`;
+            // Display event name only if different from event type (coerce objects)
+            const evName = formatText(event.eventName);
+            const etName = formatText(et.eventType);
+            const displayName =
+              evName === etName ? evName : `${evName} - ${etName}`;
 
             // Check if start and end date are the same day
-            const isSameDay = startDate.toDateString() === actualEndDate.toDateString();
+            const isSameDay =
+              startDate.toDateString() === actualEndDate.toDateString();
 
             calendarEvents.push({
               id: `${event._id}-${idx}`,
               title: displayName,
               start: startDate.toISOString(),
-              end: isSameDay 
+              end: isSameDay
                 ? startDate.toISOString() // Single day event
-                : new Date(actualEndDate.getTime() + 24 * 60 * 60 * 1000).toISOString(), // Multi-day event
+                : new Date(
+                    actualEndDate.getTime() + 24 * 60 * 60 * 1000
+                  ).toISOString(), // Multi-day event
               allDay: true,
               extendedProps: {
-                clientName: event.clientName || "Unknown Client",
-                eventName: event.eventName || "Untitled Event",
-                eventType: et.eventType || "Unknown Type",
-                venue: et.venueLocation || "TBD",
-                brideName: event.brideName,
-                groomName: event.groomName,
-                mainEvent: event.eventName || "Untitled Event",
+                clientName: formatText(event.clientName) || "Unknown Client",
+                eventName: evName || "Untitled Event",
+                eventType: etName || "Unknown Type",
+                venue: formatText(et.venueLocation) || "TBD",
+                brideName: formatText(event.brideName),
+                groomName: formatText(event.groomName),
+                mainEvent: evName || "Untitled Event",
                 hasMultipleTypes: event.eventTypes.length > 1,
                 agreedAmount: et.agreedAmount || event.agreedAmount || 0,
                 startDate: et.startDate,
                 endDate: et.endDate,
               },
-              backgroundColor: getEventColor(event.eventName),
-              borderColor: getEventColor(event.eventName),
+              // Use a seed that includes the event id and the specific event-type index so
+              // multiple events on the same day can get different but consistent colors
+              backgroundColor: getEventColor(`${event._id}-${idx}`),
+              borderColor: getEventColor(`${event._id}-${idx}`),
               textColor: "#ffffff",
             });
           } catch (error) {
@@ -160,267 +156,47 @@ const CalendarClients = () => {
     return calendarEvents;
   };
 
-  const getEventColor = (eventName) => {
-    // Light, pleasant colors for all events
+  const getEventColor = (seed) => {
+    const s = String(seed || "");
     const colors = [
-      "#60a5fa", // light blue
-      "#34d399", // light green
-      "#fbbf24", // light yellow
-      "#a78bfa", // light purple
-      "#f472b6", // light pink
-      "#fb923c", // light orange
-      "#4ade80", // light lime
-      "#38bdf8", // light sky
-      "#c084fc", // light violet
-      "#fb7185", // light rose
-      "#facc15", // light amber
-      "#22d3ee", // light cyan
+      "#3b82f6", // blue
+      "#10b981", // green
+      "#f59e0b", // amber
+      "#8b5cf6", // purple
+      "#ec4899", // pink
+      "#fb923c", // orange
+      "#34d399", // mint
+      "#60a5fa", // sky
+      "#a78bfa", // violet
+      "#fb7185", // rose
     ];
-    
-    // Generate consistent color based on event name
+
     let hash = 0;
-    for (let i = 0; i < eventName.length; i++) {
-      hash = eventName.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < s.length; i++) {
+      hash = s.charCodeAt(i) + ((hash << 5) - hash);
     }
     const index = Math.abs(hash) % colors.length;
     return colors[index];
   };
 
-  const handleExportPDF = async () => {
-    setExporting(true);
+  const formatText = (v) => {
     try {
-      message.loading({
-        content: "Generating PDF...",
-        key: "pdf-export",
-        duration: 0,
-      });
-
-      // Find all sections to export
-      const allSections = document.querySelectorAll('.pdf-export-section');
-      
-      if (!allSections || allSections.length === 0) {
-        throw new Error("No content found to export");
-      }
-      
-      // Create a container for export
-      const exportContainer = document.createElement("div");
-      exportContainer.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0px;
-        width: 1200px;
-        background-color: #ffffff;
-        padding: 40px;
-      `;
-
-      // Clone all sections
-      allSections.forEach((section) => {
-        const clonedSection = section.cloneNode(true);
-        
-        // Remove any problematic colors and classes
-        const processElement = (element) => {
-          if (!element) return;
-          
-          // Remove Tailwind classes that might use oklch
-          if (element.className && typeof element.className === 'string') {
-            // Remove all Tailwind gradient and color classes
-            element.className = element.className
-              .replace(/bg-gradient-[^\s]*/g, '')
-              .replace(/from-[^\s]*/g, '')
-              .replace(/to-[^\s]*/g, '')
-              .replace(/via-[^\s]*/g, '')
-              .trim();
-          }
-          
-          // Process inline styles
-          if (element.style) {
-            const styleProps = ['backgroundColor', 'color', 'borderColor', 'background', 'backgroundImage'];
-            styleProps.forEach(prop => {
-              const value = element.style[prop];
-              if (value) {
-                if (value.includes('oklch') || value.includes('gradient')) {
-                  if (prop === 'backgroundColor' || prop === 'background' || prop === 'backgroundImage') {
-                    element.style[prop] = '#ffffff';
-                  } else if (prop === 'color') {
-                    element.style[prop] = '#000000';
-                  } else if (prop === 'borderColor') {
-                    element.style[prop] = '#e5e7eb';
-                  }
-                }
-              }
-            });
-          }
-          
-          // Process computed styles for elements that might have oklch
-          if (window.getComputedStyle && element.nodeType === 1) {
-            const computed = window.getComputedStyle(element);
-            const bgColor = computed.backgroundColor;
-            const color = computed.color;
-            const borderColor = computed.borderColor;
-            
-            if (bgColor && bgColor.includes('oklch')) {
-              element.style.backgroundColor = '#ffffff';
-            }
-            if (color && color.includes('oklch')) {
-              element.style.color = '#000000';
-            }
-            if (borderColor && borderColor.includes('oklch')) {
-              element.style.borderColor = '#e5e7eb';
-            }
-          }
-          
-          // Recursively process children
-          if (element.children) {
-            Array.from(element.children).forEach(child => processElement(child));
-          }
-        };
-        
-        processElement(clonedSection);
-        clonedSection.style.marginBottom = '30px';
-        clonedSection.style.backgroundColor = '#ffffff';
-        exportContainer.appendChild(clonedSection);
-      });
-
-      document.body.appendChild(exportContainer);
-
-      // Wait for fonts and rendering
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capture with html2canvas
-      const canvas = await html2canvas(exportContainer, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: "#ffffff",
-        allowTaint: false,
-        foreignObjectRendering: false,
-        imageTimeout: 0,
-        ignoreElements: (element) => {
-          // Skip any element that might have oklch colors
-          if (element.style) {
-            const style = window.getComputedStyle(element);
-            if (style.backgroundColor?.includes('oklch') || 
-                style.color?.includes('oklch') || 
-                style.borderColor?.includes('oklch')) {
-              return true;
-            }
-          }
-          return false;
-        },
-        onclone: (clonedDoc) => {
-          // Final pass to remove any remaining oklch colors in cloned document
-          const allElements = clonedDoc.querySelectorAll('*');
-          allElements.forEach(el => {
-            if (el.style) {
-              ['backgroundColor', 'color', 'borderColor', 'background', 'backgroundImage'].forEach(prop => {
-                const value = el.style[prop];
-                if (value && (value.includes('oklch') || value.includes('gradient'))) {
-                  el.style[prop] = prop === 'color' ? '#000000' : '#ffffff';
-                }
-              });
-            }
-          });
+      if (v === null || v === undefined) return "";
+      if (typeof v === "string" || typeof v === "number") return String(v);
+      if (Array.isArray(v)) return v.map((x) => formatText(x)).join(", ");
+      if (typeof v === "object") {
+        if (v.name) return String(v.name);
+        if (v.title) return String(v.title);
+        if (v.label) return String(v.label);
+        try {
+          return JSON.stringify(v);
+        } catch {
+          return String(v);
         }
-      });
-
-      document.body.removeChild(exportContainer);
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.95);
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      // A4 dimensions
-      const pdfWidth = 210;
-      const pdfHeight = 297;
-      const margin = 10;
-      const maxWidth = pdfWidth - (2 * margin);
-      const maxHeight = pdfHeight - (2 * margin);
-
-      // Calculate scaling
-      const widthRatio = maxWidth / (imgWidth / 3.779527559);
-      const heightRatio = maxHeight / (imgHeight / 3.779527559);
-      const scale = Math.min(widthRatio, heightRatio, 1);
-
-      const finalWidth = (imgWidth / 3.779527559) * scale;
-      const finalHeight = (imgHeight / 3.779527559) * scale;
-
-      // Create PDF
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
-
-      let yPosition = margin;
-      let remainingHeight = imgHeight;
-      let pageCount = 0;
-
-      while (remainingHeight > 0) {
-        if (pageCount > 0) {
-          pdf.addPage();
-          yPosition = margin;
-        }
-
-        const sourceY = pageCount * (maxHeight / scale) * 3.779527559;
-        const sourceHeight = Math.min(
-          remainingHeight,
-          (maxHeight / scale) * 3.779527559
-        );
-
-        // Create a temporary canvas for this page
-        const pageCanvas = document.createElement('canvas');
-        pageCanvas.width = canvas.width;
-        pageCanvas.height = sourceHeight;
-        const pageCtx = pageCanvas.getContext('2d');
-        
-        pageCtx.drawImage(
-          canvas,
-          0, sourceY, canvas.width, sourceHeight,
-          0, 0, canvas.width, sourceHeight
-        );
-
-        const pageImgData = pageCanvas.toDataURL("image/jpeg", 0.95);
-
-        pdf.addImage(
-          pageImgData,
-          "JPEG",
-          margin,
-          yPosition,
-          finalWidth,
-          (sourceHeight / 3.779527559) * scale,
-          undefined,
-          "FAST"
-        );
-
-        remainingHeight -= sourceHeight;
-        pageCount++;
-
-        if (pageCount > 10) break; // Safety limit
       }
-
-      const monthNames = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
-      ];
-      const month = selectedMonth.getMonth();
-      const year = selectedMonth.getFullYear();
-      const filename = `Event_Calendar_${monthNames[month]}_${year}.pdf`;
-
-      pdf.save(filename);
-
-      message.success({
-        content: "PDF exported successfully!",
-        key: "pdf-export",
-      });
-    } catch (error) {
-      console.error("Error exporting PDF:", error);
-      message.error({
-        content: `Failed to export PDF: ${error.message}`,
-        key: "pdf-export",
-        duration: 5,
-      });
-    } finally {
-      setExporting(false);
+      return String(v);
+    } catch {
+      return "";
     }
   };
 
@@ -429,23 +205,23 @@ const CalendarClients = () => {
       const { eventName, eventType, venue } =
         eventInfo.event.extendedProps || {};
 
-      // Show only event name if it's the same as event type
-      const showEventType = eventName !== eventType;
+      // Show only event type if it's different from event name
+      const showEventType = formatText(eventName) !== formatText(eventType);
 
       return (
         <div className="p-1.5 text-xs overflow-hidden leading-tight">
           <div className="font-semibold truncate text-white mb-0.5">
-            {eventName}
+            {formatText(eventName)}
           </div>
           {showEventType && (
             <div className="truncate text-white opacity-90 mb-0.5">
-              {eventType}
+              {formatText(eventType)}
             </div>
           )}
           {venue && (
             <div className="truncate opacity-80 flex items-center gap-1 text-white">
               <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="truncate">{venue}</span>
+              <span className="truncate">{formatText(venue)}</span>
             </div>
           )}
         </div>
@@ -491,7 +267,9 @@ const CalendarClients = () => {
 
           try {
             const start = new Date(et.startDate);
-            const end = et.endDate ? new Date(et.endDate) : new Date(et.startDate);
+            const end = et.endDate
+              ? new Date(et.endDate)
+              : new Date(et.startDate);
 
             if (isNaN(start.getTime()) || isNaN(end.getTime())) {
               return false;
@@ -503,8 +281,9 @@ const CalendarClients = () => {
             const endYear = end.getFullYear();
 
             // Event type must have start date OR end date in the current month/year
-            const startsInCurrentMonth = (startMonth === month && startYear === year);
-            const endsInCurrentMonth = (endMonth === month && endYear === year);
+            const startsInCurrentMonth =
+              startMonth === month && startYear === year;
+            const endsInCurrentMonth = endMonth === month && endYear === year;
 
             return startsInCurrentMonth || endsInCurrentMonth;
           } catch (error) {
@@ -517,9 +296,28 @@ const CalendarClients = () => {
         if (eventTypesInMonth.length > 0) {
           filteredEvents.push({
             ...event,
-            eventTypes: eventTypesInMonth
+            eventTypes: eventTypesInMonth,
           });
         }
+      });
+
+      // Sort event types by start date and then sort events by their earliest start date
+      filteredEvents.forEach((ev) => {
+        ev.eventTypes.sort(
+          (a, b) => new Date(a.startDate) - new Date(b.startDate)
+        );
+      });
+
+      filteredEvents.sort((a, b) => {
+        const aFirst =
+          a.eventTypes && a.eventTypes[0]
+            ? new Date(a.eventTypes[0].startDate)
+            : new Date(0);
+        const bFirst =
+          b.eventTypes && b.eventTypes[0]
+            ? new Date(b.eventTypes[0].startDate)
+            : new Date(0);
+        return aFirst - bFirst;
       });
 
       return filteredEvents;
@@ -545,6 +343,20 @@ const CalendarClients = () => {
     }
   };
 
+  const formatDateShort = (dateString) => {
+    try {
+      if (!dateString) return "";
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return "";
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+    } catch (error) {
+      return "";
+    }
+  };
+
   const formatTime = (dateString) => {
     try {
       if (!dateString) return "N/A";
@@ -562,7 +374,7 @@ const CalendarClients = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen" >
+      <div className="flex items-center justify-center h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
           <div className="text-lg text-white">Loading events...</div>
@@ -694,7 +506,13 @@ const CalendarClients = () => {
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 no-print">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-4">
-              <div className="p-3 rounded-xl" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+              <div
+                className="p-3 rounded-xl"
+                style={{
+                  background:
+                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                }}
+              >
                 <Calendar className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -706,31 +524,14 @@ const CalendarClients = () => {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleExportPDF}
-              disabled={exporting || loading}
-              className="flex items-center gap-2 px-6 py-3 text-white rounded-xl transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-              style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-            >
-              {exporting ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  Exporting...
-                </>
-              ) : (
-                <>
-                  <Download className="w-5 h-5" />
-                  Export to PDF
-                </>
-              )}
-            </button>
+            <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 rounded-lg">
+              {events.length} events
+            </div>
           </div>
         </div>
 
         {/* Calendar */}
-        <div
-          className="bg-white rounded-2xl shadow-xl p-6 mb-6 pdf-export-section"
-        >
+        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 pdf-export-section">
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, interactionPlugin]}
@@ -768,20 +569,21 @@ const CalendarClients = () => {
                   venue,
                   brideName,
                   groomName,
-                  agreedAmount,
                 } = info.event.extendedProps;
 
-                const showEventType = eventName !== eventType;
-                
-                let tooltip = showEventType ? `${eventName} - ${eventType}` : eventName;
-                tooltip += `\nClient: ${clientName || "Unknown"}`;
+                const showEventType =
+                  formatText(eventName) !== formatText(eventType);
+
+                let tooltip = showEventType
+                  ? `${formatText(eventName)} - ${formatText(eventType)}`
+                  : formatText(eventName);
+                tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
                 if (brideName && groomName) {
-                  tooltip += `\n${brideName} & ${groomName}`;
+                  tooltip += `\n${formatText(brideName)} & ${formatText(
+                    groomName
+                  )}`;
                 }
-                tooltip += `\nVenue: ${venue || "TBD"}`;
-                if (agreedAmount) {
-                  tooltip += `\nAmount: ₹${agreedAmount.toLocaleString()}`;
-                }
+                tooltip += `\nVenue: ${formatText(venue) || "TBD"}`;
 
                 info.el.setAttribute("title", tooltip);
               } catch (error) {
@@ -794,7 +596,7 @@ const CalendarClients = () => {
         {/* Event Details Section */}
         <div className="bg-white rounded-2xl shadow-xl p-6 pdf-export-section">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg" style={{ background: '#667eea' }}>
+            <div className="p-2 rounded-lg" style={{ background: "#667eea" }}>
               <Users className="w-6 h-6 text-white" />
             </div>
             <h3 className="text-2xl font-bold text-gray-800">
@@ -817,9 +619,9 @@ const CalendarClients = () => {
                 <div
                   key={event._id}
                   className="border-l-4 rounded-lg p-6 bg-white hover:shadow-lg transition-shadow"
-                  style={{ 
-                    borderColor: getEventColor(event.eventName),
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                  style={{
+                    borderColor: getEventColor(event._id),
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                   }}
                 >
                   <div className="flex justify-between items-start mb-4">
@@ -828,19 +630,33 @@ const CalendarClients = () => {
                         <span
                           className="px-3 py-1 rounded-full text-sm font-semibold text-white"
                           style={{
-                            backgroundColor: getEventColor(event.eventName),
+                            backgroundColor: getEventColor(
+                              formatText(event.eventName)
+                            ),
                           }}
                         >
-                          {event.eventName}
+                          {formatText(event.eventName)}
                         </span>
                       </div>
                       <h4 className="text-xl font-bold text-gray-800 mb-1">
-                        {event.clientName}
+                        {formatText(event.clientName)}
                       </h4>
+                      <div className="flex items-center gap-3 text-sm text-indigo-600 mb-2">
+                        <span className="font-medium">
+                          Project Coordinators:
+                        </span>
+                        <span>{formatText(event.lead1) || "-"}</span>
+                        <span>
+                          {formatText(event.lead2)
+                            ? `, ${formatText(event.lead2)}`
+                            : ""}
+                        </span>
+                      </div>
                       {event.brideName && event.groomName && (
                         <p className="text-gray-600 flex items-center gap-2">
                           <Users className="w-4 h-4" />
-                          {event.brideName} & {event.groomName}
+                          {formatText(event.brideName)} &{" "}
+                          {formatText(event.groomName)}
                         </p>
                       )}
                     </div>
@@ -848,45 +664,68 @@ const CalendarClients = () => {
 
                   <div className="space-y-3">
                     {event.eventTypes.map((et, idx) => {
-                      const showEventType = event.eventName !== et.eventType;
-                      
+                      const showEventType =
+                        formatText(event.eventName) !==
+                        formatText(et.eventType);
+                      const start = et?.startDate;
+                      const end = et?.endDate;
+                      const multiDay = start && end && start !== end;
+
                       return (
                         <div
                           key={idx}
                           className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition-colors"
                         >
-                          <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0">
+                              <div className="text-sm font-semibold bg-indigo-600 text-white px-3 py-2 rounded">
+                                {formatDateShort(start)}
+                              </div>
+                            </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-800 mb-2 flex items-center gap-2">
+                              <div className="font-semibold text-gray-800 mb-1 flex items-center gap-2">
                                 <div
                                   className="w-2 h-2 rounded-full"
                                   style={{
                                     backgroundColor: getEventColor(
-                                      event.eventName
+                                      `${event._id}-${idx}`
                                     ),
                                   }}
                                 ></div>
-                                {showEventType ? et.eventType : event.eventName}
+                                {showEventType
+                                  ? formatText(et.eventType)
+                                  : formatText(event.eventName)}
                               </div>
-                              <div className="flex items-start gap-2 text-sm text-gray-600 mb-2">
-                                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: '#667eea' }} />
-                                <span>{et.venueLocation}</span>
-                              </div>
-                              <div className="flex items-center gap-2 text-sm text-gray-600">
-                                <Clock className="w-4 h-4 flex-shrink-0" style={{ color: '#667eea' }} />
-                                <span>
-                                  {formatDate(et.startDate)} at{" "}
-                                  {formatTime(et.startDate)}
-                                  {et.startDate !== et.endDate && et.endDate && (
-                                    <>
-                                      {" "}
-                                      → {formatDate(et.endDate)} at{" "}
-                                      {formatTime(et.endDate)}
-                                    </>
-                                  )}
+
+                              <div className="text-sm text-gray-600 mb-2">
+                                <span className="inline-flex items-center gap-2 mr-4">
+                                  <MapPin
+                                    className="w-4 h-4 mt-0.5"
+                                    style={{ color: "#667eea" }}
+                                  />
+                                  <span>{formatText(et.venueLocation)}</span>
+                                </span>
+                                <span className="inline-flex items-center gap-2">
+                                  <Clock
+                                    className="w-4 h-4"
+                                    style={{ color: "#667eea" }}
+                                  />
+                                  <span>
+                                    {formatDate(start)} {formatTime(start)}
+                                    {multiDay && end
+                                      ? ` → ${formatDate(end)} ${formatTime(
+                                          end
+                                        )}`
+                                      : ""}
+                                  </span>
                                 </span>
                               </div>
                             </div>
+                            {/* <div className="ml-4 text-sm font-medium text-gray-700">
+                              {et.agreedAmount
+                                ? `₹${Number(et.agreedAmount).toLocaleString()}`
+                                : ""}
+                            </div> */}
                           </div>
                         </div>
                       );

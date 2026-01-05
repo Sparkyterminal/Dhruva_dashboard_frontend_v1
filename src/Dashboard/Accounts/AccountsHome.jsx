@@ -197,6 +197,25 @@ const AccountsHome = () => {
         </svg>
       ),
     },
+    {
+      label: "Checklists",
+      route: "/user/checklists",
+      icon: (
+        <svg
+          className="w-4 h-4 md:w-5 md:h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9 12l2 2 4-4M7 8h10M7 16h10"
+          />
+        </svg>
+      ),
+    },
   ];
 
   return (

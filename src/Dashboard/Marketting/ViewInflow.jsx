@@ -10,7 +10,7 @@ import {
   Row, 
   Col, 
   Tag, 
-  Modal,
+  Drawer,
   Descriptions,
   Divider,
   Badge,
@@ -41,7 +41,7 @@ const ViewInflow = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -84,6 +84,9 @@ const ViewInflow = () => {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -92,16 +95,24 @@ const ViewInflow = () => {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
+  // Helper function to get event name as string
+  const getEventName = (eventName) => {
+    if (typeof eventName === 'string') return eventName;
+    return eventName?.name || 'N/A';
+  };
+
   // Helper function to check if event is Wedding type with event-specific amounts
   const isWeddingWithEventSpecificAmounts = (record) => {
-    return record.eventName === "Wedding" && 
-           record.eventTypes?.some(et => et.agreedAmount !== undefined);
+    const eventNameStr = getEventName(record.eventName);
+    return eventNameStr === "Wedding" && 
+           record.eventTypes?.some(et => et.agreedAmount !== undefined && et.agreedAmount > 0);
   };
 
   // Helper function to check if event is Wedding with common amounts
   const isWeddingWithCommonAmounts = (record) => {
-    return record.eventName === "Wedding" && 
-           record.eventTypes?.every(et => et.agreedAmount === undefined);
+    const eventNameStr = getEventName(record.eventName);
+    return eventNameStr === "Wedding" && 
+           record.eventTypes?.every(et => !et.agreedAmount || et.agreedAmount === 0);
   };
 
   // Calculate total agreed amount for a booking
@@ -160,9 +171,9 @@ const ViewInflow = () => {
     return total;
   };
 
-  const showEventDetailsModal = (record) => {
+  const showEventDetailsDrawer = (record) => {
     setSelectedEvent(record);
-    setModalVisible(true);
+    setDrawerVisible(true);
   };
 
   const columns = [
@@ -171,11 +182,15 @@ const ViewInflow = () => {
       dataIndex: "eventName",
       key: "eventName",
       width: 140,
-      render: (text) => (
-        <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-          {text}
-        </Tag>
-      ),
+      render: (text) => {
+        // Handle both string and object cases
+        const eventNameStr = typeof text === 'string' ? text : (text?.name || text?.id || 'N/A');
+        return (
+          <Tag color="purple" className="text-sm font-semibold px-3 py-1">
+            {eventNameStr}
+          </Tag>
+        );
+      },
     },
     {
       title: "Client Details",
@@ -287,7 +302,7 @@ const ViewInflow = () => {
         <Button
           type="primary"
           icon={<EyeOutlined />}
-          onClick={() => showEventDetailsModal(record)}
+          onClick={() => showEventDetailsDrawer(record)}
           className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
         >
           View ({record.eventTypes?.length || 0})
@@ -455,22 +470,21 @@ const ViewInflow = () => {
         </Card>
       </div>
 
-      {/* Event Details Modal */}
-      <Modal
+      {/* Event Details Drawer */}
+      <Drawer
         title={
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎯</span>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Event Details - {selectedEvent?.eventName}
+              Event Details - {getEventName(selectedEvent?.eventName)}
             </span>
           </div>
         }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={1000}
-        className="event-details-modal"
-        bodyStyle={{ padding: 24, maxHeight: '70vh', overflowY: 'auto' }}
+        open={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        width="80%"
+        placement="right"
+        styles={{ body: { padding: 24 } }}
       >
         {selectedEvent && (
           <div className="space-y-6" style={{ paddingRight: 8 }}>
@@ -496,16 +510,24 @@ const ViewInflow = () => {
                 {selectedEvent.altContactNumber && (
                   <Descriptions.Item label={<span className="font-semibold">Alt Contact</span>}>
                     {selectedEvent.altContactNumber}
+                    {selectedEvent.altContactName && (
+                      <Text type="secondary" className="ml-2">({selectedEvent.altContactName})</Text>
+                    )}
                   </Descriptions.Item>
                 )}
                 {selectedEvent.lead1 && (
-                  <Descriptions.Item label={<span className="font-semibold">Lead 1</span>}>
+                  <Descriptions.Item label={<span className="font-semibold">Project Coordinator 1</span>}>
                     {selectedEvent.lead1}
                   </Descriptions.Item>
                 )}
                 {selectedEvent.lead2 && (
-                  <Descriptions.Item label={<span className="font-semibold">Lead 2</span>}>
+                  <Descriptions.Item label={<span className="font-semibold">Project Coordinator 2</span>}>
                     {selectedEvent.lead2}
+                  </Descriptions.Item>
+                )}
+                {selectedEvent.note && (
+                  <Descriptions.Item label={<span className="font-semibold">Note</span>} span={2}>
+                    <Text>{selectedEvent.note}</Text>
                   </Descriptions.Item>
                 )}
               </Descriptions>
@@ -532,14 +554,18 @@ const ViewInflow = () => {
                 </Card>
 
                 {/* Event Types - Only dates and venue */}
-                {selectedEvent.eventTypes?.map((eventType, index) => (
+                {selectedEvent.eventTypes?.map((eventType, index) => {
+                  const eventTypeName = typeof eventType.eventType === 'string' 
+                    ? eventType.eventType 
+                    : (eventType.eventType?.name || 'N/A');
+                  return (
                   <Card
                     key={index}
                     className="border-2 border-blue-200 hover:border-blue-400 transition-all"
                     title={
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-blue-700">
-                          {eventType.eventType}
+                          {eventTypeName}
                         </span>
                         <Tag color="blue" className="text-sm">
                           Event {index + 1}
@@ -577,7 +603,8 @@ const ViewInflow = () => {
                       </Col>
                     </Row>
                   </Card>
-                ))}
+                  );
+                })}
 
                 {/* Common Advances */}
                 <Card className="bg-green-50 border-green-300" title={<span className="font-bold text-green-700">Common Advance Payments</span>}>
@@ -656,16 +683,20 @@ const ViewInflow = () => {
               </>
             )}
 
-            {(isWeddingWithEventSpecificAmounts(selectedEvent) || !selectedEvent.eventName.includes("Wedding")) && (
+            {(isWeddingWithEventSpecificAmounts(selectedEvent) || getEventName(selectedEvent.eventName) !== "Wedding") && (
               // Type 1: Wedding with event-specific amounts OR Type 3: Other events
-              selectedEvent.eventTypes?.map((eventType, index) => (
+              selectedEvent.eventTypes?.map((eventType, index) => {
+                const eventTypeName = typeof eventType.eventType === 'string' 
+                  ? eventType.eventType 
+                  : (eventType.eventType?.name || 'N/A');
+                return (
                 <Card
                   key={index}
                   className="border-2 border-purple-200 hover:border-purple-400 transition-all"
                   title={
                     <div className="flex items-center justify-between">
                       <span className="text-lg font-bold text-purple-700">
-                        {eventType.eventType}
+                        {eventTypeName}
                       </span>
                       <Tag color="purple" className="text-sm">
                         Event {index + 1}
@@ -703,18 +734,45 @@ const ViewInflow = () => {
                           </div>
                         </div>
                       </Col>
-                      {eventType.agreedAmount !== undefined && (
-                        <Col span={24}>
-                          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                            <DollarOutlined className="text-green-600 text-lg" />
-                            <div>
-                              <Text className="text-xs text-gray-500 block">Agreed Amount</Text>
-                              <Text strong className="text-lg text-green-700">
-                                {formatAmount(eventType.agreedAmount)}
-                              </Text>
+                      {eventType.agreedAmount !== undefined && eventType.agreedAmount > 0 && (
+                        <>
+                          <Col span={24}>
+                            <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                              <DollarOutlined className="text-green-600 text-lg" />
+                              <div>
+                                <Text className="text-xs text-gray-500 block">Agreed Amount</Text>
+                                <Text strong className="text-lg text-green-700">
+                                  {formatAmount(eventType.agreedAmount)}
+                                </Text>
+                              </div>
                             </div>
-                          </div>
-                        </Col>
+                          </Col>
+                          {eventType.agreedAmountBreakup && (
+                            <Col span={24}>
+                              <Card size="small" className="bg-blue-50 border-blue-200">
+                                <Text className="text-xs font-semibold text-gray-600 block mb-2">Amount Breakup:</Text>
+                                <Row gutter={[8, 8]}>
+                                  <Col span={6}>
+                                    <Text className="text-xs text-gray-500">Account:</Text>
+                                    <div className="font-semibold">{formatAmount(eventType.agreedAmountBreakup.accountAmount || 0)}</div>
+                                  </Col>
+                                  <Col span={6}>
+                                    <Text className="text-xs text-gray-500">Cash:</Text>
+                                    <div className="font-semibold">{formatAmount(eventType.agreedAmountBreakup.cashAmount || 0)}</div>
+                                  </Col>
+                                  <Col span={6}>
+                                    <Text className="text-xs text-gray-500">GST Rate:</Text>
+                                    <div className="font-semibold">{(eventType.agreedAmountBreakup.accountGstRate * 100 || 0)}%</div>
+                                  </Col>
+                                  <Col span={6}>
+                                    <Text className="text-xs text-gray-500">Account (incl. GST):</Text>
+                                    <div className="font-semibold text-green-600">{formatAmount(eventType.agreedAmountBreakup.accountTotalWithGst || 0)}</div>
+                                  </Col>
+                                </Row>
+                              </Card>
+                            </Col>
+                          )}
+                        </>
                       )}
                     </Row>
 
@@ -795,11 +853,12 @@ const ViewInflow = () => {
                     ))}
                   </div>
                 </Card>
-              ))
+                );
+              })
             )}
           </div>
         )}
-      </Modal>
+      </Drawer>
 
       <style>{`
         .custom-table .ant-table-thead > tr > th {
@@ -822,22 +881,20 @@ const ViewInflow = () => {
           color: white;
         }
 
-        .event-details-modal .ant-modal-header {
+        .ant-drawer-header {
           background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
           border-bottom: 2px solid #c7d2fe;
         }
 
-        .event-details-modal .ant-modal-body {
+        .ant-drawer-body {
           padding: 24px !important;
-          max-height: 70vh;
-          overflow-y: auto;
         }
 
-        .event-details-modal .ant-modal-content {
-          border-radius: 12px;
+        .ant-drawer-content {
+          border-radius: 12px 0 0 12px;
         }
 
-        .event-details-modal .ant-descriptions-item-label {
+        .ant-descriptions-item-label {
           font-weight: 600;
           color: #6366f1;
         }

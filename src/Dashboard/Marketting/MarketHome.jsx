@@ -125,14 +125,14 @@ const MarketHome = () => {
           className="max-w-7xl w-full mx-auto"
         >
           {/* Glassmorphism Header */}
-          <div className="glass-header flex flex-col lg:flex-row justify-between items-center gap-6 px-6 py-6 md:px-10 md:py-8 mb-8 slide-in-top">
+          <div className="glass-header overflow-visible flex flex-col lg:flex-row justify-between items-center gap-6 px-4 py-4 md:px-10 md:py-8 mb-8 slide-in-top">
             {/* Left Section - Welcome & Time */}
-            <div className="flex-1 w-full lg:w-auto">
+            <div className="flex-1 w-full lg:w-auto mb-4 lg:mb-0">
               <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
-                className="text-2xl md:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 flex items-center gap-3"
+                className="text-2xl md:text-3xl lg:text-4xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3 flex items-center gap-3"
               >
                 <Lottie
                   animationData={welcome}
@@ -171,12 +171,12 @@ const MarketHome = () => {
             </div>
 
             {/* Center Section - Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4 shrink-0">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full px-2">
               {/* Add Requirement Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
                 <motion.button
                   onClick={() => navigate("/user/sendrequest")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-orange-50 hover:to-orange-100"
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-orange-50 hover:to-orange-100"
                   variants={{
                     hover: {
                       color: "#ff7300",
@@ -215,10 +215,10 @@ const MarketHome = () => {
               </motion.div>
 
               {/* Client Bookings Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
                 <motion.button
                   onClick={() => navigate("/user/viewclient")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100"
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-100 hover:to-pink-100"
                   variants={{
                     hover: {
                       color: "#e11d48",
@@ -256,11 +256,97 @@ const MarketHome = () => {
                 </motion.button>
               </motion.div>
 
+              {/* Add Event Button */}
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
+                <motion.button
+                  onClick={() => navigate("/user/viewevents")}
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-indigo-50 to-sky-50 hover:from-indigo-100 hover:to-sky-100"
+                  variants={{
+                    hover: {
+                      color: "#0ea5e9",
+                      scale: 1.05,
+                    },
+                  }}
+                  style={{
+                    color: "#0369a1",
+                  }}
+                  aria-label="Add Event"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 md:w-5 md:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 4v16m8-8H4"
+                      />
+                    </svg>
+                    Add Events
+                  </span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500"
+                    initial={{ scaleX: 0 }}
+                    variants={{
+                      hover: { scaleX: 1 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.button>
+              </motion.div>
+
+              {/* Events Calendar Button */}
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
+                <motion.button
+                  onClick={() => navigate("/user/eventcalender")}
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-sky-50 to-indigo-50 hover:from-sky-100 hover:to-indigo-100"
+                  variants={{
+                    hover: {
+                      color: "#0ea5e9",
+                      scale: 1.05,
+                    },
+                  }}
+                  style={{
+                    color: "#0369a1",
+                  }}
+                  aria-label="Events Calendar"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 md:w-5 md:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Events Calendar
+                  </span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"
+                    initial={{ scaleX: 0 }}
+                    variants={{
+                      hover: { scaleX: 1 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.button>
+              </motion.div>
+
               {/* View Vendors Button */}
-              {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
                 <motion.button
                   onClick={() => navigate("/user/viewvendors")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-sky-50 hover:to-sky-100"
+                  className="w-full justify-center font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-sky-50 hover:to-sky-100"
                   variants={{
                     hover: {
                       color: "#0284c7",
@@ -296,13 +382,13 @@ const MarketHome = () => {
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>
-              </motion.div> */}
+              </motion.div>
 
               {/* Checklists Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
                 <motion.button
                   onClick={() => navigate("/user/checklists")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100"
+                  className="w-full justify-center font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100"
                   variants={{
                     hover: {
                       color: "#059669",
@@ -342,7 +428,7 @@ const MarketHome = () => {
             </div>
 
             {/* Right Section - Avatar/Menu Dropdown */}
-            <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-end">
+            <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-end mt-3 lg:mt-0">
               <div className="relative" ref={dropdownRef}>
                 {/* Desktop - Audience Icon */}
                 <motion.button
@@ -379,7 +465,7 @@ const MarketHome = () => {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 lg:right-0 top-14 lg:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
+                    className="z-10 absolute right-0 lg:right-0 top-14 lg:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
                   >
                     <motion.button
                       whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}

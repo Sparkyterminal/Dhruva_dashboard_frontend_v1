@@ -197,7 +197,7 @@ const ViewVendor = () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}vendor/list`, config);
-      setVendors(res.data.vendors || []);
+      setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");
     } finally {
@@ -227,7 +227,7 @@ const ViewVendor = () => {
     //   }${vendor.name || ""}`;
     //   tableData.push(["Vendor Code / Name", combined]);
     // }
-    if (vendor.vendor_code) tableData.push(["Vendor Code", vendor.vendor_code]);
+    if (vendor.vendor_code) tableData.push(["Vendor Code", vendor.vendor_code.toUpperCase()]);
     if (vendor.name) tableData.push(["Vendor Name", vendor.name]);
     // Second row: Company Name
     if (vendor.company_name)
@@ -738,7 +738,7 @@ const ViewVendor = () => {
       responsive: ["sm"],
       render: (text) => (
         <span style={{ fontWeight: 700, color: "#32255e" }}>
-          {text || "N/A"}
+          {text.toUpperCase() || "N/A"}
         </span>
       ),
     },
@@ -877,7 +877,7 @@ const ViewVendor = () => {
                 <span style={{ fontWeight: 700, color: "#32255e" }}>
                   Code:{" "}
                 </span>
-                {vendor.vendor_code || "N/A"}
+                {vendor.vendor_code.toUpperCase() || "N/A"}
               </div>
               <div
                 style={{

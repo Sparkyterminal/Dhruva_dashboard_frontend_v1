@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../config";
-import { message, Table, Button, Input, Card, Space, Modal } from "antd";
+import { message, Table, Button, Input, Card, Space, Modal, Drawer, Typography, Divider } from "antd";
 import {
   EditOutlined,
   DeleteOutlined,
@@ -825,82 +825,66 @@ const ViewChecklist = () => {
         </Card>
       </motion.div>
 
-      <Modal
-        title="Checklist Details"
+      <Drawer
         open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => setModalVisible(false)}
-            className="checklist-btn-primary"
-          >
-            Close
-          </Button>,
-        ]}
-        width={1200}
-        centered
+        onClose={() => setModalVisible(false)}
+        width="90%"
+        style={{ padding: 24 }}
+        destroyOnClose
+        closable
+        className="checklist-drawer"
+        zIndex={1000}
       >
         {selectedRecord && (
-          <div className="checklist-modal-content">
-            <div className="modal-header-section">
-              <div className="modal-header-item">
-                <span className="modal-header-label">Heading:</span>
-                {selectedRecord.heading}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <div>
+                <Typography.Title level={3} style={{ margin: 0 }}>{selectedRecord.heading}</Typography.Title>
+                {selectedRecord.eventReference && (
+                  <Typography.Text type="secondary">Event Reference: {selectedRecord.eventReference}</Typography.Text>
+                )}
               </div>
-              {selectedRecord.eventReference && (
-                <div className="modal-header-item">
-                  <span className="modal-header-label">Event Reference:</span>
-                  {selectedRecord.eventReference}
-                </div>
-              )}
+              <div>
+                <Button onClick={() => setModalVisible(false)} className="checklist-btn-primary">Close</Button>
+              </div>
             </div>
 
-            {/* Display Sub Headings with their Checklists */}
-            {selectedRecord.subHeadings &&
-              Array.isArray(selectedRecord.subHeadings) &&
-              selectedRecord.subHeadings.length > 0 &&
-              selectedRecord.subHeadings.map((subHeading, subIndex) => {
-                if (
-                  !subHeading.checklists ||
-                  !Array.isArray(subHeading.checklists) ||
-                  subHeading.checklists.length === 0
-                ) {
-                  return null;
-                }
+            <Divider />
 
-                const checklistColumns = getChecklistColumns(
-                  subHeading.checklists
-                );
+            <div>
+              {selectedRecord.subHeadings && Array.isArray(selectedRecord.subHeadings) && selectedRecord.subHeadings.length > 0 ? (
+                selectedRecord.subHeadings.map((subHeading, subIndex) => {
+                  if (!subHeading.checklists || !Array.isArray(subHeading.checklists) || subHeading.checklists.length === 0) {
+                    return null;
+                  }
 
-                return (
-                  <div key={subIndex} style={{ marginBottom: "2rem" }}>
-                    <h3
-                      style={{
-                        fontSize: "18px",
-                        fontWeight: "bold",
-                        color: "#667eea",
-                        marginBottom: "1rem",
-                        fontFamily: "'Cormorant Garamond', serif",
-                      }}
-                    >
-                      {subIndex + 1}. {subHeading.subHeadingName}
-                    </h3>
-                    <Table
-                      columns={checklistColumns}
-                      dataSource={subHeading.checklists}
-                      pagination={false}
-                      rowKey={(record, index) => `sub-${subIndex}-check-${index}`}
-                      className="points-modal-table"
-                      scroll={{ x: "max-content" }}
-                      size="small"
-                    />
-                  </div>
-                );
-              })}
+                  const checklistColumns = getChecklistColumns(subHeading.checklists);
+
+                  return (
+                    <div key={subIndex} style={{ marginBottom: 24 }}>
+                      <Typography.Title level={4} style={{ color: '#667eea', marginBottom: 12 }}>
+                        {subIndex + 1}. {subHeading.subHeadingName}
+                      </Typography.Title>
+
+                      <Table
+                        columns={checklistColumns}
+                        dataSource={subHeading.checklists}
+                        pagination={false}
+                        rowKey={(record, index) => `sub-${subIndex}-check-${index}`}
+                        className="points-modal-table"
+                        scroll={{ x: "max-content" }}
+                        size="small"
+                      />
+                    </div>
+                  );
+                })
+              ) : (
+                <Typography.Paragraph>No checklist items available.</Typography.Paragraph>
+              )}
+            </div>
           </div>
         )}
-      </Modal>
+      </Drawer>
     </div>
   );
 };
