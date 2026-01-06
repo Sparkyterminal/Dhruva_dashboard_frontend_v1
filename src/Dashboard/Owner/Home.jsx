@@ -83,8 +83,8 @@ const HomeOwner = () => {
       animation: requirementsAnimation,
     },
     {
-      label: "PlayBook",
-      route: "/owner/playbook",
+      label: "Daybook",
+      route: "/owner/daybook",
       animation: requirementsAnimation, // Replace with playbook animation
     },
     {
@@ -100,6 +100,11 @@ const HomeOwner = () => {
     {
       label: "Bills",
       route: "/owner/viewbills",
+      animation: requirementsAnimation, // Replace with bills animation
+    },
+    {
+      label: "Checklists",
+      route: "/owner/checklists",
       animation: requirementsAnimation, // Replace with bills animation
     },
     {
@@ -195,7 +200,7 @@ const HomeOwner = () => {
                   </div>
                 </div>
                 {/* Elephant Image */}
-                <motion.div
+                {/* <motion.div
                   className="hidden sm:block"
                   animate={{ y: [0, -10, 0] }}
                   transition={{
@@ -209,7 +214,7 @@ const HomeOwner = () => {
                     alt="Elephant"
                     className="w-16 h-16 md:w-20 md:h-20"
                   />
-                </motion.div>
+                </motion.div> */}
               </div>
               {/* User actions */}
               <motion.div className="flex items-center gap-4 shrink-0">

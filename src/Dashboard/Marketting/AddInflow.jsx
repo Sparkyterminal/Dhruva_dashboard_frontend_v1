@@ -1,6 +1,17 @@
 /* eslint-disable no-unused-vars */
-import React, { useState } from "react";
-import { Form, Input, DatePicker, Button, InputNumber, message, Select, Space, Tag, Radio } from "antd";
+import React, { useEffect, useState } from "react";
+import {
+  Form,
+  Input,
+  DatePicker,
+  Button,
+  InputNumber,
+  message,
+  Select,
+  Space,
+  Tag,
+  Radio,
+} from "antd";
 import {
   ArrowLeftOutlined,
   PlusOutlined,
@@ -11,6 +22,8 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
+import axios from "axios";
+import { useSelector } from "react-redux";
 
 const { Option } = Select;
 
@@ -24,126 +37,147 @@ const customStyles = `
   .ant-form-item-label > label { font-weight: 600 !important; color: #0369a1 !important; }
 `;
 
-const EVENT_TYPES = [
-  { value: "Wedding", label: "Wedding", emoji: "💒" },
-  { value: "House Warming Ceremony", label: "House Warming Ceremony", emoji: "🏡" },
-  { value: "Baby Shower", label: "Baby Shower", emoji: "👶" },
-  { value: "Temple Decor", label: "Temple Decor", emoji: "🛕" },
-  { value: "Birthday", label: "Birthday", emoji: "🎂" },
-  { value: "Government Events", label: "Government Events", emoji: "🏛️" },
-  { value: "Bhumi Pooje", label: "Bhumi Pooje", emoji: "🙏" },
-  { value: "Half Saree Event", label: "Half Saree Event", emoji: "🧵" },
-  { value: "Engagement Event", label: "Engagement Event", emoji: "💍" },
-  { value: "Other", label: "Other", emoji: "✨" },
-];
-
-const WEDDING_SUB_TYPES = [
-  { value: "Muhurtham", label: "Muhurtham", emoji: "💍" },
-  { value: "Reception", label: "Reception", emoji: "🎊" },
-  { value: "Beegara Uta", label: "Beegara Uta", emoji: "🍽️" },
-  { value: "Bride Home Decor", label: "Bride Home Decor", emoji: "🏠" },
-  { value: "Groom Home Decor", label: "Groom Home Decor", emoji: "🏘️" },
-  { value: "Bride Chapra", label: "Bride Chapra", emoji: "👰" },
-  { value: "Bride Bangle Ceremony", label: "Bride Bangle Ceremony", emoji: "🩵" },
-  { value: "Bride Mehandi", label: "Bride Mehandi", emoji: "🤲" },
-  { value: "Bride Nelugu", label: "Bride Nelugu", emoji: "🌼" },
-  { value: "Bride Batte Shastra", label: "Bride Batte Shastra", emoji: "👗" },
-  { value: "Groom Batte Shashtra", label: "Groom Batte Shashtra", emoji: "🤵" },
-  { value: "Groom Chapra", label: "Groom Chapra", emoji: "🛖" },
-  { value: "Groom Bangle Ceremony", label: "Groom Bangle Ceremony", emoji: "🟡" },
-  { value: "Groom Mehandi", label: "Groom Mehandi", emoji: "✋" },
-];
-
-
 const AddInflow = () => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [eventName, setEventName] = useState("");
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [events, setEvents] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventTypes, setEventTypes] = useState([]);
+  const [eventTypesLoading, setEventTypesLoading] = useState(false);
   const [selectedEventTypes, setSelectedEventTypes] = useState([]);
-  const [advanceMode, setAdvanceMode] = useState('separate'); // 'separate' (per-event) or 'complete' (single package)
+  const [advanceMode, setAdvanceMode] = useState("separate"); // 'separate' (per-event) or 'complete' (single package)
+  const [gstOptions] = useState([
+    { label: "No GST", value: 0 },
+    { label: "18% GST", value: 0.18 },
+    { label: "22% GST", value: 0.22 },
+  ]);
   const navigate = useNavigate();
+  const user = useSelector((state) => state.user.value);
+  const axiosConfig = { headers: { Authorization: user?.access_token } };
 
   // Indian number formatter (groups as per Indian numbering system)
   const formatINR = (val) => {
     if (val === undefined || val === null || val === "") return "";
-    const parts = val.toString().split('.');
-    let integer = parts[0].replace(/[^0-9]/g, '');
-    const fraction = parts[1] ? '.' + parts[1] : '';
+    const parts = val.toString().split(".");
+    let integer = parts[0].replace(/[^0-9]/g, "");
+    const fraction = parts[1] ? "." + parts[1] : "";
     if (integer.length <= 3) return integer + fraction;
     const last3 = integer.slice(-3);
     let rest = integer.slice(0, -3);
-    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
-    return rest + ',' + last3 + fraction;
+    rest = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+    return rest + "," + last3 + fraction;
   };
 
   const indianFormatter = (value) => {
-    if (value === undefined || value === null || value === '') return '';
+    if (value === undefined || value === null || value === "") return "";
     return `₹${formatINR(value)}`;
   };
 
   const indianParser = (value) => {
-    if (!value && value !== 0) return '';
-    return String(value).replace(/[^0-9.-]/g, '');
+    if (!value && value !== 0) return "";
+    return String(value).replace(/[^0-9.-]/g, "");
   };
 
-const normalizeAmount = (value) => {
-  if (value === undefined || value === null || value === '') return undefined;
-  const parsed = indianParser(value);
-  if (parsed === undefined || parsed === null || parsed === '') return undefined;
-  const numeric = Number(parsed);
-  return Number.isNaN(numeric) ? undefined : numeric;
-};
+  const normalizeAmount = (value) => {
+    if (value === undefined || value === null || value === "") return undefined;
+    const parsed = indianParser(value);
+    if (parsed === undefined || parsed === null || parsed === "")
+      return undefined;
+    const numeric = Number(parsed);
+    return Number.isNaN(numeric) ? undefined : numeric;
+  };
 
-  const handleEventNameChange = (value) => {
-    setEventName(value);
-    if (value !== "Wedding") {
-      setSelectedEventTypes([]);
-      form.setFieldsValue({ eventTypes: [], eventTypeAdvances: {}, eventTypeDates: {}, eventTypeMeta: {} });
+  const calculateGstTotal = (amount, rate) => {
+    const amt = normalizeAmount(amount);
+    if (amt == null) return 0;
+    const r = rate || 0;
+    return amt + amt * r;
+  };
+
+  const timeFormat = "DD MMM YYYY, hh:mm A";
+  const isWeddingLike =
+    eventName && eventName.toLowerCase().includes("wedding");
+
+  const handleEventNameChange = async (eventId) => {
+    const evt =
+      events.find((e) => e.id === eventId || e._id === eventId) || null;
+    setSelectedEvent(evt);
+    setEventName(evt?.name || "");
+
+    // reset fields related to event types and dates/meta
+    setSelectedEventTypes([]);
+    setAdvanceMode("separate");
+    form.setFieldsValue({
+      eventTypes: [],
+      eventTypeAdvances: {},
+      eventTypeDates: {},
+      eventTypeMeta: {},
+      advances: [{ expectedAmount: undefined, advanceDate: undefined }],
+    });
+
+    // fetch event types for this event
+    if (!eventId) {
+      setEventTypes([]);
+      return;
     }
-    // Reset bride/groom names when changing event type
-    if (value !== "Wedding") {
-      form.setFieldsValue({ brideName: undefined, groomName: undefined });
-    }
-    // reset advance mode when switching away
-    if (value !== "Wedding") {
-      setAdvanceMode('separate');
-      form.setFieldsValue({ advances: [{ expectedAmount: undefined, advanceDate: undefined }], eventTypeAdvances: {}, eventTypeDates: {}, eventTypeMeta: {}, lead1: undefined, lead2: undefined });
+
+    setEventTypesLoading(true);
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}event-types/event/${eventId}`,
+        axiosConfig
+      );
+      const data = res.data?.eventTypes || res.data || [];
+      setEventTypes(data);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load event types");
+      setEventTypes([]);
+    } finally {
+      setEventTypesLoading(false);
     }
   };
 
   const handleEventTypesChange = (values) => {
     setSelectedEventTypes(values);
-    
+
     // Initialize advances for new event types (only if in 'separate' mode)
-    if (advanceMode === 'separate') {
+    if (advanceMode === "separate") {
       const currentAdvances = form.getFieldValue("eventTypeAdvances") || {};
       const newAdvances = { ...currentAdvances };
-      
-      values.forEach(eventType => {
+
+      values.forEach((eventType) => {
         if (!newAdvances[eventType]) {
-          newAdvances[eventType] = [{ expectedAmount: undefined, advanceDate: undefined }];
+          newAdvances[eventType] = [
+            { expectedAmount: undefined, advanceDate: undefined },
+          ];
         }
       });
-      
+
       // Remove advances for deselected event types
-      Object.keys(newAdvances).forEach(key => {
+      Object.keys(newAdvances).forEach((key) => {
         if (!values.includes(key)) {
           delete newAdvances[key];
         }
       });
-      
+
       form.setFieldsValue({ eventTypeAdvances: newAdvances });
     }
 
     // Initialize per-event-type meta (venue + agreedAmount) AND dates for BOTH modes
     const currentMeta = form.getFieldValue("eventTypeMeta") || {};
     const newMeta = { ...currentMeta };
-    values.forEach(eventType => {
+    values.forEach((eventType) => {
       if (!Object.prototype.hasOwnProperty.call(newMeta, eventType)) {
-        newMeta[eventType] = { venueLocation: undefined, agreedAmount: undefined };
+        newMeta[eventType] = {
+          venueLocation: undefined,
+          agreedAmount: undefined,
+        };
       }
     });
-    Object.keys(newMeta).forEach(key => {
+    Object.keys(newMeta).forEach((key) => {
       if (!values.includes(key)) {
         delete newMeta[key];
       }
@@ -153,12 +187,12 @@ const normalizeAmount = (value) => {
     // Initialize eventTypeDates for all selected event types (both modes)
     const currentDates = form.getFieldValue("eventTypeDates") || {};
     const newDates = { ...currentDates };
-    values.forEach(eventType => {
+    values.forEach((eventType) => {
       if (!Object.prototype.hasOwnProperty.call(newDates, eventType)) {
         newDates[eventType] = { startDate: undefined, endDate: undefined };
       }
     });
-    Object.keys(newDates).forEach(key => {
+    Object.keys(newDates).forEach((key) => {
       if (!values.includes(key)) {
         delete newDates[key];
       }
@@ -174,7 +208,9 @@ const normalizeAmount = (value) => {
           .map((advance, index) => {
             if (!advance) return null;
             const expectedAmount = normalizeAmount(advance.expectedAmount);
-            const advanceDate = advance.advanceDate ? advance.advanceDate.toISOString() : null;
+            const advanceDate = advance.advanceDate
+              ? advance.advanceDate.toISOString()
+              : null;
 
             if (expectedAmount == null || !advanceDate) {
               return null;
@@ -193,83 +229,157 @@ const normalizeAmount = (value) => {
           })
           .filter(Boolean);
 
-      const isWedding = eventName === "Wedding";
-      const isWeddingSharedMode = isWedding && advanceMode === "complete";
-      const isNonWedding = eventName && eventName !== "Wedding";
+      const hasEventTypes =
+        (eventTypes || []).length > 0 && (values.eventTypes || []).length > 0;
+      const selectedTypes = (values.eventTypes || []).map((id) =>
+        (eventTypes || []).find((t) => t.id === id || t._id === id)
+      );
 
+      // shared (no event types or complete package mode)
+      const totalAgreedShared = normalizeAmount(values.agreedAmountTotal);
+      const accountAmtShared = normalizeAmount(values.agreedAmountAccount);
+      const cashAmtShared = normalizeAmount(values.agreedAmountCash);
+      const gstRateShared = values.agreedAmountAccountGstRate || 0;
+      const accountTotalShared =
+        accountAmtShared != null
+          ? accountAmtShared + accountAmtShared * gstRateShared
+          : 0;
       const sharedAgreedAmount =
-        (isWeddingSharedMode || isNonWedding) && values.agreedAmount !== undefined
-          ? normalizeAmount(values.agreedAmount)
+        totalAgreedShared != null
+          ? totalAgreedShared
+          : accountAmtShared != null || cashAmtShared != null
+          ? (accountTotalShared || 0) + (cashAmtShared || 0)
           : undefined;
-      const sharedAdvances =
-        (isWeddingSharedMode || isNonWedding) && values.advances
-          ? buildAdvancesPayload(values.advances)
-          : [];
+      const sharedAdvances = values.advances
+        ? buildAdvancesPayload(values.advances)
+        : [];
 
-      const eventTypes = isWedding
-        ? (values.eventTypes || []).map((type) => {
-            const startDate = values.eventTypeDates?.[type]?.startDate
-              ? values.eventTypeDates[type].startDate.toISOString()
+      const perTypePayload = hasEventTypes
+        ? (values.eventTypes || []).map((typeId) => {
+            const typeMeta = (eventTypes || []).find(
+              (t) => t.id === typeId || t._id === typeId
+            );
+            const typeKey = typeId;
+            const startDate = values.eventTypeDates?.[typeKey]?.startDate
+              ? values.eventTypeDates[typeKey].startDate.toISOString()
               : null;
-            const endDate = values.eventTypeDates?.[type]?.endDate
-              ? values.eventTypeDates[type].endDate.toISOString()
+            const endDate = values.eventTypeDates?.[typeKey]?.endDate
+              ? values.eventTypeDates[typeKey].endDate.toISOString()
               : null;
-            const venueLocation = values.eventTypeMeta?.[type]?.venueLocation ?? null;
+            const venueLocation =
+              values.eventTypeMeta?.[typeKey]?.venueLocation ?? null;
+
+            const totalAgreedPer = normalizeAmount(
+              values.eventTypeMeta?.[typeKey]?.totalAgreedAmount
+            );
+            const accountAmtPer = normalizeAmount(
+              values.eventTypeMeta?.[typeKey]?.accountAmount
+            );
+            const cashAmtPer = normalizeAmount(
+              values.eventTypeMeta?.[typeKey]?.cashAmount
+            );
+            const gstRatePer =
+              values.eventTypeMeta?.[typeKey]?.gstRate != null
+                ? values.eventTypeMeta[typeKey].gstRate
+                : 0;
+            const accountTotalPer =
+              accountAmtPer != null
+                ? accountAmtPer + accountAmtPer * gstRatePer
+                : 0;
             const perEventAgreedAmount =
-              advanceMode === "separate"
-                ? normalizeAmount(values.eventTypeMeta?.[type]?.agreedAmount)
-                : undefined;
+              totalAgreedPer != null
+                ? totalAgreedPer
+                : accountAmtPer != null || cashAmtPer != null
+                ? (accountTotalPer || 0) + (cashAmtPer || 0)
+                : 0;
+
             const perEventAdvances =
               advanceMode === "separate"
-                ? buildAdvancesPayload(values.eventTypeAdvances?.[type] || [])
+                ? buildAdvancesPayload(
+                    values.eventTypeAdvances?.[typeKey] || []
+                  )
                 : [];
 
             return {
-              eventType: type,
+              eventTypeId: typeMeta?.id || typeMeta?._id || typeKey,
+              eventType: typeMeta?.name || typeMeta?.label || String(typeKey),
               startDate,
               endDate,
               venueLocation,
-              ...(perEventAgreedAmount != null && { agreedAmount: perEventAgreedAmount }),
+              agreedAmount: perEventAgreedAmount,
+              agreedAmountBreakup: {
+                accountAmount: accountAmtPer ?? 0,
+                cashAmount: cashAmtPer ?? 0,
+                accountGstRate: gstRatePer,
+                accountGstAmount:
+                  accountAmtPer != null ? accountTotalPer - accountAmtPer : 0,
+                accountTotalWithGst: accountTotalPer || 0,
+              },
               advances: perEventAdvances,
             };
           })
-        : [
-            {
-              eventType: eventName === "Other" ? values.customEventName : eventName,
-              startDate: values.startDate ? values.startDate.toISOString() : null,
-              endDate: values.endDate ? values.endDate.toISOString() : null,
-              venueLocation: values.venueLocation ?? null,
-              ...(sharedAgreedAmount != null && { agreedAmount: sharedAgreedAmount }),
+        : [];
+
+      const eventTypesPayload =
+        hasEventTypes && advanceMode === "separate"
+          ? perTypePayload
+          : hasEventTypes && advanceMode === "complete"
+          ? perTypePayload.map((et) => ({
+              ...et,
+              // use common (shared) advances when in complete package mode
               advances: sharedAdvances,
-            },
-          ];
+            }))
+          : [
+              {
+                eventTypeId: null,
+                eventType: null,
+                startDate: values.startDate
+                  ? values.startDate.toISOString()
+                  : null,
+                endDate: values.endDate ? values.endDate.toISOString() : null,
+                venueLocation: values.venueLocation ?? null,
+                ...(sharedAgreedAmount != null && {
+                  agreedAmount: sharedAgreedAmount,
+                  agreedAmountBreakup: {
+                    accountAmount: accountAmtShared ?? null,
+                    cashAmount: cashAmtShared ?? null,
+                    accountGstRate: gstRateShared,
+                    accountGstAmount:
+                      accountAmtShared != null
+                        ? accountTotalShared - accountAmtShared
+                        : null,
+                    accountTotalWithGst: accountTotalShared || null,
+                  },
+                }),
+                advances: sharedAdvances,
+              },
+            ];
 
       const payload = {
-        eventName: eventName === "Other" ? values.customEventName : eventName,
-        eventTypes,
+        eventId: selectedEvent?.id || selectedEvent?._id || null,
+        eventName:
+          selectedEvent?.name ||
+          (eventName === "Other" ? values.customEventName : eventName),
+        eventTypes: eventTypesPayload,
         clientName: values.clientName,
-        ...(isWedding && {
-          brideName: values.brideName,
-          groomName: values.groomName,
-        }),
         contactNumber: values.contactNumber,
         lead1: values.lead1 ?? "",
         lead2: values.lead2 ?? "",
-        ...(values.altContactNumber && { altContactNumber: values.altContactNumber }),
+        ...(isWeddingLike && {
+          brideName: values.brideName,
+          groomName: values.groomName,
+          note: values.note,
+        }),
+        ...(values.altContactNumber && {
+          altContactNumber: values.altContactNumber,
+        }),
+        ...(values.altContactName && { altContactName: values.altContactName }),
       };
 
-      if ((isWeddingSharedMode || isNonWedding) && sharedAgreedAmount != null) {
-        payload.agreedAmount = sharedAgreedAmount;
-      }
-
-      if ((isWeddingSharedMode || isNonWedding) && sharedAdvances.length > 0) {
-        payload.advances = sharedAdvances;
-      }
       // Log payload for debugging
-      console.log('Posting payload:', JSON.stringify(payload, null, 2));
+      console.log("Posting payload:", JSON.stringify(payload, null, 2));
 
-      const axios = (await import("axios")).default;
-      const response = await axios.post(`${API_BASE_URL}events`, payload);
+      const response = await axios.post(`${API_BASE_URL}events`,payload,axiosConfig );
 
       if (response.status === 200 || response.status === 201) {
         message.success("Event booking created successfully!");
@@ -316,6 +426,25 @@ const normalizeAmount = (value) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setEventsLoading(true);
+      try {
+        const res = await axios.get(`${API_BASE_URL}event-names`, axiosConfig);
+        const data = res.data?.events || res.data || [];
+        setEvents(data);
+      } catch (err) {
+        console.error(err);
+        message.error("Failed to load events");
+      } finally {
+        setEventsLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
+
+  const hasEventTypes = (eventTypes || []).length > 0;
 
   return (
     <div
@@ -461,48 +590,20 @@ const normalizeAmount = (value) => {
                     size="large"
                     placeholder="Select event name"
                     onChange={handleEventNameChange}
+                    loading={eventsLoading}
                     suffixIcon={<span style={{ fontSize: "18px" }}>🎪</span>}
                   >
-                    {EVENT_TYPES.map(type => (
-                      <Option key={type.value} value={type.value}>
-                        <span style={{ marginRight: 8 }}>{type.emoji}</span>
-                        {type.label}
+                    {events.map((evt) => (
+                      <Option key={evt.id || evt._id} value={evt.id || evt._id}>
+                        {evt.name}
                       </Option>
                     ))}
                   </Select>
                 </Form.Item>
               </motion.div>
 
-              {/* Custom Event Name (when Other is selected) */}
-              {eventName === "Other" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <Form.Item
-                    label="Custom Event Name"
-                    name="customEventName"
-                    rules={[
-                      { required: true, message: "Please enter event name" },
-                    ]}
-                  >
-                    <Input
-                      size="large"
-                      placeholder="Enter custom event name"
-                      prefix={
-                        <span style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}>
-                          ✨
-                        </span>
-                      }
-                    />
-                  </Form.Item>
-                </motion.div>
-              )}
-
-              {/* Wedding Event Types (Multiple Selection) */}
-              {eventName === "Wedding" && (
+              {/* Event Types from API (Multiple Selection, only when available) */}
+              {eventName && hasEventTypes && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
@@ -513,7 +614,10 @@ const normalizeAmount = (value) => {
                     label="Event Types"
                     name="eventTypes"
                     rules={[
-                      { required: true, message: "Please select at least one event type" },
+                      {
+                        required: true,
+                        message: "Please select at least one event type",
+                      },
                     ]}
                   >
                     <Select
@@ -523,11 +627,14 @@ const normalizeAmount = (value) => {
                       onChange={handleEventTypesChange}
                       maxTagCount="responsive"
                       value={selectedEventTypes}
+                      loading={eventTypesLoading}
                     >
-                      {WEDDING_SUB_TYPES.map(type => (
-                        <Option key={type.value} value={type.value}>
-                          <span style={{ marginRight: 8 }}>{type.emoji}</span>
-                          {type.label}
+                      {eventTypes.map((type) => (
+                        <Option
+                          key={type.id || type._id}
+                          value={type.id || type._id}
+                        >
+                          {type.name}
                         </Option>
                       ))}
                     </Select>
@@ -535,27 +642,47 @@ const normalizeAmount = (value) => {
                 </motion.div>
               )}
 
-              {/* Common Start Date / End Date shown only for non-wedding events */}
-              {eventName && eventName !== 'Wedding' && (
+              {/* Common Start Date / End Date when there are no event types */}
+              {eventName && !hasEventTypes && (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.45 }}
                 >
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 12,
+                    }}
+                  >
                     <Form.Item
                       label="Start Date"
                       name="startDate"
-                      rules={[{ required: true, message: 'Please select start date' }]}
+                      rules={[
+                        { required: true, message: "Please select start date" },
+                      ]}
                     >
-                      <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
+                      <DatePicker
+                        size="large"
+                        style={{ width: "100%" }}
+                        format={timeFormat}
+                        showTime={{ use12Hours: true, format: "hh:mm A" }}
+                      />
                     </Form.Item>
                     <Form.Item
                       label="End Date"
                       name="endDate"
-                      rules={[{ required: true, message: 'Please select end date' }]}
+                      rules={[
+                        { required: true, message: "Please select end date" },
+                      ]}
                     >
-                      <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
+                      <DatePicker
+                        size="large"
+                        style={{ width: "100%" }}
+                        format={timeFormat}
+                        showTime={{ use12Hours: true, format: "hh:mm A" }}
+                      />
                     </Form.Item>
                   </div>
                 </motion.div>
@@ -569,12 +696,33 @@ const normalizeAmount = (value) => {
                   transition={{ delay: 0.48 }}
                   style={{ marginTop: 12 }}
                 >
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                    <Form.Item label="Lead 1" name="lead1" rules={[{ required: true, message: 'Please enter Lead 1' }]}>
-                      <Input size="large" />
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 12,
+                    }}
+                  >
+                    <Form.Item
+                      label="Project Coordinator 1"
+                      name="lead1"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please enter Project Coordinator 1",
+                        },
+                      ]}
+                    >
+                      <Input
+                        size="large"
+                        placeholder="Enter Project Coordinator 1"
+                      />
                     </Form.Item>
-                    <Form.Item label="Lead 2" name="lead2">
-                      <Input size="large" />
+                    <Form.Item label="Project Coordinator 2" name="lead2">
+                      <Input
+                        size="large"
+                        placeholder="Enter Project Coordinator 2 (optional)"
+                      />
                     </Form.Item>
                   </div>
                 </motion.div>
@@ -606,63 +754,6 @@ const normalizeAmount = (value) => {
                   />
                 </Form.Item>
               </motion.div>
-
-              {/* Bride and Groom Names (only for Wedding) */}
-              {eventName === "Wedding" && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.35 }}
-                  >
-                    <Form.Item
-                      label="Bride Name"
-                      name="brideName"
-                      rules={[
-                        { required: true, message: "Please enter bride name" },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        placeholder="Enter bride name"
-                        prefix={
-                          <span
-                            style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
-                          >
-                            👰‍♀️
-                          </span>
-                        }
-                      />
-                    </Form.Item>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.37 }}
-                  >
-                    <Form.Item
-                      label="Groom Name"
-                      name="groomName"
-                      rules={[
-                        { required: true, message: "Please enter groom name" },
-                      ]}
-                    >
-                      <Input
-                        size="large"
-                        placeholder="Enter groom name"
-                        prefix={
-                          <span
-                            style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
-                          >
-                            🤵‍♂️
-                          </span>
-                        }
-                      />
-                    </Form.Item>
-                  </motion.div>
-                </>
-              )}
 
               {/* Contact Number */}
               <motion.div
@@ -727,8 +818,75 @@ const normalizeAmount = (value) => {
                 </Form.Item>
               </motion.div>
 
-              {/* Venue Location - Only for non-wedding events */}
-              {eventName && eventName !== "Wedding" && (
+              {/* Name of Alternative Contact */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.44 }}
+              >
+                <Form.Item
+                  label="Name of Alternative Contact"
+                  name="altContactName"
+                >
+                  <Input
+                    size="large"
+                    placeholder="Enter name of person for alternative number"
+                  />
+                </Form.Item>
+              </motion.div>
+
+              {/* Bride & Groom Details - only when event looks like Wedding */}
+              {isWeddingLike && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.46 }}
+                  >
+                    <Form.Item
+                      label="Bride Name"
+                      name="brideName"
+                      rules={[
+                        { required: true, message: "Please enter bride name" },
+                      ]}
+                    >
+                      <Input size="large" placeholder="Enter bride name" />
+                    </Form.Item>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.48 }}
+                  >
+                    <Form.Item
+                      label="Groom Name"
+                      name="groomName"
+                      rules={[
+                        { required: true, message: "Please enter groom name" },
+                      ]}
+                    >
+                      <Input size="large" placeholder="Enter groom name" />
+                    </Form.Item>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.5 }}
+                  >
+                    <Form.Item label="Note" name="note">
+                      <Input.TextArea
+                        rows={4}
+                        placeholder="Any special instructions, preferences, or notes for this wedding (optional)"
+                      />
+                    </Form.Item>
+                  </motion.div>
+                </>
+              )}
+
+              {/* Venue Location - Only when there are no event types */}
+              {eventName && !hasEventTypes && (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -738,7 +896,10 @@ const normalizeAmount = (value) => {
                     label="Venue Location"
                     name="venueLocation"
                     rules={[
-                      { required: true, message: "Please enter venue location" },
+                      {
+                        required: true,
+                        message: "Please enter venue location",
+                      },
                     ]}
                   >
                     <Input
@@ -746,7 +907,11 @@ const normalizeAmount = (value) => {
                       placeholder="Enter venue location"
                       prefix={
                         <span
-                          style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
+                          style={{
+                            color: "#4f46e5",
+                            marginRight: 4,
+                            padding: 8,
+                          }}
                         >
                           📍
                         </span>
@@ -756,34 +921,137 @@ const normalizeAmount = (value) => {
                 </motion.div>
               )}
 
-              {/* Agreed Amount - Only for non-wedding events */}
-              {eventName && eventName !== "Wedding" && (
+              {/* Agreed Amount with GST - Only when there are no event types */}
+              {eventName && !hasEventTypes && (
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.55 }}
                 >
-                  <Form.Item
-                    label="Agreed Amount"
-                    name="agreedAmount"
-                    rules={[
-                      { required: true, message: "Please enter agreed amount" },
-                    ]}
+                  <div
+                    className="glass-advance-card"
+                    style={{
+                      padding: 16,
+                      borderRadius: 8,
+                      border: "1px solid #e5e7eb",
+                    }}
                   >
-                    <InputNumber
-                      size="large"
-                      style={{ width: "100%" }}
-                      placeholder="Enter agreed amount"
-                      formatter={indianFormatter}
-                      parser={indianParser}
-                      min={0}
-                    />
-                  </Form.Item>
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 12,
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, color: "#0369a1" }}>
+                        Agreed Amount (Package)
+                      </div>
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(220px, 1fr))",
+                        gap: 12,
+                      }}
+                    >
+                      <Form.Item
+                        label="Total Agreed Amount (incl. GST)"
+                        name="agreedAmountTotal"
+                      >
+                        <InputNumber
+                          size="large"
+                          style={{ width: "100%" }}
+                          placeholder="Enter total agreed amount (incl. GST)"
+                          formatter={indianFormatter}
+                          parser={indianParser}
+                          min={0}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        label="Account Amount"
+                        name="agreedAmountAccount"
+                        rules={[
+                          {
+                            required: false,
+                          },
+                        ]}
+                      >
+                        <InputNumber
+                          size="large"
+                          style={{ width: "100%" }}
+                          placeholder="Enter amount through account"
+                          formatter={indianFormatter}
+                          parser={indianParser}
+                          min={0}
+                        />
+                      </Form.Item>
+                      <Form.Item
+                        label="GST on Account"
+                        name="agreedAmountAccountGstRate"
+                        initialValue={0}
+                      >
+                        <Select size="large">
+                          {gstOptions.map((g) => (
+                            <Option key={g.value} value={g.value}>
+                              {g.label}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                      <Form.Item label="Cash Amount" name="agreedAmountCash">
+                        <InputNumber
+                          size="large"
+                          style={{ width: "100%" }}
+                          placeholder="Enter amount through cash"
+                          formatter={indianFormatter}
+                          parser={indianParser}
+                          min={0}
+                        />
+                      </Form.Item>
+                    </div>
+                    <Form.Item
+                      shouldUpdate={(prev, cur) =>
+                        prev.agreedAmountAccount !== cur.agreedAmountAccount ||
+                        prev.agreedAmountAccountGstRate !==
+                          cur.agreedAmountAccountGstRate
+                      }
+                      noStyle
+                    >
+                      {({ getFieldValue }) => {
+                        const acc = getFieldValue("agreedAmountAccount");
+                        const rate =
+                          getFieldValue("agreedAmountAccountGstRate") || 0;
+                        const total = calculateGstTotal(acc, rate);
+                        return (
+                          <div
+                            style={{
+                              marginTop: 8,
+                              paddingTop: 8,
+                              borderTop: "1px dashed #e5e7eb",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              flexWrap: "wrap",
+                              gap: 8,
+                            }}
+                          >
+                            <span style={{ fontSize: 13, color: "#6b7280" }}>
+                              Account total (incl. GST):
+                            </span>
+                            <span style={{ fontWeight: 700, color: "#111827" }}>
+                              ₹{formatINR(total || 0)}
+                            </span>
+                          </div>
+                        );
+                      }}
+                    </Form.Item>
+                  </div>
                 </motion.div>
               )}
 
-              {/* Advances Section - For Wedding with Multiple Event Types */}
-              {eventName === "Wedding" && selectedEventTypes.length > 0 && (
+              {/* Advances + Agreed Amount Section - When event has event types */}
+              {eventName && hasEventTypes && selectedEventTypes.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -799,228 +1067,840 @@ const normalizeAmount = (value) => {
                       marginBottom: "12px",
                     }}
                   >
-                    <div style={{ fontWeight: 600, color: '#0369a1' }}>Advance Payments</div>
-                    <Form.Item name="advanceMode" style={{ marginBottom: 0 }} initialValue={advanceMode}>
-                      <Radio.Group onChange={(e) => {
-                        const val = e.target.value;
-                        setAdvanceMode(val);
-                        if (val === 'complete') {
-                          // clear per-type advances but keep per-type dates and meta
-                          form.setFieldsValue({ eventTypeAdvances: {} });
-                          if (!form.getFieldValue('advances')) form.setFieldsValue({ advances: [{ expectedAmount: undefined, advanceDate: undefined }] });
-                        } else {
-                          // clear global advances and initialize per-type advances
-                          form.setFieldsValue({ advances: undefined });
-                          const curr = form.getFieldValue('eventTypeAdvances') || {};
-                          const newAdv = { ...curr };
-                          selectedEventTypes.forEach(t => { if (!newAdv[t]) newAdv[t] = [{ expectedAmount: undefined, advanceDate: undefined }]; });
-                          form.setFieldsValue({ eventTypeAdvances: newAdv });
-                        }
-                      }}>
+                    <div style={{ fontWeight: 600, color: "#0369a1" }}>
+                      Advance Payments
+                    </div>
+                    <Form.Item
+                      name="advanceMode"
+                      style={{ marginBottom: 0 }}
+                      initialValue={advanceMode}
+                    >
+                      <Radio.Group
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setAdvanceMode(val);
+                          if (val === "complete") {
+                            // clear per-type advances but keep per-type dates and meta
+                            form.setFieldsValue({ eventTypeAdvances: {} });
+                            if (!form.getFieldValue("advances"))
+                              form.setFieldsValue({
+                                advances: [
+                                  {
+                                    expectedAmount: undefined,
+                                    advanceDate: undefined,
+                                  },
+                                ],
+                              });
+                          } else {
+                            // clear global advances and initialize per-type advances
+                            form.setFieldsValue({ advances: undefined });
+                            const curr =
+                              form.getFieldValue("eventTypeAdvances") || {};
+                            const newAdv = { ...curr };
+                            selectedEventTypes.forEach((t) => {
+                              if (!newAdv[t])
+                                newAdv[t] = [
+                                  {
+                                    expectedAmount: undefined,
+                                    advanceDate: undefined,
+                                  },
+                                ];
+                            });
+                            form.setFieldsValue({ eventTypeAdvances: newAdv });
+                          }
+                        }}
+                      >
                         <Radio value="complete">Complete Package</Radio>
-                        <Radio value="separate" style={{ marginLeft: 12 }}>Separate / Event Specific</Radio>
+                        <Radio value="separate" style={{ marginLeft: 12 }}>
+                          Separate / Event Specific
+                        </Radio>
                       </Radio.Group>
                     </Form.Item>
                   </div>
 
-                  {advanceMode === 'separate' ? (
+                  {advanceMode === "separate" ? (
                     <>
-                      {selectedEventTypes.map((eventType) => (
-                        <div key={eventType} className="glass-event-type-card" style={{ padding: "24px" }}>
+                      {selectedEventTypes.map((eventTypeId) => {
+                        const typeMeta = (eventTypes || []).find(
+                          (t) => t.id === eventTypeId || t._id === eventTypeId
+                        );
+                        const label =
+                          typeMeta?.name || typeMeta?.label || "Event Type";
+                        const key = eventTypeId;
+                        return (
                           <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "12px",
-                              marginBottom: "20px",
-                            }}
+                            key={key}
+                            className="glass-event-type-card"
+                            style={{ padding: "24px" }}
                           >
-                            <Tag className="event-type-tag">
-                              {WEDDING_SUB_TYPES.find(t => t.value === eventType)?.emoji} {eventType}
-                            </Tag>
-                          </div>
-                          <div style={{ marginBottom: 12 }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                              <Form.Item
-                                label={`${eventType} Start`}
-                                name={["eventTypeDates", eventType, "startDate"]}
-                                rules={[{ required: true, message: `Please select start date for ${eventType}` }]}
-                              >
-                                <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
-                              </Form.Item>
-                              <Form.Item
-                                label={`${eventType} End`}
-                                name={["eventTypeDates", eventType, "endDate"]}
-                                rules={[{ required: true, message: `Please select end date for ${eventType}` }]}
-                              >
-                                <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
-                              </Form.Item>
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                marginBottom: "20px",
+                              }}
+                            >
+                              <Tag className="event-type-tag">{label}</Tag>
                             </div>
-                            <Form.Item
-                              label={`${eventType} Venue`}
-                              name={["eventTypeMeta", eventType, "venueLocation"]}
-                              rules={[{ required: true, message: `Please enter venue for ${eventType}` }]}
-                            >
-                              <Input size="large" placeholder={`Venue for ${eventType}`} />
-                            </Form.Item>
-                            <Form.Item
-                              label={`${eventType} Agreed Amount`}
-                              name={["eventTypeMeta", eventType, "agreedAmount"]}
-                              rules={[{ required: true, message: `Please enter agreed amount for ${eventType}` }]}
-                            >
-                              <InputNumber
-                                size="large"
-                                style={{ width: '100%' }}
-                                placeholder={`Agreed amount for ${eventType}`}
-                                formatter={indianFormatter}
-                                parser={indianParser}
-                                min={0}
-                              />
-                            </Form.Item>
-                          </div>
-                          <Form.List name={["eventTypeAdvances", eventType]}>
-                            {(fields, { add, remove }) => (
-                              <>
-                                {fields.map((field, idx) => (
-                                  <div key={field.key} className="glass-advance-card" style={{ marginBottom: 12 }}>
-                                    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                                      <div style={{ flex: 1, minWidth: 240 }}>
-                                        <div style={{ fontWeight: 600, marginBottom: 8 }}>Advance #{idx + 1}</div>
+                            <div style={{ marginBottom: 12 }}>
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: 12,
+                                  marginBottom: 12,
+                                }}
+                              >
+                                <Form.Item
+                                  label={`${label} Start`}
+                                  name={["eventTypeDates", key, "startDate"]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: `Please select start date for ${label}`,
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    format={timeFormat}
+                                    showTime={{
+                                      use12Hours: true,
+                                      format: "hh:mm A",
+                                    }}
+                                  />
+                                </Form.Item>
+                                <Form.Item
+                                  label={`${label} End`}
+                                  name={["eventTypeDates", key, "endDate"]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: `Please select end date for ${label}`,
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    format={timeFormat}
+                                    showTime={{
+                                      use12Hours: true,
+                                      format: "hh:mm A",
+                                    }}
+                                  />
+                                </Form.Item>
+                              </div>
+                              <Form.Item
+                                label={`${label} Venue`}
+                                name={["eventTypeMeta", key, "venueLocation"]}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `Please enter venue for ${label}`,
+                                  },
+                                ]}
+                              >
+                                <Input
+                                  size="large"
+                                  placeholder={`Venue for ${label}`}
+                                />
+                              </Form.Item>
+                              <div
+                                className="glass-advance-card"
+                                style={{
+                                  padding: 12,
+                                  borderRadius: 8,
+                                  marginTop: 8,
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    fontWeight: 600,
+                                    color: "#0369a1",
+                                    marginBottom: 8,
+                                    fontSize: 14,
+                                  }}
+                                >
+                                  {label} Agreed Amount
+                                </div>
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns:
+                                      "repeat(auto-fit, minmax(200px, 1fr))",
+                                    gap: 8,
+                                  }}
+                                >
+                                  <Form.Item
+  label="Total Agreed Amount (incl. GST)"
+  name={["eventTypeMeta", key, "totalAgreedAmount"]}
+  rules={[
+    { required: true, message: "Please enter total agreed amount" },
+  ]}
+>
+                                    <InputNumber
+                                      size="large"
+                                      style={{ width: "100%" }}
+                                      placeholder="Total agreed amount for this event (incl. GST)"
+                                      formatter={indianFormatter}
+                                      parser={indianParser}
+                                      min={0}
+                                    />
+                                  </Form.Item>
+                                  <Form.Item
+                                    label="Account Amount"
+                                    name={[
+                                      "eventTypeMeta",
+                                      key,
+                                      "accountAmount",
+                                    ]}
+                                  >
+                                    <InputNumber
+                                      size="large"
+                                      style={{ width: "100%" }}
+                                      placeholder="Amount through account"
+                                      formatter={indianFormatter}
+                                      parser={indianParser}
+                                      min={0}
+                                    />
+                                  </Form.Item>
+                                  <Form.Item
+                                    label="GST on Account"
+                                    name={["eventTypeMeta", key, "gstRate"]}
+                                    initialValue={0}
+                                  >
+                                    <Select size="large">
+                                      {gstOptions.map((g) => (
+                                        <Option key={g.value} value={g.value}>
+                                          {g.label}
+                                        </Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                  <Form.Item
+                                    label="Cash Amount"
+                                    name={["eventTypeMeta", key, "cashAmount"]}
+                                  >
+                                    <InputNumber
+                                      size="large"
+                                      style={{ width: "100%" }}
+                                      placeholder="Amount through cash"
+                                      formatter={indianFormatter}
+                                      parser={indianParser}
+                                      min={0}
+                                    />
+                                  </Form.Item>
+                                </div>
+                                <Form.Item
+                                  shouldUpdate={(prev, cur) =>
+                                    prev.eventTypeMeta?.[key]?.accountAmount !==
+                                      cur.eventTypeMeta?.[key]?.accountAmount ||
+                                    prev.eventTypeMeta?.[key]?.gstRate !==
+                                      cur.eventTypeMeta?.[key]?.gstRate
+                                  }
+                                  noStyle
+                                >
+                                  {({ getFieldValue }) => {
+                                    const acc = getFieldValue([
+                                      "eventTypeMeta",
+                                      key,
+                                      "accountAmount",
+                                    ]);
+                                    const rate =
+                                      getFieldValue([
+                                        "eventTypeMeta",
+                                        key,
+                                        "gstRate",
+                                      ]) || 0;
+                                    const total = calculateGstTotal(acc, rate);
+                                    return (
+                                      <div
+                                        style={{
+                                          marginTop: 6,
+                                          paddingTop: 6,
+                                          borderTop: "1px dashed #e5e7eb",
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                          gap: 8,
+                                          flexWrap: "wrap",
+                                        }}
+                                      >
+                                        <span
+                                          style={{
+                                            fontSize: 12,
+                                            color: "#6b7280",
+                                          }}
+                                        >
+                                          Account total (incl. GST):
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontWeight: 600,
+                                            color: "#111827",
+                                          }}
+                                        >
+                                          ₹{formatINR(total || 0)}
+                                        </span>
+                                      </div>
+                                    );
+                                  }}
+                                </Form.Item>
+                              </div>
+                            </div>
+                            <Form.List name={["eventTypeAdvances", key]}>
+                              {(fields, { add, remove }) => (
+                                <>
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns: "80px 1fr 1fr 60px",
+                                      gap: 8,
+                                      padding: "8px 12px",
+                                      background: "#f9fafb",
+                                      borderRadius: 8,
+                                      marginBottom: 8,
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                      color: "#6b7280",
+                                    }}
+                                  >
+                                    <span>No.</span>
+                                    <span>Amount</span>
+                                    <span>Date</span>
+                                    <span>Action</span>
+                                  </div>
+                                  {fields.map((field, idx) => (
+                                    <div
+                                      key={field.key}
+                                      className="glass-advance-card"
+                                      style={{
+                                        marginBottom: 8,
+                                        padding: "8px 12px",
+                                        borderRadius: 8,
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          display: "grid",
+                                          gridTemplateColumns:
+                                            "80px 1fr 1fr 60px",
+                                          gap: 8,
+                                          alignItems: "center",
+                                        }}
+                                      >
+                                        <div
+                                          style={{
+                                            fontWeight: 600,
+                                            fontSize: 13,
+                                          }}
+                                        >
+                                          #{idx + 1}
+                                        </div>
                                         <Form.Item
                                           key={`expectedAmount-${field.key}`}
-                                          name={[field.name, 'expectedAmount']}
+                                          name={[field.name, "expectedAmount"]}
                                           isListField={field.isListField}
-                                           
-                                          rules={[{ required: true, message: 'Enter amount' }]}
+                                          rules={[
+                                            {
+                                              required: true,
+                                              message: "Enter amount",
+                                            },
+                                          ]}
+                                          style={{ marginBottom: 0 }}
                                         >
-                                          <InputNumber size="large" style={{ width: '100%' }} min={0} formatter={indianFormatter} parser={indianParser} placeholder="Enter amount" />
+                                          <InputNumber
+                                            size="large"
+                                            style={{ width: "100%" }}
+                                            min={0}
+                                            formatter={indianFormatter}
+                                            parser={indianParser}
+                                            placeholder="Enter amount"
+                                          />
                                         </Form.Item>
                                         <Form.Item
                                           key={`advanceDate-${field.key}`}
-                                          label="Advance Date"
-                                          name={[field.name, 'advanceDate']}
+                                          name={[field.name, "advanceDate"]}
                                           isListField={field.isListField}
-                                           
-                                          rules={[{ required: true, message: 'Select date' }]}
+                                          rules={[
+                                            {
+                                              required: true,
+                                              message: "Select date",
+                                            },
+                                          ]}
+                                          style={{ marginBottom: 0 }}
                                         >
-                                          <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
+                                          <DatePicker
+                                            size="large"
+                                            style={{ width: "100%" }}
+                                            format={timeFormat}
+                                            showTime={{
+                                              use12Hours: true,
+                                              format: "hh:mm A",
+                                            }}
+                                          />
                                         </Form.Item>
-                                      </div>
-                                      {fields.length > 1 && (
-                                        <div>
-                                          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
+                                        <div style={{ textAlign: "center" }}>
+                                          {fields.length > 1 && (
+                                            <Button
+                                              type="text"
+                                              danger
+                                              icon={<DeleteOutlined />}
+                                              onClick={() => remove(field.name)}
+                                            />
+                                          )}
                                         </div>
-                                      )}
+                                      </div>
                                     </div>
+                                  ))}
+                                  <Form.Item shouldUpdate noStyle>
+                                    {({ getFieldValue }) => {
+                                      const totalAgreed =
+                                        normalizeAmount(
+                                          getFieldValue([
+                                            "eventTypeMeta",
+                                            key,
+                                            "totalAgreedAmount",
+                                          ])
+                                        ) ?? 0;
+                                      const advs =
+                                        getFieldValue([
+                                          "eventTypeAdvances",
+                                          key,
+                                        ]) || [];
+                                      const paid = advs.reduce((sum, a) => {
+                                        const amt = normalizeAmount(
+                                          a?.expectedAmount
+                                        );
+                                        return sum + (amt || 0);
+                                      }, 0);
+                                      const balance = totalAgreed - paid;
+                                      return (
+                                        <div
+                                          style={{
+                                            marginTop: 8,
+                                            paddingTop: 8,
+                                            borderTop: "1px dashed #e5e7eb",
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            fontSize: 13,
+                                            color: "#374151",
+                                          }}
+                                        >
+                                          <span>Balance after advances:</span>
+                                          <span style={{ fontWeight: 600 }}>
+                                            ₹{formatINR(balance || 0)}
+                                          </span>
+                                        </div>
+                                      );
+                                    }}
+                                  </Form.Item>
+                                  <div>
+                                    <Button
+                                      type="dashed"
+                                      onClick={() => add()}
+                                      block
+                                      icon={<PlusOutlined />}
+                                    >
+                                      Add Advance for {label}
+                                    </Button>
                                   </div>
-                                ))}
-                                <div>
-                                  <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>Add Advance for {eventType}</Button>
-                                </div>
-                              </>
-                            )}
-                          </Form.List>
-                        </div>
-                      ))}
+                                </>
+                              )}
+                            </Form.List>
+                          </div>
+                        );
+                      })}
                     </>
                   ) : (
                     <>
-                      <Form.Item
-                        label="Agreed Amount (Complete Package)"
-                        name="agreedAmount"
-                        rules={[{ required: true, message: "Please enter agreed amount for complete package" }]}
-                      >
-                        <InputNumber
-                          size="large"
-                          style={{ width: '100%' }}
-                          placeholder="Enter agreed amount for complete package"
-                          formatter={indianFormatter}
-                          parser={indianParser}
-                          min={0}
-                        />
-                      </Form.Item>
-                      {selectedEventTypes.map((eventType) => (
-                        <div key={eventType} className="glass-event-type-card" style={{ padding: "24px", marginBottom: 16 }}>
+                      {selectedEventTypes.map((eventTypeId) => {
+                        const typeMeta = (eventTypes || []).find(
+                          (t) => t.id === eventTypeId || t._id === eventTypeId
+                        );
+                        const label =
+                          typeMeta?.name || typeMeta?.label || "Event Type";
+                        const key = eventTypeId;
+                        return (
                           <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "12px",
-                              marginBottom: "20px",
-                            }}
+                            key={key}
+                            className="glass-event-type-card"
+                            style={{ padding: "24px", marginBottom: 16 }}
                           >
-                            <Tag className="event-type-tag">
-                              {WEDDING_SUB_TYPES.find(t => t.value === eventType)?.emoji} {eventType}
-                            </Tag>
-                          </div>
-                          <div style={{ marginBottom: 12 }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-                              <Form.Item
-                                label={`${eventType} Start`}
-                                name={["eventTypeDates", eventType, "startDate"]}
-                                rules={[{ required: true, message: `Please select start date for ${eventType}` }]}
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "12px",
+                                marginBottom: "20px",
+                              }}
+                            >
+                              <Tag className="event-type-tag">{label}</Tag>
+                            </div>
+                            <div style={{ marginBottom: 12 }}>
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: 12,
+                                  marginBottom: 12,
+                                }}
                               >
-                                <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
-                              </Form.Item>
+                                <Form.Item
+                                  label={`${label} Start`}
+                                  name={["eventTypeDates", key, "startDate"]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: `Please select start date for ${label}`,
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    format={timeFormat}
+                                    showTime={{
+                                      use12Hours: true,
+                                      format: "hh:mm A",
+                                    }}
+                                  />
+                                </Form.Item>
+                                <Form.Item
+                                  label={`${label} End`}
+                                  name={["eventTypeDates", key, "endDate"]}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message: `Please select end date for ${label}`,
+                                    },
+                                  ]}
+                                >
+                                  <DatePicker
+                                    size="large"
+                                    style={{ width: "100%" }}
+                                    format={timeFormat}
+                                    showTime={{
+                                      use12Hours: true,
+                                      format: "hh:mm A",
+                                    }}
+                                  />
+                                </Form.Item>
+                              </div>
                               <Form.Item
-                                label={`${eventType} End`}
-                                name={["eventTypeDates", eventType, "endDate"]}
-                                rules={[{ required: true, message: `Please select end date for ${eventType}` }]}
+                                label={`${label} Venue`}
+                                name={["eventTypeMeta", key, "venueLocation"]}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: `Please enter venue for ${label}`,
+                                  },
+                                ]}
                               >
-                                <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
+                                <Input
+                                  size="large"
+                                  placeholder={`Venue for ${label}`}
+                                />
                               </Form.Item>
                             </div>
-                            <Form.Item
-                              label={`${eventType} Venue`}
-                              name={["eventTypeMeta", eventType, "venueLocation"]}
-                              rules={[{ required: true, message: `Please enter venue for ${eventType}` }]}
-                            >
-                              <Input size="large" placeholder={`Venue for ${eventType}`} />
-                            </Form.Item>
+                          </div>
+                        );
+                      })}
+                      {/* Agreed Amount (Complete Package) just above common advances */}
+                      <div
+                        className="glass-advance-card"
+                        style={{
+                          padding: 16,
+                          borderRadius: 8,
+                          marginTop: 8,
+                          marginBottom: 16,
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 12,
+                          }}
+                        >
+                          <div
+                            style={{
+                              fontWeight: 600,
+                              color: "#0369a1",
+                              fontSize: 16,
+                            }}
+                          >
+                            Agreed Amount (Complete Package)
                           </div>
                         </div>
-                      ))}
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns:
+                              "repeat(auto-fit, minmax(220px, 1fr))",
+                            gap: 12,
+                          }}
+                        >
+                          <Form.Item
+                            label="Total Agreed Amount (incl. GST)"
+                            name="agreedAmountTotal"
+                          >
+                            <InputNumber
+                              size="large"
+                              
+                              style={{ width: "100%" }}
+                              placeholder="Enter total agreed amount (incl. GST)"
+                              formatter={indianFormatter}
+                              parser={indianParser}
+                              min={0}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            label="Account Amount"
+                            name="agreedAmountAccount"
+                          >
+                            <InputNumber
+                              size="large"
+                              style={{ width: "100%" }}
+                              placeholder="Amount through account"
+                              formatter={indianFormatter}
+                              parser={indianParser}
+                              min={0}
+                            />
+                          </Form.Item>
+                          <Form.Item
+                            label="GST on Account"
+                            name="agreedAmountAccountGstRate"
+                            initialValue={0}
+                          >
+                            <Select size="large">
+                              {gstOptions.map((g) => (
+                                <Option key={g.value} value={g.value}>
+                                  {g.label}
+                                </Option>
+                              ))}
+                            </Select>
+                          </Form.Item>
+                          <Form.Item
+                            label="Cash Amount"
+                            name="agreedAmountCash"
+                          >
+                            <InputNumber
+                              size="large"
+                              style={{ width: "100%" }}
+                              placeholder="Amount through cash"
+                              formatter={indianFormatter}
+                              parser={indianParser}
+                              min={0}
+                            />
+                          </Form.Item>
+                        </div>
+                        <Form.Item
+                          shouldUpdate={(prev, cur) =>
+                            prev.agreedAmountAccount !==
+                              cur.agreedAmountAccount ||
+                            prev.agreedAmountAccountGstRate !==
+                              cur.agreedAmountAccountGstRate
+                          }
+                          noStyle
+                        >
+                          {({ getFieldValue }) => {
+                            const acc = getFieldValue("agreedAmountAccount");
+                            const rate =
+                              getFieldValue("agreedAmountAccountGstRate") || 0;
+                            const total = calculateGstTotal(acc, rate);
+                            return (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingTop: 8,
+                                  borderTop: "1px dashed #e5e7eb",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  flexWrap: "wrap",
+                                  gap: 8,
+                                }}
+                              >
+                                <span
+                                  style={{ fontSize: 13, color: "#6b7280" }}
+                                >
+                                  Account total (incl. GST):
+                                </span>
+                                <span
+                                  style={{
+                                    fontWeight: 700,
+                                    color: "#111827",
+                                  }}
+                                >
+                                  ₹{formatINR(total || 0)}
+                                </span>
+                              </div>
+                            );
+                          }}
+                        </Form.Item>
+                      </div>
                       {/* Common advances for all event types */}
                       <div style={{ marginTop: 16 }}>
-                        <div style={{ fontWeight: 600, color: '#0369a1', marginBottom: 12, fontSize: 16 }}>📦 Advances (Common for All Events)</div>
+                        <div
+                          style={{
+                            fontWeight: 600,
+                            color: "#0369a1",
+                            marginBottom: 12,
+                            fontSize: 16,
+                          }}
+                        >
+                          📦 Advances (Common for All Events)
+                        </div>
                         <Form.List name="advances">
                           {(fields, { add, remove }) => (
                             <>
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "80px 1fr 1fr 60px",
+                                  gap: 8,
+                                  padding: "8px 12px",
+                                  background: "#f9fafb",
+                                  borderRadius: 8,
+                                  marginBottom: 8,
+                                  fontSize: 12,
+                                  fontWeight: 600,
+                                  color: "#6b7280",
+                                }}
+                              >
+                                <span>No.</span>
+                                <span>Amount</span>
+                                <span>Date</span>
+                                <span>Action</span>
+                              </div>
                               {fields.map((field, idx) => (
-                                <div key={field.key} className="glass-advance-card" style={{ marginBottom: 12 }}>
-                                  <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', flexWrap: 'wrap' }}>
-                                    <div style={{ flex: 1, minWidth: 240 }}>
-                                      <div style={{ fontWeight: 600, marginBottom: 8 }}>Advance #{idx + 1}</div>
-                                      <Form.Item
-                                        key={`expectedAmount-${field.key}`}
-                                        name={[field.name, 'expectedAmount']}
-                                        isListField={field.isListField}
-                                         
-                                        rules={[{ required: true, message: 'Enter amount' }]}
-                                      >
-                                        <InputNumber size="large" style={{ width: '100%' }} min={0} formatter={indianFormatter} parser={indianParser} placeholder="Enter amount" />
-                                      </Form.Item>
-                                      <Form.Item
-                                        key={`advanceDate-${field.key}`}
-                                        label="Advance Date"
-                                        name={[field.name, 'advanceDate']}
-                                        isListField={field.isListField}
-                                         
-                                        rules={[{ required: true, message: 'Select date' }]}
-                                      >
-                                        <DatePicker size="large" style={{ width: '100%' }} format="DD MMM YYYY" />
-                                      </Form.Item>
+                                <div
+                                  key={field.key}
+                                  className="glass-advance-card"
+                                  style={{
+                                    marginBottom: 8,
+                                    padding: "8px 12px",
+                                    borderRadius: 8,
+                                  }}
+                                >
+                                  <div
+                                    style={{
+                                      display: "grid",
+                                      gridTemplateColumns: "80px 1fr 1fr 60px",
+                                      gap: 8,
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        fontWeight: 600,
+                                        fontSize: 13,
+                                      }}
+                                    >
+                                      #{idx + 1}
                                     </div>
-                                    {fields.length > 1 && (
-                                      <div>
-                                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(field.name)} />
-                                      </div>
-                                    )}
+                                    <Form.Item
+                                      key={`expectedAmount-${field.key}`}
+                                      name={[field.name, "expectedAmount"]}
+                                      isListField={field.isListField}
+                                      rules={[
+                                        {
+                                          required: true,
+                                          message: "Enter amount",
+                                        },
+                                      ]}
+                                      style={{ marginBottom: 0 }}
+                                    >
+                                      <InputNumber
+                                        size="large"
+                                        style={{ width: "100%" }}
+                                        min={0}
+                                        formatter={indianFormatter}
+                                        parser={indianParser}
+                                        placeholder="Enter amount"
+                                      />
+                                    </Form.Item>
+                                    <Form.Item
+                                      key={`advanceDate-${field.key}`}
+                                      name={[field.name, "advanceDate"]}
+                                      isListField={field.isListField}
+                                      rules={[
+                                        {
+                                          required: true,
+                                          message: "Select date",
+                                        },
+                                      ]}
+                                      style={{ marginBottom: 0 }}
+                                    >
+                                      <DatePicker
+                                        size="large"
+                                        style={{ width: "100%" }}
+                                        format={timeFormat}
+                                        showTime={{
+                                          use12Hours: true,
+                                          format: "hh:mm A",
+                                        }}
+                                      />
+                                    </Form.Item>
+                                    <div style={{ textAlign: "center" }}>
+                                      {fields.length > 1 && (
+                                        <Button
+                                          type="text"
+                                          danger
+                                          icon={<DeleteOutlined />}
+                                          onClick={() => remove(field.name)}
+                                        />
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
                               ))}
+                              <Form.Item shouldUpdate noStyle>
+                                {({ getFieldValue }) => {
+                                  const totalAgreed =
+                                    normalizeAmount(
+                                      getFieldValue("agreedAmountTotal")
+                                    ) ?? 0;
+                                  const advs = getFieldValue("advances") || [];
+                                  const paid = advs.reduce((sum, a) => {
+                                    const amt = normalizeAmount(
+                                      a?.expectedAmount
+                                    );
+                                    return sum + (amt || 0);
+                                  }, 0);
+                                  const balance = totalAgreed - paid;
+                                  return (
+                                    <div
+                                      style={{
+                                        marginTop: 8,
+                                        paddingTop: 8,
+                                        borderTop: "1px dashed #e5e7eb",
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        fontSize: 13,
+                                        color: "#374151",
+                                      }}
+                                    >
+                                      <span>Balance after advances:</span>
+                                      <span style={{ fontWeight: 600 }}>
+                                        ₹{formatINR(balance || 0)}
+                                      </span>
+                                    </div>
+                                  );
+                                }}
+                              </Form.Item>
                               <div>
-                                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>Add Advance Payment</Button>
+                                <Button
+                                  type="dashed"
+                                  onClick={() => add()}
+                                  block
+                                  icon={<PlusOutlined />}
+                                >
+                                  Add Advance Payment
+                                </Button>
                               </div>
                             </>
                           )}
@@ -1032,7 +1912,7 @@ const normalizeAmount = (value) => {
               )}
 
               {/* Advances Section - For Non-Wedding Events */}
-              {eventName && eventName !== "Wedding" && (
+              {eventName && !hasEventTypes && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1133,7 +2013,10 @@ const normalizeAmount = (value) => {
                                     {...field}
                                     name={[field.name, "expectedAmount"]}
                                     rules={[
-                                      { required: true, message: "Enter amount" },
+                                      {
+                                        required: true,
+                                        message: "Enter amount",
+                                      },
                                     ]}
                                     style={{ marginBottom: 12 }}
                                   >
@@ -1153,7 +2036,8 @@ const normalizeAmount = (value) => {
                                     rules={[
                                       {
                                         required: true,
-                                        message: "Please select the advance date",
+                                        message:
+                                          "Please select the advance date",
                                       },
                                     ]}
                                     style={{ marginBottom: 0 }}
@@ -1162,7 +2046,11 @@ const normalizeAmount = (value) => {
                                       size="large"
                                       style={{ width: "100%" }}
                                       placeholder="Select advance date"
-                                      format="DD MMM YYYY"
+                                      format={timeFormat}
+                                      showTime={{
+                                        use12Hours: true,
+                                        format: "hh:mm A",
+                                      }}
                                     />
                                   </Form.Item>
                                 </div>
@@ -1189,6 +2077,38 @@ const normalizeAmount = (value) => {
                             </div>
                           </motion.div>
                         ))}
+                        <Form.Item shouldUpdate noStyle>
+                          {({ getFieldValue }) => {
+                            const totalAgreed =
+                              normalizeAmount(
+                                getFieldValue("agreedAmountTotal")
+                              ) ?? 0;
+                            const advs = getFieldValue("advances") || [];
+                            const paid = advs.reduce((sum, a) => {
+                              const amt = normalizeAmount(a?.expectedAmount);
+                              return sum + (amt || 0);
+                            }, 0);
+                            const balance = totalAgreed - paid;
+                            return (
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingTop: 8,
+                                  borderTop: "1px dashed #e5e7eb",
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  fontSize: 13,
+                                  color: "#374151",
+                                }}
+                              >
+                                <span>Balance after advances:</span>
+                                <span style={{ fontWeight: 600 }}>
+                                  ₹{formatINR(balance || 0)}
+                                </span>
+                              </div>
+                            );
+                          }}
+                        </Form.Item>
 
                         <motion.div
                           whileHover={{ scale: 1.02 }}

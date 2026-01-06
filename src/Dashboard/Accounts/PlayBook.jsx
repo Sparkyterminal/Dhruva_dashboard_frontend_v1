@@ -145,7 +145,9 @@ const PlayBook = () => {
       key: "purpose",
       fixed: "left",
       width: 180,
-      render: (text) => <span className="font-semibold text-gray-800">{text}</span>,
+      render: (text) => (
+        <span className="font-semibold text-gray-800">{text}</span>
+      ),
     },
     {
       title: "Amount",
@@ -154,7 +156,9 @@ const PlayBook = () => {
       sorter: (a, b) => a.amount - b.amount,
       width: 130,
       render: (amount) => (
-        <span className="font-bold text-indigo-600">₹{amount?.toLocaleString()}</span>
+        <span className="font-bold text-indigo-600">
+          ₹{amount?.toLocaleString()}
+        </span>
       ),
     },
     {
@@ -162,7 +166,9 @@ const PlayBook = () => {
       dataIndex: "priority",
       key: "priority",
       width: 100,
-      render: (priority) => <Tag color={getPriorityColor(priority)}>{priority}</Tag>,
+      render: (priority) => (
+        <Tag color={getPriorityColor(priority)}>{priority}</Tag>
+      ),
     },
     {
       title: "Status",
@@ -176,15 +182,17 @@ const PlayBook = () => {
       key: "requested_by",
       width: 200,
       render: (_, record) =>
-        `${record.requested_by?.first_name || ""} ${record.requested_by?.last_name || ""} (${
-          record.requested_by?.designation || ""
-        })`,
+        `${record.requested_by?.first_name || ""} ${
+          record.requested_by?.last_name || ""
+        } (${record.requested_by?.designation || ""})`,
     },
     {
       title: "Department",
       key: "department",
       width: 150,
-      render: (_, record) => <Tag color="cyan">{record.department?.name || ""}</Tag>,
+      render: (_, record) => (
+        <Tag color="cyan">{record.department?.name || ""}</Tag>
+      ),
     },
     {
       title: "Vendor",
@@ -199,7 +207,9 @@ const PlayBook = () => {
       width: 130,
       render: (amount) =>
         amount ? (
-          <span className="font-semibold text-green-600">₹{amount?.toLocaleString()}</span>
+          <span className="font-semibold text-green-600">
+            ₹{amount?.toLocaleString()}
+          </span>
         ) : (
           <span className="text-gray-400">-</span>
         ),
@@ -211,7 +221,9 @@ const PlayBook = () => {
       width: 140,
       render: (amount) =>
         amount ? (
-          <span className="font-semibold text-purple-600">₹{amount?.toLocaleString()}</span>
+          <span className="font-semibold text-purple-600">
+            ₹{amount?.toLocaleString()}
+          </span>
         ) : (
           <span className="text-gray-400">-</span>
         ),
@@ -236,8 +248,14 @@ const PlayBook = () => {
 
   // Calculate totals
   const totalAmount = requests.reduce((sum, req) => sum + (req.amount || 0), 0);
-  const totalAmountPaid = requests.reduce((sum, req) => sum + (req.amount_paid || 0), 0);
-  const totalPlannedAmount = requests.reduce((sum, req) => sum + (req.planned_amount || 0), 0);
+  const totalAmountPaid = requests.reduce(
+    (sum, req) => sum + (req.amount_paid || 0),
+    0
+  );
+  const totalPlannedAmount = requests.reduce(
+    (sum, req) => sum + (req.planned_amount || 0),
+    0
+  );
 
   return (
     <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative font-[cormoreg]">
@@ -290,7 +308,7 @@ const PlayBook = () => {
             transition={{ delay: 0.2, duration: 0.5 }}
             className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
           >
-            PlayBook
+            DayBook
           </motion.h1>
 
           <div className="w-24" />
@@ -306,11 +324,17 @@ const PlayBook = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-white/80 text-xs font-medium mb-1">Total Requests</p>
+                <p className="text-white/80 text-xs font-medium mb-1">
+                  Total Requests
+                </p>
                 <p className="text-3xl font-bold">{requests.length}</p>
               </div>
               <div className="float-animation">
-                <svg className="w-12 h-12 text-white/30" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-12 h-12 text-white/30"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z"
@@ -329,13 +353,19 @@ const PlayBook = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-xs font-medium mb-1">Total Amount Requested</p>
+                <p className="text-gray-600 text-xs font-medium mb-1">
+                  Total Amount Requested
+                </p>
                 <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
                   ₹{totalAmount.toLocaleString()}
                 </p>
               </div>
               <div className="float-animation">
-                <svg className="w-12 h-12 text-indigo-200" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-12 h-12 text-indigo-200"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
                   <path
                     fillRule="evenodd"
@@ -354,13 +384,19 @@ const PlayBook = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-xs font-medium mb-1">Planned Amount</p>
+                <p className="text-gray-600 text-xs font-medium mb-1">
+                  Planned Amount
+                </p>
                 <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                   ₹{totalPlannedAmount.toLocaleString()}
                 </p>
               </div>
               <div className="float-animation">
-                <svg className="w-12 h-12 text-purple-200" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-12 h-12 text-purple-200"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
                   <path
                     fillRule="evenodd"
@@ -379,13 +415,19 @@ const PlayBook = () => {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-gray-600 text-xs font-medium mb-1">Amount Paid</p>
+                <p className="text-gray-600 text-xs font-medium mb-1">
+                  Amount Paid
+                </p>
                 <p className="text-2xl lg:text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   ₹{totalAmountPaid.toLocaleString()}
                 </p>
               </div>
               <div className="float-animation">
-                <svg className="w-12 h-12 text-green-200" fill="currentColor" viewBox="0 0 20 20">
+                <svg
+                  className="w-12 h-12 text-green-200"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
                     fillRule="evenodd"
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
@@ -407,7 +449,9 @@ const PlayBook = () => {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-              <p className="text-gray-600 font-semibold">Loading playbook data...</p>
+              <p className="text-gray-600 font-semibold">
+                Loading playbook data...
+              </p>
             </div>
           ) : requests.length === 0 ? (
             <div className="text-center py-12">
@@ -424,7 +468,9 @@ const PlayBook = () => {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <p className="text-gray-600 font-semibold text-lg">No requests found</p>
+              <p className="text-gray-600 font-semibold text-lg">
+                No requests found
+              </p>
             </div>
           ) : (
             <Table
@@ -438,7 +484,9 @@ const PlayBook = () => {
               footer={() => (
                 <div className="flex flex-wrap gap-6 justify-center md:justify-end px-4 py-3">
                   <div className="text-center">
-                    <div className="text-white/80 text-xs mb-1">Total Amount</div>
+                    <div className="text-white/80 text-xs mb-1">
+                      Total Amount
+                    </div>
                     <div className="text-xl font-bold text-white">
                       ₹{totalAmount.toLocaleString()}
                     </div>
@@ -450,7 +498,9 @@ const PlayBook = () => {
                     </div>
                   </div>
                   <div className="text-center">
-                    <div className="text-white/80 text-xs mb-1">Total Planned</div>
+                    <div className="text-white/80 text-xs mb-1">
+                      Total Planned
+                    </div>
                     <div className="text-xl font-bold text-white">
                       ₹{totalPlannedAmount.toLocaleString()}
                     </div>

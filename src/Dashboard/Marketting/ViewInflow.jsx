@@ -1,39 +1,40 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { 
-  message, 
-  Table, 
-  Button, 
-  Card, 
-  Typography, 
-  Space, 
-  Row, 
-  Col, 
-  Tag, 
-  Modal,
+import {
+  message,
+  Table,
+  Button,
+  Card,
+  Typography,
+  Space,
+  Row,
+  Col,
+  Tag,
+  Drawer,
   Descriptions,
   Divider,
   Badge,
-  Statistic
+  Statistic,
 } from "antd";
-import { 
-  ArrowLeftOutlined, 
-  PlusOutlined, 
-  EditOutlined, 
+import {
+  ArrowLeftOutlined,
+  PlusOutlined,
+  EditOutlined,
   EyeOutlined,
-  CalendarOutlined, 
-  EnvironmentOutlined, 
+  CalendarOutlined,
+  EnvironmentOutlined,
   DollarOutlined,
   UserOutlined,
   PhoneOutlined,
   HeartOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  TeamOutlined
+  TeamOutlined,
 } from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
+import { useSelector } from "react-redux";
 
 const { Title, Text } = Typography;
 
@@ -41,18 +42,21 @@ const ViewInflow = () => {
   const navigate = useNavigate();
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
+  
+  const user = useSelector((state) => state.user.value);
+  const config = { headers: { Authorization: user?.access_token } };
 
   const fetchRequirementsData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axios.get(`${API_BASE_URL}events/my-events`,config, {
         params: { page, limit: pageSize },
       });
       setBookings(res.data.events || res.data.data || res.data || []);
@@ -84,6 +88,9 @@ const ViewInflow = () => {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -92,23 +99,42 @@ const ViewInflow = () => {
     return `₹${amount.toLocaleString("en-IN")}`;
   };
 
+  // Helper function to get event name as string
+  const getEventName = (eventName) => {
+    if (typeof eventName === "string") return eventName;
+    return eventName?.name || "N/A";
+  };
+
   // Helper function to check if event is Wedding type with event-specific amounts
   const isWeddingWithEventSpecificAmounts = (record) => {
-    return record.eventName === "Wedding" && 
-           record.eventTypes?.some(et => et.agreedAmount !== undefined);
+    const eventNameStr = getEventName(record.eventName);
+    return (
+      eventNameStr === "Wedding" &&
+      record.eventTypes?.some(
+        (et) => et.agreedAmount !== undefined && et.agreedAmount > 0
+      )
+    );
   };
 
   // Helper function to check if event is Wedding with common amounts
   const isWeddingWithCommonAmounts = (record) => {
-    return record.eventName === "Wedding" && 
-           record.eventTypes?.every(et => et.agreedAmount === undefined);
+    const eventNameStr = getEventName(record.eventName);
+    return (
+      eventNameStr === "Wedding" &&
+      record.eventTypes?.every(
+        (et) => !et.agreedAmount || et.agreedAmount === 0
+      )
+    );
   };
 
   // Calculate total agreed amount for a booking
   const getTotalAgreedAmount = (record) => {
     if (isWeddingWithEventSpecificAmounts(record)) {
       // Type 1: Wedding with event-specific amounts
-      return record.eventTypes.reduce((sum, et) => sum + (et.agreedAmount || 0), 0);
+      return record.eventTypes.reduce(
+        (sum, et) => sum + (et.agreedAmount || 0),
+        0
+      );
     } else if (isWeddingWithCommonAmounts(record)) {
       // Type 2: Wedding with common amount (stored at event level, not yet in API)
       return record.agreedAmount || 0;
@@ -122,17 +148,17 @@ const ViewInflow = () => {
   const getTotalExpectedAdvances = (record) => {
     let total = 0;
     if (isWeddingWithEventSpecificAmounts(record)) {
-      record.eventTypes?.forEach(et => {
-        et.advances?.forEach(adv => {
+      record.eventTypes?.forEach((et) => {
+        et.advances?.forEach((adv) => {
           total += adv.expectedAmount || 0;
         });
       });
     } else if (isWeddingWithCommonAmounts(record)) {
-      record.advances?.forEach(adv => {
+      record.advances?.forEach((adv) => {
         total += adv.expectedAmount || 0;
       });
     } else {
-      record.eventTypes?.[0]?.advances?.forEach(adv => {
+      record.eventTypes?.[0]?.advances?.forEach((adv) => {
         total += adv.expectedAmount || 0;
       });
     }
@@ -143,26 +169,26 @@ const ViewInflow = () => {
   const getTotalReceivedAdvances = (record) => {
     let total = 0;
     if (isWeddingWithEventSpecificAmounts(record)) {
-      record.eventTypes?.forEach(et => {
-        et.advances?.forEach(adv => {
+      record.eventTypes?.forEach((et) => {
+        et.advances?.forEach((adv) => {
           total += adv.receivedAmount || 0;
         });
       });
     } else if (isWeddingWithCommonAmounts(record)) {
-      record.advances?.forEach(adv => {
+      record.advances?.forEach((adv) => {
         total += adv.receivedAmount || 0;
       });
     } else {
-      record.eventTypes?.[0]?.advances?.forEach(adv => {
+      record.eventTypes?.[0]?.advances?.forEach((adv) => {
         total += adv.receivedAmount || 0;
       });
     }
     return total;
   };
 
-  const showEventDetailsModal = (record) => {
+  const showEventDetailsDrawer = (record) => {
     setSelectedEvent(record);
-    setModalVisible(true);
+    setDrawerVisible(true);
   };
 
   const columns = [
@@ -171,11 +197,16 @@ const ViewInflow = () => {
       dataIndex: "eventName",
       key: "eventName",
       width: 140,
-      render: (text) => (
-        <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-          {text}
-        </Tag>
-      ),
+      render: (text) => {
+        // Handle both string and object cases
+        const eventNameStr =
+          typeof text === "string" ? text : text?.name || text?.id || "N/A";
+        return (
+          <Tag color="purple" className="text-sm font-semibold px-3 py-1">
+            {eventNameStr}
+          </Tag>
+        );
+      },
     },
     {
       title: "Client Details",
@@ -185,7 +216,9 @@ const ViewInflow = () => {
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <UserOutlined className="text-blue-500" />
-            <Text strong className="text-base">{record.clientName}</Text>
+            <Text strong className="text-base">
+              {record.clientName}
+            </Text>
           </div>
           {record.brideName && record.groomName && (
             <div className="flex items-center gap-2">
@@ -208,12 +241,15 @@ const ViewInflow = () => {
             <PhoneOutlined className="text-green-500 text-xs" />
             <Text className="text-sm">{record.contactNumber}</Text>
           </div>
-          {record.altContactNumber && record.altContactNumber !== record.contactNumber && (
-            <div className="flex items-center gap-1">
-              <PhoneOutlined className="text-orange-500 text-xs" />
-              <Text className="text-sm text-gray-500">{record.altContactNumber}</Text>
-            </div>
-          )}
+          {record.altContactNumber &&
+            record.altContactNumber !== record.contactNumber && (
+              <div className="flex items-center gap-1">
+                <PhoneOutlined className="text-orange-500 text-xs" />
+                <Text className="text-sm text-gray-500">
+                  {record.altContactNumber}
+                </Text>
+              </div>
+            )}
         </div>
       ),
     },
@@ -259,19 +295,30 @@ const ViewInflow = () => {
       render: (_, record) => {
         const expected = getTotalExpectedAdvances(record);
         const received = getTotalReceivedAdvances(record);
-        const percentage = expected > 0 ? Math.round((received / expected) * 100) : 0;
-        
+        const percentage =
+          expected > 0 ? Math.round((received / expected) * 100) : 0;
+
         return (
           <div className="space-y-1">
             <div className="flex justify-between items-center">
               <Text className="text-xs text-gray-500">Received:</Text>
-              <Text strong className="text-sm text-green-600">{formatAmount(received)}</Text>
+              <Text strong className="text-sm text-green-600">
+                {formatAmount(received)}
+              </Text>
             </div>
             <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Expected:</Text>
+              <Text className="text-xs text-gray-500">Balance:</Text>
               <Text className="text-sm">{formatAmount(expected)}</Text>
             </div>
-            <Tag color={percentage === 100 ? "success" : percentage > 0 ? "warning" : "default"}>
+            <Tag
+              color={
+                percentage === 100
+                  ? "success"
+                  : percentage > 0
+                  ? "warning"
+                  : "default"
+              }
+            >
               {percentage}% Collected
             </Tag>
           </div>
@@ -287,7 +334,7 @@ const ViewInflow = () => {
         <Button
           type="primary"
           icon={<EyeOutlined />}
-          onClick={() => showEventDetailsModal(record)}
+          onClick={() => showEventDetailsDrawer(record)}
           className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
         >
           View ({record.eventTypes?.length || 0})
@@ -300,29 +347,45 @@ const ViewInflow = () => {
       fixed: "right",
       width: 90,
       align: "center",
-      render: (_, record) => (
-        <Button
-          type="default"
-          icon={<EditOutlined />}
-          onClick={() => navigate(`/user/editclient/${record._id}`)}
-          className="border-blue-400 text-blue-600 hover:bg-blue-50"
-        >
-          Edit
-        </Button>
-      ),
+      // In your columns definition, update the Edit button:
+      render: (_, record) => {
+        console.log("📝 Edit button record:", record._id, record.clientName);
+        return (
+          <Button
+            type="default"
+            icon={<EditOutlined />}
+            onClick={() => {
+              console.log("🔘 Navigating to edit:", record._id);
+              navigate(`/user/editclient/${record._id}`);
+            }}
+            className="border-blue-400 text-blue-600 hover:bg-blue-50"
+          >
+            Edit
+          </Button>
+        );
+      },
     },
   ];
 
   // Calculate statistics
   const totalBookings = bookings.length;
-  const totalAgreedRevenue = bookings.reduce((acc, curr) => acc + getTotalAgreedAmount(curr), 0);
-  const totalReceivedRevenue = bookings.reduce((acc, curr) => acc + getTotalReceivedAdvances(curr), 0);
+  const totalAgreedRevenue = bookings.reduce(
+    (acc, curr) => acc + getTotalAgreedAmount(curr),
+    0
+  );
+  const totalReceivedRevenue = bookings.reduce(
+    (acc, curr) => acc + getTotalReceivedAdvances(curr),
+    0
+  );
   const totalPendingRevenue = bookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
     const received = getTotalReceivedAdvances(curr);
     return acc + (expected - received);
   }, 0);
-  const totalEventTypes = bookings.reduce((acc, curr) => acc + (curr.eventTypes?.length || 0), 0);
+  const totalEventTypes = bookings.reduce(
+    (acc, curr) => acc + (curr.eventTypes?.length || 0),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
@@ -342,7 +405,10 @@ const ViewInflow = () => {
             </Col>
 
             <Col xs={24} sm={8} className="text-center">
-              <Title level={2} className="!mb-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+              <Title
+                level={2}
+                className="!mb-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
+              >
                 📋 Bookings Dashboard
               </Title>
             </Col>
@@ -366,15 +432,28 @@ const ViewInflow = () => {
           <Col xs={24} sm={12} md={6}>
             <Card
               className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{ background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', color: 'white' }}
+              style={{
+                background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+                color: "white",
+              }}
             >
               <Statistic
-                title={<Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Total Bookings</Text>}
+                title={
+                  <Text
+                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                  >
+                    Total Bookings
+                  </Text>
+                }
                 value={totalBookings}
                 prefix="📊"
-                valueStyle={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}
+                valueStyle={{
+                  color: "white",
+                  fontSize: 32,
+                  fontWeight: "bold",
+                }}
               />
-              <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
                 Active client bookings
               </Text>
             </Card>
@@ -383,16 +462,29 @@ const ViewInflow = () => {
           <Col xs={24} sm={12} md={6}>
             <Card
               className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{ background: 'linear-gradient(135deg,#10b981,#059669)', color: 'white' }}
+              style={{
+                background: "linear-gradient(135deg,#10b981,#059669)",
+                color: "white",
+              }}
             >
               <Statistic
-                title={<Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Total Agreed Amount</Text>}
+                title={
+                  <Text
+                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                  >
+                    Total Agreed Amount
+                  </Text>
+                }
                 value={totalAgreedRevenue}
                 prefix="💰"
-                valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
+                valueStyle={{
+                  color: "white",
+                  fontSize: 28,
+                  fontWeight: "bold",
+                }}
                 formatter={(value) => formatAmount(value)}
               />
-              <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
                 Total contracted revenue
               </Text>
             </Card>
@@ -401,16 +493,29 @@ const ViewInflow = () => {
           <Col xs={24} sm={12} md={6}>
             <Card
               className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{ background: 'linear-gradient(135deg,#22c55e,#16a34a)', color: 'white' }}
+              style={{
+                background: "linear-gradient(135deg,#22c55e,#16a34a)",
+                color: "white",
+              }}
             >
               <Statistic
-                title={<Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Amount Received</Text>}
+                title={
+                  <Text
+                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                  >
+                    Amount Received
+                  </Text>
+                }
                 value={totalReceivedRevenue}
                 prefix="✅"
-                valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
+                valueStyle={{
+                  color: "white",
+                  fontSize: 28,
+                  fontWeight: "bold",
+                }}
                 formatter={(value) => formatAmount(value)}
               />
-              <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
                 Payments collected so far
               </Text>
             </Card>
@@ -419,16 +524,29 @@ const ViewInflow = () => {
           <Col xs={24} sm={12} md={6}>
             <Card
               className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{ background: 'linear-gradient(135deg,#f59e0b,#d97706)', color: 'white' }}
+              style={{
+                background: "linear-gradient(135deg,#f59e0b,#d97706)",
+                color: "white",
+              }}
             >
               <Statistic
-                title={<Text style={{ color: 'rgba(255,255,255,0.9)', fontSize: 14 }}>Pending Amount</Text>}
+                title={
+                  <Text
+                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                  >
+                    Pending Amount
+                  </Text>
+                }
                 value={totalPendingRevenue}
                 prefix="⏳"
-                valueStyle={{ color: 'white', fontSize: 28, fontWeight: 'bold' }}
+                valueStyle={{
+                  color: "white",
+                  fontSize: 28,
+                  fontWeight: "bold",
+                }}
                 formatter={(value) => formatAmount(value)}
               />
-              <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 12 }}>
+              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
                 Outstanding payments due
               </Text>
             </Card>
@@ -455,57 +573,91 @@ const ViewInflow = () => {
         </Card>
       </div>
 
-      {/* Event Details Modal */}
-      <Modal
+      {/* Event Details Drawer */}
+      <Drawer
         title={
           <div className="flex items-center gap-3">
             <span className="text-2xl">🎯</span>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Event Details - {selectedEvent?.eventName}
+              Event Details - {getEventName(selectedEvent?.eventName)}
             </span>
           </div>
         }
-        open={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={1000}
-        className="event-details-modal"
-        bodyStyle={{ padding: 24, maxHeight: '70vh', overflowY: 'auto' }}
+        open={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        width="80%"
+        placement="right"
+        styles={{ body: { padding: 24 } }}
       >
         {selectedEvent && (
           <div className="space-y-6" style={{ paddingRight: 8 }}>
             {/* Client Info */}
             <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
               <Descriptions column={2} size="small">
-                <Descriptions.Item label={<span className="font-semibold">Client Name</span>}>
+                <Descriptions.Item
+                  label={<span className="font-semibold">Client Name</span>}
+                >
                   <Text strong>{selectedEvent.clientName}</Text>
                 </Descriptions.Item>
                 {selectedEvent.brideName && selectedEvent.groomName && (
                   <>
-                    <Descriptions.Item label={<span className="font-semibold">Bride</span>}>
+                    <Descriptions.Item
+                      label={<span className="font-semibold">Bride</span>}
+                    >
                       {selectedEvent.brideName}
                     </Descriptions.Item>
-                    <Descriptions.Item label={<span className="font-semibold">Groom</span>}>
+                    <Descriptions.Item
+                      label={<span className="font-semibold">Groom</span>}
+                    >
                       {selectedEvent.groomName}
                     </Descriptions.Item>
                   </>
                 )}
-                <Descriptions.Item label={<span className="font-semibold">Contact</span>}>
+                <Descriptions.Item
+                  label={<span className="font-semibold">Contact</span>}
+                >
                   {selectedEvent.contactNumber}
                 </Descriptions.Item>
                 {selectedEvent.altContactNumber && (
-                  <Descriptions.Item label={<span className="font-semibold">Alt Contact</span>}>
+                  <Descriptions.Item
+                    label={<span className="font-semibold">Alt Contact</span>}
+                  >
                     {selectedEvent.altContactNumber}
+                    {selectedEvent.altContactName && (
+                      <Text type="secondary" className="ml-2">
+                        ({selectedEvent.altContactName})
+                      </Text>
+                    )}
                   </Descriptions.Item>
                 )}
                 {selectedEvent.lead1 && (
-                  <Descriptions.Item label={<span className="font-semibold">Lead 1</span>}>
+                  <Descriptions.Item
+                    label={
+                      <span className="font-semibold">
+                        Project Coordinator 1
+                      </span>
+                    }
+                  >
                     {selectedEvent.lead1}
                   </Descriptions.Item>
                 )}
                 {selectedEvent.lead2 && (
-                  <Descriptions.Item label={<span className="font-semibold">Lead 2</span>}>
+                  <Descriptions.Item
+                    label={
+                      <span className="font-semibold">
+                        Project Coordinator 2
+                      </span>
+                    }
+                  >
                     {selectedEvent.lead2}
+                  </Descriptions.Item>
+                )}
+                {selectedEvent.note && (
+                  <Descriptions.Item
+                    label={<span className="font-semibold">Note</span>}
+                    span={2}
+                  >
+                    <Text>{selectedEvent.note}</Text>
                   </Descriptions.Item>
                 )}
               </Descriptions>
@@ -521,7 +673,9 @@ const ViewInflow = () => {
                       <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
                         <DollarOutlined className="text-green-600 text-lg" />
                         <div>
-                          <Text className="text-xs text-gray-500 block">Common Agreed Amount</Text>
+                          <Text className="text-xs text-gray-500 block">
+                            Common Agreed Amount
+                          </Text>
                           <Text strong className="text-lg text-green-700">
                             {formatAmount(selectedEvent.agreedAmount || 0)}
                           </Text>
@@ -532,55 +686,78 @@ const ViewInflow = () => {
                 </Card>
 
                 {/* Event Types - Only dates and venue */}
-                {selectedEvent.eventTypes?.map((eventType, index) => (
-                  <Card
-                    key={index}
-                    className="border-2 border-blue-200 hover:border-blue-400 transition-all"
-                    title={
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-blue-700">
-                          {eventType.eventType}
-                        </span>
-                        <Tag color="blue" className="text-sm">
-                          Event {index + 1}
-                        </Tag>
-                      </div>
-                    }
-                  >
-                    <Row gutter={[16, 16]}>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                          <CalendarOutlined className="text-blue-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">Start Date</Text>
-                            <Text strong>{formatDate(eventType.startDate)}</Text>
-                          </div>
+                {selectedEvent.eventTypes?.map((eventType, index) => {
+                  const eventTypeName =
+                    typeof eventType.eventType === "string"
+                      ? eventType.eventType
+                      : eventType.eventType?.name || "N/A";
+                  return (
+                    <Card
+                      key={index}
+                      className="border-2 border-blue-200 hover:border-blue-400 transition-all"
+                      title={
+                        <div className="flex items-center justify-between">
+                          <span className="text-lg font-bold text-blue-700">
+                            {eventTypeName}
+                          </span>
+                          <Tag color="blue" className="text-sm">
+                            Event {index + 1}
+                          </Tag>
                         </div>
-                      </Col>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                          <CalendarOutlined className="text-purple-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">End Date</Text>
-                            <Text strong>{formatDate(eventType.endDate)}</Text>
+                      }
+                    >
+                      <Row gutter={[16, 16]}>
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                            <CalendarOutlined className="text-blue-600 text-lg" />
+                            <div>
+                              <Text className="text-xs text-gray-500 block">
+                                Start Date
+                              </Text>
+                              <Text strong>
+                                {formatDate(eventType.startDate)}
+                              </Text>
+                            </div>
                           </div>
-                        </div>
-                      </Col>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
-                          <EnvironmentOutlined className="text-pink-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">Venue</Text>
-                            <Text strong>{eventType.venueLocation}</Text>
+                        </Col>
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                            <CalendarOutlined className="text-purple-600 text-lg" />
+                            <div>
+                              <Text className="text-xs text-gray-500 block">
+                                End Date
+                              </Text>
+                              <Text strong>
+                                {formatDate(eventType.endDate)}
+                              </Text>
+                            </div>
                           </div>
-                        </div>
-                      </Col>
-                    </Row>
-                  </Card>
-                ))}
+                        </Col>
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
+                            <EnvironmentOutlined className="text-pink-600 text-lg" />
+                            <div>
+                              <Text className="text-xs text-gray-500 block">
+                                Venue
+                              </Text>
+                              <Text strong>{eventType.venueLocation}</Text>
+                            </div>
+                          </div>
+                        </Col>
+                      </Row>
+                    </Card>
+                  );
+                })}
 
                 {/* Common Advances */}
-                <Card className="bg-green-50 border-green-300" title={<span className="font-bold text-green-700">Common Advance Payments</span>}>
+                <Card
+                  className="bg-green-50 border-green-300"
+                  title={
+                    <span className="font-bold text-green-700">
+                      Common Advance Payments
+                    </span>
+                  }
+                >
                   {selectedEvent.advances?.map((advance, advIndex) => (
                     <Card
                       key={advIndex}
@@ -588,16 +765,26 @@ const ViewInflow = () => {
                       className="bg-white border border-gray-200 mb-3"
                       title={
                         <div className="flex items-center justify-between">
-                          <span className="font-semibold">Advance #{advance.advanceNumber}</span>
+                          <span className="font-semibold">
+                            Advance #{advance.advanceNumber}
+                          </span>
                           {advance.receivedAmount > 0 ? (
-                            <Badge 
-                              status="success" 
-                              text={<span className="font-semibold text-green-600">Received</span>} 
+                            <Badge
+                              status="success"
+                              text={
+                                <span className="font-semibold text-green-600">
+                                  Received
+                                </span>
+                              }
                             />
                           ) : (
-                            <Badge 
-                              status="warning" 
-                              text={<span className="font-semibold text-orange-600">Pending</span>} 
+                            <Badge
+                              status="warning"
+                              text={
+                                <span className="font-semibold text-orange-600">
+                                  Pending
+                                </span>
+                              }
                             />
                           )}
                         </div>
@@ -605,46 +792,65 @@ const ViewInflow = () => {
                     >
                       <Row gutter={[8, 8]}>
                         <Col span={12}>
-                          <Text className="text-xs text-gray-500">Expected Amount</Text>
+                          <Text className="text-xs text-gray-500">
+                            Expected Amount
+                          </Text>
                           <div className="font-semibold text-blue-600">
                             {formatAmount(advance.expectedAmount)}
                           </div>
                         </Col>
                         <Col span={12}>
-                          <Text className="text-xs text-gray-500">Received Amount</Text>
+                          <Text className="text-xs text-gray-500">
+                            Received Amount
+                          </Text>
                           <div className="font-semibold text-green-600">
                             {formatAmount(advance.receivedAmount)}
                           </div>
                         </Col>
                         <Col span={12}>
-                          <Text className="text-xs text-gray-500">Expected Date</Text>
-                          <div className="font-medium">{formatDate(advance.advanceDate)}</div>
+                          <Text className="text-xs text-gray-500">
+                            Expected Date
+                          </Text>
+                          <div className="font-medium">
+                            {formatDate(advance.advanceDate)}
+                          </div>
                         </Col>
                         <Col span={12}>
-                          <Text className="text-xs text-gray-500">Received Date</Text>
+                          <Text className="text-xs text-gray-500">
+                            Received Date
+                          </Text>
                           <div className="font-medium">
-                            {advance.receivedDate ? formatDate(advance.receivedDate) : "-"}
+                            {advance.receivedDate
+                              ? formatDate(advance.receivedDate)
+                              : "-"}
                           </div>
                         </Col>
                       </Row>
 
-                      {(advance.remarks?.accounts || advance.remarks?.owner || advance.remarks?.approver) && (
+                      {(advance.remarks?.accounts ||
+                        advance.remarks?.owner ||
+                        advance.remarks?.approver) && (
                         <div className="mt-3 pt-3 border-t border-gray-200">
-                          <Text className="text-xs text-gray-500 block mb-2">Remarks:</Text>
+                          <Text className="text-xs text-gray-500 block mb-2">
+                            Remarks:
+                          </Text>
                           <div className="space-y-1">
                             {advance.remarks.accounts && (
                               <div className="text-sm">
-                                <Text type="secondary">Accounts:</Text> {advance.remarks.accounts}
+                                <Text type="secondary">Accounts:</Text>{" "}
+                                {advance.remarks.accounts}
                               </div>
                             )}
                             {advance.remarks.owner && (
                               <div className="text-sm">
-                                <Text type="secondary">Owner:</Text> {advance.remarks.owner}
+                                <Text type="secondary">Owner:</Text>{" "}
+                                {advance.remarks.owner}
                               </div>
                             )}
                             {advance.remarks.approver && (
                               <div className="text-sm">
-                                <Text type="secondary">Approver:</Text> {advance.remarks.approver}
+                                <Text type="secondary">Approver:</Text>{" "}
+                                {advance.remarks.approver}
                               </div>
                             )}
                           </div>
@@ -656,150 +862,260 @@ const ViewInflow = () => {
               </>
             )}
 
-            {(isWeddingWithEventSpecificAmounts(selectedEvent) || !selectedEvent.eventName.includes("Wedding")) && (
+            {(isWeddingWithEventSpecificAmounts(selectedEvent) ||
+              getEventName(selectedEvent.eventName) !== "Wedding") &&
               // Type 1: Wedding with event-specific amounts OR Type 3: Other events
-              selectedEvent.eventTypes?.map((eventType, index) => (
-                <Card
-                  key={index}
-                  className="border-2 border-purple-200 hover:border-purple-400 transition-all"
-                  title={
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-bold text-purple-700">
-                        {eventType.eventType}
-                      </span>
-                      <Tag color="purple" className="text-sm">
-                        Event {index + 1}
-                      </Tag>
-                    </div>
-                  }
-                >
-                  <div className="space-y-4">
-                    {/* Event Basic Info */}
-                    <Row gutter={[16, 16]}>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                          <CalendarOutlined className="text-blue-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">Start Date</Text>
-                            <Text strong>{formatDate(eventType.startDate)}</Text>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                          <CalendarOutlined className="text-purple-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">End Date</Text>
-                            <Text strong>{formatDate(eventType.endDate)}</Text>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col span={8}>
-                        <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
-                          <EnvironmentOutlined className="text-pink-600 text-lg" />
-                          <div>
-                            <Text className="text-xs text-gray-500 block">Venue</Text>
-                            <Text strong>{eventType.venueLocation}</Text>
-                          </div>
-                        </div>
-                      </Col>
-                      {eventType.agreedAmount !== undefined && (
-                        <Col span={24}>
-                          <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                            <DollarOutlined className="text-green-600 text-lg" />
+              selectedEvent.eventTypes?.map((eventType, index) => {
+                const eventTypeName =
+                  typeof eventType.eventType === "string"
+                    ? eventType.eventType
+                    : eventType.eventType?.name || "N/A";
+                return (
+                  <Card
+                    key={index}
+                    className="border-2 border-purple-200 hover:border-purple-400 transition-all"
+                    title={
+                      <div className="flex items-center justify-between">
+                        <span className="text-lg font-bold text-purple-700">
+                          {eventTypeName}
+                        </span>
+                        <Tag color="purple" className="text-sm">
+                          Event {index + 1}
+                        </Tag>
+                      </div>
+                    }
+                  >
+                    <div className="space-y-4">
+                      {/* Event Basic Info */}
+                      <Row gutter={[16, 16]}>
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
+                            <CalendarOutlined className="text-blue-600 text-lg" />
                             <div>
-                              <Text className="text-xs text-gray-500 block">Agreed Amount</Text>
-                              <Text strong className="text-lg text-green-700">
-                                {formatAmount(eventType.agreedAmount)}
+                              <Text className="text-xs text-gray-500 block">
+                                Start Date
+                              </Text>
+                              <Text strong>
+                                {formatDate(eventType.startDate)}
                               </Text>
                             </div>
                           </div>
                         </Col>
-                      )}
-                    </Row>
-
-                    <Divider className="my-4">Advance Payments</Divider>
-
-                    {/* Advances */}
-                    {eventType.advances?.map((advance, advIndex) => (
-                      <Card
-                        key={advIndex}
-                        size="small"
-                        className="bg-gray-50 border border-gray-200"
-                        title={
-                          <div className="flex items-center justify-between">
-                            <span className="font-semibold">Advance #{advance.advanceNumber}</span>
-                            {advance.receivedAmount > 0 ? (
-                              <Badge 
-                                status="success" 
-                                text={<span className="font-semibold text-green-600">Received</span>} 
-                              />
-                            ) : (
-                              <Badge 
-                                status="warning" 
-                                text={<span className="font-semibold text-orange-600">Pending</span>} 
-                              />
-                            )}
-                          </div>
-                        }
-                        style={{ marginBottom: 12 }}
-                      >
-                        <Row gutter={[8, 8]}>
-                          <Col span={12}>
-                            <Text className="text-xs text-gray-500">Expected Amount</Text>
-                            <div className="font-semibold text-blue-600">
-                              {formatAmount(advance.expectedAmount)}
-                            </div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-gray-500">Received Amount</Text>
-                            <div className="font-semibold text-green-600">
-                              {formatAmount(advance.receivedAmount)}
-                            </div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-gray-500">Expected Date</Text>
-                            <div className="font-medium">{formatDate(advance.advanceDate)}</div>
-                          </Col>
-                          <Col span={12}>
-                            <Text className="text-xs text-gray-500">Received Date</Text>
-                            <div className="font-medium">
-                              {advance.receivedDate ? formatDate(advance.receivedDate) : "-"}
-                            </div>
-                          </Col>
-                        </Row>
-
-                        {(advance.remarks?.accounts || advance.remarks?.owner || advance.remarks?.approver) && (
-                          <div className="mt-3 pt-3 border-t border-gray-200">
-                            <Text className="text-xs text-gray-500 block mb-2">Remarks:</Text>
-                            <div className="space-y-1">
-                              {advance.remarks.accounts && (
-                                <div className="text-sm">
-                                  <Text type="secondary">Accounts:</Text> {advance.remarks.accounts}
-                                </div>
-                              )}
-                              {advance.remarks.owner && (
-                                <div className="text-sm">
-                                  <Text type="secondary">Owner:</Text> {advance.remarks.owner}
-                                </div>
-                              )}
-                              {advance.remarks.approver && (
-                                <div className="text-sm">
-                                  <Text type="secondary">Approver:</Text> {advance.remarks.approver}
-                                </div>
-                              )}
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
+                            <CalendarOutlined className="text-purple-600 text-lg" />
+                            <div>
+                              <Text className="text-xs text-gray-500 block">
+                                End Date
+                              </Text>
+                              <Text strong>
+                                {formatDate(eventType.endDate)}
+                              </Text>
                             </div>
                           </div>
-                        )}
-                      </Card>
-                    ))}
-                  </div>
-                </Card>
-              ))
-            )}
+                        </Col>
+                        <Col span={8}>
+                          <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
+                            <EnvironmentOutlined className="text-pink-600 text-lg" />
+                            <div>
+                              <Text className="text-xs text-gray-500 block">
+                                Venue
+                              </Text>
+                              <Text strong>{eventType.venueLocation}</Text>
+                            </div>
+                          </div>
+                        </Col>
+                        {eventType.agreedAmount !== undefined &&
+                          eventType.agreedAmount > 0 && (
+                            <>
+                              <Col span={24}>
+                                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
+                                  <DollarOutlined className="text-green-600 text-lg" />
+                                  <div>
+                                    <Text className="text-xs text-gray-500 block">
+                                      Agreed Amount
+                                    </Text>
+                                    <Text
+                                      strong
+                                      className="text-lg text-green-700"
+                                    >
+                                      {formatAmount(eventType.agreedAmount)}
+                                    </Text>
+                                  </div>
+                                </div>
+                              </Col>
+                              {eventType.agreedAmountBreakup && (
+                                <Col span={24}>
+                                  <Card
+                                    size="small"
+                                    className="bg-blue-50 border-blue-200"
+                                  >
+                                    <Text className="text-xs font-semibold text-gray-600 block mb-2">
+                                      Amount Breakup:
+                                    </Text>
+                                    <Row gutter={[8, 8]}>
+                                      <Col span={6}>
+                                        <Text className="text-xs text-gray-500">
+                                          Account:
+                                        </Text>
+                                        <div className="font-semibold">
+                                          {formatAmount(
+                                            eventType.agreedAmountBreakup
+                                              .accountAmount || 0
+                                          )}
+                                        </div>
+                                      </Col>
+                                      <Col span={6}>
+                                        <Text className="text-xs text-gray-500">
+                                          Cash:
+                                        </Text>
+                                        <div className="font-semibold">
+                                          {formatAmount(
+                                            eventType.agreedAmountBreakup
+                                              .cashAmount || 0
+                                          )}
+                                        </div>
+                                      </Col>
+                                      <Col span={6}>
+                                        <Text className="text-xs text-gray-500">
+                                          GST Rate:
+                                        </Text>
+                                        <div className="font-semibold">
+                                          {eventType.agreedAmountBreakup
+                                            .accountGstRate * 100 || 0}
+                                          %
+                                        </div>
+                                      </Col>
+                                      <Col span={6}>
+                                        <Text className="text-xs text-gray-500">
+                                          Account (incl. GST):
+                                        </Text>
+                                        <div className="font-semibold text-green-600">
+                                          {formatAmount(
+                                            eventType.agreedAmountBreakup
+                                              .accountTotalWithGst || 0
+                                          )}
+                                        </div>
+                                      </Col>
+                                    </Row>
+                                  </Card>
+                                </Col>
+                              )}
+                            </>
+                          )}
+                      </Row>
+
+                      <Divider className="my-4">Advance Payments</Divider>
+
+                      {/* Advances */}
+                      {eventType.advances?.map((advance, advIndex) => (
+                        <Card
+                          key={advIndex}
+                          size="small"
+                          className="bg-gray-50 border border-gray-200"
+                          title={
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold">
+                                Advance #{advance.advanceNumber}
+                              </span>
+                              {advance.receivedAmount > 0 ? (
+                                <Badge
+                                  status="success"
+                                  text={
+                                    <span className="font-semibold text-green-600">
+                                      Received
+                                    </span>
+                                  }
+                                />
+                              ) : (
+                                <Badge
+                                  status="warning"
+                                  text={
+                                    <span className="font-semibold text-orange-600">
+                                      Pending
+                                    </span>
+                                  }
+                                />
+                              )}
+                            </div>
+                          }
+                          style={{ marginBottom: 12 }}
+                        >
+                          <Row gutter={[8, 8]}>
+                            <Col span={12}>
+                              <Text className="text-xs text-gray-500">
+                                Expected Amount
+                              </Text>
+                              <div className="font-semibold text-blue-600">
+                                {formatAmount(advance.expectedAmount)}
+                              </div>
+                            </Col>
+                            <Col span={12}>
+                              <Text className="text-xs text-gray-500">
+                                Received Amount
+                              </Text>
+                              <div className="font-semibold text-green-600">
+                                {formatAmount(advance.receivedAmount)}
+                              </div>
+                            </Col>
+                            <Col span={12}>
+                              <Text className="text-xs text-gray-500">
+                                Expected Date
+                              </Text>
+                              <div className="font-medium">
+                                {formatDate(advance.advanceDate)}
+                              </div>
+                            </Col>
+                            <Col span={12}>
+                              <Text className="text-xs text-gray-500">
+                                Received Date
+                              </Text>
+                              <div className="font-medium">
+                                {advance.receivedDate
+                                  ? formatDate(advance.receivedDate)
+                                  : "-"}
+                              </div>
+                            </Col>
+                          </Row>
+
+                          {(advance.remarks?.accounts ||
+                            advance.remarks?.owner ||
+                            advance.remarks?.approver) && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <Text className="text-xs text-gray-500 block mb-2">
+                                Remarks:
+                              </Text>
+                              <div className="space-y-1">
+                                {advance.remarks.accounts && (
+                                  <div className="text-sm">
+                                    <Text type="secondary">Accounts:</Text>{" "}
+                                    {advance.remarks.accounts}
+                                  </div>
+                                )}
+                                {advance.remarks.owner && (
+                                  <div className="text-sm">
+                                    <Text type="secondary">Owner:</Text>{" "}
+                                    {advance.remarks.owner}
+                                  </div>
+                                )}
+                                {advance.remarks.approver && (
+                                  <div className="text-sm">
+                                    <Text type="secondary">Approver:</Text>{" "}
+                                    {advance.remarks.approver}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </Card>
+                      ))}
+                    </div>
+                  </Card>
+                );
+              })}
           </div>
         )}
-      </Modal>
+      </Drawer>
 
       <style>{`
         .custom-table .ant-table-thead > tr > th {
@@ -822,22 +1138,20 @@ const ViewInflow = () => {
           color: white;
         }
 
-        .event-details-modal .ant-modal-header {
+        .ant-drawer-header {
           background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
           border-bottom: 2px solid #c7d2fe;
         }
 
-        .event-details-modal .ant-modal-body {
+        .ant-drawer-body {
           padding: 24px !important;
-          max-height: 70vh;
-          overflow-y: auto;
         }
 
-        .event-details-modal .ant-modal-content {
-          border-radius: 12px;
+        .ant-drawer-content {
+          border-radius: 12px 0 0 12px;
         }
 
-        .event-details-modal .ant-descriptions-item-label {
+        .ant-descriptions-item-label {
           font-weight: 600;
           color: #6366f1;
         }

@@ -17,7 +17,18 @@ import {
 } from "@ant-design/icons";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Document, Paragraph, TextRun, Table as DocxTable, TableCell, TableRow, WidthType, AlignmentType, BorderStyle, Packer } from "docx";
+import {
+  Document,
+  Paragraph,
+  TextRun,
+  Table as DocxTable,
+  TableCell,
+  TableRow,
+  WidthType,
+  AlignmentType,
+  BorderStyle,
+  Packer,
+} from "docx";
 import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../../../../config";
 
@@ -130,6 +141,50 @@ const ViewVendor = () => {
     headers: { Authorization: user?.access_token },
   };
 
+  const getAddVendorPath = () => {
+    if (!user) return "/user/addvendor";
+    const candidates = [];
+    if (user.role) candidates.push(user.role);
+    if (user.user_role) candidates.push(user.user_role);
+    if (user.roles) {
+      if (Array.isArray(user.roles)) {
+        user.roles.forEach((r) => {
+          if (!r) return;
+          if (typeof r === "string") candidates.push(r);
+          else if (r.role) candidates.push(r.role);
+          else if (r.name) candidates.push(r.name);
+        });
+      } else if (typeof user.roles === "string") candidates.push(user.roles);
+    }
+
+    const normalized = candidates.map((s) => String(s).toUpperCase());
+    if (normalized.includes("OWNER")) return "/owner/addvendor";
+    if (normalized.includes("APPROVER")) return "/approver/addvendor";
+    return "/user/addvendor";
+  };
+
+  const getEditVendorPath = (id) => {
+    if (!id) return "/user/editvendor/";
+    if (!user) return `/user/editvendor/${id}`;
+    const candidates = [];
+    if (user.role) candidates.push(user.role);
+    if (user.user_role) candidates.push(user.user_role);
+    if (user.roles) {
+      if (Array.isArray(user.roles)) {
+        user.roles.forEach((r) => {
+          if (!r) return;
+          if (typeof r === "string") candidates.push(r);
+          else if (r.role) candidates.push(r.role);
+          else if (r.name) candidates.push(r.name);
+        });
+      } else if (typeof user.roles === "string") candidates.push(user.roles);
+    }
+    const normalized = candidates.map((s) => String(s).toUpperCase());
+    if (normalized.includes("OWNER")) return `/owner/editvendor/${id}`;
+    if (normalized.includes("APPROVER")) return `/approver/editvendor/${id}`;
+    return `/user/editvendor/${id}`;
+  };
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
@@ -141,11 +196,8 @@ const ViewVendor = () => {
   const fetchRequirementsData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}vendor/list`,
-        config
-      );
-      setVendors(res.data.vendors || []);
+      const res = await axios.get(`${API_BASE_URL}vendor/list`, config);
+      setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");
     } finally {
@@ -154,63 +206,85 @@ const ViewVendor = () => {
   };
 
   useEffect(() => {
-    if (deptId) fetchRequirementsData();
+    fetchRequirementsData();
     // eslint-disable-next-line
-  }, [deptId]);
+  }, []);
 
   const exportToPDF = (vendor) => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Request Form For Opening New Vendor Code", 105, 22, { align: "center" });
+    doc.text("Vendor Registered Form", 105, 22, { align: "center" });
 
     // Build table data with only non-empty fields
     const tableData = [];
-    
-    // Basic Information
-    if (vendor.name) tableData.push(["Name of The Vendor", vendor.name]);
-    if (vendor.person_category) tableData.push(["Category of Person", vendor.person_category]);
-    if (vendor.company_name) tableData.push(["Company Name", vendor.company_name]);
-    if (vendor.vendor_type) tableData.push(["Type Of Vendor", vendor.vendor_type]);
-    if (vendor.refered_by) tableData.push(["Referred By", vendor.refered_by]);
-    
+
+    // First row: Vendor Code and Vendor Name together
+    // if (vendor.vendor_code || vendor.name) {
+    //   const combined = `${vendor.vendor_code || ""}${
+    //     vendor.vendor_code && vendor.name ? "    " : ""
+    //   }${vendor.name || ""}`;
+    //   tableData.push(["Vendor Code / Name", combined]);
+    // }
+    if (vendor.vendor_code) tableData.push(["Vendor Code", vendor.vendor_code.toUpperCase()]);
+    if (vendor.name) tableData.push(["Vendor Name", vendor.name]);
+    // Second row: Company Name
+    if (vendor.company_name)
+      tableData.push(["Company Name", vendor.company_name]);
+
+    // Then rest of the fields (avoid duplicating fields already added)
+
     // Permanent Address Section
-    const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || vendor.perm_city || 
-                                 vendor.perm_pin || vendor.perm_state || vendor.perm_country;
+    const hasPermanentAddress =
+      vendor.perm_address_1 ||
+      vendor.perm_address_2 ||
+      vendor.perm_city ||
+      vendor.perm_pin ||
+      vendor.perm_state ||
+      vendor.perm_country;
     if (hasPermanentAddress) {
       tableData.push(["", ""]);
       tableData.push(["PERMANENT ADDRESS", ""]);
-      if (vendor.perm_address_1) tableData.push(["Address ", vendor.perm_address_1]);
-      if (vendor.perm_address_2) tableData.push(["Address ", vendor.perm_address_2]);
+      if (vendor.perm_address_1)
+        tableData.push(["Address ", vendor.perm_address_1]);
+      if (vendor.perm_address_2)
+        tableData.push(["Address ", vendor.perm_address_2]);
       if (vendor.perm_city) tableData.push(["City", vendor.perm_city]);
       if (vendor.perm_pin) tableData.push(["PIN Code", vendor.perm_pin]);
       if (vendor.perm_state) tableData.push(["State", vendor.perm_state]);
       if (vendor.perm_country) tableData.push(["Country", vendor.perm_country]);
     }
-    
+
     // Temporary Address Section
-    const hasTempAddress = vendor.temp_address_1 || vendor.temp_city || vendor.temp_pin || 
-                           vendor.temp_state || vendor.temp_country;
+    const hasTempAddress =
+      vendor.temp_address_1 ||
+      vendor.temp_city ||
+      vendor.temp_pin ||
+      vendor.temp_state ||
+      vendor.temp_country;
     if (hasTempAddress) {
       tableData.push(["", ""]);
       tableData.push(["TEMPORARY ADDRESS", ""]);
-      if (vendor.temp_address_1) tableData.push(["Address ", vendor.temp_address_1]);
+      if (vendor.temp_address_1)
+        tableData.push(["Address ", vendor.temp_address_1]);
       if (vendor.temp_city) tableData.push(["City", vendor.temp_city]);
       if (vendor.temp_pin) tableData.push(["PIN Code", vendor.temp_pin]);
       if (vendor.temp_state) tableData.push(["State", vendor.temp_state]);
       if (vendor.temp_country) tableData.push(["Country", vendor.temp_country]);
     }
-    
+
     // Contact Information
     tableData.push(["", ""]);
     tableData.push(["CONTACT INFORMATION", ""]);
-    if (vendor.cont_person) tableData.push(["Contact Person", vendor.cont_person]);
+    if (vendor.cont_person)
+      tableData.push(["Contact Person", vendor.cont_person]);
     if (vendor.designation) tableData.push(["Designation", vendor.designation]);
     if (vendor.mobile_no) tableData.push(["Contact Number", vendor.mobile_no]);
-    if (vendor.alt_mobile_no) tableData.push(["Alternate Mobile Number", vendor.alt_mobile_no]);
+    if (vendor.alt_mobile_no)
+      tableData.push(["Alternate Mobile Number", vendor.alt_mobile_no]);
     if (vendor.email) tableData.push(["E-Mail", vendor.email]);
-    
+
     // Tax & Registration Details
     const hasTaxDetails = vendor.gst_no || vendor.msmed_no || vendor.pan_no;
     if (hasTaxDetails) {
@@ -220,30 +294,42 @@ const ViewVendor = () => {
       if (vendor.msmed_no) tableData.push(["MSMED Number", vendor.msmed_no]);
       if (vendor.pan_no) tableData.push(["PAN Number", vendor.pan_no]);
     }
-    
+
     // Bank Details Section
-    const hasBankDetails = vendor.bank_name || vendor.bank_address_1 || vendor.bank_address_2 || 
-                          vendor.bank_pin || vendor.account_number || vendor.ifscode || 
-                          vendor.branch || vendor.beneficiary_name;
+    const hasBankDetails =
+      vendor.bank_name ||
+      vendor.bank_address_1 ||
+      vendor.bank_address_2 ||
+      vendor.bank_pin ||
+      vendor.account_number ||
+      vendor.ifscode ||
+      vendor.branch ||
+      vendor.beneficiary_name;
     if (hasBankDetails) {
       tableData.push(["", ""]);
       tableData.push(["BANK DETAILS", ""]);
       if (vendor.bank_name) tableData.push(["Bank Name", vendor.bank_name]);
-      if (vendor.beneficiary_name) tableData.push(["Beneficiary Name", vendor.beneficiary_name]);
-      if (vendor.account_number) tableData.push(["Account Number", vendor.account_number]);
+      if (vendor.beneficiary_name)
+        tableData.push(["Beneficiary Name", vendor.beneficiary_name]);
+      if (vendor.account_number)
+        tableData.push(["Account Number", vendor.account_number]);
       if (vendor.ifscode) tableData.push(["IFSC Code", vendor.ifscode]);
       if (vendor.branch) tableData.push(["Branch", vendor.branch]);
-      if (vendor.bank_address_1) tableData.push(["Bank Address 1", vendor.bank_address_1]);
-      if (vendor.bank_address_2) tableData.push(["Bank Address 2", vendor.bank_address_2]);
+      if (vendor.bank_address_1)
+        tableData.push(["Bank Address 1", vendor.bank_address_1]);
+      if (vendor.bank_address_2)
+        tableData.push(["Bank Address 2", vendor.bank_address_2]);
       if (vendor.bank_pin) tableData.push(["Bank PIN Code", vendor.bank_pin]);
     }
-    
+
     // Payment Terms
     if (vendor.payment_terms || vendor.tds_details) {
       tableData.push(["", ""]);
       tableData.push(["PAYMENT INFORMATION", ""]);
-      if (vendor.payment_terms) tableData.push(["Payment Terms", vendor.payment_terms]);
-      if (vendor.tds_details) tableData.push(["TDS Rate & Section", vendor.tds_details]);
+      if (vendor.payment_terms)
+        tableData.push(["Payment Terms", vendor.payment_terms]);
+      if (vendor.tds_details)
+        tableData.push(["TDS Rate & Section", vendor.tds_details]);
     }
 
     // Track section header indices for styling
@@ -258,34 +344,42 @@ const ViewVendor = () => {
       startY: 35,
       head: [],
       body: tableData,
-      theme: 'grid',
+      theme: "grid",
       styles: {
         fontSize: 9,
         cellPadding: 3,
       },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 70 },
-        1: { cellWidth: 120 }
+        0: { fontStyle: "bold", cellWidth: 70 },
+        1: { cellWidth: 120 },
       },
-      didParseCell: function(data) {
+      didParseCell: function (data) {
         if (sectionHeaders.includes(data.row.index) || data.row.index === 0) {
           data.cell.styles.fillColor = [230, 230, 230];
-          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontStyle = "bold";
         }
-      }
+      },
     });
 
     // Footer Notes
-    const finalY = doc.lastAutoTable.finalY + 10;
+    const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : 50;
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
-    doc.text("*All the columns should be properly filled up. No column should be kept Blank.", 14, finalY);
-    doc.text("*All registered certificates should be scanned and attached in system.", 14, finalY + 5);
-    
+    doc.text(
+      "*All the columns should be properly filled up. No column should be kept Blank.",
+      14,
+      finalY
+    );
+    doc.text(
+      "*All registered certificates should be scanned and attached in system.",
+      14,
+      finalY + 5
+    );
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text("Compulsory Documents to be Attached:", 14, finalY + 15);
-    
+
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     const docs = [
@@ -293,11 +387,11 @@ const ViewVendor = () => {
       "2) Address proof- copy of voter card, Aadhar card, license, passport",
       "3) Copy of GST certificate as applicable",
       "4) Copy of cancelled cheque",
-      "5) MSMED form"
+      "5) MSMED form",
     ];
-    
+
     let yPos = finalY + 20;
-    docs.forEach(docItem => {
+    docs.forEach((docItem) => {
       doc.text(docItem, 14, yPos);
       yPos += 5;
     });
@@ -307,7 +401,10 @@ const ViewVendor = () => {
     doc.text("SIGNATURE", 14, yPos + 10);
     doc.line(14, yPos + 15, 80, yPos + 15);
 
-    doc.save(`Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+    const safeName = (vendor.name || vendor.vendor_code || "vendor")
+      .toString()
+      .replace(/\s+/g, "_");
+    doc.save(`Vendor_${safeName}_${new Date().getTime()}.pdf`);
     message.success("PDF exported successfully!");
   };
 
@@ -320,16 +417,22 @@ const ViewVendor = () => {
         return new TableRow({
           children: [
             new TableCell({
-              children: [new Paragraph({
-                children: [new TextRun({ text: label, bold: true, size: 20 })],
-              })],
+              children: [
+                new Paragraph({
+                  children: [
+                    new TextRun({ text: label, bold: true, size: 20 }),
+                  ],
+                }),
+              ],
               width: { size: 35, type: WidthType.PERCENTAGE },
               shading: isHeader ? { fill: "E6E6E6" } : undefined,
             }),
             new TableCell({
-              children: [new Paragraph({
-                children: [new TextRun({ text: value || "", size: 20 })],
-              })],
+              children: [
+                new Paragraph({
+                  children: [new TextRun({ text: value || "", size: 20 })],
+                }),
+              ],
               width: { size: 65, type: WidthType.PERCENTAGE },
               shading: isHeader ? { fill: "E6E6E6" } : undefined,
             }),
@@ -337,178 +440,266 @@ const ViewVendor = () => {
         });
       };
 
-      // Basic Information
-      if (vendor.name) tableRows.push(createRow("Name of The Vendor", vendor.name));
-      if (vendor.person_category) tableRows.push(createRow("Category of Person", vendor.person_category));
-      if (vendor.company_name) tableRows.push(createRow("Company Name", vendor.company_name));
-      if (vendor.vendor_type) tableRows.push(createRow("Type Of Vendor", vendor.vendor_type));
-      if (vendor.refered_by) tableRows.push(createRow("Referred By", vendor.refered_by));
+      // First row: Vendor Code and Vendor Name
+      if (vendor.vendor_code || vendor.name) {
+        const combined = `${vendor.vendor_code || ""}${
+          vendor.vendor_code && vendor.name ? "    " : ""
+        }${vendor.name || ""}`;
+        tableRows.push(createRow("Vendor Code / Name", combined));
+      }
+      // Second row: Company Name
+      if (vendor.company_name)
+        tableRows.push(createRow("Company Name", vendor.company_name));
+
+      // Basic Information (rest) - avoid duplicating vendor_code/name/company_name
+      if (vendor.person_category)
+        tableRows.push(createRow("Category of Person", vendor.person_category));
+      if (vendor.vendor_type)
+        tableRows.push(createRow("Type Of Vendor", vendor.vendor_type));
+      if (vendor.refered_by)
+        tableRows.push(createRow("Referred By", vendor.refered_by));
 
       // Permanent Address
-      const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || vendor.perm_city || 
-                                   vendor.perm_pin || vendor.perm_state || vendor.perm_country;
+      const hasPermanentAddress =
+        vendor.perm_address_1 ||
+        vendor.perm_address_2 ||
+        vendor.perm_city ||
+        vendor.perm_pin ||
+        vendor.perm_state ||
+        vendor.perm_country;
       if (hasPermanentAddress) {
         tableRows.push(createRow("PERMANENT ADDRESS", "", true));
-        if (vendor.perm_address_1) tableRows.push(createRow("Address ", vendor.perm_address_1));
-        if (vendor.perm_address_2) tableRows.push(createRow("Address ", vendor.perm_address_2));
-        if (vendor.perm_city) tableRows.push(createRow("City", vendor.perm_city));
-        if (vendor.perm_pin) tableRows.push(createRow("PIN Code", vendor.perm_pin));
-        if (vendor.perm_state) tableRows.push(createRow("State", vendor.perm_state));
-        if (vendor.perm_country) tableRows.push(createRow("Country", vendor.perm_country));
+        if (vendor.perm_address_1)
+          tableRows.push(createRow("Address ", vendor.perm_address_1));
+        if (vendor.perm_address_2)
+          tableRows.push(createRow("Address ", vendor.perm_address_2));
+        if (vendor.perm_city)
+          tableRows.push(createRow("City", vendor.perm_city));
+        if (vendor.perm_pin)
+          tableRows.push(createRow("PIN Code", vendor.perm_pin));
+        if (vendor.perm_state)
+          tableRows.push(createRow("State", vendor.perm_state));
+        if (vendor.perm_country)
+          tableRows.push(createRow("Country", vendor.perm_country));
       }
 
       // Temporary Address
-      const hasTempAddress = vendor.temp_address_1 || vendor.temp_city || vendor.temp_pin || 
-                             vendor.temp_state || vendor.temp_country;
+      const hasTempAddress =
+        vendor.temp_address_1 ||
+        vendor.temp_city ||
+        vendor.temp_pin ||
+        vendor.temp_state ||
+        vendor.temp_country;
       if (hasTempAddress) {
         tableRows.push(createRow("TEMPORARY ADDRESS", "", true));
-        if (vendor.temp_address_1) tableRows.push(createRow("Address ", vendor.temp_address_1));
-        if (vendor.temp_city) tableRows.push(createRow("City", vendor.temp_city));
-        if (vendor.temp_pin) tableRows.push(createRow("PIN Code", vendor.temp_pin));
-        if (vendor.temp_state) tableRows.push(createRow("State", vendor.temp_state));
-        if (vendor.temp_country) tableRows.push(createRow("Country", vendor.temp_country));
+        if (vendor.temp_address_1)
+          tableRows.push(createRow("Address ", vendor.temp_address_1));
+        if (vendor.temp_city)
+          tableRows.push(createRow("City", vendor.temp_city));
+        if (vendor.temp_pin)
+          tableRows.push(createRow("PIN Code", vendor.temp_pin));
+        if (vendor.temp_state)
+          tableRows.push(createRow("State", vendor.temp_state));
+        if (vendor.temp_country)
+          tableRows.push(createRow("Country", vendor.temp_country));
       }
 
       // Contact Information
       tableRows.push(createRow("CONTACT INFORMATION", "", true));
-      if (vendor.cont_person) tableRows.push(createRow("Contact Person", vendor.cont_person));
-      if (vendor.designation) tableRows.push(createRow("Designation", vendor.designation));
-      if (vendor.mobile_no) tableRows.push(createRow("Contact Number", vendor.mobile_no));
-      if (vendor.alt_mobile_no) tableRows.push(createRow("Alternate Mobile Number", vendor.alt_mobile_no));
+      if (vendor.cont_person)
+        tableRows.push(createRow("Contact Person", vendor.cont_person));
+      if (vendor.designation)
+        tableRows.push(createRow("Designation", vendor.designation));
+      if (vendor.mobile_no)
+        tableRows.push(createRow("Contact Number", vendor.mobile_no));
+      if (vendor.alt_mobile_no)
+        tableRows.push(
+          createRow("Alternate Mobile Number", vendor.alt_mobile_no)
+        );
       if (vendor.email) tableRows.push(createRow("E-Mail", vendor.email));
 
       // Tax Details
       const hasTaxDetails = vendor.gst_no || vendor.msmed_no || vendor.pan_no;
       if (hasTaxDetails) {
         tableRows.push(createRow("TAX & REGISTRATION DETAILS", "", true));
-        if (vendor.gst_no) tableRows.push(createRow("GST Number", vendor.gst_no));
-        if (vendor.msmed_no) tableRows.push(createRow("MSMED Number", vendor.msmed_no));
-        if (vendor.pan_no) tableRows.push(createRow("PAN Number", vendor.pan_no));
+        if (vendor.gst_no)
+          tableRows.push(createRow("GST Number", vendor.gst_no));
+        if (vendor.msmed_no)
+          tableRows.push(createRow("MSMED Number", vendor.msmed_no));
+        if (vendor.pan_no)
+          tableRows.push(createRow("PAN Number", vendor.pan_no));
       }
 
       // Bank Details
-      const hasBankDetails = vendor.bank_name || vendor.bank_address_1 || vendor.bank_address_2 || 
-                            vendor.bank_pin || vendor.account_number || vendor.ifscode || 
-                            vendor.branch || vendor.beneficiary_name;
+      const hasBankDetails =
+        vendor.bank_name ||
+        vendor.bank_address_1 ||
+        vendor.bank_address_2 ||
+        vendor.bank_pin ||
+        vendor.account_number ||
+        vendor.ifscode ||
+        vendor.branch ||
+        vendor.beneficiary_name;
       if (hasBankDetails) {
         tableRows.push(createRow("BANK DETAILS", "", true));
-        if (vendor.bank_name) tableRows.push(createRow("Bank Name", vendor.bank_name));
-        if (vendor.beneficiary_name) tableRows.push(createRow("Beneficiary Name", vendor.beneficiary_name));
-        if (vendor.account_number) tableRows.push(createRow("Account Number", vendor.account_number));
-        if (vendor.ifscode) tableRows.push(createRow("IFSC Code", vendor.ifscode));
+        if (vendor.bank_name)
+          tableRows.push(createRow("Bank Name", vendor.bank_name));
+        if (vendor.beneficiary_name)
+          tableRows.push(
+            createRow("Beneficiary Name", vendor.beneficiary_name)
+          );
+        if (vendor.account_number)
+          tableRows.push(createRow("Account Number", vendor.account_number));
+        if (vendor.ifscode)
+          tableRows.push(createRow("IFSC Code", vendor.ifscode));
         if (vendor.branch) tableRows.push(createRow("Branch", vendor.branch));
-        if (vendor.bank_address_1) tableRows.push(createRow("Bank Address 1", vendor.bank_address_1));
-        if (vendor.bank_address_2) tableRows.push(createRow("Bank Address 2", vendor.bank_address_2));
-        if (vendor.bank_pin) tableRows.push(createRow("Bank PIN Code", vendor.bank_pin));
+        if (vendor.bank_address_1)
+          tableRows.push(createRow("Bank Address 1", vendor.bank_address_1));
+        if (vendor.bank_address_2)
+          tableRows.push(createRow("Bank Address 2", vendor.bank_address_2));
+        if (vendor.bank_pin)
+          tableRows.push(createRow("Bank PIN Code", vendor.bank_pin));
       }
 
       // Payment Information
       if (vendor.payment_terms || vendor.tds_details) {
         tableRows.push(createRow("PAYMENT INFORMATION", "", true));
-        if (vendor.payment_terms) tableRows.push(createRow("Payment Terms", vendor.payment_terms));
-        if (vendor.tds_details) tableRows.push(createRow("TDS Rate & Section", vendor.tds_details));
+        if (vendor.payment_terms)
+          tableRows.push(createRow("Payment Terms", vendor.payment_terms));
+        if (vendor.tds_details)
+          tableRows.push(createRow("TDS Rate & Section", vendor.tds_details));
       }
 
       const doc = new Document({
-        sections: [{
-          properties: {},
-          children: [
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Request Form For Opening New Vendor Code",
-                  bold: true,
-                  size: 28,
-                }),
-              ],
-              alignment: AlignmentType.CENTER,
-              spacing: { after: 400 },
-            }),
-            new DocxTable({
-              rows: tableRows,
-              width: { size: 100, type: WidthType.PERCENTAGE },
-              borders: {
-                top: { style: BorderStyle.SINGLE, size: 1 },
-                bottom: { style: BorderStyle.SINGLE, size: 1 },
-                left: { style: BorderStyle.SINGLE, size: 1 },
-                right: { style: BorderStyle.SINGLE, size: 1 },
-                insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
-                insideVertical: { style: BorderStyle.SINGLE, size: 1 },
-              },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "", size: 20 })],
-              spacing: { before: 400, after: 200 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "*All the columns should be properly filled up. No column should be kept Blank.",
-                  italics: true,
-                  size: 18,
-                }),
-              ],
-              spacing: { after: 100 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "*All registered certificates should be scanned and attached in system.",
-                  italics: true,
-                  size: 18,
-                }),
-              ],
-              spacing: { after: 300 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "Compulsory Documents to be Attached:",
-                  bold: true,
-                  size: 20,
-                }),
-              ],
-              spacing: { after: 200 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "1) Copy of PAN Card", size: 18 })],
-              spacing: { after: 100 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "2) Address proof- copy of voter card, Aadhar card, license, passport", size: 18 })],
-              spacing: { after: 100 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "3) Copy of GST certificate as applicable", size: 18 })],
-              spacing: { after: 100 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "4) Copy of cancelled cheque", size: 18 })],
-              spacing: { after: 100 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "5) MSMED form", size: 18 })],
-              spacing: { after: 400 },
-            }),
-            new Paragraph({
-              children: [
-                new TextRun({
-                  text: "SIGNATURE",
-                  bold: true,
-                  size: 22,
-                }),
-              ],
-              spacing: { after: 200 },
-            }),
-            new Paragraph({
-              children: [new TextRun({ text: "___________________________", size: 20 })],
-            }),
-          ],
-        }],
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Vendor Registered Form",
+                    bold: true,
+                    size: 28,
+                  }),
+                ],
+                alignment: AlignmentType.CENTER,
+                spacing: { after: 400 },
+              }),
+              new DocxTable({
+                rows: tableRows,
+                width: { size: 100, type: WidthType.PERCENTAGE },
+                borders: {
+                  top: { style: BorderStyle.SINGLE, size: 1 },
+                  bottom: { style: BorderStyle.SINGLE, size: 1 },
+                  left: { style: BorderStyle.SINGLE, size: 1 },
+                  right: { style: BorderStyle.SINGLE, size: 1 },
+                  insideHorizontal: { style: BorderStyle.SINGLE, size: 1 },
+                  insideVertical: { style: BorderStyle.SINGLE, size: 1 },
+                },
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "", size: 20 })],
+                spacing: { before: 400, after: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "*All the columns should be properly filled up. No column should be kept Blank.",
+                    italics: true,
+                    size: 18,
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "*All registered certificates should be scanned and attached in system.",
+                    italics: true,
+                    size: 18,
+                  }),
+                ],
+                spacing: { after: 300 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "Compulsory Documents to be Attached:",
+                    bold: true,
+                    size: 20,
+                  }),
+                ],
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: "1) Copy of PAN Card", size: 18 }),
+                ],
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "2) Address proof- copy of voter card, Aadhar card, license, passport",
+                    size: 18,
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "3) Copy of GST certificate as applicable",
+                    size: 18,
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "4) Copy of cancelled cheque",
+                    size: 18,
+                  }),
+                ],
+                spacing: { after: 100 },
+              }),
+              new Paragraph({
+                children: [new TextRun({ text: "5) MSMED form", size: 18 })],
+                spacing: { after: 400 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "SIGNATURE",
+                    bold: true,
+                    size: 22,
+                  }),
+                ],
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({
+                    text: "___________________________",
+                    size: 20,
+                  }),
+                ],
+              }),
+            ],
+          },
+        ],
       });
 
       const blob = await Packer.toBlob(doc);
-      saveAs(blob, `Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.docx`);
+      saveAs(
+        blob,
+        `Vendor_${vendor.name.replace(
+          /\s+/g,
+          "_"
+        )}_${new Date().getTime()}.docx`
+      );
       message.success("Word document exported successfully!");
     } catch (error) {
       console.error("Error exporting to Word:", error);
@@ -527,7 +718,7 @@ const ViewVendor = () => {
   };
 
   const handleEdit = (id) => {
-    navigate(`/user/editvendor/${id}`);
+    navigate(getEditVendorPath(id));
   };
 
   const filteredVendors = vendors.filter(
@@ -540,6 +731,17 @@ const ViewVendor = () => {
   );
 
   const columns = [
+    {
+      title: "Vendor Code",
+      dataIndex: "vendor_code",
+      key: "vendor_code",
+      responsive: ["sm"],
+      render: (text) => (
+        <span style={{ fontWeight: 700, color: "#32255e" }}>
+          {text.toUpperCase() || "N/A"}
+        </span>
+      ),
+    },
     {
       title: "Vendor Name",
       dataIndex: "name",
@@ -595,7 +797,14 @@ const ViewVendor = () => {
       align: "center",
       width: 250,
       render: (_, record) => (
-        <div style={{ display: "flex", gap: "8px", justifyContent: "center", flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
           <Button
             type="text"
             icon={<EyeOutlined />}
@@ -664,6 +873,12 @@ const ViewVendor = () => {
               >
                 {vendor.name}
               </div>
+              <div style={{ color: "#5b5270", fontSize: "13px", marginTop: 4 }}>
+                <span style={{ fontWeight: 700, color: "#32255e" }}>
+                  Code:{" "}
+                </span>
+                {vendor.vendor_code.toUpperCase() || "N/A"}
+              </div>
               <div
                 style={{
                   display: "flex",
@@ -673,18 +888,23 @@ const ViewVendor = () => {
                 }}
               >
                 <div style={{ color: "#5b5270" }}>
-                  <span style={{ fontWeight: 600, color: "#32255e" }}>Company: </span>
+                  <span style={{ fontWeight: 600, color: "#32255e" }}>
+                    Company:{" "}
+                  </span>
                   {vendor.company_name || "N/A"}
                 </div>
                 <div style={{ color: "#5b5270" }}>
-                  <span style={{ fontWeight: 600, color: "#32255e" }}>GST: </span>
+                  <span style={{ fontWeight: 600, color: "#32255e" }}>
+                    GST:{" "}
+                  </span>
                   {vendor.gst_no || "N/A"}
                 </div>
                 <div>
                   <span
                     style={{
                       padding: "3px 10px",
-                      background: "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
+                      background:
+                        "linear-gradient(135deg, #667eea15 0%, #764ba215 100%)",
                       borderRadius: "6px",
                       color: "#667eea",
                       fontWeight: 500,
@@ -695,8 +915,12 @@ const ViewVendor = () => {
                   </span>
                   {vendor.refered_by && (
                     <>
-                      <span style={{ margin: "0 8px", color: "#d1c9e0" }}>•</span>
-                      <span style={{ color: "#5b5270" }}>Ref: {vendor.refered_by}</span>
+                      <span style={{ margin: "0 8px", color: "#d1c9e0" }}>
+                        •
+                      </span>
+                      <span style={{ color: "#5b5270" }}>
+                        Ref: {vendor.refered_by}
+                      </span>
                     </>
                   )}
                 </div>
@@ -884,7 +1108,10 @@ const ViewVendor = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <Card className="vendor-glass-card" styles={{ padding: isMobile ? "16px" : "28px" }}>
+          <Card
+            className="vendor-glass-card"
+            styles={{ padding: isMobile ? "16px" : "28px" }}
+          >
             {/* Search and Add Button */}
             <div
               style={{
@@ -929,7 +1156,7 @@ const ViewVendor = () => {
                 <Button
                   type="primary"
                   icon={<PlusOutlined />}
-                  onClick={() => navigate("/user/addvendor")}
+                  onClick={() => navigate(getAddVendorPath())}
                   className="vendor-btn-primary"
                   style={{
                     height: "42px",
@@ -952,7 +1179,9 @@ const ViewVendor = () => {
                   color: "#9079a5",
                 }}
               >
-                <div style={{ fontSize: "18px", fontWeight: 500 }}>Loading vendors...</div>
+                <div style={{ fontSize: "18px", fontWeight: 500 }}>
+                  Loading vendors...
+                </div>
               </div>
             ) : filteredVendors.length === 0 ? (
               <div
@@ -963,11 +1192,19 @@ const ViewVendor = () => {
                 }}
               >
                 <UserOutlined
-                  style={{ fontSize: "48px", marginBottom: "16px", opacity: 0.3 }}
+                  style={{
+                    fontSize: "48px",
+                    marginBottom: "16px",
+                    opacity: 0.3,
+                  }}
                 />
-                <div style={{ fontSize: "18px", fontWeight: 500 }}>No vendors found</div>
+                <div style={{ fontSize: "18px", fontWeight: 500 }}>
+                  No vendors found
+                </div>
                 <div style={{ fontSize: "14px", marginTop: "8px" }}>
-                  {search ? "Try adjusting your search" : "Add your first vendor to get started"}
+                  {search
+                    ? "Try adjusting your search"
+                    : "Add your first vendor to get started"}
                 </div>
               </div>
             ) : isMobile ? (
@@ -1059,47 +1296,40 @@ const ViewVendor = () => {
               padding: "8px",
             }}
           >
-            {[
-              { label: "Vendor Name", value: selectedVendor.name },
-              { label: "Person Category", value: selectedVendor.person_category },
-              { label: "Company Name", value: selectedVendor.company_name },
-              { label: "Vendor Type", value: selectedVendor.vendor_type },
-              { label: "Referred By", value: selectedVendor.refered_by },
-              { label: "Permanent Address 1", value: selectedVendor.perm_address_1 },
-              { label: "Permanent Address 2", value: selectedVendor.perm_address_2 },
-              { label: "Permanent City", value: selectedVendor.perm_city },
-              { label: "Permanent PIN", value: selectedVendor.perm_pin },
-              { label: "Permanent State", value: selectedVendor.perm_state },
-              { label: "Permanent Country", value: selectedVendor.perm_country },
-              { label: "Temporary Address", value: selectedVendor.temp_address_1 },
-              { label: "Temporary City", value: selectedVendor.temp_city },
-              { label: "Temporary PIN", value: selectedVendor.temp_pin },
-              { label: "Temporary State", value: selectedVendor.temp_state },
-              { label: "Temporary Country", value: selectedVendor.temp_country },
-              { label: "Contact Person", value: selectedVendor.cont_person },
-              { label: "Designation", value: selectedVendor.designation },
-              { label: "Mobile Number", value: selectedVendor.mobile_no },
-              { label: "Alternate Mobile Number", value: selectedVendor.alt_mobile_no },
-              { label: "Email Address", value: selectedVendor.email },
-              { label: "GST Number", value: selectedVendor.gst_no },
-              { label: "MSMED Number", value: selectedVendor.msmed_no },
-              { label: "PAN Number", value: selectedVendor.pan_no },
-              { label: "Bank Name", value: selectedVendor.bank_name },
-              { label: "Beneficiary Name", value: selectedVendor.beneficiary_name },
-              { label: "Account Number", value: selectedVendor.account_number },
-              { label: "IFSC Code", value: selectedVendor.ifscode },
-              { label: "Branch", value: selectedVendor.branch },
-              { label: "Bank Address 1", value: selectedVendor.bank_address_1 },
-              { label: "Bank Address 2", value: selectedVendor.bank_address_2 },
-              { label: "Bank PIN", value: selectedVendor.bank_pin },
-              { label: "Payment Terms", value: selectedVendor.payment_terms },
-              { label: "TDS Details", value: selectedVendor.tds_details },
-              { label: "Vendor Status", value: selectedVendor.vendor_status },
-            ]
-              .filter(item => item.value) // Only show fields with values
-              .map((item, index) => (
+            {(() => {
+              const preferred = ["vendor_code", "name", "company_name"];
+              const entries = Object.entries(selectedVendor)
+                .filter(([, v]) => v !== undefined && v !== null && v !== "")
+                .sort((a, b) => {
+                  const ai = preferred.indexOf(a[0]);
+                  const bi = preferred.indexOf(b[0]);
+                  if (ai !== -1 || bi !== -1)
+                    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+                  return a[0].localeCompare(b[0]);
+                });
+
+              const formatLabel = (key) =>
+                key
+                  .replace(/_/g, " ")
+                  .replace(/\b\w/g, (ch) => ch.toUpperCase());
+
+              const formatValue = (val) => {
+                if (val === true || val === false) return val.toString();
+                if (typeof val === "object") {
+                  if (val === null) return "";
+                  if (val.id) return val.id;
+                  try {
+                    return JSON.stringify(val);
+                  } catch (e) {
+                    return String(val);
+                  }
+                }
+                return String(val);
+              };
+
+              return entries.map(([key, value], index) => (
                 <div
-                  key={index}
+                  key={key}
                   style={{
                     display: "grid",
                     gridTemplateColumns: isMobile ? "1fr" : "180px 1fr",
@@ -1117,7 +1347,7 @@ const ViewVendor = () => {
                       fontSize: "15px",
                     }}
                   >
-                    {item.label}
+                    {formatLabel(key)}
                   </span>
                   <span
                     style={{
@@ -1126,10 +1356,11 @@ const ViewVendor = () => {
                       fontSize: "15px",
                     }}
                   >
-                    {item.value}
+                    {formatValue(value)}
                   </span>
                 </div>
-              ))}
+              ));
+            })()}
           </div>
         )}
       </Modal>
