@@ -348,7 +348,7 @@ useEffect(() => {
       setInitialLoading(true);
       try {
         // Step 1: Fetch the event data
-        const res = await axios.get(`${API_BASE_URL}events/${id}`);
+        const res = await axios.get(`${API_BASE_URL}events/${id}`,axiosConfig);
         const event = res.data.event;
         console.log("✅ Fetched event data:", event);
         console.log("✅ Event ID from response:", event._id || event.id);
