@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: "cormoreg";
+  src: url("/assets/Font/CormorantGaramond-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: normal;
+}
