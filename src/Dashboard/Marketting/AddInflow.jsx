@@ -297,6 +297,8 @@ const AddInflow = () => {
               values.eventTypeMeta?.[typeKey]?.venueLocation ?? null;
             const subVenueLocation =
               values.eventTypeMeta?.[typeKey]?.subVenueLocation ?? null;
+            const coordinator =
+              values.eventTypeMeta?.[typeKey]?.coordinator ?? null;
 
             // ✅ EXACT Backend expected fields
             const totalAgreedPer = normalizeAmount(
@@ -330,6 +332,7 @@ const AddInflow = () => {
               endDate,
               venueLocation,
               subVenueLocation,
+              coordinator,
               // ✅ Backend EXPECTS agreedAmount field (line 192 in your backend)
               agreedAmount: totalAgreedPer,
               accountAmount: accountAmtPer ?? 0,
