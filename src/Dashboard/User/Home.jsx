@@ -214,11 +214,7 @@ const Home = () => {
               </motion.div>
 
               {/* Add calender Button */}
-<<<<<<< HEAD
               {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
-=======
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                 <motion.button
                   onClick={() => navigate("/user/eventcalender")}
                   className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"

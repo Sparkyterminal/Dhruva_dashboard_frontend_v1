@@ -227,7 +227,8 @@ const ViewVendor = () => {
     //   }${vendor.name || ""}`;
     //   tableData.push(["Vendor Code / Name", combined]);
     // }
-    if (vendor.vendor_code) tableData.push(["Vendor Code", vendor.vendor_code.toUpperCase()]);
+    if (vendor.vendor_code)
+      tableData.push(["Vendor Code", vendor.vendor_code.toUpperCase()]);
     if (vendor.name) tableData.push(["Vendor Name", vendor.name]);
     // Second row: Company Name
     if (vendor.company_name)
@@ -529,11 +530,8 @@ const ViewVendor = () => {
           tableRows.push(createRow("MSMED Number", vendor.msmed_no));
         if (vendor.pan_no)
           tableRows.push(createRow("PAN Number", vendor.pan_no));
-<<<<<<< HEAD
         if (vendor.adhar_no)
           tableRows.push(createRow("AADHAR Number", vendor.adhar_no));
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
       }
 
       // Bank Details

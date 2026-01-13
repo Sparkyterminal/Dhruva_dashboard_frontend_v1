@@ -143,40 +143,27 @@ const ViewRequirements = () => {
       dataIndex: "slNo",
       key: "slNo",
       render: (_text, _record, index) => (currentPage - 1) * 10 + index + 1,
-<<<<<<< HEAD
       width: 100,
       // fixed: "left",
-=======
-      width: 80,
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     },
     {
       title: "Purpose",
       dataIndex: "purpose",
       key: "purpose",
-<<<<<<< HEAD
       width: 200,
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
-<<<<<<< HEAD
       width: 120,
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
       render: (amount) => `₹${amount.toLocaleString()}`,
     },
     {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
-<<<<<<< HEAD
       width: 100,
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
       render: (priority) => (
         <Tag color={getPriorityColor(priority)}>{priority}</Tag>
       ),
@@ -185,7 +172,6 @@ const ViewRequirements = () => {
       title: "Planned Amount",
       dataIndex: "planned_amount",
       key: "planned_amount",
-<<<<<<< HEAD
       width: 150,
       render: (amount) => `₹${(amount || 0).toLocaleString()}`,
     },
@@ -195,49 +181,32 @@ const ViewRequirements = () => {
       key: "approver_amount",
       width: 150,
       render: (amount) => `₹${(amount || 0).toLocaleString()}`,
-=======
-      render: (amount) => `₹${amount.toLocaleString()}`,
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     },
     {
       title: "Amount Paid",
       dataIndex: "amount_paid",
       key: "amount_paid",
-<<<<<<< HEAD
       width: 150,
       render: (amount) => `₹${(amount || 0).toLocaleString()}`,
-=======
-      render: (amount) => `₹${amount.toLocaleString()}`,
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     },
     {
       title: "Transaction In",
       dataIndex: "transation_in",
       key: "transation_in",
-<<<<<<< HEAD
       width: 130,
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     },
     {
       title: "Vendor",
       dataIndex: "vendor",
       key: "vendor",
-<<<<<<< HEAD
       width: 180,
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
       render: (vendor) =>
         vendor ? (
           <div>
             <div className="font-semibold">{vendor.name}</div>
-<<<<<<< HEAD
             <div className="text-xs text-gray-500">
               Code: {vendor.vendor_code}
             </div>
-=======
-            <div className="text-xs text-gray-500">ID: {vendor.vendor_code}</div>
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
           </div>
         ) : (
           <span>No Vendor</span>
@@ -247,7 +216,6 @@ const ViewRequirements = () => {
       title: "Event",
       dataIndex: "event_reference",
       key: "event_reference",
-<<<<<<< HEAD
       width: 200,
       render: (event) =>
         event ? (
@@ -258,13 +226,6 @@ const ViewRequirements = () => {
             <div className="text-xs text-gray-500">
               Client: {event.clientName}
             </div>
-=======
-      render: (event) =>
-        event ? (
-          <div>
-            <div className="font-semibold">{event.eventName?.name || 'N/A'}</div>
-            <div className="text-xs text-gray-500">Client: {event.clientName}</div>
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
           </div>
         ) : (
           <span>No Event</span>
@@ -353,11 +314,7 @@ const ViewRequirements = () => {
                         <div>
                           <div className="text-sm text-black">
                             <span className="font-semibold">Event:</span>{" "}
-<<<<<<< HEAD
                             {req.event_reference.eventName?.name || "N/A"}
-=======
-                            {req.event_reference.eventName?.name || 'N/A'}
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                           </div>
                           <div className="text-sm text-black">
                             <span className="font-semibold">Client:</span>{" "}
@@ -396,7 +353,6 @@ const ViewRequirements = () => {
   );
 
   const ListView = () => (
-<<<<<<< HEAD
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="overflow-x-auto">
         <Table
@@ -411,19 +367,6 @@ const ViewRequirements = () => {
           bordered={false}
         />
       </div>
-=======
-    <div style={{ overflowX: 'auto' }}>
-      <Table
-        dataSource={requirements}
-        columns={columns}
-        loading={loading}
-        rowKey="id"
-        rowClassName={getRowClassName}
-        pagination={false}
-        scroll={{ x: 'max-content' }}
-        sticky
-      />
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
 
       <div className="flex justify-center mt-6 pb-4">
         <Pagination
@@ -589,7 +532,6 @@ const ViewRequirements = () => {
           color: #000000 !important;
         }
 
-<<<<<<< HEAD
         /* Table Scrolling Styles */
         .overflow-x-auto {
           -webkit-overflow-scrolling: touch;
@@ -637,14 +579,6 @@ const ViewRequirements = () => {
 
         .ant-table-tbody > tr:hover > td {
           background: #fafafa !important;
-=======
-        .ant-table-wrapper {
-          overflow-x: auto;
-        }
-
-        .ant-table {
-          min-width: 100%;
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
         }
       `}</style>
     </div>

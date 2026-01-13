@@ -62,7 +62,6 @@ import ViewEvents from "./Dashboard/Marketting/EventsNames/ViewEvents";
 import AddSubEvents from "./Dashboard/Marketting/SubEvents/AddSubEvents";
 import EditSubEvent from "./Dashboard/Marketting/SubEvents/EditSubEvent";
 import ViewSubEvents from "./Dashboard/Marketting/SubEvents/ViewSubEvents";
-<<<<<<< HEAD
 import AddPC from "./Dashboard/Admin/ProjectCoordinators/AddPC";
 import EditPC from "./Dashboard/Admin/ProjectCoordinators/EditPC";
 import ViewPC from "./Dashboard/Admin/ProjectCoordinators/ViewPC";
@@ -72,8 +71,6 @@ import EditVenue from "./Dashboard/Marketting/AddVenue/EditVenue";
 import AddSubVenue from "./Dashboard/Marketting/AddSubVenue/AddSubVenue";
 import ViewSubVenue from "./Dashboard/Marketting/AddSubVenue/ViewSubVenue";
 import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -153,11 +150,8 @@ const App = () => {
             <>
               <Route path="/user" element={<AccountsHome />} />
               <Route path="/user/departments" element={<Departments />} />
-<<<<<<< HEAD
               <Route path="/user/viewrequests" element={<ViewRequirements />} />
               <Route path="/user/sendrequest" element={<AddRequirements />} />
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
               <Route
                 path="/user/departments/:id"
                 element={<Departmentwise />}
@@ -171,7 +165,7 @@ const App = () => {
                 path="/user/viewclientbookings"
                 element={<ViewClientsBookings />}
               />
-               <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
               <Route
                 path="/user/editchecklists/:id"
@@ -210,15 +204,12 @@ const App = () => {
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
-<<<<<<< HEAD
               <Route path="/user/addvenue" element={<AddVenue />} />
               <Route path="/user/viewvenue" element={<ViewVenue />} />
               <Route path="/user/editvenue/:id" element={<EditVenue />} />
               <Route path="/user/addsubvenue" element={<AddSubVenue />} />
               <Route path="/user/viewsubvenue" element={<ViewSubVenue />} />
               <Route path="/user/editsubvenue/:id" element={<EditSubVenue />} />
-=======
->>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
@@ -241,7 +232,7 @@ const App = () => {
               <Route path="/user/sendrequest" element={<AddRequirements />} />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
-               <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
               <Route
                 path="/user/editchecklists/:id"
