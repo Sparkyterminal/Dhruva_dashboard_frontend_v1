@@ -123,6 +123,11 @@ const AdminLayout = () => {
         },
       ],
     },
+    {
+      key: "/dashboard/viewprojectcoordinator",
+      icon: <UserOutlined style={{ color: DARK_FOREST_GREEN }} />,
+      label: <span style={{ color: TEXT_DARK }}>View Project Coordinator</span>,
+    }
   ];
 
   // Sidebar menu items for USER
@@ -181,11 +186,11 @@ const AdminLayout = () => {
             marginBottom: 8,
           }}
         >
-          <img
+          {/* <img
             src="/assets/dhruvalogo.png"
             alt="Logo"
             style={{ height: 100, width: 100, marginBottom: 8 }}
-          />
+          /> */}
           <span
             style={{
               color: DARK_FOREST_GREEN,

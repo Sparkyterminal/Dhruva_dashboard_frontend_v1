@@ -1,700 +1,3 @@
-// /* eslint-disable no-unused-vars */
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { useSelector } from "react-redux";
-// import {
-//   Table,
-//   Input,
-//   Button,
-//   Select,
-//   Space,
-//   message,
-//   Card,
-//   Row,
-//   Col,
-//   Tag,
-// } from "antd";
-// import {
-//   EditOutlined,
-//   CheckOutlined,
-//   CloseCircleOutlined,
-//   CheckCircleOutlined,
-//   ReloadOutlined,
-//   SearchOutlined,
-// } from "@ant-design/icons";
-// import dayjs from "dayjs";
-
-// import { API_BASE_URL } from "../../../config";
-
-// const { Option } = Select;
-
-// const departmentsList = [
-//   { name: "Hennur Godown", id: "68fdf1cfe66ed5069ddb9f25" },
-// ];
-
-// const RequirementTableApprover = () => {
-//   const user = useSelector((state) => state.user.value);
-//   const [requirements, setRequirements] = useState([]);
-//   const [loading, setLoading] = useState(false);
-//   const [search, setSearch] = useState("");
-//   const [selectedDept, setSelectedDept] = useState(null);
-
-//   // Editable row IDs and values for planned_amount and amount_paid
-//   const [editRowId, setEditRowId] = useState(null);
-//   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
-//   const [editAmountPaid, setEditAmountPaid] = useState(null);
-
-//   const config = {
-//     headers: { Authorization: user?.access_token },
-//   };
-
-//   // Calculate statistics
-//   const stats = {
-//     total: requirements.length,
-//     pending: requirements.filter((r) => r.status === "PENDING").length,
-//     completed: requirements.filter((r) => r.status === "COMPLETED").length,
-//   };
-
-//   const fetchRequirementsData = async (params = {}) => {
-//     setLoading(true);
-//     try {
-//       let query = [];
-//       if (params.search) query.push(`search=${params.search}`);
-//       if (params.department) query.push(`department=${params.department}`);
-//       const queryString = query.length ? `?${query.join("&")}` : "";
-//       const res = await axios.get(
-//         `${API_BASE_URL}request${queryString}`,
-//         config
-//       );
-//       setRequirements(res.data.items || []);
-//     } catch (err) {
-//       message.error("Failed to fetch requirements");
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   useEffect(() => {
-//     fetchRequirementsData();
-//   }, []);
-
-//   const sortedRequirements = [...requirements].sort((a, b) => {
-//     const statusOrder = {
-//       PENDING: 0,
-//       COMPLETED: 1,
-//       REJECTED: 1,
-//     };
-//     const statusA = statusOrder[a.status] ?? 0;
-//     const statusB = statusOrder[b.status] ?? 0;
-//     return statusA - statusB;
-//   });
-
-//   // Handlers for search and filters
-//   const handleSearch = (e) => setSearch(e.target.value);
-//   const handleSearchSubmit = () =>
-//     fetchRequirementsData({
-//       search,
-//       department: selectedDept,
-//     });
-//   const handleDeptChange = (value) => setSelectedDept(value);
-
-//   // Start editing planned_amount and amount_paid for a row
-//   const handleEditClick = (row) => {
-//     setEditRowId(row.id);
-//     setEditPlannedAmount(row.planned_amount ?? "");
-//     setEditAmountPaid(row.amount_paid ?? "");
-//   };
-//   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
-//   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
-
-//   // Save the editable fields: planned_amount and amount_paid
-//   const handleSaveClick = async (row) => {
-//     const planned = Number(editPlannedAmount);
-//     const paid = Number(editAmountPaid);
-//     if (isNaN(planned) || planned < 0) {
-//       message.error("Please enter a valid planned amount");
-//       return;
-//     }
-//     if (isNaN(paid) || paid < 0) {
-//       message.error("Please enter a valid amount paid");
-//       return;
-//     }
-
-//     try {
-//       await axios.patch(
-//         `${API_BASE_URL}request/${row.id}`,
-//         { planned_amount: planned, amount_paid: paid },
-//         config
-//       );
-//       message.success("Updated successfully");
-//       setEditRowId(null);
-//       fetchRequirementsData({ search, department: selectedDept });
-//     } catch (err) {
-//       message.error("Failed to update amounts");
-//     }
-//   };
-
-//   const handleComplete = async (row) => {
-//     try {
-//       await axios.patch(
-//         `${API_BASE_URL}request/${row.id}`,
-//         { status: "COMPLETED" },
-//         config
-//       );
-//       message.success("Request marked as completed");
-//       fetchRequirementsData({ search, department: selectedDept });
-//     } catch (err) {
-//       message.error("Failed to mark as completed");
-//     }
-//   };
-
-//   const handleReject = async (row) => {
-//     try {
-//       await axios.patch(
-//         `${API_BASE_URL}request/${row.id}`,
-//         { status: "REJECTED" },
-//         config
-//       );
-//       message.success("Request marked as rejected");
-//       fetchRequirementsData({ search, department: selectedDept });
-//     } catch (err) {
-//       message.error("Failed to reject request");
-//     }
-//   };
-
-//   const columns = [
-//     {
-//       title: "Sl. No",
-//       key: "slno",
-//       width: 70,
-//       fixed: "left",
-//       render: (_, __, idx) => (
-//         <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
-//           {idx + 1}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Requested At",
-//       dataIndex: "createdAt",
-//       key: "createdAt",
-//       width: 150,
-//       render: (date) => (
-//         <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
-//           {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Requester",
-//       dataIndex: ["requested_by", "first_name"],
-//       key: "first_name",
-//       width: 120,
-//       render: (_, record) => (
-//         <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-//           {record.requested_by?.first_name || "-"}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Department",
-//       dataIndex: ["department", "name"],
-//       key: "department",
-//       width: 150,
-//       render: (_, record) => (
-//         <Tag
-//           color="blue"
-//           style={{ borderRadius: 6, fontWeight: 700, fontSize: 12 }}
-//         >
-//           {record.department?.name || "-"}
-//         </Tag>
-//       ),
-//     },
-//     {
-//       title: "Purpose",
-//       dataIndex: "purpose",
-//       key: "purpose",
-//       width: 200,
-//       render: (text) => (
-//         <span
-//           style={{
-//             fontWeight: 700,
-//             fontSize: 18,
-//             color: "#000",
-//             whiteSpace: "normal",
-//             wordBreak: "break-word",
-//             display: "inline-block",
-//             maxWidth: 200,
-//           }}
-//         >
-//           {text}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Amount",
-//       dataIndex: "amount",
-//       key: "amount",
-//       width: 120,
-//       render: (amt) => (
-//         <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
-//           {amt?.toLocaleString("en-IN", {
-//             style: "currency",
-//             currency: "INR",
-//           })}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Priority",
-//       dataIndex: "priority",
-//       key: "priority",
-//       width: 100,
-//       render: (priority) => (
-//         <Tag
-//           color={
-//             priority === "HIGH"
-//               ? "#fee2e2"
-//               : priority === "MEDIUM"
-//               ? "#fef3c7"
-//               : "#d1fae5"
-//           }
-//           style={{
-//             color:
-//               priority === "HIGH"
-//                 ? "#991b1b"
-//                 : priority === "MEDIUM"
-//                 ? "#92400e"
-//                 : "#065f46",
-//             borderRadius: 6,
-//             border: "none",
-//             fontWeight: 700,
-//             fontSize: 16,
-//           }}
-//         >
-//           {priority}
-//         </Tag>
-//       ),
-//     },
-//     {
-//       title: "Updated At",
-//       dataIndex: "updatedAt",
-//       key: "updatedAt",
-//       width: 150,
-//       render: (date) => (
-//         <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
-//           {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
-//         </span>
-//       ),
-//     },
-//     {
-//       title: "Planned Amount",
-//       dataIndex: "planned_amount",
-//       key: "planned_amount",
-//       width: 180,
-//       render: (planned_amount, row) =>
-//         row.id === editRowId ? (
-//           <Space>
-//             <Input
-//               style={{ width: 120, fontWeight: 600, fontSize: 18 }}
-//               value={editPlannedAmount}
-//               onChange={handlePlannedAmountChange}
-//               size="small"
-//             />
-//           </Space>
-//         ) : (
-//           <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
-//             {planned_amount?.toLocaleString("en-IN", {
-//               style: "currency",
-//               currency: "INR",
-//             }) || "₹0"}
-//           </span>
-//         ),
-//     },
-//     {
-//       title: "Amount Paid",
-//       dataIndex: "amount_paid",
-//       key: "amount_paid",
-//       width: 180,
-//       render: (amount_paid, row) =>
-//         row.id === editRowId ? (
-//           <Space>
-//             <Input
-//               style={{ width: 120, fontWeight: 600, fontSize: 18 }}
-//               value={editAmountPaid}
-//               onChange={handleAmountPaidChange}
-//               size="small"
-//             />
-//           </Space>
-//         ) : (
-//           <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
-//             {amount_paid?.toLocaleString("en-IN", {
-//               style: "currency",
-//               currency: "INR",
-//             }) || "₹0"}
-//           </span>
-//         ),
-//     },
-//     {
-//       title: "Accounts Check",
-//       dataIndex: "accounts_check",
-//       key: "accounts_check",
-//       width: 140,
-//       render: (val) => (
-//         <Tag
-//           color={
-//             val === "APPROVED"
-//               ? "#34d399"
-//               : val === "PENDING"
-//               ? "#fbbf24"
-//               : "#f87171"
-//           }
-//           style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-//         >
-//           {val || "-"}
-//         </Tag>
-//       ),
-//     },
-//     {
-//       title: "Approver Check",
-//       dataIndex: "approver_check",
-//       key: "approver_check",
-//       width: 200,
-//       render: (_, row) => {
-//         if (row.approver_check === "PENDING") {
-//           return (
-//             <Space>
-//               <Button
-//                 type="primary"
-//                 size="small"
-//                 onClick={() => handleComplete(row)}
-//                 icon={<CheckCircleOutlined />}
-//                 style={{ background: "#10b981", borderColor: "#10b981" }}
-//               >
-//                 Complete
-//               </Button>
-//               <Button
-//                 danger
-//                 size="small"
-//                 onClick={() => handleReject(row)}
-//                 icon={<CloseCircleOutlined />}
-//               >
-//                 Reject
-//               </Button>
-//             </Space>
-//           );
-//         } else if (row.approver_check === "APPROVED") {
-//           return (
-//             <Tag
-//               color="#34d399"
-//               style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-//             >
-//               Completed
-//             </Tag>
-//           );
-//         } else if (row.approver_check === "REJECTED") {
-//           return (
-//             <Tag
-//               color="#f87171"
-//               style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-//             >
-//               Rejected
-//             </Tag>
-//           );
-//         }
-//         return "-";
-//       },
-//     },
-//     {
-//       title: "Actions",
-//       key: "actions",
-//       width: 150,
-//       fixed: "right",
-//       render: (_, row) => {
-//         if (row.id === editRowId) {
-//           return (
-//             <Space>
-//               <Button
-//                 type="primary"
-//                 size="small"
-//                 onClick={() => handleSaveClick(row)}
-//                 icon={<CheckOutlined />}
-//               >
-//                 Save
-//               </Button>
-//             </Space>
-//           );
-//         } else {
-//           return (
-//             <Button
-//               icon={<EditOutlined />}
-//               size="small"
-//               onClick={() => handleEditClick(row)}
-//             />
-//           );
-//         }
-//       },
-//     },
-//   ];
-
-//   const rowClassName = (record) => {
-//     if (record.status === "COMPLETED") return "completed-row";
-//     if (record.status === "REJECTED") return "rejected-row";
-//     return "";
-//   };
-
-//   return (
-//     <div
-//       className="min-h-screen w-full relative"
-//       style={{ background: "transparent" }}
-//     >
-//       <style>{`
-//         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
-//         * {
-//           font-family: 'Cormorant Garamond', serif;
-//         }
-//         .completed-row {
-//           background: #f0fdf4 !important;
-//           opacity: 0.85;
-//         }
-//         .rejected-row {
-//           background: #fef2f2 !important;
-//           opacity: 0.75;
-//         }
-//         .ant-table-thead > tr > th {
-//           background: #1d174c !important;
-//           color: #fff !important;
-//           font-size: 18px !important;
-//           font-weight: 700 !important;
-//           border-bottom: 2px solid #e5e7eb !important;
-//         }
-//         .ant-table-tbody > tr > td {
-//           color: #000 !important;
-//           font-size: 18px !important;
-//           font-weight: 700 !important;
-//         }
-//       `}</style>
-
-//       <div
-//         style={{
-//           padding: "32px",
-//           background: "transparent",
-//           minHeight: "100vh",
-//           position: "relative",
-//           zIndex: 10,
-//         }}
-//       >
-//         {/* Centered Heading */}
-//         <h1
-//           style={{
-//             textAlign: "center",
-//             fontSize: 48,
-//             fontWeight: 600,
-//             color: "#1f2937",
-//             marginBottom: 24,
-//             letterSpacing: "-0.02em",
-//           }}
-//         >
-//           Request's Dashboard
-//         </h1>
-
-//         {/* Statistics Cards */}
-//         <Row
-//           gutter={[24, 24]}
-//           style={{
-//             marginBottom: 32,
-//             maxWidth: 900,
-//             marginLeft: "auto",
-//             marginRight: "auto",
-//           }}
-//         >
-//           <Col xs={24} sm={8}>
-//             <Card
-//               className="stat-card"
-//               hoverable
-//               style={{
-//                 background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-//                 borderColor: "transparent",
-//                 color: "#ffffff",
-//               }}
-//             >
-//               <div
-//                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-//               >
-//                 <div style={{ flex: 1 }}>
-//                   <div
-//                     style={{
-//                       fontSize: 20,
-//                       fontWeight: 700,
-//                       color: "#ffffff",
-//                       marginBottom: 8,
-//                     }}
-//                   >
-//                     Total Requests
-//                   </div>
-//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
-//                     {stats.total}
-//                   </div>
-//                 </div>
-//               </div>
-//             </Card>
-//           </Col>
-//           <Col xs={24} sm={8}>
-//             <Card
-//               className="stat-card"
-//               hoverable
-//               style={{
-//                 background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-//                 borderColor: "transparent",
-//                 color: "#ffffff",
-//               }}
-//             >
-//               <div
-//                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-//               >
-//                 <div style={{ flex: 1 }}>
-//                   <div
-//                     style={{
-//                       fontSize: 20,
-//                       fontWeight: 700,
-//                       color: "#ffffff",
-//                       marginBottom: 8,
-//                     }}
-//                   >
-//                     Pending
-//                   </div>
-//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
-//                     {stats.pending}
-//                   </div>
-//                 </div>
-//               </div>
-//             </Card>
-//           </Col>
-//           <Col xs={24} sm={8}>
-//             <Card
-//               className="stat-card"
-//               hoverable
-//               style={{
-//                 background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-//                 borderColor: "transparent",
-//                 color: "#ffffff",
-//               }}
-//             >
-//               <div
-//                 style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-//               >
-//                 <div style={{ flex: 1 }}>
-//                   <div
-//                     style={{
-//                       fontSize: 20,
-//                       fontWeight: 700,
-//                       color: "#ffffff",
-//                       marginBottom: 8,
-//                     }}
-//                   >
-//                     Completed
-//                   </div>
-//                   <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
-//                     {stats.completed}
-//                   </div>
-//                 </div>
-//               </div>
-//             </Card>
-//           </Col>
-//         </Row>
-
-//         {/* Filters */}
-//         <div
-//           className="filter-section"
-//           style={{
-//             marginBottom: 24,
-//             background: "#fff",
-//             padding: 24,
-//             borderRadius: 16,
-//           }}
-//         >
-//           <Space size="middle" wrap style={{ width: "100%" }}>
-//             <Input
-//               placeholder="Search requirements..."
-//               value={search}
-//               onChange={handleSearch}
-//               onPressEnter={handleSearchSubmit}
-//               prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
-//               style={{ width: 240, borderRadius: 8 }}
-//               size="large"
-//             />
-//             <Select
-//               placeholder="Department"
-//               value={selectedDept}
-//               onChange={handleDeptChange}
-//               allowClear
-//               style={{ width: 180, borderRadius: 8 }}
-//               size="large"
-//             >
-//               {departmentsList.map((dept) => (
-//                 <Option value={dept.id} key={dept.id}>
-//                   {dept.name}
-//                 </Option>
-//               ))}
-//             </Select>
-//             <Button
-//               type="primary"
-//               size="large"
-//               onClick={handleSearchSubmit}
-//               icon={<SearchOutlined />}
-//               style={{
-//                 borderRadius: 8,
-//                 background: "#3b82f6",
-//                 borderColor: "#3b82f6",
-//               }}
-//             >
-//               Search
-//             </Button>
-//             <Button
-//               size="large"
-//               onClick={() => {
-//                 setSearch("");
-//                 setSelectedDept(null);
-//                 fetchRequirementsData();
-//               }}
-//               icon={<ReloadOutlined />}
-//               style={{ borderRadius: 8 }}
-//             >
-//               Reset
-//             </Button>
-//           </Space>
-//         </div>
-
-//         {/* Table */}
-//         <Card
-//           style={{
-//             borderRadius: 16,
-//             overflow: "hidden",
-//             border: "1px solid #e5e7eb",
-//             boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-//           }}
-//         >
-//           <Table
-//             rowKey="id"
-//             loading={loading}
-//             columns={columns}
-//             dataSource={sortedRequirements}
-//             pagination={{
-//               pageSize: 10,
-//               showTotal: (total) => `Total ${total} requirements`,
-//               showSizeChanger: true,
-//             }}
-//             scroll={{ x: 1600 }}
-//             size="middle"
-//             rowClassName={rowClassName}
-//           />
-//         </Card>
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default RequirementTableApprover;
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -732,10 +35,11 @@ const RequirementTableApprover = () => {
   const [search, setSearch] = useState("");
   const [selectedDate, setSelectedDate] = useState(dayjs());
 
-  // Editable row IDs and values for planned_amount and amount_paid
+  // Editable row IDs and values for planned_amount, amount_paid, and approver_amount
   const [editRowId, setEditRowId] = useState(null);
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
+  const [editApproverAmount, setEditApproverAmount] = useState(null);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -754,9 +58,12 @@ const RequirementTableApprover = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
       if (date) params.append("singleDate", date);
-      
+
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(`${API_BASE_URL}request${queryString}`, config);
+      const res = await axios.get(
+        `${API_BASE_URL}request${queryString}`,
+        config
+      );
       setRequirements(res.data.items || []);
     } catch (err) {
       message.error("Failed to fetch requirements");
@@ -772,7 +79,10 @@ const RequirementTableApprover = () => {
   useEffect(() => {
     // Fetch data on each search input change with a slight debounce
     const timeoutId = setTimeout(() => {
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -803,19 +113,23 @@ const RequirementTableApprover = () => {
     setSelectedDate(date);
   };
 
-  // Start editing planned_amount and amount_paid for a row
+  // Start editing planned_amount, amount_paid, and approver_amount for a row
   const handleEditClick = (row) => {
     setEditRowId(row.id);
     setEditPlannedAmount(row.planned_amount ?? "");
     setEditAmountPaid(row.amount_paid ?? "");
+    setEditApproverAmount(row.approver_amount ?? "");
   };
   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
+  const handleApproverAmountChange = (e) =>
+    setEditApproverAmount(e.target.value);
 
-  // Save the editable fields: planned_amount and amount_paid
+  // Save the editable fields: planned_amount, amount_paid, and approver_amount
   const handleSaveClick = async (row) => {
     const planned = Number(editPlannedAmount);
     const paid = Number(editAmountPaid);
+    const approved = Number(editApproverAmount);
     if (isNaN(planned) || planned < 0) {
       message.error("Please enter a valid planned amount");
       return;
@@ -824,16 +138,27 @@ const RequirementTableApprover = () => {
       message.error("Please enter a valid amount paid");
       return;
     }
+    if (isNaN(approved) || approved < 0) {
+      message.error("Please enter a valid approved amount");
+      return;
+    }
 
     try {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
-        { planned_amount: planned, amount_paid: paid },
+        {
+          planned_amount: planned,
+          amount_paid: paid,
+          approver_amount: approved,
+        },
         config
       );
       message.success("Updated successfully");
       setEditRowId(null);
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch (err) {
       message.error("Failed to update amounts");
     }
@@ -847,7 +172,10 @@ const RequirementTableApprover = () => {
         config
       );
       message.success("Request marked as completed");
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch (err) {
       message.error("Failed to mark as completed");
     }
@@ -861,7 +189,10 @@ const RequirementTableApprover = () => {
         config
       );
       message.success("Request marked as rejected");
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch (err) {
       message.error("Failed to reject request");
     }
@@ -950,48 +281,48 @@ const RequirementTableApprover = () => {
         </span>
       ),
     },
-    {
-      title: "Priority",
-      dataIndex: "priority",
-      key: "priority",
-      width: 100,
-      render: (priority) => (
-        <Tag
-          color={
-            priority === "HIGH"
-              ? "#fee2e2"
-              : priority === "MEDIUM"
-              ? "#fef3c7"
-              : "#d1fae5"
-          }
-          style={{
-            color:
-              priority === "HIGH"
-                ? "#991b1b"
-                : priority === "MEDIUM"
-                ? "#92400e"
-                : "#065f46",
-            borderRadius: 6,
-            border: "none",
-            fontWeight: 700,
-            fontSize: 16,
-          }}
-        >
-          {priority}
-        </Tag>
-      ),
-    },
-    {
-      title: "Updated At",
-      dataIndex: "updatedAt",
-      key: "updatedAt",
-      width: 150,
-      render: (date) => (
-        <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
-          {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
-        </span>
-      ),
-    },
+    // {
+    //   title: "Priority",
+    //   dataIndex: "priority",
+    //   key: "priority",
+    //   width: 100,
+    //   render: (priority) => (
+    //     <Tag
+    //       color={
+    //         priority === "HIGH"
+    //           ? "#fee2e2"
+    //           : priority === "MEDIUM"
+    //           ? "#fef3c7"
+    //           : "#d1fae5"
+    //       }
+    //       style={{
+    //         color:
+    //           priority === "HIGH"
+    //             ? "#991b1b"
+    //             : priority === "MEDIUM"
+    //             ? "#92400e"
+    //             : "#065f46",
+    //         borderRadius: 6,
+    //         border: "none",
+    //         fontWeight: 700,
+    //         fontSize: 16,
+    //       }}
+    //     >
+    //       {priority}
+    //     </Tag>
+    //   ),
+    // },
+    // {
+    //   title: "Updated At",
+    //   dataIndex: "updatedAt",
+    //   key: "updatedAt",
+    //   width: 150,
+    //   render: (date) => (
+    //     <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
+    //       {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
+    //     </span>
+    //   ),
+    // },
     {
       title: "Planned Amount",
       dataIndex: "planned_amount",
@@ -1010,6 +341,30 @@ const RequirementTableApprover = () => {
         ) : (
           <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
             {planned_amount?.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            }) || "₹0"}
+          </span>
+        ),
+    },
+    {
+      title: "Approved Amount",
+      dataIndex: "approver_amount",
+      key: "approver_amount",
+      width: 180,
+      render: (approver_amount, row) =>
+        row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+              value={editApproverAmount}
+              onChange={handleApproverAmountChange}
+              size="small"
+            />
+          </Space>
+        ) : (
+          <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+            {approver_amount?.toLocaleString("en-IN", {
               style: "currency",
               currency: "INR",
             }) || "₹0"}
@@ -1040,6 +395,57 @@ const RequirementTableApprover = () => {
           </span>
         ),
     },
+
+    {
+      title: "Approver Check",
+      dataIndex: "approver_check",
+      key: "approver_check",
+      width: 200,
+      render: (_, row) => {
+        if (row.approver_check === "PENDING") {
+          return (
+            <Space>
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => handleComplete(row)}
+                icon={<CheckCircleOutlined />}
+                style={{ background: "#10b981", borderColor: "#10b981" }}
+              >
+                Approved
+              </Button>
+              <Button
+                danger
+                size="small"
+                onClick={() => handleReject(row)}
+                icon={<CloseCircleOutlined />}
+              >
+                Rejected
+              </Button>
+            </Space>
+          );
+        } else if (row.approver_check === "APPROVED") {
+          return (
+            <Tag
+              color="#34d399"
+              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+            >
+              Approved
+            </Tag>
+          );
+        } else if (row.approver_check === "REJECTED") {
+          return (
+            <Tag
+              color="#f87171"
+              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+            >
+              Rejected
+            </Tag>
+          );
+        }
+        return "-";
+      },
+    },
     {
       title: "Accounts Check",
       dataIndex: "accounts_check",
@@ -1059,56 +465,6 @@ const RequirementTableApprover = () => {
           {val || "-"}
         </Tag>
       ),
-    },
-    {
-      title: "Approver Check",
-      dataIndex: "approver_check",
-      key: "approver_check",
-      width: 200,
-      render: (_, row) => {
-        if (row.approver_check === "PENDING") {
-          return (
-            <Space>
-              <Button
-                type="primary"
-                size="small"
-                onClick={() => handleComplete(row)}
-                icon={<CheckCircleOutlined />}
-                style={{ background: "#10b981", borderColor: "#10b981" }}
-              >
-                Complete
-              </Button>
-              <Button
-                danger
-                size="small"
-                onClick={() => handleReject(row)}
-                icon={<CloseCircleOutlined />}
-              >
-                Reject
-              </Button>
-            </Space>
-          );
-        } else if (row.approver_check === "APPROVED") {
-          return (
-            <Tag
-              color="#34d399"
-              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-            >
-              Completed
-            </Tag>
-          );
-        } else if (row.approver_check === "REJECTED") {
-          return (
-            <Tag
-              color="#f87171"
-              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-            >
-              Rejected
-            </Tag>
-          );
-        }
-        return "-";
-      },
     },
     {
       title: "Actions",
@@ -1151,10 +507,15 @@ const RequirementTableApprover = () => {
   // Header for each accordion panel with counts
   const getPanelHeader = (deptObj) => {
     const items = deptObj.items;
-    const approvedCount = items.filter((r) => r.approver_check === "APPROVED")
-      .length;
-    const pendingCount = items.filter((r) => r.approver_check === "PENDING").length;
-    const rejectedCount = items.filter((r) => r.approver_check === "REJECTED").length;
+    const approvedCount = items.filter(
+      (r) => r.approver_check === "APPROVED"
+    ).length;
+    const pendingCount = items.filter(
+      (r) => r.approver_check === "PENDING"
+    ).length;
+    const rejectedCount = items.filter(
+      (r) => r.approver_check === "REJECTED"
+    ).length;
 
     return (
       <div
@@ -1172,14 +533,18 @@ const RequirementTableApprover = () => {
       >
         <span>{deptObj.department?.name || "Unknown Department"}</span>
         <span>
-          Approved: {approvedCount} | Pending: {pendingCount} | Rejected: {rejectedCount}
+          Approved: {approvedCount} | Pending: {pendingCount} | Rejected:{" "}
+          {rejectedCount}
         </span>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: "transparent" }}>
+    <div
+      className="min-h-screen w-full relative"
+      style={{ background: "transparent" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
         * {
@@ -1272,7 +637,9 @@ const RequirementTableApprover = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1284,7 +651,9 @@ const RequirementTableApprover = () => {
                   >
                     Total Requests
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.total}
                   </div>
                 </div>
@@ -1301,7 +670,9 @@ const RequirementTableApprover = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1313,7 +684,9 @@ const RequirementTableApprover = () => {
                   >
                     Pending
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.pending}
                   </div>
                 </div>
@@ -1330,7 +703,9 @@ const RequirementTableApprover = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1342,7 +717,9 @@ const RequirementTableApprover = () => {
                   >
                     Completed
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.completed}
                   </div>
                 </div>

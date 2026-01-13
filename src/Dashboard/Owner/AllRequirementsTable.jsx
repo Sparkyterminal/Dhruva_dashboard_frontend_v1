@@ -563,11 +563,11 @@
 
 //       <style>{`
 //         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
-        
+
 //         * {
 //           font-family: 'Cormorant Garamond', serif;
 //         }
-        
+
 //         .completed-row {
 //           background: #f0fdf4 !important;
 //           opacity: 0.85;
@@ -908,12 +908,13 @@ const AllRequirementsTable = () => {
   const user = useSelector((state) => state.user.value);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
-    const [search, setSearch] = useState("");
-    const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [search, setSearch] = useState("");
+  const [selectedDate, setSelectedDate] = useState(dayjs());
   const [selectedDept, setSelectedDept] = useState(null);
   const [editRowId, setEditRowId] = useState(null);
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
+  const [editApprovedAmount, setEditApprovedAmount] = useState(null);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -932,9 +933,12 @@ const AllRequirementsTable = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
       if (date) params.append("singleDate", date);
-      
+
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(`${API_BASE_URL}request${queryString}`, config);
+      const res = await axios.get(
+        `${API_BASE_URL}request${queryString}`,
+        config
+      );
       setRequirements(res.data.items || []);
     } catch (err) {
       message.error("Failed to fetch requirements");
@@ -950,7 +954,10 @@ const AllRequirementsTable = () => {
   useEffect(() => {
     // Fetch data on each search input change with a slight debounce
     const timeoutId = setTimeout(() => {
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -971,8 +978,14 @@ const AllRequirementsTable = () => {
         APPROVED: 1,
         REJECTED: 1,
       };
-      const statusA = statusOrder[a.owner_check] !== undefined ? statusOrder[a.owner_check] : 0;
-      const statusB = statusOrder[b.owner_check] !== undefined ? statusOrder[b.owner_check] : 0;
+      const statusA =
+        statusOrder[a.owner_check] !== undefined
+          ? statusOrder[a.owner_check]
+          : 0;
+      const statusB =
+        statusOrder[b.owner_check] !== undefined
+          ? statusOrder[b.owner_check]
+          : 0;
       return statusA - statusB;
     });
   };
@@ -1020,12 +1033,34 @@ const AllRequirementsTable = () => {
       );
       message.success("Amount paid updated");
       setEditRowId(null);
-      fetchRequirementsData({
+      fetchRequirementsData(
         search,
-        department: selectedDept,
-      });
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch (err) {
       message.error("Failed to update amount paid");
+    }
+  };
+
+  const handleApprovedAmountSave = async (row) => {
+    if (editApprovedAmount == null || isNaN(editApprovedAmount)) {
+      message.error("Please enter a valid number for approved amount");
+      return;
+    }
+    try {
+      await axios.patch(
+        `${API_BASE_URL}request/${row.id}`,
+        { approver_amount: Number(editApprovedAmount) },
+        config
+      );
+      message.success("Approved amount updated");
+      setEditRowId(null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
+    } catch (err) {
+      message.error("Failed to update approved amount");
     }
   };
 
@@ -1067,12 +1102,15 @@ const AllRequirementsTable = () => {
     setEditRowId(row.id);
     setEditPlannedAmount(row.planned_amount);
     setEditAmountPaid(row.amount_paid);
+    setEditApprovedAmount(row.approver_amount);
   };
 
   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
+  const handleApprovedAmountChange = (e) =>
+    setEditApprovedAmount(e.target.value);
 
-    const handleDateChange = (date) => {
+  const handleDateChange = (date) => {
     setSelectedDate(date);
   };
 
@@ -1235,6 +1273,52 @@ const AllRequirementsTable = () => {
           </Space>
         ),
     },
+
+    {
+      title: "Approved Amount",
+      dataIndex: "approver_amount",
+      key: "approver_amount",
+      width: 160,
+      render: (approver_amount, row) =>
+        row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
+          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
+            {approver_amount?.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            }) || "₹0"}
+          </span>
+        ) : row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 100, fontWeight: 600, fontSize: 18 }}
+              value={editApprovedAmount}
+              onChange={handleApprovedAmountChange}
+              size="small"
+            />
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              size="small"
+              onClick={() => handleApprovedAmountSave(row)}
+              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+            />
+          </Space>
+        ) : (
+          <Space>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+              {approver_amount?.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+              }) || "₹0"}
+            </span>
+            <Button
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handlePlannedAmountEdit(row)}
+            />
+          </Space>
+        ),
+    },
     {
       title: "Amount Paid",
       dataIndex: "amount_paid",
@@ -1372,7 +1456,7 @@ const AllRequirementsTable = () => {
                 padding: "4px 12px",
               }}
             >
-              Completed
+              Approved
             </Tag>
           );
         }
@@ -1407,7 +1491,7 @@ const AllRequirementsTable = () => {
                 fontSize: 16,
               }}
             >
-              Complete
+              Approved
             </Button>
             <Button
               danger
@@ -1416,7 +1500,7 @@ const AllRequirementsTable = () => {
               icon={<CloseCircleOutlined />}
               style={{ fontWeight: 700, fontSize: 18 }}
             >
-              Reject
+              Rejected
             </Button>
           </Space>
         );
@@ -1433,9 +1517,15 @@ const AllRequirementsTable = () => {
   // Accordion header with department name + counts of APPROVED, PENDING, REJECTED
   const getPanelHeader = (deptObj) => {
     const items = deptObj.items;
-    const approvedCount = items.filter((r) => r.owner_check === "APPROVED").length;
-    const pendingCount = items.filter((r) => r.owner_check === "PENDING").length;
-    const rejectedCount = items.filter((r) => r.owner_check === "REJECTED").length;
+    const approvedCount = items.filter(
+      (r) => r.owner_check === "APPROVED"
+    ).length;
+    const pendingCount = items.filter(
+      (r) => r.owner_check === "PENDING"
+    ).length;
+    const rejectedCount = items.filter(
+      (r) => r.owner_check === "REJECTED"
+    ).length;
 
     return (
       <div
@@ -1453,14 +1543,18 @@ const AllRequirementsTable = () => {
       >
         <span>{deptObj.department?.name || "Unknown Department"}</span>
         <span>
-          Approved: {approvedCount} | Pending: {pendingCount} | Rejected: {rejectedCount}
+          Approved: {approvedCount} | Pending: {pendingCount} | Rejected:{" "}
+          {rejectedCount}
         </span>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: "transparent" }}>
+    <div
+      className="min-h-screen w-full relative"
+      style={{ background: "transparent" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
         * {
@@ -1516,6 +1610,25 @@ const AllRequirementsTable = () => {
           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
           margin-bottom: 24px;
         }
+        /* Scrolling Styles */
+        .overflow-x-auto {
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+        }
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 8px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 10px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
       `}</style>
 
       <div
@@ -1561,7 +1674,9 @@ const AllRequirementsTable = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1573,7 +1688,9 @@ const AllRequirementsTable = () => {
                   >
                     Total Requests
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.total}
                   </div>
                 </div>
@@ -1590,7 +1707,9 @@ const AllRequirementsTable = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1602,7 +1721,9 @@ const AllRequirementsTable = () => {
                   >
                     Pending
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.pending}
                   </div>
                 </div>
@@ -1619,7 +1740,9 @@ const AllRequirementsTable = () => {
                 color: "#ffffff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div
+                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
+              >
                 <div style={{ flex: 1 }}>
                   <div
                     style={{
@@ -1631,7 +1754,9 @@ const AllRequirementsTable = () => {
                   >
                     Completed
                   </div>
-                  <div style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}>
+                  <div
+                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
+                  >
                     {stats.completed}
                   </div>
                 </div>
@@ -1641,7 +1766,7 @@ const AllRequirementsTable = () => {
         </Row>
 
         {/* Filters */}
-       <div
+        <div
           className="filter-section"
           style={{
             marginBottom: 24,
@@ -1680,16 +1805,20 @@ const AllRequirementsTable = () => {
         >
           {Object.entries(requirementsByDept).map(([deptId, deptObj]) => (
             <Panel key={deptId} header={getPanelHeader(deptObj)}>
-              <Table
-                rowKey="id"
-                loading={loading}
-                columns={columns}
-                dataSource={sortedRequirements(deptObj.items)}
-                pagination={false} // No pagination as requested
-                scroll={{ x: 1800 }}
-                size="middle"
-                rowClassName={rowClassName}
-              />
+              <div className="bg-white rounded-lg overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table
+                    rowKey="id"
+                    loading={loading}
+                    columns={columns}
+                    dataSource={sortedRequirements(deptObj.items)}
+                    pagination={false}
+                    scroll={{ x: 2000 }}
+                    size="middle"
+                    rowClassName={rowClassName}
+                  />
+                </div>
+              </div>
             </Panel>
           ))}
         </Collapse>

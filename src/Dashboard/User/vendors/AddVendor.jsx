@@ -47,28 +47,29 @@ const AddVendor = () => {
     const payload = {
       name: values.name,
       depId: values.depId || null,
+      specify_cat: values.specify_category || null,
       person_category: values.person_category,
       company_name: values.company_name || null,
-      referred_by: values.referred_by || null,
-      temp_address_1: values.temp_address_1,
-      temp_city: values.temp_city,
-      temp_pin: values.temp_pin,
-      temp_state: values.temp_state,
-      temp_country: values.temp_country,
+      temp_address_1: values.temp_address_1 || null,
+      temp_city: values.temp_city || null,
+      temp_pin: values.temp_pin || null,
+      temp_state: values.temp_state || null,
+      temp_country: values.temp_country || null,
       perm_address_2: values.perm_address_2 || null,
       perm_city: values.perm_city || null,
       perm_pin: values.perm_pin || null,
       perm_state: values.perm_state || null,
       perm_country: values.perm_country || null,
-      cont_person: values.cont_person,
+      cont_person: values.cont_person || null,
       designation: values.designation || null,
-      mobile_no: values.mobile_no,
+      mobile_no: values.mobile_no || null,
       alt_mobile_no: values.alt_mobile_no || null,
-      email: values.email,
+      email: values.email || null,
       vendor_type: values.vendor_type === 'Other' ? values.vendor_type_other : values.vendor_type,
-      gst_no: values.gst_no,
-      msmed_no: values.msmed_no,
-      pan_no: values.pan_no,
+      gst_no: values.gst_no || null,
+      msmed_no: values.msmed_no || null,
+      pan_no: values.pan_no || null,
+      adhar_no: values.adhar_no || null,
       bank_name: values.bank_name,
       beneficiary_name: values.beneficiary_name || null,
       bank_pin: values.bank_pin || null,
@@ -138,6 +139,15 @@ const AddVendor = () => {
               </Select>
             </Form.Item>
           </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item name="specify_category" label="Specify Category" rules={[{ required: true, message: 'Please select category' }]}>
+              <Select placeholder="Select category">
+                <Option value="cash">Cash</Option>
+                <Option value="account">Acccount</Option>
+                <Option value="cash_and_account">Cash&Account</Option>
+              </Select>
+            </Form.Item>
+          </Col>
         </Row>
 
         {/* Vendor Info */}
@@ -165,40 +175,35 @@ const AddVendor = () => {
               <Input placeholder="Enter company name (if any)" />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item name="referred_by" label="Referred By">
-              <Input placeholder="Enter referrer name" />
-            </Form.Item>
-          </Col>
         </Row>
 
         {/* Address Section */}
         <Title level={5}>Address (Temporary)</Title>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
-            <Form.Item name="temp_address_1" label="Address 1" rules={[{ required: true, message: 'Please enter temporary address' }]}>
+            <Form.Item name="temp_address_1" label="Address 1">
               <Input placeholder="Temporary address 1" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item name="temp_city" label="City" rules={[{ required: true, message: 'Please enter city' }]}>
+            <Form.Item name="temp_city" label="City">
               <Input placeholder="City" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item name="temp_pin" label="PIN Code" rules={[{ required: true, message: 'Please enter PIN code' }]}>
+            <Form.Item name="temp_pin" label="PIN Code">
               <Input placeholder="PIN code" />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col xs={24} sm={8}>
-            <Form.Item name="temp_state" label="State" rules={[{ required: true, message: 'Please enter state' }]}>
+            <Form.Item name="temp_state" label="State">
               <Input placeholder="State" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
-            <Form.Item name="temp_country" label="Country" rules={[{ required: true, message: 'Please enter country' }]}>
+            <Form.Item name="temp_country" label="Country">
               <Input placeholder="Country" />
             </Form.Item>
           </Col>
@@ -239,7 +244,7 @@ const AddVendor = () => {
         <Title level={5}>Contact Information</Title>
         <Row gutter={16}>
           <Col xs={24} sm={8}>
-            <Form.Item name="cont_person" label="Contact Person" rules={[{ required: true, message: 'Please enter contact person name' }]}>
+            <Form.Item name="cont_person" label="Contact Person">
               <Input placeholder="Contact person name" />
             </Form.Item>
           </Col>
@@ -249,7 +254,7 @@ const AddVendor = () => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item name="mobile_no" label="Mobile No." rules={[{ required: true, message: 'Please enter mobile number' }]}>
+            <Form.Item name="mobile_no" label="Mobile No.">
               <Input placeholder="Mobile number" />
             </Form.Item>
           </Col>
@@ -261,7 +266,7 @@ const AddVendor = () => {
         </Row>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
-            <Form.Item name="email" label="Email" rules={[{ type: 'email', required: true, message: 'Please enter valid email' }]}>
+            <Form.Item name="email" label="Email" rules={[{ type: 'email', message: 'Please enter valid email' }]}>
               <Input placeholder="Email" />
             </Form.Item>
           </Col>
@@ -289,18 +294,23 @@ const AddVendor = () => {
             </Col>
           )}
           <Col xs={24} sm={6}>
-            <Form.Item name="gst_no" label="GST No" rules={[{ required: true, message: 'Please enter GST number' }]}>
+            <Form.Item name="gst_no" label="GST No">
               <Input placeholder="GST number" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item name="msmed_no" label="MSMED No" rules={[{ required: true, message: 'Please enter MSMED number' }]}>
+            <Form.Item name="msmed_no" label="MSMED No">
               <Input placeholder="MSMED number" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
             <Form.Item name="pan_no" label="PAN No" rules={[{ required: true, message: 'Please enter PAN number' }]}>
               <Input placeholder="PAN number" />
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={6}>
+            <Form.Item name="adhar_no" label="Aadhar No" rules={[{ required: true, message: 'Please enter Aadhar number' }]}>
+              <Input placeholder="Aadhar number" />
             </Form.Item>
           </Col>
         </Row>

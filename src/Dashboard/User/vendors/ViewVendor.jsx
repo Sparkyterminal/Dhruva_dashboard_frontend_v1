@@ -206,9 +206,9 @@ const ViewVendor = () => {
   };
 
   useEffect(() => {
-    if (deptId) fetchRequirementsData();
+    fetchRequirementsData();
     // eslint-disable-next-line
-  }, [deptId]);
+  }, []);
 
   const exportToPDF = (vendor) => {
     const doc = new jsPDF();
@@ -293,6 +293,7 @@ const ViewVendor = () => {
       if (vendor.gst_no) tableData.push(["GST Number", vendor.gst_no]);
       if (vendor.msmed_no) tableData.push(["MSMED Number", vendor.msmed_no]);
       if (vendor.pan_no) tableData.push(["PAN Number", vendor.pan_no]);
+      if (vendor.adhar_no) tableData.push(["AADHAR Number", vendor.adhar_no]);
     }
 
     // Bank Details Section
@@ -528,6 +529,8 @@ const ViewVendor = () => {
           tableRows.push(createRow("MSMED Number", vendor.msmed_no));
         if (vendor.pan_no)
           tableRows.push(createRow("PAN Number", vendor.pan_no));
+        if (vendor.adhar_no)
+          tableRows.push(createRow("AADHAR Number", vendor.adhar_no));
       }
 
       // Bank Details
@@ -784,13 +787,13 @@ const ViewVendor = () => {
         </span>
       ),
     },
-    {
-      title: "Referred By",
-      dataIndex: "refered_by",
-      key: "refered_by",
-      responsive: ["lg"],
-      render: (text) => <span>{text || "N/A"}</span>,
-    },
+    // {
+    //   title: "Referred By",
+    //   dataIndex: "refered_by",
+    //   key: "refered_by",
+    //   responsive: ["lg"],
+    //   render: (text) => <span>{text || "N/A"}</span>,
+    // },
     {
       title: "Actions",
       key: "actions",

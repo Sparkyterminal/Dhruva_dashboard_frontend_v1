@@ -11,6 +11,7 @@ import {
   Space,
   Tag,
   Radio,
+  Table,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -53,6 +54,14 @@ const AddInflow = () => {
     { label: "18% GST", value: 0.18 },
     { label: "22% GST", value: 0.22 },
   ]);
+  const [coordinators, setCoordinators] = useState([]);
+  const [coordinatorsLoading, setCoordinatorsLoading] = useState(false);
+  const [venues, setVenues] = useState([]);
+  const [venuesLoading, setVenuesLoading] = useState(false);
+  const [subVenues, setSubVenues] = useState([]);
+  const [subVenuesLoading, setSubVenuesLoading] = useState(false);
+  const [selectedVenueId, setSelectedVenueId] = useState(null);
+  const [eventTypeSubVenues, setEventTypeSubVenues] = useState({}); // { eventTypeId: subVenues[] }
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
   const axiosConfig = { headers: { Authorization: user?.access_token } };
@@ -166,14 +175,17 @@ const AddInflow = () => {
       form.setFieldsValue({ eventTypeAdvances: newAdvances });
     }
 
-    // Initialize per-event-type meta (venue + agreedAmount) AND dates for BOTH modes
+    // Initialize per-event-type meta (venue + amounts) AND dates for BOTH modes
     const currentMeta = form.getFieldValue("eventTypeMeta") || {};
     const newMeta = { ...currentMeta };
     values.forEach((eventType) => {
       if (!Object.prototype.hasOwnProperty.call(newMeta, eventType)) {
         newMeta[eventType] = {
           venueLocation: undefined,
-          agreedAmount: undefined,
+          subVenueLocation: undefined,
+          totalAgreedAmount: undefined,
+          accountAmount: undefined,
+          cashAmount: undefined,
         };
       }
     });
@@ -220,36 +232,50 @@ const AddInflow = () => {
               advanceNumber: advance.advanceNumber ?? index + 1,
               expectedAmount,
               advanceDate,
-              receivedAmount: advance.receivedAmount,
-              receivedDate: advance.receivedDate,
-              remarks: advance.remarks,
-              updatedBy: advance.updatedBy,
-              updatedAt: advance.updatedAt,
+              receivedAmount: advance.receivedAmount || null,
+              receivedDate: advance.receivedDate || null,
+              givenBy: advance.givenBy || null,
+              collectedBy: advance.collectedBy || null,
+              modeOfPayment: advance.modeOfPayment || null,
+              remarks: advance.remarks || "",
+              updatedBy: advance.updatedBy || null,
+              updatedAt: advance.updatedAt || null,
             };
           })
           .filter(Boolean);
 
       const hasEventTypes =
         (eventTypes || []).length > 0 && (values.eventTypes || []).length > 0;
-      const selectedTypes = (values.eventTypes || []).map((id) =>
-        (eventTypes || []).find((t) => t.id === id || t._id === id)
-      );
 
-      // shared (no event types or complete package mode)
+      // 🔥 FIX: For complete mode, manually ensure amounts are synced to eventTypeMeta
+      if (hasEventTypes && advanceMode === "complete") {
+        const agreedAmt = normalizeAmount(values.agreedAmountTotal);
+        const accountAmt = normalizeAmount(values.agreedAmountAccount);
+
+        // Ensure eventTypeMeta has the shared amounts
+        if (values.eventTypeMeta) {
+          (values.eventTypes || []).forEach((typeId) => {
+            if (values.eventTypeMeta[typeId]) {
+              values.eventTypeMeta[typeId].totalAgreedAmount = agreedAmt;
+              values.eventTypeMeta[typeId].accountAmount = accountAmt;
+            }
+          });
+        }
+      }
+
+      // SHARED PACKAGE AMOUNTS (no event types case)
       const totalAgreedShared = normalizeAmount(values.agreedAmountTotal);
       const accountAmtShared = normalizeAmount(values.agreedAmountAccount);
-      const cashAmtShared = normalizeAmount(values.agreedAmountCash);
-      const gstRateShared = values.agreedAmountAccountGstRate || 0;
+      const gstRateShared = 0.18;
+      const accountGstShared =
+        accountAmtShared != null ? accountAmtShared * gstRateShared : 0;
       const accountTotalShared =
-        accountAmtShared != null
-          ? accountAmtShared + accountAmtShared * gstRateShared
+        accountAmtShared != null ? accountAmtShared + accountGstShared : 0;
+      const cashAmtShared =
+        totalAgreedShared != null && accountAmtShared != null
+          ? Math.max(0, totalAgreedShared - accountAmtShared)
           : 0;
-      const sharedAgreedAmount =
-        totalAgreedShared != null
-          ? totalAgreedShared
-          : accountAmtShared != null || cashAmtShared != null
-          ? (accountTotalShared || 0) + (cashAmtShared || 0)
-          : undefined;
+      const totalPayableShared = accountTotalShared + cashAmtShared;
       const sharedAdvances = values.advances
         ? buildAdvancesPayload(values.advances)
         : [];
@@ -260,38 +286,36 @@ const AddInflow = () => {
               (t) => t.id === typeId || t._id === typeId
             );
             const typeKey = typeId;
+
             const startDate = values.eventTypeDates?.[typeKey]?.startDate
               ? values.eventTypeDates[typeKey].startDate.toISOString()
               : null;
             const endDate = values.eventTypeDates?.[typeKey]?.endDate
               ? values.eventTypeDates[typeKey].endDate.toISOString()
               : null;
+
             const venueLocation =
               values.eventTypeMeta?.[typeKey]?.venueLocation ?? null;
+            const subVenueLocation =
+              values.eventTypeMeta?.[typeKey]?.subVenueLocation ?? null;
 
+            // ✅ EXACT Backend expected fields
             const totalAgreedPer = normalizeAmount(
               values.eventTypeMeta?.[typeKey]?.totalAgreedAmount
             );
             const accountAmtPer = normalizeAmount(
               values.eventTypeMeta?.[typeKey]?.accountAmount
             );
-            const cashAmtPer = normalizeAmount(
-              values.eventTypeMeta?.[typeKey]?.cashAmount
-            );
-            const gstRatePer =
-              values.eventTypeMeta?.[typeKey]?.gstRate != null
-                ? values.eventTypeMeta[typeKey].gstRate
-                : 0;
+            const gstRatePer = 0.18;
+            const accountGstPer =
+              accountAmtPer != null ? accountAmtPer * gstRatePer : 0;
             const accountTotalPer =
-              accountAmtPer != null
-                ? accountAmtPer + accountAmtPer * gstRatePer
+              accountAmtPer != null ? accountAmtPer + accountGstPer : 0;
+            const cashAmtPer =
+              totalAgreedPer != null && accountAmtPer != null
+                ? Math.max(0, totalAgreedPer - accountAmtPer)
                 : 0;
-            const perEventAgreedAmount =
-              totalAgreedPer != null
-                ? totalAgreedPer
-                : accountAmtPer != null || cashAmtPer != null
-                ? (accountTotalPer || 0) + (cashAmtPer || 0)
-                : 0;
+            const totalPayablePer = accountTotalPer + cashAmtPer;
 
             const perEventAdvances =
               advanceMode === "separate"
@@ -301,20 +325,19 @@ const AddInflow = () => {
                 : [];
 
             return {
-              eventTypeId: typeMeta?.id || typeMeta?._id || typeKey,
-              eventType: typeMeta?.name || typeMeta?.label || String(typeKey),
+              // ✅ Backend expects eventTypeId (string), NOT eventType object
+              eventTypeId: typeId, // This matches your backend validation
               startDate,
               endDate,
               venueLocation,
-              agreedAmount: perEventAgreedAmount,
-              agreedAmountBreakup: {
-                accountAmount: accountAmtPer ?? 0,
-                cashAmount: cashAmtPer ?? 0,
-                accountGstRate: gstRatePer,
-                accountGstAmount:
-                  accountAmtPer != null ? accountTotalPer - accountAmtPer : 0,
-                accountTotalWithGst: accountTotalPer || 0,
-              },
+              subVenueLocation,
+              // ✅ Backend EXPECTS agreedAmount field (line 192 in your backend)
+              agreedAmount: totalAgreedPer,
+              accountAmount: accountAmtPer ?? 0,
+              accountGst: accountGstPer,
+              accountAmountWithGst: accountTotalPer,
+              cashAmount: cashAmtPer,
+              totalPayable: totalPayablePer,
               advances: perEventAdvances,
             };
           })
@@ -324,62 +347,90 @@ const AddInflow = () => {
         hasEventTypes && advanceMode === "separate"
           ? perTypePayload
           : hasEventTypes && advanceMode === "complete"
-          ? perTypePayload.map((et) => ({
-              ...et,
-              // use common (shared) advances when in complete package mode
-              advances: sharedAdvances,
-            }))
+          ? perTypePayload.map((et) => ({ ...et, advances: sharedAdvances }))
           : [
               {
+                // No event types - generic booking
                 eventTypeId: null,
-                eventType: null,
                 startDate: values.startDate
                   ? values.startDate.toISOString()
                   : null,
                 endDate: values.endDate ? values.endDate.toISOString() : null,
                 venueLocation: values.venueLocation ?? null,
-                ...(sharedAgreedAmount != null && {
-                  agreedAmount: sharedAgreedAmount,
-                  agreedAmountBreakup: {
-                    accountAmount: accountAmtShared ?? null,
-                    cashAmount: cashAmtShared ?? null,
-                    accountGstRate: gstRateShared,
-                    accountGstAmount:
-                      accountAmtShared != null
-                        ? accountTotalShared - accountAmtShared
-                        : null,
-                    accountTotalWithGst: accountTotalShared || null,
-                  },
-                }),
+                subVenueLocation: values.subVenueLocation ?? null,
+                agreedAmount: totalAgreedShared,
+                accountAmount: accountAmtShared ?? 0,
+                accountGst: accountGstShared,
+                accountAmountWithGst: accountTotalShared,
+                cashAmount: cashAmtShared,
+                totalPayable: totalPayableShared,
                 advances: sharedAdvances,
               },
             ];
 
       const payload = {
-        eventId: selectedEvent?.id || selectedEvent?._id || null,
-        eventName:
-          selectedEvent?.name ||
-          (eventName === "Other" ? values.customEventName : eventName),
+        eventId: selectedEvent?.id || selectedEvent?._id,
         eventTypes: eventTypesPayload,
         clientName: values.clientName,
+        brideName: values.brideName,
+        groomName: values.groomName,
         contactNumber: values.contactNumber,
-        lead1: values.lead1 ?? "",
-        lead2: values.lead2 ?? "",
-        ...(isWeddingLike && {
-          brideName: values.brideName,
-          groomName: values.groomName,
-          note: values.note,
-        }),
-        ...(values.altContactNumber && {
-          altContactNumber: values.altContactNumber,
-        }),
-        ...(values.altContactName && { altContactName: values.altContactName }),
+        altContactNumber: values.altContactNumber || undefined,
+        altContactName: values.altContactName || undefined,
+        lead1: values.lead1 || null,
+        lead2: values.lead2 || null,
+        note: values.note || undefined,
+        eventConfirmation: values.eventConfirmation,
+        ...(isWeddingLike && { advancePaymentType: advanceMode }),
       };
 
-      // Log payload for debugging
-      console.log("Posting payload:", JSON.stringify(payload, null, 2));
+      console.log("🔥 FORM VALUES:", JSON.stringify(values, null, 2));
+      console.log(
+        "🔥 EVENT TYPE META:",
+        JSON.stringify(values.eventTypeMeta, null, 2)
+      );
+      console.log("🔥 FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-      const response = await axios.post(`${API_BASE_URL}events`, payload);
+      // Validation: Ensure amounts are present
+      if (hasEventTypes) {
+        // In complete mode, check if shared amounts were entered
+        if (advanceMode === "complete") {
+          const sharedAgreed = normalizeAmount(values.agreedAmountTotal);
+          const sharedAccount = normalizeAmount(values.agreedAmountAccount);
+          if (
+            sharedAgreed == null ||
+            sharedAgreed === 0 ||
+            sharedAccount == null ||
+            sharedAccount === 0
+          ) {
+            message.warning(
+              "⚠️ Please fill in Agreed Amount and Account Amount for Complete Package"
+            );
+            setLoading(false);
+            return;
+          }
+        } else {
+          // In separate mode, check each event type
+          const invalidTypes = payload.eventTypes.filter(
+            (et) =>
+              (et.agreedAmount == null || et.agreedAmount === 0) &&
+              (et.accountAmount == null || et.accountAmount === 0)
+          );
+          if (invalidTypes.length > 0) {
+            message.warning(
+              "⚠️ Please fill in Agreed Amount and Account Amount for all event types"
+            );
+            setLoading(false);
+            return;
+          }
+        }
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL}events`,
+        payload,
+        axiosConfig
+      );
 
       if (response.status === 200 || response.status === 201) {
         message.success("Event booking created successfully!");
@@ -389,41 +440,133 @@ const AddInflow = () => {
         navigate("/user/viewclient");
       }
     } catch (error) {
-      console.error("Error:", error);
-
-      if (error.response) {
-        const status = error.response.status;
-        const errorMsg =
-          error.response.data?.message || error.response.data?.error;
-
-        if (status === 400) {
-          message.error(
-            errorMsg || "Invalid booking data. Please check your inputs."
-          );
-        } else if (status === 401) {
-          message.error("Unauthorized. Please login again.");
-        } else if (status === 403) {
-          message.error("You don't have permission to create bookings.");
-        } else if (status === 409) {
-          message.error(
-            errorMsg || "Booking conflict. Please check the details."
-          );
-        } else if (status >= 500) {
-          message.error("Server error. Please try again later.");
-        } else {
-          message.error(
-            errorMsg || "Failed to create booking. Please try again."
-          );
-        }
-      } else if (error.request) {
-        message.error(
-          "Network error. Please check your connection and try again."
-        );
-      } else {
-        message.error("An unexpected error occurred. Please try again.");
-      }
+      console.error("❌ Error:", error.response?.data || error.message);
+      const errorMsg =
+        error.response?.data?.message || "Failed to create booking";
+      message.error(errorMsg);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch Coordinators
+  const fetchCoordinators = async () => {
+    setCoordinatorsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}coordinators`, axiosConfig);
+      const raw = res.data;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw.coordinators)
+        ? raw.coordinators
+        : Array.isArray(raw.items)
+        ? raw.items
+        : Array.isArray(raw.data)
+        ? raw.data
+        : [];
+      setCoordinators(list);
+    } catch (err) {
+      console.error("fetchCoordinators error:", err);
+      message.error("Failed to load coordinators");
+    } finally {
+      setCoordinatorsLoading(false);
+    }
+  };
+
+  // Fetch Venues
+  const fetchVenues = async () => {
+    setVenuesLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}venue`, axiosConfig);
+      const raw = res.data;
+      const list = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw.venues)
+        ? raw.venues
+        : Array.isArray(raw.items)
+        ? raw.items
+        : Array.isArray(raw.data)
+        ? raw.data
+        : [];
+      setVenues(list);
+    } catch (err) {
+      console.error("fetchVenues error:", err);
+      message.error("Failed to load venues");
+    } finally {
+      setVenuesLoading(false);
+    }
+  };
+
+  // Fetch Sub Venues for a specific venue
+  const fetchSubVenues = async (venueId) => {
+    if (!venueId) {
+      setSubVenues([]);
+      return;
+    }
+    setSubVenuesLoading(true);
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}sub-venue-location`,
+        axiosConfig
+      );
+      const raw = res.data;
+      const allSubVenues = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw.subVenueLocations)
+        ? raw.subVenueLocations
+        : Array.isArray(raw.items)
+        ? raw.items
+        : Array.isArray(raw.data)
+        ? raw.data
+        : [];
+      // Filter sub venues by venue ID
+      const filtered = allSubVenues.filter(
+        (sv) =>
+          sv.venue?.id === venueId ||
+          sv.venue === venueId ||
+          sv.venueId === venueId
+      );
+      setSubVenues(filtered);
+    } catch (err) {
+      console.error("fetchSubVenues error:", err);
+      message.error("Failed to load sub venues");
+      setSubVenues([]);
+    } finally {
+      setSubVenuesLoading(false);
+    }
+  };
+
+  // Fetch Sub Venues for event type venue
+  const fetchEventTypeSubVenues = async (venueId, eventTypeId) => {
+    if (!venueId) {
+      setEventTypeSubVenues((prev) => ({ ...prev, [eventTypeId]: [] }));
+      return;
+    }
+    try {
+      const res = await axios.get(
+        `${API_BASE_URL}sub-venue-location`,
+        axiosConfig
+      );
+      const raw = res.data;
+      const allSubVenues = Array.isArray(raw)
+        ? raw
+        : Array.isArray(raw.subVenueLocations)
+        ? raw.subVenueLocations
+        : Array.isArray(raw.items)
+        ? raw.items
+        : Array.isArray(raw.data)
+        ? raw.data
+        : [];
+      const filtered = allSubVenues.filter(
+        (sv) =>
+          sv.venue?.id === venueId ||
+          sv.venue === venueId ||
+          sv.venueId === venueId
+      );
+      setEventTypeSubVenues((prev) => ({ ...prev, [eventTypeId]: filtered }));
+    } catch (err) {
+      console.error("fetchEventTypeSubVenues error:", err);
+      setEventTypeSubVenues((prev) => ({ ...prev, [eventTypeId]: [] }));
     }
   };
 
@@ -442,6 +585,9 @@ const AddInflow = () => {
       }
     };
     fetchEvents();
+    fetchCoordinators();
+    fetchVenues();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const hasEventTypes = (eventTypes || []).length > 0;
@@ -571,8 +717,35 @@ const AddInflow = () => {
                 advances: [
                   { expectedAmount: undefined, advanceDate: undefined },
                 ],
+                eventConfirmation: "InProgress",
               }}
             >
+              {/* Event Confirmation */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Form.Item
+                  label="Event Confirmation"
+                  name="eventConfirmation"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select event confirmation status",
+                    },
+                  ]}
+                >
+                  <Select
+                    size="large"
+                    placeholder="Select event confirmation status"
+                  >
+                    <Option value="InProgress">InProgress</Option>
+                    <Option value="Confirmed Event">Confirmed Event</Option>
+                  </Select>
+                </Form.Item>
+              </motion.div>
+
               {/* Event Name */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -709,20 +882,49 @@ const AddInflow = () => {
                       rules={[
                         {
                           required: true,
-                          message: "Please enter Project Coordinator 1",
+                          message: "Please select Project Coordinator 1",
                         },
                       ]}
                     >
-                      <Input
+                      <Select
                         size="large"
-                        placeholder="Enter Project Coordinator 1"
-                      />
+                        placeholder="Select Project Coordinator 1"
+                        loading={coordinatorsLoading}
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          (option?.children ?? "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                      >
+                        {coordinators.map((coord) => (
+                          <Option key={coord.id} value={coord.id}>
+                            {coord.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                     <Form.Item label="Project Coordinator 2" name="lead2">
-                      <Input
+                      <Select
                         size="large"
-                        placeholder="Enter Project Coordinator 2 (optional)"
-                      />
+                        placeholder="Select Project Coordinator 2 (optional)"
+                        loading={coordinatorsLoading}
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          (option?.children ?? "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        allowClear
+                      >
+                        {coordinators.map((coord) => (
+                          <Option key={coord.id} value={coord.id}>
+                            {coord.name}
+                          </Option>
+                        ))}
+                      </Select>
                     </Form.Item>
                   </div>
                 </motion.div>
@@ -898,26 +1100,60 @@ const AddInflow = () => {
                     rules={[
                       {
                         required: true,
-                        message: "Please enter venue location",
+                        message: "Please select venue location",
                       },
                     ]}
                   >
-                    <Input
+                    <Select
                       size="large"
-                      placeholder="Enter venue location"
-                      prefix={
-                        <span
-                          style={{
-                            color: "#4f46e5",
-                            marginRight: 4,
-                            padding: 8,
-                          }}
-                        >
-                          📍
-                        </span>
+                      placeholder="Select venue"
+                      loading={venuesLoading}
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        (option?.children ?? "")
+                          .toLowerCase()
+                          .includes(input.toLowerCase())
                       }
-                    />
+                      onChange={(value) => {
+                        setSelectedVenueId(value);
+                        fetchSubVenues(value);
+                        form.setFieldsValue({ subVenueLocation: undefined });
+                      }}
+                    >
+                      {venues.map((venue) => (
+                        <Option key={venue.id} value={venue.id}>
+                          {venue.name}
+                        </Option>
+                      ))}
+                    </Select>
                   </Form.Item>
+                  {selectedVenueId && subVenues.length > 0 && (
+                    <Form.Item
+                      label="Sub Venue Location"
+                      name="subVenueLocation"
+                    >
+                      <Select
+                        size="large"
+                        placeholder="Select sub venue (optional)"
+                        loading={subVenuesLoading}
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          (option?.children ?? "")
+                            .toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        allowClear
+                      >
+                        {subVenues.map((subVenue) => (
+                          <Option key={subVenue.id} value={subVenue.id}>
+                            {subVenue.name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  )}
                 </motion.div>
               )}
 
@@ -957,13 +1193,19 @@ const AddInflow = () => {
                       }}
                     >
                       <Form.Item
-                        label="Total Agreed Amount (incl. GST)"
+                        label="Agreed Amount"
                         name="agreedAmountTotal"
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please enter agreed amount",
+                          },
+                        ]}
                       >
                         <InputNumber
                           size="large"
                           style={{ width: "100%" }}
-                          placeholder="Enter total agreed amount (incl. GST)"
+                          placeholder="Enter agreed amount"
                           formatter={indianFormatter}
                           parser={indianParser}
                           min={0}
@@ -972,39 +1214,11 @@ const AddInflow = () => {
                       <Form.Item
                         label="Account Amount"
                         name="agreedAmountAccount"
-                        rules={[
-                          {
-                            required: false,
-                          },
-                        ]}
                       >
                         <InputNumber
                           size="large"
                           style={{ width: "100%" }}
-                          placeholder="Enter amount through account"
-                          formatter={indianFormatter}
-                          parser={indianParser}
-                          min={0}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        label="GST on Account"
-                        name="agreedAmountAccountGstRate"
-                        initialValue={0}
-                      >
-                        <Select size="large">
-                          {gstOptions.map((g) => (
-                            <Option key={g.value} value={g.value}>
-                              {g.label}
-                            </Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                      <Form.Item label="Cash Amount" name="agreedAmountCash">
-                        <InputNumber
-                          size="large"
-                          style={{ width: "100%" }}
-                          placeholder="Enter amount through cash"
+                          placeholder="Enter account amount"
                           formatter={indianFormatter}
                           parser={indianParser}
                           min={0}
@@ -1013,38 +1227,164 @@ const AddInflow = () => {
                     </div>
                     <Form.Item
                       shouldUpdate={(prev, cur) =>
-                        prev.agreedAmountAccount !== cur.agreedAmountAccount ||
-                        prev.agreedAmountAccountGstRate !==
-                          cur.agreedAmountAccountGstRate
+                        prev.agreedAmountTotal !== cur.agreedAmountTotal ||
+                        prev.agreedAmountAccount !== cur.agreedAmountAccount
                       }
                       noStyle
                     >
-                      {({ getFieldValue }) => {
-                        const acc = getFieldValue("agreedAmountAccount");
-                        const rate =
-                          getFieldValue("agreedAmountAccountGstRate") || 0;
-                        const total = calculateGstTotal(acc, rate);
+                      {({ getFieldValue, setFieldsValue }) => {
+                        const agreedAmount = normalizeAmount(
+                          getFieldValue("agreedAmountTotal")
+                        );
+                        const accountAmount = normalizeAmount(
+                          getFieldValue("agreedAmountAccount")
+                        );
+                        const gstRate = 0.18; // Fixed 18% GST
+                        const accountWithGst =
+                          accountAmount != null
+                            ? accountAmount + accountAmount * gstRate
+                            : 0;
+                        const cashAmount =
+                          agreedAmount != null && accountAmount != null
+                            ? Math.max(0, agreedAmount - accountAmount)
+                            : 0;
+                        const clientPayable = cashAmount + accountWithGst;
+
+                        // Auto-update cash amount when account amount changes
+                        if (agreedAmount != null && accountAmount != null) {
+                          const calculatedCash = Math.max(
+                            0,
+                            agreedAmount - accountAmount
+                          );
+                          const currentCash = normalizeAmount(
+                            getFieldValue("agreedAmountCash")
+                          );
+                          if (currentCash !== calculatedCash) {
+                            setTimeout(() => {
+                              setFieldsValue({
+                                agreedAmountCash: calculatedCash,
+                              });
+                            }, 0);
+                          }
+                        }
+
                         return (
-                          <div
-                            style={{
-                              marginTop: 8,
-                              paddingTop: 8,
-                              borderTop: "1px dashed #e5e7eb",
-                              display: "flex",
-                              justifyContent: "space-between",
-                              flexWrap: "wrap",
-                              gap: 8,
-                            }}
-                          >
-                            <span style={{ fontSize: 13, color: "#6b7280" }}>
-                              Account total (incl. GST):
-                            </span>
-                            <span style={{ fontWeight: 700, color: "#111827" }}>
-                              ₹{formatINR(total || 0)}
-                            </span>
-                          </div>
+                          <>
+                            <div
+                              style={{
+                                marginTop: 12,
+                                padding: 12,
+                                background: "#f9fafb",
+                                borderRadius: 8,
+                                border: "1px solid #e5e7eb",
+                              }}
+                            >
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gridTemplateColumns: "1fr 1fr",
+                                  gap: 12,
+                                  marginBottom: 8,
+                                }}
+                              >
+                                <div>
+                                  <span
+                                    style={{ fontSize: 13, color: "#6b7280" }}
+                                  >
+                                    Account Amount:
+                                  </span>
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      color: "#111827",
+                                    }}
+                                  >
+                                    ₹{formatINR(accountAmount || 0)}
+                                  </div>
+                                </div>
+                                <div>
+                                  <span
+                                    style={{ fontSize: 13, color: "#6b7280" }}
+                                  >
+                                    Account Amount (incl. 18% GST):
+                                  </span>
+                                  <div
+                                    style={{
+                                      fontWeight: 700,
+                                      color: "#0369a1",
+                                    }}
+                                  >
+                                    ₹{formatINR(accountWithGst || 0)}
+                                  </div>
+                                </div>
+                              </div>
+                              <div
+                                style={{
+                                  marginTop: 8,
+                                  paddingTop: 8,
+                                  borderTop: "1px dashed #e5e7eb",
+                                }}
+                              >
+                                <div style={{ marginBottom: 8 }}>
+                                  <span
+                                    style={{ fontSize: 13, color: "#6b7280" }}
+                                  >
+                                    Cash Amount (Auto-calculated):
+                                  </span>
+                                  <div
+                                    style={{
+                                      fontWeight: 600,
+                                      color: "#111827",
+                                    }}
+                                  >
+                                    ₹{formatINR(cashAmount || 0)}
+                                  </div>
+                                </div>
+                                <div
+                                  style={{
+                                    padding: 12,
+                                    background: "#e6f7ff",
+                                    borderRadius: 6,
+                                    border: "1px solid #91d5ff",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: 14,
+                                      color: "#0369a1",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Total Client Payable:
+                                  </span>
+                                  <div
+                                    style={{
+                                      fontSize: 18,
+                                      fontWeight: 700,
+                                      color: "#0369a1",
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    ₹{formatINR(clientPayable || 0)}
+                                  </div>
+                                  <div
+                                    style={{
+                                      fontSize: 12,
+                                      color: "#6b7280",
+                                      marginTop: 4,
+                                    }}
+                                  >
+                                    (Cash Amount + Account Amount with GST)
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </>
                         );
                       }}
+                    </Form.Item>
+                    <Form.Item name="agreedAmountCash" hidden>
+                      <InputNumber />
                     </Form.Item>
                   </div>
                 </motion.div>
@@ -1193,21 +1533,113 @@ const AddInflow = () => {
                                   />
                                 </Form.Item>
                               </div>
+                              {/* Coordinator dropdown for event-specific packages */}
+                              {isWeddingLike && (
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 1fr",
+                                    gap: 12,
+                                    marginBottom: 12,
+                                  }}
+                                >
+                                  <Form.Item
+                                    label={`${label} Coordinator`}
+                                    name={["eventTypeMeta", key, "coordinator"]}
+                                  >
+                                    <Select
+                                      size="large"
+                                      placeholder={`Select coordinator for ${label}`}
+                                      loading={coordinatorsLoading}
+                                      showSearch
+                                      optionFilterProp="children"
+                                      filterOption={(input, option) =>
+                                        (option?.children ?? "")
+                                          .toLowerCase()
+                                          .includes(input.toLowerCase())
+                                      }
+                                      allowClear
+                                    >
+                                      {coordinators.map((coord) => (
+                                        <Option key={coord.id} value={coord.id}>
+                                          {coord.name}
+                                        </Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                </div>
+                              )}
                               <Form.Item
                                 label={`${label} Venue`}
                                 name={["eventTypeMeta", key, "venueLocation"]}
                                 rules={[
                                   {
                                     required: true,
-                                    message: `Please enter venue for ${label}`,
+                                    message: `Please select venue for ${label}`,
                                   },
                                 ]}
                               >
-                                <Input
+                                <Select
                                   size="large"
-                                  placeholder={`Venue for ${label}`}
-                                />
+                                  placeholder={`Select venue for ${label}`}
+                                  loading={venuesLoading}
+                                  showSearch
+                                  optionFilterProp="children"
+                                  filterOption={(input, option) =>
+                                    (option?.children ?? "")
+                                      .toLowerCase()
+                                      .includes(input.toLowerCase())
+                                  }
+                                  onChange={(value) => {
+                                    fetchEventTypeSubVenues(value, key);
+                                    form.setFieldsValue({
+                                      [`eventTypeMeta.${key}.subVenueLocation`]:
+                                        undefined,
+                                    });
+                                  }}
+                                >
+                                  {venues.map((venue) => (
+                                    <Option key={venue.id} value={venue.id}>
+                                      {venue.name}
+                                    </Option>
+                                  ))}
+                                </Select>
                               </Form.Item>
+                              {eventTypeSubVenues[key] &&
+                                eventTypeSubVenues[key].length > 0 && (
+                                  <Form.Item
+                                    label={`${label} Sub Venue`}
+                                    name={[
+                                      "eventTypeMeta",
+                                      key,
+                                      "subVenueLocation",
+                                    ]}
+                                  >
+                                    <Select
+                                      size="large"
+                                      placeholder={`Select sub venue for ${label} (optional)`}
+                                      showSearch
+                                      optionFilterProp="children"
+                                      filterOption={(input, option) =>
+                                        (option?.children ?? "")
+                                          .toLowerCase()
+                                          .includes(input.toLowerCase())
+                                      }
+                                      allowClear
+                                    >
+                                      {eventTypeSubVenues[key].map(
+                                        (subVenue) => (
+                                          <Option
+                                            key={subVenue.id}
+                                            value={subVenue.id}
+                                          >
+                                            {subVenue.name}
+                                          </Option>
+                                        )
+                                      )}
+                                    </Select>
+                                  </Form.Item>
+                                )}
                               <div
                                 className="glass-advance-card"
                                 style={{
@@ -1235,16 +1667,23 @@ const AddInflow = () => {
                                   }}
                                 >
                                   <Form.Item
-  label="Total Agreed Amount (incl. GST)"
-  name={["eventTypeMeta", key, "totalAgreedAmount"]}
-  rules={[
-    { required: true, message: "Please enter total agreed amount" },
-  ]}
->
+                                    label="Agreed Amount"
+                                    name={[
+                                      "eventTypeMeta",
+                                      key,
+                                      "totalAgreedAmount",
+                                    ]}
+                                    rules={[
+                                      {
+                                        required: true,
+                                        message: "Please enter agreed amount",
+                                      },
+                                    ]}
+                                  >
                                     <InputNumber
                                       size="large"
                                       style={{ width: "100%" }}
-                                      placeholder="Total agreed amount for this event (incl. GST)"
+                                      placeholder="Enter agreed amount"
                                       formatter={indianFormatter}
                                       parser={indianParser}
                                       min={0}
@@ -1261,33 +1700,7 @@ const AddInflow = () => {
                                     <InputNumber
                                       size="large"
                                       style={{ width: "100%" }}
-                                      placeholder="Amount through account"
-                                      formatter={indianFormatter}
-                                      parser={indianParser}
-                                      min={0}
-                                    />
-                                  </Form.Item>
-                                  <Form.Item
-                                    label="GST on Account"
-                                    name={["eventTypeMeta", key, "gstRate"]}
-                                    initialValue={0}
-                                  >
-                                    <Select size="large">
-                                      {gstOptions.map((g) => (
-                                        <Option key={g.value} value={g.value}>
-                                          {g.label}
-                                        </Option>
-                                      ))}
-                                    </Select>
-                                  </Form.Item>
-                                  <Form.Item
-                                    label="Cash Amount"
-                                    name={["eventTypeMeta", key, "cashAmount"]}
-                                  >
-                                    <InputNumber
-                                      size="large"
-                                      style={{ width: "100%" }}
-                                      placeholder="Amount through cash"
+                                      placeholder="Enter account amount"
                                       formatter={indianFormatter}
                                       parser={indianParser}
                                       min={0}
@@ -1296,57 +1709,201 @@ const AddInflow = () => {
                                 </div>
                                 <Form.Item
                                   shouldUpdate={(prev, cur) =>
+                                    prev.eventTypeMeta?.[key]
+                                      ?.totalAgreedAmount !==
+                                      cur.eventTypeMeta?.[key]
+                                        ?.totalAgreedAmount ||
                                     prev.eventTypeMeta?.[key]?.accountAmount !==
-                                      cur.eventTypeMeta?.[key]?.accountAmount ||
-                                    prev.eventTypeMeta?.[key]?.gstRate !==
-                                      cur.eventTypeMeta?.[key]?.gstRate
+                                      cur.eventTypeMeta?.[key]?.accountAmount
                                   }
                                   noStyle
                                 >
-                                  {({ getFieldValue }) => {
-                                    const acc = getFieldValue([
-                                      "eventTypeMeta",
-                                      key,
-                                      "accountAmount",
-                                    ]);
-                                    const rate =
+                                  {({ getFieldValue, setFieldsValue }) => {
+                                    const agreedAmount = normalizeAmount(
                                       getFieldValue([
                                         "eventTypeMeta",
                                         key,
-                                        "gstRate",
-                                      ]) || 0;
-                                    const total = calculateGstTotal(acc, rate);
+                                        "totalAgreedAmount",
+                                      ])
+                                    );
+                                    const accountAmount = normalizeAmount(
+                                      getFieldValue([
+                                        "eventTypeMeta",
+                                        key,
+                                        "accountAmount",
+                                      ])
+                                    );
+                                    const gstRate = 0.18; // Fixed 18% GST
+                                    const accountWithGst =
+                                      accountAmount != null
+                                        ? accountAmount +
+                                          accountAmount * gstRate
+                                        : 0;
+                                    const cashAmount =
+                                      agreedAmount != null &&
+                                      accountAmount != null
+                                        ? Math.max(
+                                            0,
+                                            agreedAmount - accountAmount
+                                          )
+                                        : 0;
+                                    const clientPayable =
+                                      cashAmount + accountWithGst;
+
+                                    // Auto-update cash amount
+                                    if (
+                                      agreedAmount != null &&
+                                      accountAmount != null
+                                    ) {
+                                      const calculatedCash = Math.max(
+                                        0,
+                                        agreedAmount - accountAmount
+                                      );
+                                      const currentCash = normalizeAmount(
+                                        getFieldValue([
+                                          "eventTypeMeta",
+                                          key,
+                                          "cashAmount",
+                                        ])
+                                      );
+                                      if (currentCash !== calculatedCash) {
+                                        setTimeout(() => {
+                                          setFieldsValue({
+                                            [`eventTypeMeta.${key}.cashAmount`]:
+                                              calculatedCash,
+                                          });
+                                        }, 0);
+                                      }
+                                    }
+
                                     return (
                                       <div
                                         style={{
-                                          marginTop: 6,
-                                          paddingTop: 6,
-                                          borderTop: "1px dashed #e5e7eb",
-                                          display: "flex",
-                                          justifyContent: "space-between",
-                                          gap: 8,
-                                          flexWrap: "wrap",
+                                          marginTop: 12,
+                                          padding: 12,
+                                          background: "#f9fafb",
+                                          borderRadius: 8,
+                                          border: "1px solid #e5e7eb",
                                         }}
                                       >
-                                        <span
+                                        <div
                                           style={{
-                                            fontSize: 12,
-                                            color: "#6b7280",
+                                            display: "grid",
+                                            gridTemplateColumns: "1fr 1fr",
+                                            gap: 12,
+                                            marginBottom: 8,
                                           }}
                                         >
-                                          Account total (incl. GST):
-                                        </span>
-                                        <span
+                                          <div>
+                                            <span
+                                              style={{
+                                                fontSize: 13,
+                                                color: "#6b7280",
+                                              }}
+                                            >
+                                              Account Amount:
+                                            </span>
+                                            <div
+                                              style={{
+                                                fontWeight: 600,
+                                                color: "#111827",
+                                              }}
+                                            >
+                                              ₹{formatINR(accountAmount || 0)}
+                                            </div>
+                                          </div>
+                                          <div>
+                                            <span
+                                              style={{
+                                                fontSize: 13,
+                                                color: "#6b7280",
+                                              }}
+                                            >
+                                              Account Amount (incl. 18% GST):
+                                            </span>
+                                            <div
+                                              style={{
+                                                fontWeight: 700,
+                                                color: "#0369a1",
+                                              }}
+                                            >
+                                              ₹{formatINR(accountWithGst || 0)}
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div
                                           style={{
-                                            fontWeight: 600,
-                                            color: "#111827",
+                                            marginTop: 8,
+                                            paddingTop: 8,
+                                            borderTop: "1px dashed #e5e7eb",
                                           }}
                                         >
-                                          ₹{formatINR(total || 0)}
-                                        </span>
+                                          <div style={{ marginBottom: 8 }}>
+                                            <span
+                                              style={{
+                                                fontSize: 13,
+                                                color: "#6b7280",
+                                              }}
+                                            >
+                                              Cash Amount (Auto-calculated):
+                                            </span>
+                                            <div
+                                              style={{
+                                                fontWeight: 600,
+                                                color: "#111827",
+                                              }}
+                                            >
+                                              ₹{formatINR(cashAmount || 0)}
+                                            </div>
+                                          </div>
+                                          <div
+                                            style={{
+                                              padding: 12,
+                                              background: "#e6f7ff",
+                                              borderRadius: 6,
+                                              border: "1px solid #91d5ff",
+                                            }}
+                                          >
+                                            <span
+                                              style={{
+                                                fontSize: 14,
+                                                color: "#0369a1",
+                                                fontWeight: 600,
+                                              }}
+                                            >
+                                              Total Client Payable:
+                                            </span>
+                                            <div
+                                              style={{
+                                                fontSize: 18,
+                                                fontWeight: 700,
+                                                color: "#0369a1",
+                                                marginTop: 4,
+                                              }}
+                                            >
+                                              ₹{formatINR(clientPayable || 0)}
+                                            </div>
+                                            <div
+                                              style={{
+                                                fontSize: 12,
+                                                color: "#6b7280",
+                                                marginTop: 4,
+                                              }}
+                                            >
+                                              (Cash Amount + Account Amount with
+                                              GST)
+                                            </div>
+                                          </div>
+                                        </div>
                                       </div>
                                     );
                                   }}
+                                </Form.Item>
+                                <Form.Item
+                                  name={["eventTypeMeta", key, "cashAmount"]}
+                                  hidden
+                                >
+                                  <InputNumber />
                                 </Form.Item>
                               </div>
                             </div>
@@ -1457,14 +2014,37 @@ const AddInflow = () => {
                                   ))}
                                   <Form.Item shouldUpdate noStyle>
                                     {({ getFieldValue }) => {
-                                      const totalAgreed =
-                                        normalizeAmount(
-                                          getFieldValue([
-                                            "eventTypeMeta",
-                                            key,
-                                            "totalAgreedAmount",
-                                          ])
-                                        ) ?? 0;
+                                      const agreedAmount = normalizeAmount(
+                                        getFieldValue([
+                                          "eventTypeMeta",
+                                          key,
+                                          "totalAgreedAmount",
+                                        ])
+                                      );
+                                      const accountAmount = normalizeAmount(
+                                        getFieldValue([
+                                          "eventTypeMeta",
+                                          key,
+                                          "accountAmount",
+                                        ])
+                                      );
+                                      const gstRate = 0.18;
+                                      const accountWithGst =
+                                        accountAmount != null
+                                          ? accountAmount +
+                                            accountAmount * gstRate
+                                          : 0;
+                                      const cashAmount =
+                                        agreedAmount != null &&
+                                        accountAmount != null
+                                          ? Math.max(
+                                              0,
+                                              agreedAmount - accountAmount
+                                            )
+                                          : 0;
+                                      const clientPayable =
+                                        cashAmount + accountWithGst;
+
                                       const advs =
                                         getFieldValue([
                                           "eventTypeAdvances",
@@ -1476,7 +2056,10 @@ const AddInflow = () => {
                                         );
                                         return sum + (amt || 0);
                                       }, 0);
-                                      const balance = totalAgreed - paid;
+                                      const balance = clientPayable - paid;
+                                      const exceeded =
+                                        balance < 0 ? Math.abs(balance) : 0;
+
                                       return (
                                         <div
                                           style={{
@@ -1484,15 +2067,48 @@ const AddInflow = () => {
                                             paddingTop: 8,
                                             borderTop: "1px dashed #e5e7eb",
                                             display: "flex",
-                                            justifyContent: "space-between",
+                                            flexDirection: "column",
+                                            gap: 4,
                                             fontSize: 13,
-                                            color: "#374151",
                                           }}
                                         >
-                                          <span>Balance after advances:</span>
-                                          <span style={{ fontWeight: 600 }}>
-                                            ₹{formatINR(balance || 0)}
-                                          </span>
+                                          <div
+                                            style={{
+                                              display: "flex",
+                                              justifyContent: "space-between",
+                                            }}
+                                          >
+                                            <span style={{ color: "#374151" }}>
+                                              Balance after advances:
+                                            </span>
+                                            <span
+                                              style={{
+                                                fontWeight: 600,
+                                                color:
+                                                  balance >= 0
+                                                    ? "#374151"
+                                                    : "#ef4444",
+                                              }}
+                                            >
+                                              {balance >= 0
+                                                ? `₹${formatINR(balance || 0)}`
+                                                : `-₹${formatINR(
+                                                    exceeded || 0
+                                                  )}`}
+                                            </span>
+                                          </div>
+                                          {exceeded > 0 && (
+                                            <div
+                                              style={{
+                                                color: "#ef4444",
+                                                fontSize: 12,
+                                                fontWeight: 600,
+                                              }}
+                                            >
+                                              ⚠️ Amount exceeded by ₹
+                                              {formatINR(exceeded)}
+                                            </div>
+                                          )}
                                         </div>
                                       );
                                     }}
@@ -1589,21 +2205,113 @@ const AddInflow = () => {
                                   />
                                 </Form.Item>
                               </div>
+                              {/* Coordinator dropdown for event-specific packages */}
+                              {isWeddingLike && (
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 1fr",
+                                    gap: 12,
+                                    marginBottom: 12,
+                                  }}
+                                >
+                                  <Form.Item
+                                    label={`${label} Coordinator`}
+                                    name={["eventTypeMeta", key, "coordinator"]}
+                                  >
+                                    <Select
+                                      size="large"
+                                      placeholder={`Select coordinator for ${label}`}
+                                      loading={coordinatorsLoading}
+                                      showSearch
+                                      optionFilterProp="children"
+                                      filterOption={(input, option) =>
+                                        (option?.children ?? "")
+                                          .toLowerCase()
+                                          .includes(input.toLowerCase())
+                                      }
+                                      allowClear
+                                    >
+                                      {coordinators.map((coord) => (
+                                        <Option key={coord.id} value={coord.id}>
+                                          {coord.name}
+                                        </Option>
+                                      ))}
+                                    </Select>
+                                  </Form.Item>
+                                </div>
+                              )}
                               <Form.Item
                                 label={`${label} Venue`}
                                 name={["eventTypeMeta", key, "venueLocation"]}
                                 rules={[
                                   {
                                     required: true,
-                                    message: `Please enter venue for ${label}`,
+                                    message: `Please select venue for ${label}`,
                                   },
                                 ]}
                               >
-                                <Input
+                                <Select
                                   size="large"
-                                  placeholder={`Venue for ${label}`}
-                                />
+                                  placeholder={`Select venue for ${label}`}
+                                  loading={venuesLoading}
+                                  showSearch
+                                  optionFilterProp="children"
+                                  filterOption={(input, option) =>
+                                    (option?.children ?? "")
+                                      .toLowerCase()
+                                      .includes(input.toLowerCase())
+                                  }
+                                  onChange={(value) => {
+                                    fetchEventTypeSubVenues(value, key);
+                                    form.setFieldsValue({
+                                      [`eventTypeMeta.${key}.subVenueLocation`]:
+                                        undefined,
+                                    });
+                                  }}
+                                >
+                                  {venues.map((venue) => (
+                                    <Option key={venue.id} value={venue.id}>
+                                      {venue.name}
+                                    </Option>
+                                  ))}
+                                </Select>
                               </Form.Item>
+                              {eventTypeSubVenues[key] &&
+                                eventTypeSubVenues[key].length > 0 && (
+                                  <Form.Item
+                                    label={`${label} Sub Venue`}
+                                    name={[
+                                      "eventTypeMeta",
+                                      key,
+                                      "subVenueLocation",
+                                    ]}
+                                  >
+                                    <Select
+                                      size="large"
+                                      placeholder={`Select sub venue for ${label} (optional)`}
+                                      showSearch
+                                      optionFilterProp="children"
+                                      filterOption={(input, option) =>
+                                        (option?.children ?? "")
+                                          .toLowerCase()
+                                          .includes(input.toLowerCase())
+                                      }
+                                      allowClear
+                                    >
+                                      {eventTypeSubVenues[key].map(
+                                        (subVenue) => (
+                                          <Option
+                                            key={subVenue.id}
+                                            value={subVenue.id}
+                                          >
+                                            {subVenue.name}
+                                          </Option>
+                                        )
+                                      )}
+                                    </Select>
+                                  </Form.Item>
+                                )}
                             </div>
                           </div>
                         );
@@ -1645,14 +2353,19 @@ const AddInflow = () => {
                           }}
                         >
                           <Form.Item
-                            label="Total Agreed Amount (incl. GST)"
+                            label="Agreed Amount"
                             name="agreedAmountTotal"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter agreed amount",
+                              },
+                            ]}
                           >
                             <InputNumber
                               size="large"
-                              
                               style={{ width: "100%" }}
-                              placeholder="Enter total agreed amount (incl. GST)"
+                              placeholder="Enter agreed amount"
                               formatter={indianFormatter}
                               parser={indianParser}
                               min={0}
@@ -1661,37 +2374,17 @@ const AddInflow = () => {
                           <Form.Item
                             label="Account Amount"
                             name="agreedAmountAccount"
+                            rules={[
+                              {
+                                required: true,
+                                message: "Please enter account amount",
+                              },
+                            ]}
                           >
                             <InputNumber
                               size="large"
                               style={{ width: "100%" }}
-                              placeholder="Amount through account"
-                              formatter={indianFormatter}
-                              parser={indianParser}
-                              min={0}
-                            />
-                          </Form.Item>
-                          <Form.Item
-                            label="GST on Account"
-                            name="agreedAmountAccountGstRate"
-                            initialValue={0}
-                          >
-                            <Select size="large">
-                              {gstOptions.map((g) => (
-                                <Option key={g.value} value={g.value}>
-                                  {g.label}
-                                </Option>
-                              ))}
-                            </Select>
-                          </Form.Item>
-                          <Form.Item
-                            label="Cash Amount"
-                            name="agreedAmountCash"
-                          >
-                            <InputNumber
-                              size="large"
-                              style={{ width: "100%" }}
-                              placeholder="Amount through cash"
+                              placeholder="Enter account amount"
                               formatter={indianFormatter}
                               parser={indianParser}
                               min={0}
@@ -1700,46 +2393,180 @@ const AddInflow = () => {
                         </div>
                         <Form.Item
                           shouldUpdate={(prev, cur) =>
-                            prev.agreedAmountAccount !==
-                              cur.agreedAmountAccount ||
-                            prev.agreedAmountAccountGstRate !==
-                              cur.agreedAmountAccountGstRate
+                            prev.agreedAmountTotal !== cur.agreedAmountTotal ||
+                            prev.agreedAmountAccount !== cur.agreedAmountAccount
                           }
                           noStyle
                         >
-                          {({ getFieldValue }) => {
-                            const acc = getFieldValue("agreedAmountAccount");
-                            const rate =
-                              getFieldValue("agreedAmountAccountGstRate") || 0;
-                            const total = calculateGstTotal(acc, rate);
+                          {({ getFieldValue, setFieldsValue }) => {
+                            const agreedAmount = normalizeAmount(
+                              getFieldValue("agreedAmountTotal")
+                            );
+                            const accountAmount = normalizeAmount(
+                              getFieldValue("agreedAmountAccount")
+                            );
+                            const gstRate = 0.18; // Fixed 18% GST
+                            const accountWithGst =
+                              accountAmount != null
+                                ? accountAmount + accountAmount * gstRate
+                                : 0;
+                            const cashAmount =
+                              agreedAmount != null && accountAmount != null
+                                ? Math.max(0, agreedAmount - accountAmount)
+                                : 0;
+                            const clientPayable = cashAmount + accountWithGst;
+
+                            // Auto-update cash amount when account amount changes
+                            if (agreedAmount != null && accountAmount != null) {
+                              const calculatedCash = Math.max(
+                                0,
+                                agreedAmount - accountAmount
+                              );
+                              const currentCash = normalizeAmount(
+                                getFieldValue("agreedAmountCash")
+                              );
+                              if (currentCash !== calculatedCash) {
+                                setTimeout(() => {
+                                  setFieldsValue({
+                                    agreedAmountCash: calculatedCash,
+                                  });
+                                }, 0);
+                              }
+                            }
+
+                            // 🔥 SYNC shared amounts to all event types in eventTypeMeta for "complete" mode
+                            if (agreedAmount != null || accountAmount != null) {
+                              const currentMeta =
+                                getFieldValue("eventTypeMeta") || {};
+                              const updatedMeta = { ...currentMeta };
+                              selectedEventTypes.forEach((typeId) => {
+                                if (updatedMeta[typeId]) {
+                                  updatedMeta[typeId].totalAgreedAmount =
+                                    agreedAmount;
+                                  updatedMeta[typeId].accountAmount =
+                                    accountAmount;
+                                }
+                              });
+                              setTimeout(() => {
+                                setFieldsValue({ eventTypeMeta: updatedMeta });
+                              }, 0);
+                            }
+
                             return (
                               <div
                                 style={{
-                                  marginTop: 8,
-                                  paddingTop: 8,
-                                  borderTop: "1px dashed #e5e7eb",
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  flexWrap: "wrap",
-                                  gap: 8,
+                                  marginTop: 12,
+                                  padding: 12,
+                                  background: "#f9fafb",
+                                  borderRadius: 8,
+                                  border: "1px solid #e5e7eb",
                                 }}
                               >
-                                <span
-                                  style={{ fontSize: 13, color: "#6b7280" }}
-                                >
-                                  Account total (incl. GST):
-                                </span>
-                                <span
+                                <div
                                   style={{
-                                    fontWeight: 700,
-                                    color: "#111827",
+                                    display: "grid",
+                                    gridTemplateColumns: "1fr 1fr",
+                                    gap: 12,
+                                    marginBottom: 8,
                                   }}
                                 >
-                                  ₹{formatINR(total || 0)}
-                                </span>
+                                  <div>
+                                    <span
+                                      style={{ fontSize: 13, color: "#6b7280" }}
+                                    >
+                                      Account Amount:
+                                    </span>
+                                    <div
+                                      style={{
+                                        fontWeight: 600,
+                                        color: "#111827",
+                                      }}
+                                    >
+                                      ₹{formatINR(accountAmount || 0)}
+                                    </div>
+                                  </div>
+                                  <div>
+                                    <span
+                                      style={{ fontSize: 13, color: "#6b7280" }}
+                                    >
+                                      Account Amount (incl. 18% GST):
+                                    </span>
+                                    <div
+                                      style={{
+                                        fontWeight: 700,
+                                        color: "#0369a1",
+                                      }}
+                                    >
+                                      ₹{formatINR(accountWithGst || 0)}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div
+                                  style={{
+                                    marginTop: 8,
+                                    paddingTop: 8,
+                                    borderTop: "1px dashed #e5e7eb",
+                                  }}
+                                >
+                                  <div style={{ marginBottom: 8 }}>
+                                    <span
+                                      style={{ fontSize: 13, color: "#6b7280" }}
+                                    >
+                                      Cash Amount (Auto-calculated):
+                                    </span>
+                                    <div
+                                      style={{
+                                        fontWeight: 600,
+                                        color: "#111827",
+                                      }}
+                                    >
+                                      ₹{formatINR(cashAmount || 0)}
+                                    </div>
+                                  </div>
+                                  <div
+                                    style={{
+                                      padding: 12,
+                                      background: "#e6f7ff",
+                                      borderRadius: 6,
+                                      border: "1px solid #91d5ff",
+                                    }}
+                                  >
+                                    <span
+                                      style={{
+                                        fontSize: 14,
+                                        color: "#0369a1",
+                                        fontWeight: 600,
+                                      }}
+                                    >
+                                      Total Client Payable:
+                                    </span>
+                                    <div
+                                      style={{
+                                        fontSize: 18,
+                                        fontWeight: 700,
+                                        color: "#0369a1",
+                                        marginTop: 4,
+                                      }}
+                                    >
+                                      ₹{formatINR(clientPayable || 0)}
+                                    </div>
+                                    <div
+                                      style={{
+                                        fontSize: 12,
+                                        color: "#6b7280",
+                                        marginTop: 4,
+                                      }}
+                                    >
+                                      (Cash Amount + Account Amount with GST)
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
                             );
                           }}
+                        </Form.Item>
+                        <Form.Item name="agreedAmountCash" hidden>
+                          <InputNumber />
                         </Form.Item>
                       </div>
                       {/* Common advances for all event types */}
@@ -1860,10 +2687,28 @@ const AddInflow = () => {
                               ))}
                               <Form.Item shouldUpdate noStyle>
                                 {({ getFieldValue }) => {
-                                  const totalAgreed =
-                                    normalizeAmount(
-                                      getFieldValue("agreedAmountTotal")
-                                    ) ?? 0;
+                                  const agreedAmount = normalizeAmount(
+                                    getFieldValue("agreedAmountTotal")
+                                  );
+                                  const accountAmount = normalizeAmount(
+                                    getFieldValue("agreedAmountAccount")
+                                  );
+                                  const gstRate = 0.18;
+                                  const accountWithGst =
+                                    accountAmount != null
+                                      ? accountAmount + accountAmount * gstRate
+                                      : 0;
+                                  const cashAmount =
+                                    agreedAmount != null &&
+                                    accountAmount != null
+                                      ? Math.max(
+                                          0,
+                                          agreedAmount - accountAmount
+                                        )
+                                      : 0;
+                                  const clientPayable =
+                                    cashAmount + accountWithGst;
+
                                   const advs = getFieldValue("advances") || [];
                                   const paid = advs.reduce((sum, a) => {
                                     const amt = normalizeAmount(
@@ -1871,7 +2716,10 @@ const AddInflow = () => {
                                     );
                                     return sum + (amt || 0);
                                   }, 0);
-                                  const balance = totalAgreed - paid;
+                                  const balance = clientPayable - paid;
+                                  const exceeded =
+                                    balance < 0 ? Math.abs(balance) : 0;
+
                                   return (
                                     <div
                                       style={{
@@ -1879,15 +2727,46 @@ const AddInflow = () => {
                                         paddingTop: 8,
                                         borderTop: "1px dashed #e5e7eb",
                                         display: "flex",
-                                        justifyContent: "space-between",
+                                        flexDirection: "column",
+                                        gap: 4,
                                         fontSize: 13,
-                                        color: "#374151",
                                       }}
                                     >
-                                      <span>Balance after advances:</span>
-                                      <span style={{ fontWeight: 600 }}>
-                                        ₹{formatINR(balance || 0)}
-                                      </span>
+                                      <div
+                                        style={{
+                                          display: "flex",
+                                          justifyContent: "space-between",
+                                        }}
+                                      >
+                                        <span style={{ color: "#374151" }}>
+                                          Balance after advances:
+                                        </span>
+                                        <span
+                                          style={{
+                                            fontWeight: 600,
+                                            color:
+                                              balance >= 0
+                                                ? "#374151"
+                                                : "#ef4444",
+                                          }}
+                                        >
+                                          {balance >= 0
+                                            ? `₹${formatINR(balance || 0)}`
+                                            : `-₹${formatINR(exceeded || 0)}`}
+                                        </span>
+                                      </div>
+                                      {exceeded > 0 && (
+                                        <div
+                                          style={{
+                                            color: "#ef4444",
+                                            fontSize: 12,
+                                            fontWeight: 600,
+                                          }}
+                                        >
+                                          ⚠️ Amount exceeded by ₹
+                                          {formatINR(exceeded)}
+                                        </div>
+                                      )}
                                     </div>
                                   );
                                 }}
@@ -1956,139 +2835,135 @@ const AddInflow = () => {
                   <Form.List name="advances">
                     {(fields, { add, remove }) => (
                       <>
-                        {fields.map((field, index) => (
-                          <motion.div
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "80px 1fr 1fr 60px",
+                            gap: 8,
+                            padding: "8px 12px",
+                            background: "#f9fafb",
+                            borderRadius: 8,
+                            marginBottom: 8,
+                            fontSize: 12,
+                            fontWeight: 600,
+                            color: "#6b7280",
+                          }}
+                        >
+                          <span>No.</span>
+                          <span>Amount</span>
+                          <span>Date</span>
+                          <span>Action</span>
+                        </div>
+                        {fields.map((field, idx) => (
+                          <div
                             key={field.key}
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            transition={{ delay: index * 0.1 }}
+                            className="glass-advance-card"
+                            style={{
+                              marginBottom: 8,
+                              padding: "8px 12px",
+                              borderRadius: 8,
+                            }}
                           >
                             <div
-                              className="glass-advance-card"
                               style={{
-                                padding: "20px",
-                                marginBottom: "16px",
+                                display: "grid",
+                                gridTemplateColumns: "80px 1fr 1fr 60px",
+                                gap: 8,
+                                alignItems: "center",
                               }}
                             >
                               <div
                                 style={{
-                                  display: "flex",
-                                  gap: "16px",
-                                  alignItems: "flex-start",
-                                  flexWrap: "wrap",
+                                  fontWeight: 600,
+                                  fontSize: 13,
                                 }}
                               >
-                                <div style={{ flex: "1", minWidth: "250px" }}>
-                                  <div
-                                    style={{
-                                      fontSize: "13px",
-                                      color: "#7c3aed",
-                                      marginBottom: "12px",
-                                      fontWeight: 600,
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "8px",
-                                    }}
-                                  >
-                                    <span
-                                      style={{
-                                        width: "24px",
-                                        height: "24px",
-                                        borderRadius: "6px",
-                                        background:
-                                          "linear-gradient(135deg, #4f46e5, #7c3aed)",
-                                        color: "white",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        fontSize: "12px",
-                                        fontWeight: 700,
-                                      }}
-                                    >
-                                      {index + 1}
-                                    </span>
-                                    Advance #{index + 1}
-                                  </div>
-                                  <Form.Item
-                                    {...field}
-                                    name={[field.name, "expectedAmount"]}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message: "Enter amount",
-                                      },
-                                    ]}
-                                    style={{ marginBottom: 12 }}
-                                  >
-                                    <InputNumber
-                                      size="large"
-                                      style={{ width: "100%" }}
-                                      placeholder="Enter advance amount"
-                                      formatter={indianFormatter}
-                                      parser={indianParser}
-                                      min={0}
-                                    />
-                                  </Form.Item>
-                                  <Form.Item
-                                    {...field}
-                                    label="Advance Date"
-                                    name={[field.name, "advanceDate"]}
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message:
-                                          "Please select the advance date",
-                                      },
-                                    ]}
-                                    style={{ marginBottom: 0 }}
-                                  >
-                                    <DatePicker
-                                      size="large"
-                                      style={{ width: "100%" }}
-                                      placeholder="Select advance date"
-                                      format={timeFormat}
-                                      showTime={{
-                                        use12Hours: true,
-                                        format: "hh:mm A",
-                                      }}
-                                    />
-                                  </Form.Item>
-                                </div>
+                                #{idx + 1}
+                              </div>
+                              <Form.Item
+                                key={`expectedAmount-${field.key}`}
+                                name={[field.name, "expectedAmount"]}
+                                isListField={field.isListField}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Enter amount",
+                                  },
+                                ]}
+                                style={{ marginBottom: 0 }}
+                              >
+                                <InputNumber
+                                  size="large"
+                                  style={{ width: "100%" }}
+                                  min={0}
+                                  formatter={indianFormatter}
+                                  parser={indianParser}
+                                  placeholder="Enter amount"
+                                />
+                              </Form.Item>
+                              <Form.Item
+                                key={`advanceDate-${field.key}`}
+                                name={[field.name, "advanceDate"]}
+                                isListField={field.isListField}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message: "Select date",
+                                  },
+                                ]}
+                                style={{ marginBottom: 0 }}
+                              >
+                                <DatePicker
+                                  size="large"
+                                  style={{ width: "100%" }}
+                                  format={timeFormat}
+                                  showTime={{
+                                    use12Hours: true,
+                                    format: "hh:mm A",
+                                  }}
+                                />
+                              </Form.Item>
+                              <div style={{ textAlign: "center" }}>
                                 {fields.length > 1 && (
-                                  <motion.div
-                                    whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
-                                  >
-                                    <Button
-                                      type="text"
-                                      danger
-                                      icon={<DeleteOutlined />}
-                                      onClick={() => remove(field.name)}
-                                      style={{
-                                        marginTop: "32px",
-                                        borderRadius: "8px",
-                                        width: "40px",
-                                        height: "40px",
-                                      }}
-                                    />
-                                  </motion.div>
+                                  <Button
+                                    type="text"
+                                    danger
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => remove(field.name)}
+                                  />
                                 )}
                               </div>
                             </div>
-                          </motion.div>
+                          </div>
                         ))}
                         <Form.Item shouldUpdate noStyle>
                           {({ getFieldValue }) => {
-                            const totalAgreed =
-                              normalizeAmount(
-                                getFieldValue("agreedAmountTotal")
-                              ) ?? 0;
+                            const agreedAmount = normalizeAmount(
+                              getFieldValue("agreedAmountTotal")
+                            );
+                            const accountAmount = normalizeAmount(
+                              getFieldValue("agreedAmountAccount")
+                            );
+                            const gstRate = 0.18;
+                            const accountWithGst =
+                              accountAmount != null
+                                ? accountAmount + accountAmount * gstRate
+                                : 0;
+                            const cashAmount =
+                              agreedAmount != null && accountAmount != null
+                                ? Math.max(0, agreedAmount - accountAmount)
+                                : 0;
+                            const clientPayable = cashAmount + accountWithGst;
+
                             const advs = getFieldValue("advances") || [];
                             const paid = advs.reduce((sum, a) => {
                               const amt = normalizeAmount(a?.expectedAmount);
                               return sum + (amt || 0);
                             }, 0);
-                            const balance = totalAgreed - paid;
+                            const balance = clientPayable - paid;
+                            const exceeded =
+                              balance < 0 ? Math.abs(balance) : 0;
+
                             return (
                               <div
                                 style={{
@@ -2096,15 +2971,43 @@ const AddInflow = () => {
                                   paddingTop: 8,
                                   borderTop: "1px dashed #e5e7eb",
                                   display: "flex",
-                                  justifyContent: "space-between",
+                                  flexDirection: "column",
+                                  gap: 4,
                                   fontSize: 13,
-                                  color: "#374151",
                                 }}
                               >
-                                <span>Balance after advances:</span>
-                                <span style={{ fontWeight: 600 }}>
-                                  ₹{formatINR(balance || 0)}
-                                </span>
+                                <div
+                                  style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                  }}
+                                >
+                                  <span style={{ color: "#374151" }}>
+                                    Balance after advances:
+                                  </span>
+                                  <span
+                                    style={{
+                                      fontWeight: 600,
+                                      color:
+                                        balance >= 0 ? "#374151" : "#ef4444",
+                                    }}
+                                  >
+                                    {balance >= 0
+                                      ? `₹${formatINR(balance || 0)}`
+                                      : `-₹${formatINR(exceeded || 0)}`}
+                                  </span>
+                                </div>
+                                {exceeded > 0 && (
+                                  <div
+                                    style={{
+                                      color: "#ef4444",
+                                      fontSize: 12,
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    ⚠️ Amount exceeded by ₹{formatINR(exceeded)}
+                                  </div>
+                                )}
                               </div>
                             );
                           }}

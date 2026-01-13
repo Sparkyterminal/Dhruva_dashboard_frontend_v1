@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
-import { Form, Input, InputNumber, Select, Button, message, Card } from "antd";
+import { Form, Input, InputNumber, Select, Button, message, Card, DatePicker } from "antd";
 import { ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../config";
@@ -85,7 +85,10 @@ const AddRequirements = () => {
       purpose: values.purpose,
       vendor: values.vendor || null,
       event_reference: values.event_reference || null,
-      amount: values.amount,
+      amount: typeof values.amount === 'number' ? values.amount : Number(values.amount) || 0,
+      required_date: values.required_date
+        ? (values.required_date.toISOString ? values.required_date.toISOString() : values.required_date.format('YYYY-MM-DD'))
+        : null,
       transation_in: values.expecting_transaction_in?.toUpperCase(),
       priority: values.priority,
     };
@@ -243,7 +246,23 @@ const AddRequirements = () => {
                 formatter={(value) =>
                   `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
-                parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+                parser={(value) => (value ? value.replace(/[^\d.-]/g, "") : "")}
+                onChange={(value) => form.setFieldsValue({ amount: value })}
+                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                  Required Date
+                </span>
+              }
+              name="required_date"
+            >
+              <DatePicker
+                size="large"
+                style={{ width: "100%" }}
                 className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
               />
             </Form.Item>

@@ -38,6 +38,7 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import CalendarClients from "../../Components/calendarClients";
+import UserWiseClients from "../../Components/UserWiseClients";
 
 const { Title, Text } = Typography;
 
@@ -449,7 +450,7 @@ const ViewClientsBookings = () => {
               </Text>
             </div>
             <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Expected:</Text>
+              <Text className="text-xs text-gray-500">Balance:</Text>
               <Text className="text-sm">{formatAmount(expected)}</Text>
             </div>
             <Tag
@@ -713,6 +714,11 @@ const ViewClientsBookings = () => {
       key: "calendar",
       label: "Calendar View",
       children: <CalendarClients />,
+    },
+    {
+      key: "leaderboard",
+      label: "LeaderBoard",
+      children: <UserWiseClients />,
     },
   ];
 

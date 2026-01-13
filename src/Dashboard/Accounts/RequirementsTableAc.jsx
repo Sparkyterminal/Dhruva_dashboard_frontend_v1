@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
@@ -10,6 +11,7 @@ import {
   Tag,
   Collapse,
   DatePicker,
+  Tooltip,
 } from "antd";
 import {
   EditOutlined,
@@ -17,6 +19,7 @@ import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   SearchOutlined,
+  LockOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
@@ -45,9 +48,12 @@ const RequirementsTableAc = () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
       if (date) params.append("singleDate", date);
-      
+
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(`${API_BASE_URL}request${queryString}`, config);
+      const res = await axios.get(
+        `${API_BASE_URL}request${queryString}`,
+        config
+      );
       setRequirements(res.data.items || []);
     } catch (err) {
       message.error("Failed to fetch requirements");
@@ -63,7 +69,10 @@ const RequirementsTableAc = () => {
   useEffect(() => {
     // Fetch data on each search input change with a slight debounce
     const timeoutId = setTimeout(() => {
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     }, 300);
 
     return () => clearTimeout(timeoutId);
@@ -91,6 +100,16 @@ const RequirementsTableAc = () => {
       message.error("Please enter a valid number");
       return;
     }
+    // Validate amount_paid against approver_amount
+    if (editField === "amount_paid") {
+      const approvedAmount = row.approver_amount || 0;
+      if (Number(editValue) > approvedAmount) {
+        message.error(
+          `Amount paid cannot exceed approved amount (₹${approvedAmount})`
+        );
+        return;
+      }
+    }
     try {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
@@ -98,14 +117,23 @@ const RequirementsTableAc = () => {
         config
       );
       message.success(
-        `${editField === "planned_amount" ? "Planned amount" : "Amount paid"} updated`
+        `${
+          editField === "planned_amount" ? "Planned amount" : "Amount paid"
+        } updated`
       );
       setEditRowId(null);
       setEditField(null);
       setEditValue(null);
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch {
-      message.error(`Failed to update ${editField === "planned_amount" ? "planned amount" : "amount paid"}`);
+      message.error(
+        `Failed to update ${
+          editField === "planned_amount" ? "planned amount" : "amount paid"
+        }`
+      );
     }
   };
 
@@ -117,7 +145,10 @@ const RequirementsTableAc = () => {
         config
       );
       message.success("Request marked as completed");
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch {
       message.error("Failed to mark as completed");
     }
@@ -131,7 +162,10 @@ const RequirementsTableAc = () => {
         config
       );
       message.success("Request marked as rejected");
-      fetchRequirementsData(search, selectedDate ? selectedDate.format("YYYY-MM-DD") : null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+      );
     } catch {
       message.error("Failed to reject request");
     }
@@ -156,7 +190,9 @@ const RequirementsTableAc = () => {
       width: 70,
       fixed: "left",
       render: (_, __, idx) => (
-        <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>{idx + 1}</span>
+        <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+          {idx + 1}
+        </span>
       ),
     },
     {
@@ -187,7 +223,10 @@ const RequirementsTableAc = () => {
       key: "department",
       width: 150,
       render: (_, record) => (
-        <Tag color="blue" style={{ borderRadius: 6, fontWeight: 700, fontSize: 14 }}>
+        <Tag
+          color="blue"
+          style={{ borderRadius: 6, fontWeight: 700, fontSize: 14 }}
+        >
           {record.department?.name || "-"}
         </Tag>
       ),
@@ -196,7 +235,7 @@ const RequirementsTableAc = () => {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
-      width: 200,
+      width: 100,
       render: (text) => (
         <span
           style={{
@@ -206,10 +245,6 @@ const RequirementsTableAc = () => {
             alignItems: "center",
             justifyContent: "center",
             justifyItems: "center",
-            whiteSpace: "normal",
-            wordBreak: "break-word",
-            display: "inline-block",
-            maxWidth: 200,
           }}
         >
           {text}
@@ -256,7 +291,10 @@ const RequirementsTableAc = () => {
       render: (planned_amount, row) =>
         row.status === "COMPLETED" || row.status === "REJECTED" ? (
           <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-            {planned_amount?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0"}
+            {planned_amount?.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            }) || "₹0"}
           </span>
         ) : row.id === editRowId && editField === "planned_amount" ? (
           <Space>
@@ -277,46 +315,150 @@ const RequirementsTableAc = () => {
         ) : (
           <Space>
             <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-              {planned_amount?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0"}
+              {planned_amount?.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+              }) || "₹0"}
             </span>
-            <Button icon={<EditOutlined />} size="small" onClick={() => startEdit(row, "planned_amount")} />
+            <Button
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => startEdit(row, "planned_amount")}
+            />
           </Space>
         ),
+    },
+    {
+      title: "Approved Amount",
+      dataIndex: "approver_amount",
+      key: "approver_amount",
+      width: 180,
+      render: (approver_amount) => (
+        <span style={{ fontWeight: 700, color: "#000", fontSize: 18 }}>
+          {approver_amount?.toLocaleString("en-IN", {
+            style: "currency",
+            currency: "INR",
+          }) || "₹0"}
+        </span>
+      ),
+    },
+    {
+      title: "Approver Check",
+      dataIndex: "approver_check",
+      key: "approver_check",
+      width: 160,
+      render: (approver_check, row) => {
+        const status = approver_check || row.approver_check || "PENDING";
+        const color =
+          status === "APPROVED"
+            ? "green"
+            : status === "REJECTED"
+            ? "red"
+            : "orange";
+        return (
+          <Tag
+            color={color}
+            style={{ borderRadius: 8, fontWeight: 700, fontSize: 14 }}
+          >
+            {status}
+          </Tag>
+        );
+      },
     },
     {
       title: "Amount Paid",
       dataIndex: "amount_paid",
       key: "amount_paid",
       width: 180,
-      render: (amount_paid, row) =>
-        row.status === "COMPLETED" || row.status === "REJECTED" ? (
-          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
-            {amount_paid?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0"}
-          </span>
-        ) : row.id === editRowId && editField === "amount_paid" ? (
-          <Space>
-            <Input
-              style={{ width: 120, fontWeight: 600, fontSize: 18 }}
-              value={editValue}
-              onChange={onEditChange}
-              size="small"
-            />
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              size="small"
-              onClick={() => handleEditSave(row)}
-              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
-            />
-          </Space>
-        ) : (
+      render: (amount_paid, row) => {
+        const checkApproved = (v) => {
+          if (v === true) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "APPROVED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "APPROVED") ||
+              v.approved === true
+            );
+          return false;
+        };
+        const checkRejected = (v) => {
+          if (v === false) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "REJECTED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "REJECTED") ||
+              v.rejected === true
+            );
+          return false;
+        };
+
+        const approved =
+          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+        const rejected =
+          checkRejected(row.approver_check) ||
+          checkRejected(row.owner_check) ||
+          row.status === "REJECTED";
+
+        // If rejected -> not editable, show plain value
+        if (rejected) {
+          return (
+            <span style={{ color: "#9ca3af", fontWeight: 700, fontSize: 18 }}>
+              {amount_paid?.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+              }) || "₹0"}
+            </span>
+          );
+        }
+
+        // If approved -> allow edit
+        if (approved && row.id === editRowId && editField === "amount_paid") {
+          const approvedAmount = row.approver_amount || 0;
+          return (
+            <Space>
+              <Input
+                style={{ width: 120, fontWeight: 600, fontSize: 18 }}
+                value={editValue}
+                onChange={onEditChange}
+                size="small"
+                placeholder={`Max: ₹${approvedAmount}`}
+              />
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                size="small"
+                onClick={() => handleEditSave(row)}
+                style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+              />
+            </Space>
+          );
+        }
+
+        // Show edit icon when approved, lock when pending
+        return (
           <Space>
             <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-              {amount_paid?.toLocaleString("en-IN", { style: "currency", currency: "INR" }) || "₹0"}
+              {amount_paid?.toLocaleString("en-IN", {
+                style: "currency",
+                currency: "INR",
+              }) || "₹0"}
             </span>
-            <Button icon={<EditOutlined />} size="small" onClick={() => startEdit(row, "amount_paid")} />
+            {approved ? (
+              <Button
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => startEdit(row, "amount_paid")}
+              />
+            ) : (
+              <Tooltip title={"Awaiting approver/owner approval"}>
+                <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
+              </Tooltip>
+            )}
           </Space>
-        ),
+        );
+      },
     },
     {
       title: "Actions",
@@ -341,12 +483,20 @@ const RequirementsTableAc = () => {
               >
                 Completed
               </Button>
-              <Button danger size="small" onClick={() => handleReject(row)} icon={<CloseCircleOutlined />} style={{ fontWeight: 700, fontSize: 18 }}>
+              <Button
+                danger
+                size="small"
+                onClick={() => handleReject(row)}
+                icon={<CloseCircleOutlined />}
+                style={{ fontWeight: 700, fontSize: 18 }}
+              >
                 Rejected
               </Button>
             </>
           ) : (
-            <span style={{ fontWeight: 700, fontSize: 18, color: "#555" }}>{row.status}</span>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#555" }}>
+              {row.status}
+            </span>
           )}
         </Space>
       ),
@@ -376,16 +526,22 @@ const RequirementsTableAc = () => {
           color: "#1d174c",
         }}
       >
-        <span className="text-white">{deptObj.department?.name || "Unknown Department"}</span>
         <span className="text-white">
-          Approved: {approvedCount} | Pending: {pendingCount} | Rejected: {rejectedCount} | Total: {total}
+          {deptObj.department?.name || "Unknown Department"}
+        </span>
+        <span className="text-white">
+          Approved: {approvedCount} | Pending: {pendingCount} | Rejected:{" "}
+          {rejectedCount} | Total: {total}
         </span>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen w-full relative" style={{ background: "transparent" }}>
+    <div
+      className="min-h-screen w-full relative"
+      style={{ background: "transparent" }}
+    >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
         * { font-family: 'Cormorant Garamond', serif; }
@@ -399,8 +555,25 @@ const RequirementsTableAc = () => {
         .ant-table-tbody > tr > td { color: #000 !important; font-size: 18px !important; font-weight: 700 !important; }
       `}</style>
 
-      <div style={{ padding: "32px", background: "transparent", minHeight: "100vh", position: "relative", zIndex: 10 }}>
-        <h1 style={{ textAlign: "center", fontSize: 48, fontWeight: 600, color: "#1f2937", marginBottom: 24, letterSpacing: "-0.02em" }}>
+      <div
+        style={{
+          padding: "32px",
+          background: "transparent",
+          minHeight: "100vh",
+          position: "relative",
+          zIndex: 10,
+        }}
+      >
+        <h1
+          style={{
+            textAlign: "center",
+            fontSize: 48,
+            fontWeight: 600,
+            color: "#1f2937",
+            marginBottom: 24,
+            letterSpacing: "-0.02em",
+          }}
+        >
           Request's Dashboard
         </h1>
         {/* Search and Date Filter */}

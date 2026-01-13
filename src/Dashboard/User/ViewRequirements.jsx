@@ -26,6 +26,8 @@ import {
   CheckCircleOutlined,
   CalendarOutlined,
   FlagOutlined,
+  UserOutlined,
+  ShopOutlined,
 } from "@ant-design/icons";
 
 const iconStyle = { width: 40, height: 40 };
@@ -136,57 +138,100 @@ const ViewRequirements = () => {
   };
 
   const columns = [
-  {
-    title: "Sl. No",
-    dataIndex: "slNo",
-    key: "slNo",
-    render: (_text, _record, index) => (currentPage - 1) * 10 + index + 1,
-    width: 80,
-  },
-  {
-    title: "Purpose",
-    dataIndex: "purpose",
-    key: "purpose",
-  },
-  {
-    title: "Amount",
-    dataIndex: "amount",
-    key: "amount",
-    render: (amount) => `₹${amount.toLocaleString()}`,
-  },
-  {
-    title: "Priority",
-    dataIndex: "priority",
-    key: "priority",
-    render: (priority) => (
-      <Tag color={getPriorityColor(priority)}>{priority}</Tag>
-    ),
-  },
-  {
-    title: "Planned Amount",
-    dataIndex: "planned_amount",
-    key: "planned_amount",
-    render: (amount) => `₹${amount.toLocaleString()}`,
-  },
-  {
-    title: "Amount Paid",
-    dataIndex: "amount_paid",
-    key: "amount_paid",
-    render: (amount) => `₹${amount.toLocaleString()}`,
-  },
-  {
-    title: "Transaction In",
-    dataIndex: "transation_in",
-    key: "transation_in",
-  },
-  {
-    title: "Vendor",
-    dataIndex: "vendor",
-    key: "vendor",
-    render: (vendor) =>
-      vendor ? <Tag color="geekblue">{vendor}</Tag> : <span>No Vendor</span>,
-  },
-];
+    {
+      title: "Sl. No",
+      dataIndex: "slNo",
+      key: "slNo",
+      render: (_text, _record, index) => (currentPage - 1) * 10 + index + 1,
+      width: 100,
+      // fixed: "left",
+    },
+    {
+      title: "Purpose",
+      dataIndex: "purpose",
+      key: "purpose",
+      width: 200,
+    },
+    {
+      title: "Amount",
+      dataIndex: "amount",
+      key: "amount",
+      width: 120,
+      render: (amount) => `₹${amount.toLocaleString()}`,
+    },
+    {
+      title: "Priority",
+      dataIndex: "priority",
+      key: "priority",
+      width: 100,
+      render: (priority) => (
+        <Tag color={getPriorityColor(priority)}>{priority}</Tag>
+      ),
+    },
+    {
+      title: "Planned Amount",
+      dataIndex: "planned_amount",
+      key: "planned_amount",
+      width: 150,
+      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+    },
+    {
+      title: "Approved Amount",
+      dataIndex: "approver_amount",
+      key: "approver_amount",
+      width: 150,
+      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+    },
+    {
+      title: "Amount Paid",
+      dataIndex: "amount_paid",
+      key: "amount_paid",
+      width: 150,
+      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+    },
+    {
+      title: "Transaction In",
+      dataIndex: "transation_in",
+      key: "transation_in",
+      width: 130,
+    },
+    {
+      title: "Vendor",
+      dataIndex: "vendor",
+      key: "vendor",
+      width: 180,
+      render: (vendor) =>
+        vendor ? (
+          <div>
+            <div className="font-semibold">{vendor.name}</div>
+            <div className="text-xs text-gray-500">
+              Code: {vendor.vendor_code}
+            </div>
+          </div>
+        ) : (
+          <span>No Vendor</span>
+        ),
+    },
+    {
+      title: "Event",
+      dataIndex: "event_reference",
+      key: "event_reference",
+      width: 200,
+      render: (event) =>
+        event ? (
+          <div>
+            <div className="font-semibold">
+              {event.eventName?.name || "N/A"}
+            </div>
+            <div className="text-xs text-gray-500">
+              Client: {event.clientName}
+            </div>
+          </div>
+        ) : (
+          <span>No Event</span>
+        ),
+    },
+  ];
 
   const CardView = () => (
     <div>
@@ -245,6 +290,40 @@ const ViewRequirements = () => {
                     </span>
                     <span className="text-black">{req.transation_in}</span>
                   </div>
+
+                  {req.vendor && (
+                    <div className="pt-2 border-t">
+                      <div className="flex items-start gap-2">
+                        <ShopOutlined className="mt-1" />
+                        <div>
+                          <div className="font-cormorant font-semibold text-black">
+                            {req.vendor.name}
+                          </div>
+                          <div className="text-xs text-gray-600">
+                            Code: {req.vendor.vendor_code}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {req.event_reference && (
+                    <div className="pt-2 border-t">
+                      <div className="flex items-start gap-2">
+                        <UserOutlined className="mt-1" />
+                        <div>
+                          <div className="text-sm text-black">
+                            <span className="font-semibold">Event:</span>{" "}
+                            {req.event_reference.eventName?.name || "N/A"}
+                          </div>
+                          <div className="text-sm text-black">
+                            <span className="font-semibold">Client:</span>{" "}
+                            {req.event_reference.clientName}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {req.department && (
@@ -273,21 +352,23 @@ const ViewRequirements = () => {
     </div>
   );
 
-  // Replacing the icons with Lottie animations in the statistics cards below
-
   const ListView = () => (
-    <div>
-      <Table
-        dataSource={requirements}
-        columns={columns}
-        loading={loading}
-        rowKey="id"
-        rowClassName={getRowClassName}
-        pagination={false}
-        scroll={{ x: 800 }}
-      />
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="overflow-x-auto">
+        <Table
+          dataSource={requirements}
+          columns={columns}
+          loading={loading}
+          rowKey="id"
+          rowClassName={getRowClassName}
+          pagination={false}
+          scroll={{ x: 1200 }}
+          size="middle"
+          bordered={false}
+        />
+      </div>
 
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-6 pb-4">
         <Pagination
           current={currentPage}
           total={totalItems}
@@ -449,6 +530,55 @@ const ViewRequirements = () => {
         .text-gray-500,
         .text-gray-800 {
           color: #000000 !important;
+        }
+
+        /* Table Scrolling Styles */
+        .overflow-x-auto {
+          -webkit-overflow-scrolling: touch;
+          scroll-behavior: smooth;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 8px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 10px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #888;
+          border-radius: 10px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background: #555;
+        }
+
+        .ant-table-wrapper {
+          width: 100%;
+        }
+
+        .ant-table {
+          background: white;
+          border-collapse: collapse;
+        }
+
+        .ant-table-thead > tr > th {
+          background: #fafafa !important;
+          font-weight: 700 !important;
+          border-bottom: 2px solid #f0f0f0 !important;
+          padding: 12px 16px !important;
+        }
+
+        .ant-table-tbody > tr > td {
+          padding: 12px 16px !important;
+          border-bottom: 1px solid #f0f0f0 !important;
+        }
+
+        .ant-table-tbody > tr:hover > td {
+          background: #fafafa !important;
         }
       `}</style>
     </div>

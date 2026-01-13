@@ -118,7 +118,7 @@ const EditInflow = () => {
     selectedEvent?.name && selectedEvent.name.toLowerCase().includes("wedding");
 
   // Fetch events list
-  useEffect(() => {
+useEffect(() => {
     const fetchEvents = async () => {
       setEventsLoading(true);
       try {
@@ -135,209 +135,455 @@ const EditInflow = () => {
     fetchEvents();
   }, []);
 
-  const fetchEventData = async () => {
-    setInitialLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}events/${id}`);
-      const event = res.data.event;
-      console.log("Fetched event:", event);
+  // const fetchEventData = async () => {
+  //   setInitialLoading(true);
+  //   try {
+  //     const res = await axios.get(`${API_BASE_URL}events/${id}`);
+  //     const event = res.data.event;
+  //     console.log("Fetched event:", event);
 
-      // Find the event in the events list
-      const eventObj =
-        events.find(
-          (e) =>
-            e.name === event.eventName ||
-            e.id === event.eventId ||
-            e._id === event.eventId
-        ) || null;
-      setSelectedEvent(eventObj);
+  //     // Find the event in the events list
+  //     const eventObj =
+  //       events.find(
+  //         (e) =>
+  //           e.name === event.eventName ||
+  //           e.id === event.eventId ||
+  //           e._id === event.eventId
+  //       ) || null;
+  //     setSelectedEvent(eventObj);
 
-      // Fetch event types if event has event types
-      if (eventObj) {
-        setEventTypesLoading(true);
-        try {
-          const eventTypesRes = await axios.get(
-            `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
-            axiosConfig
-          );
-          const eventTypesData =
-            eventTypesRes.data?.eventTypes || eventTypesRes.data || [];
-          setEventTypes(eventTypesData);
-        } catch (err) {
-          console.error(err);
-          setEventTypes([]);
-        } finally {
-          setEventTypesLoading(false);
+  //     // Fetch event types if event has event types
+  //     if (eventObj) {
+  //       setEventTypesLoading(true);
+  //       try {
+  //         const eventTypesRes = await axios.get(
+  //           `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
+  //           axiosConfig
+  //         );
+  //         const eventTypesData =
+  //           eventTypesRes.data?.eventTypes || eventTypesRes.data || [];
+  //         setEventTypes(eventTypesData);
+  //       } catch (err) {
+  //         console.error(err);
+  //         setEventTypes([]);
+  //       } finally {
+  //         setEventTypesLoading(false);
+  //       }
+  //     }
+
+  //     const hasEventTypes =
+  //       eventTypes.length > 0 && event.eventTypes?.length > 0;
+  //     const eventTypesFromEvent = event.eventTypes || [];
+
+  //     if (hasEventTypes) {
+  //       // Map event types from event to IDs
+  //       const selectedTypeIds = eventTypesFromEvent
+  //         .map((et) => {
+  //           const typeId =
+  //             et.eventTypeId || et.eventType?.id || et.eventType?._id;
+  //           if (typeId) return typeId;
+  //           // Fallback: find by name
+  //           const found = eventTypes.find(
+  //             (t) => t.name === et.eventType || t.name === et.eventType?.name
+  //           );
+  //           return found?.id || found?._id;
+  //         })
+  //         .filter(Boolean);
+  //       setSelectedEventTypes(selectedTypeIds);
+
+  //       // Check if it's complete package or separate mode
+  //       const hasTopLevelAgreedAmount =
+  //         event.agreedAmount !== undefined && event.agreedAmount !== null;
+  //       const hasTopLevelAdvances = event.advances && event.advances.length > 0;
+  //       const mode =
+  //         hasTopLevelAgreedAmount || hasTopLevelAdvances
+  //           ? "complete"
+  //           : "separate";
+  //       setAdvanceMode(mode);
+
+  //       // Prepare form values
+  //       const formValues = {
+  //         eventName: eventObj?.id || eventObj?._id || null,
+  //         clientName: event.clientName,
+  //         brideName: event.brideName,
+  //         groomName: event.groomName,
+  //         contactNumber: event.contactNumber,
+  //         altContactNumber: event.altContactNumber,
+  //         altContactName: event.altContactName,
+  //         lead1: event.lead1,
+  //         lead2: event.lead2,
+  //         note: event.note,
+  //         eventTypes: selectedTypeIds,
+  //       };
+
+  //       // Initialize dates and meta for each event type
+  //       const eventTypeDates = {};
+  //       const eventTypeMeta = {};
+  //       const eventTypeAdvances = {};
+
+  //       eventTypesFromEvent.forEach((et, idx) => {
+  //         const typeId =
+  //           selectedTypeIds[idx] ||
+  //           et.eventTypeId ||
+  //           et.eventType?.id ||
+  //           et.eventType?._id;
+  //         if (!typeId) return;
+
+  //         eventTypeDates[typeId] = {
+  //           startDate: et.startDate ? dayjs(et.startDate) : undefined,
+  //           endDate: et.endDate ? dayjs(et.endDate) : undefined,
+  //         };
+
+  //         const breakup = et.agreedAmountBreakup || {};
+  //         eventTypeMeta[typeId] = {
+  //           venueLocation: et.venueLocation,
+  //           totalAgreedAmount: et.agreedAmount,
+  //           accountAmount: breakup.accountAmount,
+  //           cashAmount: breakup.cashAmount,
+  //           gstRate: breakup.accountGstRate || 0,
+  //         };
+
+  //         if (mode === "separate" && et.advances) {
+  //           eventTypeAdvances[typeId] = et.advances.map((adv) => ({
+  //             expectedAmount: adv.expectedAmount,
+  //             advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
+  //             advanceNumber: adv.advanceNumber,
+  //             receivedAmount: adv.receivedAmount,
+  //             receivedDate: adv.receivedDate
+  //               ? dayjs(adv.receivedDate)
+  //               : undefined,
+  //             remarks: adv.remarks,
+  //             updatedBy: adv.updatedBy,
+  //             updatedAt: adv.updatedAt,
+  //           }));
+  //         }
+  //       });
+
+  //       formValues.eventTypeDates = eventTypeDates;
+  //       formValues.eventTypeMeta = eventTypeMeta;
+
+  //       if (mode === "separate") {
+  //         formValues.eventTypeAdvances = eventTypeAdvances;
+  //       } else {
+  //         // Complete package mode
+  //         const breakup = event.agreedAmountBreakup || {};
+  //         formValues.agreedAmountTotal = event.agreedAmount;
+  //         formValues.agreedAmountAccount = breakup.accountAmount;
+  //         formValues.agreedAmountCash = breakup.cashAmount;
+  //         formValues.agreedAmountAccountGstRate = breakup.accountGstRate || 0;
+  //         formValues.advances = (event.advances || []).map((adv) => ({
+  //           expectedAmount: adv.expectedAmount,
+  //           advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
+  //           advanceNumber: adv.advanceNumber,
+  //           receivedAmount: adv.receivedAmount,
+  //           receivedDate: adv.receivedDate
+  //             ? dayjs(adv.receivedDate)
+  //             : undefined,
+  //           remarks: adv.remarks,
+  //           updatedBy: adv.updatedBy,
+  //           updatedAt: adv.updatedAt,
+  //         }));
+  //       }
+
+  //       form.setFieldsValue(formValues);
+  //     } else {
+  //       // Non-wedding event or event without event types
+  //       const eventType = eventTypesFromEvent[0] || {};
+  //       const breakup =
+  //         eventType.agreedAmountBreakup || event.agreedAmountBreakup || {};
+  //       form.setFieldsValue({
+  //         eventName: eventObj?.id || eventObj?._id || null,
+  //         customEventName:
+  //           event.eventName === "Other" ? eventType.eventType : undefined,
+  //         clientName: event.clientName,
+  //         contactNumber: event.contactNumber,
+  //         altContactNumber: event.altContactNumber,
+  //         altContactName: event.altContactName,
+  //         lead1: event.lead1,
+  //         lead2: event.lead2,
+  //         startDate: eventType.startDate
+  //           ? dayjs(eventType.startDate)
+  //           : undefined,
+  //         endDate: eventType.endDate ? dayjs(eventType.endDate) : undefined,
+  //         venueLocation: eventType.venueLocation,
+  //         agreedAmountTotal: eventType.agreedAmount || event.agreedAmount,
+  //         agreedAmountAccount: breakup.accountAmount,
+  //         agreedAmountCash: breakup.cashAmount,
+  //         agreedAmountAccountGstRate: breakup.accountGstRate || 0,
+  //         advances: (eventType.advances || event.advances || []).map((adv) => ({
+  //           expectedAmount: adv.expectedAmount,
+  //           advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
+  //           advanceNumber: adv.advanceNumber,
+  //           receivedAmount: adv.receivedAmount,
+  //           receivedDate: adv.receivedDate
+  //             ? dayjs(adv.receivedDate)
+  //             : undefined,
+  //           remarks: adv.remarks,
+  //           updatedBy: adv.updatedBy,
+  //           updatedAt: adv.updatedAt,
+  //         })),
+  //       });
+  //     }
+  //   } catch (err) {
+  //     console.error("Error fetching event:", err);
+  //     message.error("Failed to fetch event data");
+  //   } finally {
+  //     setInitialLoading(false);
+  //   }
+  // };
+
+  // useEffect(() => {
+  //   if (events.length > 0) {
+  //     fetchEventData();
+  //   }
+  // }, [id, events.length]);
+
+ useEffect(() => {
+    const fetchAndPopulateEventData = async () => {
+      if (!id || events.length === 0) return;
+      
+      console.log("🔍 EditInflow - ID from URL params:", id);
+      console.log("🔍 EditInflow - Fetching event with URL:", `${API_BASE_URL}events/${id}`);
+      
+      setInitialLoading(true);
+      try {
+        // Step 1: Fetch the event data
+        const res = await axios.get(`${API_BASE_URL}events/${id}`,axiosConfig);
+        const event = res.data.event;
+        console.log("✅ Fetched event data:", event);
+        console.log("✅ Event ID from response:", event._id || event.id);
+
+        // Step 2: Find the event in the events list
+        // Handle both string and object eventName from API
+        const eventNameFromApi = typeof event.eventName === 'string' 
+          ? event.eventName 
+          : event.eventName?.name || event.eventName?.id;
+        const eventIdFromApi = typeof event.eventName === 'object' 
+          ? event.eventName?.id 
+          : event.eventId;
+        
+        console.log("🔍 Event name from API:", eventNameFromApi);
+        console.log("🔍 Event ID from API:", eventIdFromApi);
+        console.log("🔍 Available events:", events);
+        
+        // IMPORTANT: Match by ID first (most reliable), then by name as fallback
+        const eventObj = events.find((e) => {
+          // Try to match by event ID first
+          if (eventIdFromApi && (e.id === eventIdFromApi || e._id === eventIdFromApi)) {
+            console.log("✅ Matched event by ID:", e);
+            return true;
+          }
+          // Fallback: match by name
+          if (eventNameFromApi && e.name === eventNameFromApi) {
+            console.log("✅ Matched event by name:", e);
+            return true;
+          }
+          return false;
+        }) || null;
+        
+        console.log("🔍 Final matched event object:", eventObj);
+        
+        if (!eventObj) {
+          message.error("Event not found in events list");
+          setInitialLoading(false);
+          return;
         }
-      }
+        
+        setSelectedEvent(eventObj);
 
-      const hasEventTypes =
-        eventTypes.length > 0 && event.eventTypes?.length > 0;
-      const eventTypesFromEvent = event.eventTypes || [];
-
-      if (hasEventTypes) {
-        // Map event types from event to IDs
-        const selectedTypeIds = eventTypesFromEvent
-          .map((et) => {
-            const typeId =
-              et.eventTypeId || et.eventType?.id || et.eventType?._id;
-            if (typeId) return typeId;
-            // Fallback: find by name
-            const found = eventTypes.find(
-              (t) => t.name === et.eventType || t.name === et.eventType?.name
+        // Step 3: Fetch event types if applicable
+        let fetchedEventTypes = [];
+        if (eventObj.id || eventObj._id) {
+          setEventTypesLoading(true);
+          try {
+            const eventTypesRes = await axios.get(
+              `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
+              axiosConfig
             );
-            return found?.id || found?._id;
-          })
-          .filter(Boolean);
-        setSelectedEventTypes(selectedTypeIds);
+            fetchedEventTypes = eventTypesRes.data?.eventTypes || eventTypesRes.data || [];
+            setEventTypes(fetchedEventTypes);
+          } catch (err) {
+            console.error("Error fetching event types:", err);
+            setEventTypes([]);
+          } finally {
+            setEventTypesLoading(false);
+          }
+        }
 
-        // Check if it's complete package or separate mode
-        const hasTopLevelAgreedAmount =
-          event.agreedAmount !== undefined && event.agreedAmount !== null;
-        const hasTopLevelAdvances = event.advances && event.advances.length > 0;
-        const mode =
-          hasTopLevelAgreedAmount || hasTopLevelAdvances
-            ? "complete"
-            : "separate";
-        setAdvanceMode(mode);
+        // Step 4: Now populate the form with the fetched data
+        const hasEventTypes = fetchedEventTypes.length > 0 && event.eventTypes?.length > 0;
+        const eventTypesFromEvent = event.eventTypes || [];
 
-        // Prepare form values
-        const formValues = {
-          eventName: eventObj?.id || eventObj?._id || null,
-          clientName: event.clientName,
-          brideName: event.brideName,
-          groomName: event.groomName,
-          contactNumber: event.contactNumber,
-          altContactNumber: event.altContactNumber,
-          altContactName: event.altContactName,
-          lead1: event.lead1,
-          lead2: event.lead2,
-          note: event.note,
-          eventTypes: selectedTypeIds,
-        };
+        if (hasEventTypes) {
+          // Map event types from event to IDs
+          const selectedTypeIds = eventTypesFromEvent
+            .map((et) => {
+              // Handle both object and string eventType
+              const typeIdFromEvent = et.eventTypeId || 
+                                     (typeof et.eventType === 'object' ? et.eventType?.id || et.eventType?._id : null);
+              
+              if (typeIdFromEvent) return typeIdFromEvent;
+              
+              // Fallback: find by name
+              const typeName = typeof et.eventType === 'string' 
+                ? et.eventType 
+                : et.eventType?.name;
+              
+              const found = fetchedEventTypes.find(
+                (t) => t.name === typeName || t.id === typeIdFromEvent || t._id === typeIdFromEvent
+              );
+              return found?.id || found?._id;
+            })
+            .filter(Boolean);
+          
+          console.log("🔍 Selected event type IDs:", selectedTypeIds);
+          
+          setSelectedEventTypes(selectedTypeIds);
 
-        // Initialize dates and meta for each event type
-        const eventTypeDates = {};
-        const eventTypeMeta = {};
-        const eventTypeAdvances = {};
+          // Check mode
+          const hasTopLevelAgreedAmount = event.agreedAmount !== undefined && event.agreedAmount !== null;
+          const hasTopLevelAdvances = event.advances && event.advances.length > 0;
+          const mode = hasTopLevelAgreedAmount || hasTopLevelAdvances ? "complete" : "separate";
+          setAdvanceMode(mode);
 
-        eventTypesFromEvent.forEach((et, idx) => {
-          const typeId =
-            selectedTypeIds[idx] ||
-            et.eventTypeId ||
-            et.eventType?.id ||
-            et.eventType?._id;
-          if (!typeId) return;
-
-          eventTypeDates[typeId] = {
-            startDate: et.startDate ? dayjs(et.startDate) : undefined,
-            endDate: et.endDate ? dayjs(et.endDate) : undefined,
+          // Prepare form values
+          const formValues = {
+            eventName: eventObj?.id || eventObj?._id || null,
+            clientName: event.clientName,
+            brideName: event.brideName,
+            groomName: event.groomName,
+            contactNumber: event.contactNumber,
+            altContactNumber: event.altContactNumber,
+            altContactName: event.altContactName,
+            lead1: event.lead1,
+            lead2: event.lead2,
+            note: event.note,
+            eventTypes: selectedTypeIds,
           };
 
-          const breakup = et.agreedAmountBreakup || {};
-          eventTypeMeta[typeId] = {
-            venueLocation: et.venueLocation,
-            totalAgreedAmount: et.agreedAmount,
-            accountAmount: breakup.accountAmount,
-            cashAmount: breakup.cashAmount,
-            gstRate: breakup.accountGstRate || 0,
-          };
+          // Initialize dates and meta for each event type
+          const eventTypeDates = {};
+          const eventTypeMeta = {};
+          const eventTypeAdvances = {};
 
-          if (mode === "separate" && et.advances) {
-            eventTypeAdvances[typeId] = et.advances.map((adv) => ({
+          eventTypesFromEvent.forEach((et, idx) => {
+            // Handle both object and direct ID for eventType
+            const typeId = selectedTypeIds[idx] || 
+                          et.eventTypeId || 
+                          (typeof et.eventType === 'object' ? et.eventType?.id || et.eventType?._id : null);
+            
+            if (!typeId) {
+              console.warn(`⚠️ Could not determine typeId for event type at index ${idx}:`, et);
+              return;
+            }
+
+            console.log(`🔍 Processing event type ${idx}: typeId=${typeId}`);
+
+            eventTypeDates[typeId] = {
+              startDate: et.startDate ? dayjs(et.startDate) : undefined,
+              endDate: et.endDate ? dayjs(et.endDate) : undefined,
+            };
+
+            const breakup = et.agreedAmountBreakup || {};
+            eventTypeMeta[typeId] = {
+              venueLocation: et.venueLocation,
+              totalAgreedAmount: et.agreedAmount,
+              accountAmount: breakup.accountAmount,
+              cashAmount: breakup.cashAmount,
+              gstRate: breakup.accountGstRate || 0,
+            };
+
+            if (mode === "separate" && et.advances) {
+              eventTypeAdvances[typeId] = et.advances.map((adv) => ({
+                expectedAmount: adv.expectedAmount,
+                advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
+                advanceNumber: adv.advanceNumber,
+                receivedAmount: adv.receivedAmount,
+                receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : undefined,
+                remarks: adv.remarks,
+                updatedBy: adv.updatedBy,
+                updatedAt: adv.updatedAt,
+              }));
+            }
+          });
+
+          formValues.eventTypeDates = eventTypeDates;
+          formValues.eventTypeMeta = eventTypeMeta;
+
+          if (mode === "separate") {
+            formValues.eventTypeAdvances = eventTypeAdvances;
+          } else {
+            // Complete package mode
+            const breakup = event.agreedAmountBreakup || {};
+            formValues.agreedAmountTotal = event.agreedAmount;
+            formValues.agreedAmountAccount = breakup.accountAmount;
+            formValues.agreedAmountCash = breakup.cashAmount;
+            formValues.agreedAmountAccountGstRate = breakup.accountGstRate || 0;
+            formValues.advances = (event.advances || []).map((adv) => ({
               expectedAmount: adv.expectedAmount,
               advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
               advanceNumber: adv.advanceNumber,
               receivedAmount: adv.receivedAmount,
-              receivedDate: adv.receivedDate
-                ? dayjs(adv.receivedDate)
-                : undefined,
+              receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : undefined,
               remarks: adv.remarks,
               updatedBy: adv.updatedBy,
               updatedAt: adv.updatedAt,
             }));
           }
-        });
 
-        formValues.eventTypeDates = eventTypeDates;
-        formValues.eventTypeMeta = eventTypeMeta;
-
-        if (mode === "separate") {
-          formValues.eventTypeAdvances = eventTypeAdvances;
+          form.setFieldsValue(formValues);
         } else {
-          // Complete package mode
-          const breakup = event.agreedAmountBreakup || {};
-          formValues.agreedAmountTotal = event.agreedAmount;
-          formValues.agreedAmountAccount = breakup.accountAmount;
-          formValues.agreedAmountCash = breakup.cashAmount;
-          formValues.agreedAmountAccountGstRate = breakup.accountGstRate || 0;
-          formValues.advances = (event.advances || []).map((adv) => ({
-            expectedAmount: adv.expectedAmount,
-            advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
-            advanceNumber: adv.advanceNumber,
-            receivedAmount: adv.receivedAmount,
-            receivedDate: adv.receivedDate
-              ? dayjs(adv.receivedDate)
-              : undefined,
-            remarks: adv.remarks,
-            updatedBy: adv.updatedBy,
-            updatedAt: adv.updatedAt,
-          }));
+          // Non-wedding event or event without event types
+          console.log("🔍 Processing non-wedding or single event type");
+          const eventType = eventTypesFromEvent[0] || {};
+          const breakup = eventType.agreedAmountBreakup || event.agreedAmountBreakup || {};
+          
+          // Handle eventName as string or object
+          const eventNameForCustom = typeof event.eventName === 'string' 
+            ? event.eventName 
+            : event.eventName?.name;
+          
+          form.setFieldsValue({
+            eventName: eventObj?.id || eventObj?._id || null,
+            customEventName: eventNameForCustom === "Other" ? eventType.eventType : undefined,
+            clientName: event.clientName,
+            contactNumber: event.contactNumber,
+            altContactNumber: event.altContactNumber,
+            altContactName: event.altContactName,
+            lead1: event.lead1,
+            lead2: event.lead2,
+            startDate: eventType.startDate ? dayjs(eventType.startDate) : undefined,
+            endDate: eventType.endDate ? dayjs(eventType.endDate) : undefined,
+            venueLocation: eventType.venueLocation,
+            agreedAmountTotal: eventType.agreedAmount || event.agreedAmount,
+            agreedAmountAccount: breakup.accountAmount,
+            agreedAmountCash: breakup.cashAmount,
+            agreedAmountAccountGstRate: breakup.accountGstRate || 0,
+            advances: (eventType.advances || event.advances || []).map((adv) => ({
+              expectedAmount: adv.expectedAmount,
+              advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
+              advanceNumber: adv.advanceNumber,
+              receivedAmount: adv.receivedAmount,
+              receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : undefined,
+              remarks: adv.remarks,
+              updatedBy: adv.updatedBy,
+              updatedAt: adv.updatedAt,
+            })),
+          });
         }
-
-        form.setFieldsValue(formValues);
-      } else {
-        // Non-wedding event or event without event types
-        const eventType = eventTypesFromEvent[0] || {};
-        const breakup =
-          eventType.agreedAmountBreakup || event.agreedAmountBreakup || {};
-        form.setFieldsValue({
-          eventName: eventObj?.id || eventObj?._id || null,
-          customEventName:
-            event.eventName === "Other" ? eventType.eventType : undefined,
-          clientName: event.clientName,
-          contactNumber: event.contactNumber,
-          altContactNumber: event.altContactNumber,
-          altContactName: event.altContactName,
-          lead1: event.lead1,
-          lead2: event.lead2,
-          startDate: eventType.startDate
-            ? dayjs(eventType.startDate)
-            : undefined,
-          endDate: eventType.endDate ? dayjs(eventType.endDate) : undefined,
-          venueLocation: eventType.venueLocation,
-          agreedAmountTotal: eventType.agreedAmount || event.agreedAmount,
-          agreedAmountAccount: breakup.accountAmount,
-          agreedAmountCash: breakup.cashAmount,
-          agreedAmountAccountGstRate: breakup.accountGstRate || 0,
-          advances: (eventType.advances || event.advances || []).map((adv) => ({
-            expectedAmount: adv.expectedAmount,
-            advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
-            advanceNumber: adv.advanceNumber,
-            receivedAmount: adv.receivedAmount,
-            receivedDate: adv.receivedDate
-              ? dayjs(adv.receivedDate)
-              : undefined,
-            remarks: adv.remarks,
-            updatedBy: adv.updatedBy,
-            updatedAt: adv.updatedAt,
-          })),
-        });
+        
+        console.log("✅ Form populated successfully");
+      } catch (err) {
+        console.error("Error fetching event:", err);
+        message.error("Failed to fetch event data");
+      } finally {
+        setInitialLoading(false);
       }
-    } catch (err) {
-      console.error("Error fetching event:", err);
-      message.error("Failed to fetch event data");
-    } finally {
-      setInitialLoading(false);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (events.length > 0) {
-      fetchEventData();
-    }
-  }, [id, events.length]);
-
+    fetchAndPopulateEventData();
+  }, [id, events]);
+  
   const handleEventNameChange = async (eventId) => {
     const evt =
       events.find((e) => e.id === eventId || e._id === eventId) || null;

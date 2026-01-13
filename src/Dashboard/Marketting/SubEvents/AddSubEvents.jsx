@@ -22,7 +22,7 @@ const AddSubEvents = () => {
     setLoadingEvents(true);
     try {
       const res = await axios.get(`${API_BASE_URL}event-names`, config);
-      setEvents(res.data.events || res.data || []);
+      setEvents(res.data.events.reverse() || res.data || []);
     } catch (err) {
       console.error(err);
       message.error("Failed to fetch events");
@@ -44,7 +44,7 @@ const AddSubEvents = () => {
     try {
       await axios.post(`${API_BASE_URL}event-types`, { event, name: subEventName.trim() }, config);
       message.success("Sub event created successfully");
-      navigate(-1);
+      // navigate(-1);
     } catch (err) {
       console.error(err);
       message.error("Failed to create sub event");

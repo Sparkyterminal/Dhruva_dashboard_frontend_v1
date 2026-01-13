@@ -28,7 +28,7 @@ const CalendarClients = () => {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, config);
+      const res = await axios.get(`${API_BASE_URL}events`);
 
       let eventsData = [];
       if (res.data) {
