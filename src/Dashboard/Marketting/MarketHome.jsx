@@ -286,7 +286,11 @@ const MarketHome = () => {
                         d="M12 4v16m8-8H4"
                       />
                     </svg>
+<<<<<<< HEAD
                     Events Masterdata
+=======
+                    Add Events
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                   </span>
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500"
@@ -299,6 +303,7 @@ const MarketHome = () => {
                 </motion.button>
               </motion.div>
 
+<<<<<<< HEAD
               {/* Venue Masterdata Button */}
               <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
                 <motion.button
@@ -334,6 +339,10 @@ const MarketHome = () => {
 
               {/* Events Calendar Button */}
               {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
+=======
+              {/* Events Calendar Button */}
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                 <motion.button
                   onClick={() => navigate("/user/eventcalender")}
                   className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-sky-50 to-indigo-50 hover:from-sky-100 hover:to-indigo-100"
@@ -373,7 +382,11 @@ const MarketHome = () => {
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>
+<<<<<<< HEAD
               </motion.div> */}
+=======
+              </motion.div>
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
 
               {/* View Vendors Button */}
               <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">

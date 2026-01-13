@@ -1,6 +1,10 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect, useRef } from "react";
+<<<<<<< HEAD
 import { Form, Input, InputNumber, Select, Button, message, Card, DatePicker } from "antd";
+=======
+import { Form, Input, InputNumber, Select, Button, message, Card } from "antd";
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
 import { ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../config";
@@ -85,10 +89,14 @@ const AddRequirements = () => {
       purpose: values.purpose,
       vendor: values.vendor || null,
       event_reference: values.event_reference || null,
+<<<<<<< HEAD
       amount: typeof values.amount === 'number' ? values.amount : Number(values.amount) || 0,
       required_date: values.required_date
         ? (values.required_date.toISOString ? values.required_date.toISOString() : values.required_date.format('YYYY-MM-DD'))
         : null,
+=======
+      amount: values.amount,
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
       transation_in: values.expecting_transaction_in?.toUpperCase(),
       priority: values.priority,
     };
@@ -246,8 +254,12 @@ const AddRequirements = () => {
                 formatter={(value) =>
                   `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
                 }
+<<<<<<< HEAD
                 parser={(value) => (value ? value.replace(/[^\d.-]/g, "") : "")}
                 onChange={(value) => form.setFieldsValue({ amount: value })}
+=======
+                parser={(value) => value.replace(/\$\s?|(,*)/g, "")}
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                 className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
               />
             </Form.Item>
@@ -255,6 +267,7 @@ const AddRequirements = () => {
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+<<<<<<< HEAD
                   Required Date
                 </span>
               }
@@ -270,6 +283,8 @@ const AddRequirements = () => {
             <Form.Item
               label={
                 <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+=======
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                   Expecting Transactions In
                 </span>
               }

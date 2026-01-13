@@ -214,7 +214,11 @@ const Home = () => {
               </motion.div>
 
               {/* Add calender Button */}
+<<<<<<< HEAD
               {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+=======
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
                 <motion.button
                   onClick={() => navigate("/user/eventcalender")}
                   className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
@@ -254,6 +258,49 @@ const Home = () => {
                   />
                 </motion.button>
               </motion.div> */}
+
+              {/* Checklists Button */}
+              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+                <motion.button
+                  onClick={() => navigate("/user/checklists")}
+                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-50 hover:to-amber-100"
+                  variants={{
+                    hover: {
+                      color: "#b45309",
+                      scale: 1.05,
+                    },
+                  }}
+                  style={{
+                    color: "#c2410c",
+                  }}
+                  aria-label="Checklists"
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 md:w-5 md:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4M7 8h10M7 16h10"
+                      />
+                    </svg>
+                    Checklists
+                  </span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"
+                    initial={{ scaleX: 0 }}
+                    variants={{
+                      hover: { scaleX: 1 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.button>
+              </motion.div>
 
               {/* Checklists Button */}
               <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>

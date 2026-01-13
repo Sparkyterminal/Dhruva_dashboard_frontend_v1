@@ -159,13 +159,25 @@ const App = () => {
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<PlayBook />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route
                 path="/user/viewclientbookings"
                 element={<ViewClientsBookings />}
               />
-               <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/addchecklists" element={<AddChecklist />} />
+              <Route
+                path="/user/editchecklists/:id"
+                element={<EditChecklist />}
+              />
+              <Route
+                path="/user/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
               <Route
                 path="/user/editchecklists/:id"
@@ -184,6 +196,7 @@ const App = () => {
                 element={<DepartmentsTable />}
               />
               <Route path="/user" element={<Navigate to="/user" replace />} />
+              <Route path="/user" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isMarketing ? (
@@ -195,6 +208,13 @@ const App = () => {
               <Route path="/user/addclient" element={<AddInflow />} />
               <Route path="/user/editclient/:id" element={<EditInflow />} />
               <Route path="/user/viewclient" element={<ViewInflow />} />
+              <Route path="/user/addevent" element={<AddEvent />} />
+              <Route path="/user/editevent/:id" element={<EditEvents />} />
+              <Route path="/user/viewevents" element={<ViewEvents />} />
+              <Route path="/user/addsubevent" element={<AddSubEvents />} />
+              <Route path="/user/editsubevent/:id" element={<EditSubEvent />} />
+              <Route path="/user/viewsubevents" element={<ViewSubEvents />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/addevent" element={<AddEvent />} />
               <Route path="/user/editevent/:id" element={<EditEvents />} />
               <Route path="/user/viewevents" element={<ViewEvents />} />
@@ -218,6 +238,11 @@ const App = () => {
                 element={<EditChecklist />}
               />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
+              <Route
+                path="/user/editchecklists/:id"
+                element={<EditChecklist />}
+              />
+              <Route path="/user/eventcalender" element={<CalenderPage />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
@@ -227,12 +252,21 @@ const App = () => {
               <Route path="/user" element={<Home />} />
               <Route path="/user/viewrequests" element={<ViewRequirements />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route path="/user/sendrequest" element={<AddRequirements />} />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
-               <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/addchecklists" element={<AddChecklist />} />
+              <Route
+                path="/user/editchecklists/:id"
+                element={<EditChecklist />}
+              />
+              <Route path="/user/eventcalender" element={<CalenderPage />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
               <Route
                 path="/user/editchecklists/:id"
@@ -256,8 +290,28 @@ const App = () => {
               />
               <Route path="/owner/daybook" element={<PlayBook />} />
               <Route path="/owner/addvendor" element={<AddVendor />} />
+              <Route
+                path="/owner/departments/:id"
+                element={<Departmentwise />}
+              />
+              <Route
+                path="/owner/changepassword"
+                element={<ChangePassword />}
+              />
+              <Route path="/owner/daybook" element={<PlayBook />} />
+              <Route path="/owner/addvendor" element={<AddVendor />} />
               <Route path="/owner/viewvendors" element={<ViewVendor />} />
               <Route path="/owner/editvendor/:id" element={<EditVendor />} />
+              <Route
+                path="/owner/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
+              <Route path="/owner/checklists" element={<ViewChecklist />} />
+              <Route path="/owner/addchecklists" element={<AddChecklist />} />
+              <Route
+                path="/owner/editchecklists/:id"
+                element={<EditChecklist />}
+              />
               <Route
                 path="/owner/viewclientbookings"
                 element={<ViewClientsBookings />}
@@ -294,6 +348,16 @@ const App = () => {
               />
               <Route path="/approver/daybook" element={<PlayBook />} />
               <Route path="/approver/addvendor" element={<AddVendor />} />
+              <Route
+                path="/approver/departments/:id"
+                element={<Departmentwise />}
+              />
+              <Route
+                path="/approver/changepassword"
+                element={<ChangePassword />}
+              />
+              <Route path="/approver/daybook" element={<PlayBook />} />
+              <Route path="/approver/addvendor" element={<AddVendor />} />
               <Route path="/approver/viewvendors" element={<ViewVendor />} />
               <Route path="/approver/checklists" element={<ViewChecklist />} />
               <Route
@@ -304,7 +368,20 @@ const App = () => {
                 path="/approver/editchecklists/:id"
                 element={<EditChecklist />}
               />
+              <Route path="/approver/checklists" element={<ViewChecklist />} />
+              <Route
+                path="/approver/addchecklists"
+                element={<AddChecklist />}
+              />
+              <Route
+                path="/approver/editchecklists/:id"
+                element={<EditChecklist />}
+              />
               <Route path="/approver/editvendor/:id" element={<EditVendor />} />
+              <Route
+                path="/approver/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
               <Route
                 path="/approver/viewclientbookings"
                 element={<ViewClientsBookings />}

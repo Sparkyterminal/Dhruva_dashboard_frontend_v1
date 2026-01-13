@@ -509,6 +509,7 @@ const AccountsHome = () => {
     });
 
   const navButtons = [
+<<<<<<< HEAD
     {
       label: "Add Requirement",
       route: "/user/sendrequest",
@@ -528,6 +529,8 @@ const AccountsHome = () => {
         </svg>
       ),
     },
+=======
+>>>>>>> b102b10a05c3c3d535861fb6f47bfb8852d511c4
     {
       label: "EMI's and Interest",
       route: "/user/viewbills",
