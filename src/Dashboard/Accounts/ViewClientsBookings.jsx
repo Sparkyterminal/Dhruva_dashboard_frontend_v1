@@ -20,6 +20,8 @@ import {
   Statistic,
   Tabs,
   InputNumber,
+  Input,
+  Select,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -105,60 +107,83 @@ const ViewClientsBookings = () => {
   };
 
   // Helper function to get event name (handles both string and object format)
-  const getEventName = (record) => {
-    if (!record) return "";
-    if (typeof record.eventName === "string") return record.eventName;
-    return record.eventName?.name || "";
+  const getEventName = (eventName) => {
+    if (typeof eventName === "string") return eventName;
+    return eventName?.name || "N/A";
   };
 
-  // Helper function to check if event is Wedding type with event-specific amounts
-  const isWeddingWithEventSpecificAmounts = (record) => {
-    const eventName = getEventName(record);
+  // Helper function to check if should display as single/complete event
+  const isSingleDisplayEvent = (record) => {
+    const eventNameStr = getEventName(record.eventName);
+    // If Wedding with 'complete' advancePaymentType, treat as single event display
+    if (
+      eventNameStr === "Wedding" &&
+      record.advancePaymentType === "complete"
+    ) {
+      return true;
+    }
+    // Non-wedding events are always single display
+    if (eventNameStr !== "Wedding") {
+      return true;
+    }
+    // Wedding with 'separate' shows each event type separately
+    return false;
+  };
+
+  // Helper function to check if Wedding with complete advancePaymentType
+  const isCompletePaymentWedding = (record) => {
+    const eventNameStr = getEventName(record.eventName);
     return (
-      eventName === "Wedding" &&
-      record.eventTypes?.some((et) => et.agreedAmount !== undefined)
+      eventNameStr === "Wedding" && record.advancePaymentType === "complete"
     );
   };
 
-  // Helper function to check if event is Wedding with common amounts
-  const isWeddingWithCommonAmounts = (record) => {
-    const eventName = getEventName(record);
-    return (
-      eventName === "Wedding" &&
-      record.eventTypes?.every((et) => et.agreedAmount === undefined)
-    );
-  };
-
-  // Calculate total agreed amount for a booking
-  const getTotalAgreedAmount = (record) => {
-    if (isWeddingWithEventSpecificAmounts(record)) {
-      return record.eventTypes.reduce(
-        (sum, et) => sum + (et.agreedAmount || 0),
-        0
-      );
-    } else if (isWeddingWithCommonAmounts(record)) {
-      return record.agreedAmount || 0;
+  // Calculate total payable for a booking
+  const getTotalPayable = (record) => {
+    if (isCompletePaymentWedding(record)) {
+      // Complete wedding: use only first event type (represents whole package)
+      return record.eventTypes?.[0]?.totalPayable || 0;
     } else {
+      // Other events: sum all event types
+      return (
+        record.eventTypes?.reduce(
+          (sum, et) => sum + (et.totalPayable || 0),
+          0
+        ) || 0
+      );
+    }
+  };
+
+  // Calculate total agreed amount for a booking (for display purposes)
+  const getTotalAgreedAmount = (record) => {
+    if (isCompletePaymentWedding(record)) {
+      // Complete wedding: use only first event type (represents whole package)
       return record.eventTypes?.[0]?.agreedAmount || 0;
+    } else {
+      // Other events: sum all event types
+      return (
+        record.eventTypes?.reduce(
+          (sum, et) => sum + (et.agreedAmount || 0),
+          0
+        ) || 0
+      );
     }
   };
 
   // Calculate total expected advances
   const getTotalExpectedAdvances = (record) => {
     let total = 0;
-    if (isWeddingWithEventSpecificAmounts(record)) {
+    if (isCompletePaymentWedding(record)) {
+      // Complete wedding: use only first event type advances
+      record.eventTypes?.[0]?.advances?.forEach((adv) => {
+        total += adv.expectedAmount || 0;
+      });
+    } else {
+      // Other events: sum advances from all event types
       record.eventTypes?.forEach((et) => {
         et.advances?.forEach((adv) => {
           total += adv.expectedAmount || 0;
         });
-      });
-    } else if (isWeddingWithCommonAmounts(record)) {
-      record.advances?.forEach((adv) => {
-        total += adv.expectedAmount || 0;
-      });
-    } else {
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.expectedAmount || 0;
       });
     }
     return total;
@@ -167,19 +192,17 @@ const ViewClientsBookings = () => {
   // Calculate total received advances
   const getTotalReceivedAdvances = (record) => {
     let total = 0;
-    if (isWeddingWithEventSpecificAmounts(record)) {
+    if (isCompletePaymentWedding(record)) {
+      // Complete wedding: use only first event type advances
+      record.eventTypes?.[0]?.advances?.forEach((adv) => {
+        total += adv.receivedAmount || 0;
+      });
+    } else {
+      // Other events: sum received advances from all event types
       record.eventTypes?.forEach((et) => {
         et.advances?.forEach((adv) => {
           total += adv.receivedAmount || 0;
         });
-      });
-    } else if (isWeddingWithCommonAmounts(record)) {
-      record.advances?.forEach((adv) => {
-        total += adv.receivedAmount || 0;
-      });
-    } else {
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.receivedAmount || 0;
       });
     }
     return total;
@@ -191,17 +214,25 @@ const ViewClientsBookings = () => {
     // Initialize editing advances based on event type
     let advancesToEdit = [];
 
-    if (isWeddingWithCommonAmounts(record)) {
-      advancesToEdit =
-        record.advances?.map((adv) => ({
+    if (isCompletePaymentWedding(record)) {
+      // Complete wedding: use only first event type advances
+      record.eventTypes?.[0]?.advances?.forEach((adv) => {
+        advancesToEdit.push({
           advanceNumber: adv.advanceNumber,
           expectedAmount: adv.expectedAmount,
           advanceDate: adv.advanceDate,
           receivedAmount: adv.receivedAmount || "",
           receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : null,
-          eventTypeIndex: null, // Common advances
-        })) || [];
-    } else if (isWeddingWithEventSpecificAmounts(record)) {
+          givenBy: adv.givenBy || "",
+          collectedBy: adv.collectedBy || "",
+          modeOfPayment: adv.modeOfPayment || "",
+          remarks: adv.remarks || "",
+          eventTypeIndex: 0,
+          eventTypeId: record.eventTypes?.[0]?._id || 0,
+        });
+      });
+    } else {
+      // Separate mode or non-wedding: all event types
       record.eventTypes?.forEach((et, etIndex) => {
         et.advances?.forEach((adv) => {
           advancesToEdit.push({
@@ -210,21 +241,13 @@ const ViewClientsBookings = () => {
             advanceDate: adv.advanceDate,
             receivedAmount: adv.receivedAmount || "",
             receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : null,
+            givenBy: adv.givenBy || "",
+            collectedBy: adv.collectedBy || "",
+            modeOfPayment: adv.modeOfPayment || "",
+            remarks: adv.remarks || "",
             eventTypeIndex: etIndex,
             eventTypeId: et._id || etIndex,
           });
-        });
-      });
-    } else {
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        advancesToEdit.push({
-          advanceNumber: adv.advanceNumber,
-          expectedAmount: adv.expectedAmount,
-          advanceDate: adv.advanceDate,
-          receivedAmount: adv.receivedAmount || "",
-          receivedDate: adv.receivedDate ? dayjs(adv.receivedDate) : null,
-          eventTypeIndex: 0,
-          eventTypeId: record.eventTypes?.[0]?._id || 0,
         });
       });
     }
@@ -282,29 +305,39 @@ const ViewClientsBookings = () => {
       let endpoint = "";
       let payload = {
         expectedAmount: parseFloat(advance.expectedAmount),
-        userId: user?.id,
       };
 
-      // Only include received amount and date if both are provided
-      if (advance.receivedAmount && advance.receivedDate) {
+      // Include received amount and date if provided
+      if (advance.receivedAmount) {
         payload.receivedAmount = parseFloat(advance.receivedAmount);
+      }
+      if (advance.receivedDate) {
         payload.receivedDate = advance.receivedDate.toISOString();
       }
 
-      if (isWeddingWithCommonAmounts(selectedEvent)) {
-        // Common advances at event level
-        endpoint = `${API_BASE_URL}events/${selectedEvent._id}/advances/${advance.advanceNumber}`;
-      } else {
-        // Event-specific advances
-        const eventType = selectedEvent.eventTypes?.[advance.eventTypeIndex];
-        if (!eventType) {
-          message.error("Event type not found");
-          return;
-        }
-        endpoint = `${API_BASE_URL}events/${selectedEvent._id}/event-types/${
-          eventType._id || advance.eventTypeIndex
-        }/advances/${advance.advanceNumber}`;
+      // Include additional fields
+      if (advance.givenBy) {
+        payload.givenBy = advance.givenBy;
       }
+      if (advance.collectedBy) {
+        payload.collectedBy = advance.collectedBy;
+      }
+      if (advance.modeOfPayment) {
+        payload.modeOfPayment = advance.modeOfPayment;
+      }
+      if (advance.remarks) {
+        payload.remarks = advance.remarks;
+      }
+
+      // Event-specific advances (always use event-types endpoint)
+      const eventType = selectedEvent.eventTypes?.[advance.eventTypeIndex];
+      if (!eventType) {
+        message.error("Event type not found");
+        return;
+      }
+      endpoint = `${API_BASE_URL}events/${selectedEvent._id}/event-types/${
+        eventType._id || advance.eventTypeId || advance.eventTypeIndex
+      }/advances/${advance.advanceNumber}`;
 
       await axios.patch(endpoint, payload, config);
 
@@ -342,11 +375,11 @@ const ViewClientsBookings = () => {
       dataIndex: "eventName",
       key: "eventName",
       width: 140,
-      render: (text, record) => {
-        const eventName = getEventName(record);
+      render: (text) => {
+        const eventNameStr = getEventName(text);
         return (
           <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-            {eventName}
+            {eventNameStr}
           </Tag>
         );
       },
@@ -405,13 +438,21 @@ const ViewClientsBookings = () => {
           {record.lead1 && (
             <div className="flex items-center gap-1">
               <TeamOutlined className="text-blue-500 text-xs" />
-              <Text className="text-sm">{record.lead1}</Text>
+              <Text className="text-sm">
+                {typeof record.lead1 === "string"
+                  ? record.lead1
+                  : record.lead1?.name || "N/A"}
+              </Text>
             </div>
           )}
           {record.lead2 && (
             <div className="flex items-center gap-1">
               <TeamOutlined className="text-purple-500 text-xs" />
-              <Text className="text-sm">{record.lead2}</Text>
+              <Text className="text-sm">
+                {typeof record.lead2 === "string"
+                  ? record.lead2
+                  : record.lead2?.name || "N/A"}
+              </Text>
             </div>
           )}
           {!record.lead1 && !record.lead2 && (
@@ -421,13 +462,13 @@ const ViewClientsBookings = () => {
       ),
     },
     {
-      title: "Agreed Amount",
-      key: "agreedAmount",
+      title: "Total Payable",
+      key: "totalPayable",
       width: 120,
       align: "right",
       render: (_, record) => (
         <Text strong className="text-green-600 text-base">
-          {formatAmount(getTotalAgreedAmount(record))}
+          {formatAmount(getTotalPayable(record))}
         </Text>
       ),
     },
@@ -505,6 +546,10 @@ const ViewClientsBookings = () => {
 
   // Calculate statistics
   const totalBookings = bookings.length;
+  const totalPayableRevenue = bookings.reduce(
+    (acc, curr) => acc + getTotalPayable(curr),
+    0
+  );
   const totalAgreedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalAgreedAmount(curr),
     0
@@ -582,10 +627,10 @@ const ViewClientsBookings = () => {
                   <Statistic
                     title={
                       <Text className="text-slate-500 text-sm font-medium">
-                        Agreed Amount
+                        Total Payable
                       </Text>
                     }
-                    value={totalAgreedRevenue}
+                    value={totalPayableRevenue}
                     valueStyle={{
                       color: "#1e293b",
                       fontSize: "28px",
@@ -809,7 +854,7 @@ const ViewClientsBookings = () => {
             </div>
             <div>
               <div className="text-lg font-semibold text-slate-800">
-                {selectedEvent ? getEventName(selectedEvent) : ""}
+                {selectedEvent ? getEventName(selectedEvent.eventName) : ""}
               </div>
               <div className="text-xs text-slate-500 font-normal">
                 Event Details
@@ -869,64 +914,130 @@ const ViewClientsBookings = () => {
                 )}
                 {selectedEvent.lead1 && (
                   <Descriptions.Item
-                    label={<span className="font-semibold">Lead 1</span>}
+                    label={
+                      <span className="font-semibold">
+                        Project Coordinator 1
+                      </span>
+                    }
                   >
-                    {selectedEvent.lead1}
+                    {typeof selectedEvent.lead1 === "string"
+                      ? selectedEvent.lead1
+                      : selectedEvent.lead1?.name || "N/A"}
                   </Descriptions.Item>
                 )}
                 {selectedEvent.lead2 && (
                   <Descriptions.Item
-                    label={<span className="font-semibold">Lead 2</span>}
+                    label={
+                      <span className="font-semibold">
+                        Project Coordinator 2
+                      </span>
+                    }
                   >
-                    {selectedEvent.lead2}
+                    {typeof selectedEvent.lead2 === "string"
+                      ? selectedEvent.lead2
+                      : selectedEvent.lead2?.name || "N/A"}
                   </Descriptions.Item>
                 )}
               </Descriptions>
             </Card>
 
             {/* Check event type and render accordingly */}
-            {isWeddingWithCommonAmounts(selectedEvent) && (
+            {isCompletePaymentWedding(selectedEvent) && (
               <>
-                <Card
-                  className="border-0"
-                  style={{
-                    borderRadius: "12px",
-                    background: "white",
-                    border: "1px solid #e2e8f0",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Row gutter={[16, 16]}>
-                    <Col span={24}>
-                      <div
-                        className="flex items-center gap-3 p-4 rounded-lg"
-                        style={{
-                          background: "#f0fdf4",
-                          border: "1px solid #bbf7d0",
-                        }}
-                      >
-                        <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center"
-                          style={{ background: "#10b981" }}
-                        >
-                          <DollarOutlined className="text-white text-lg" />
-                        </div>
-                        <div>
-                          <Text className="text-xs text-slate-500 block font-medium">
-                            Common Agreed Amount
+                {/* Complete Package Amount Breakdown */}
+                {selectedEvent.eventTypes?.[0] && (
+                  <Card
+                    className="border-0"
+                    style={{
+                      borderRadius: "12px",
+                      background: "white",
+                      border: "1px solid #e2e8f0",
+                    }}
+                    title={
+                      <span className="font-semibold text-slate-800 text-base">
+                        Complete Package Amount Breakdown
+                      </span>
+                    }
+                    bodyStyle={{ padding: "20px" }}
+                  >
+                    <Divider className="my-2">Amount Breakdown</Divider>
+                    <Row gutter={[12, 12]}>
+                      <Col span={12}>
+                        <div className="p-2 bg-green-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            Agreed Amount
                           </Text>
-                          <Text
-                            strong
-                            className="text-xl text-slate-800"
-                            style={{ fontWeight: 700 }}
-                          >
-                            {formatAmount(selectedEvent.agreedAmount || 0)}
+                          <Text strong className="text-green-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0].agreedAmount || 0
+                            )}
                           </Text>
                         </div>
-                      </div>
-                    </Col>
-                  </Row>
-                </Card>
+                      </Col>
+                      <Col span={12}>
+                        <div className="p-2 bg-blue-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            Account Amount
+                          </Text>
+                          <Text strong className="text-blue-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0].accountAmount || 0
+                            )}
+                          </Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="p-2 bg-purple-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            GST (18%)
+                          </Text>
+                          <Text strong className="text-purple-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0].accountGst || 0
+                            )}
+                          </Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="p-2 bg-pink-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            Account + GST
+                          </Text>
+                          <Text strong className="text-pink-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0]
+                                .accountAmountWithGst || 0
+                            )}
+                          </Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="p-2 bg-yellow-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            Cash Amount
+                          </Text>
+                          <Text strong className="text-yellow-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0].cashAmount || 0
+                            )}
+                          </Text>
+                        </div>
+                      </Col>
+                      <Col span={12}>
+                        <div className="p-2 bg-emerald-50 rounded">
+                          <Text className="text-xs text-gray-500 block">
+                            Total Payable
+                          </Text>
+                          <Text strong className="text-emerald-700">
+                            {formatAmount(
+                              selectedEvent.eventTypes[0].totalPayable || 0
+                            )}
+                          </Text>
+                        </div>
+                      </Col>
+                    </Row>
+                  </Card>
+                )}
 
                 {/* Event Types - Only dates and venue */}
                 {selectedEvent.eventTypes?.map((eventType, index) => (
@@ -1014,11 +1125,59 @@ const ViewClientsBookings = () => {
                               Venue
                             </Text>
                             <Text strong className="text-sm text-slate-800">
-                              {eventType.venueLocation}
+                              {eventType.venueLocation?.name ||
+                                eventType.venueLocation ||
+                                "-"}
                             </Text>
                           </div>
                         </div>
                       </Col>
+                      {eventType.subVenueLocation && (
+                        <Col span={8}>
+                          <div
+                            className="flex items-center gap-3 p-3 rounded-lg"
+                            style={{
+                              background: "#f8fafc",
+                              border: "1px solid #e2e8f0",
+                            }}
+                          >
+                            <EnvironmentOutlined className="text-slate-600" />
+                            <div>
+                              <Text className="text-xs text-slate-500 block font-medium">
+                                Sub Venue
+                              </Text>
+                              <Text strong className="text-sm text-slate-800">
+                                {eventType.subVenueLocation?.name ||
+                                  eventType.subVenueLocation ||
+                                  "-"}
+                              </Text>
+                            </div>
+                          </div>
+                        </Col>
+                      )}
+                      {eventType.coordinator && (
+                        <Col span={8}>
+                          <div
+                            className="flex items-center gap-3 p-3 rounded-lg"
+                            style={{
+                              background: "#f8fafc",
+                              border: "1px solid #e2e8f0",
+                            }}
+                          >
+                            <UserOutlined className="text-slate-600" />
+                            <div>
+                              <Text className="text-xs text-slate-500 block font-medium">
+                                Coordinator
+                              </Text>
+                              <Text strong className="text-sm text-slate-800">
+                                {eventType.coordinator?.name ||
+                                  eventType.coordinator ||
+                                  "-"}
+                              </Text>
+                            </div>
+                          </div>
+                        </Col>
+                      )}
                     </Row>
                   </Card>
                 ))}
@@ -1161,6 +1320,108 @@ const ViewClientsBookings = () => {
                         },
                       },
                       {
+                        title: "Given By",
+                        key: "givenBy",
+                        width: 150,
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          if (isEditing) {
+                            return (
+                              <Input
+                                value={record.givenBy}
+                                onChange={(e) =>
+                                  handleAdvanceChange(
+                                    index,
+                                    "givenBy",
+                                    e.target.value
+                                  )
+                                }
+                                size="small"
+                                placeholder="Enter name"
+                              />
+                            );
+                          }
+                          return (
+                            <Text className="text-slate-700">
+                              {record.givenBy || "-"}
+                            </Text>
+                          );
+                        },
+                      },
+                      {
+                        title: "Collected By",
+                        key: "collectedBy",
+                        width: 150,
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          if (isEditing) {
+                            return (
+                              <Input
+                                value={record.collectedBy}
+                                onChange={(e) =>
+                                  handleAdvanceChange(
+                                    index,
+                                    "collectedBy",
+                                    e.target.value
+                                  )
+                                }
+                                size="small"
+                                placeholder="Enter name"
+                              />
+                            );
+                          }
+                          return (
+                            <Text className="text-slate-700">
+                              {record.collectedBy || "-"}
+                            </Text>
+                          );
+                        },
+                      },
+                      {
+                        title: "Mode of Payment",
+                        key: "modeOfPayment",
+                        width: 150,
+                        render: (_, record, index) => {
+                          const advanceKey = getAdvanceKey(record);
+                          const isEditing = editingAdvanceKey === advanceKey;
+                          if (isEditing) {
+                            return (
+                              <Select
+                                value={record.modeOfPayment}
+                                onChange={(value) =>
+                                  handleAdvanceChange(
+                                    index,
+                                    "modeOfPayment",
+                                    value
+                                  )
+                                }
+                                size="small"
+                                className="w-full"
+                                placeholder="Select mode"
+                                options={[
+                                  { label: "Cash", value: "Cash" },
+                                  { label: "UPI", value: "UPI" },
+                                  {
+                                    label: "Bank Transfer",
+                                    value: "Bank Transfer",
+                                  },
+                                  { label: "Cheque", value: "Cheque" },
+                                  { label: "Card", value: "Card" },
+                                  { label: "Other", value: "Other" },
+                                ]}
+                              />
+                            );
+                          }
+                          return (
+                            <Text className="text-slate-700">
+                              {record.modeOfPayment || "-"}
+                            </Text>
+                          );
+                        },
+                      },
+                      {
                         title: "Status",
                         key: "status",
                         width: 120,
@@ -1239,14 +1500,13 @@ const ViewClientsBookings = () => {
                         },
                       },
                     ]}
-                    scroll={{ x: 1000 }}
+                    scroll={{ x: 1400 }}
                   />
                 </Card>
               </>
             )}
 
-            {(isWeddingWithEventSpecificAmounts(selectedEvent) ||
-              getEventName(selectedEvent) !== "Wedding") && (
+            {!isSingleDisplayEvent(selectedEvent) && (
               <>
                 {selectedEvent.eventTypes?.map((eventType, index) => {
                   const eventTypeAdvances = editingAdvances.filter(
@@ -1339,40 +1599,135 @@ const ViewClientsBookings = () => {
                                   Venue
                                 </Text>
                                 <Text strong className="text-sm text-slate-800">
-                                  {eventType.venueLocation}
+                                  {eventType.venueLocation?.name ||
+                                    eventType.venueLocation ||
+                                    "-"}
                                 </Text>
                               </div>
                             </div>
                           </Col>
-                          {eventType.agreedAmount !== undefined && (
-                            <Col span={24}>
+                          {eventType.subVenueLocation && (
+                            <Col span={8}>
                               <div
-                                className="flex items-center gap-3 p-4 rounded-lg"
+                                className="flex items-center gap-3 p-3 rounded-lg"
                                 style={{
-                                  background: "#f0fdf4",
-                                  border: "1px solid #bbf7d0",
+                                  background: "#f8fafc",
+                                  border: "1px solid #e2e8f0",
                                 }}
                               >
-                                <div
-                                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                  style={{ background: "#10b981" }}
-                                >
-                                  <DollarOutlined className="text-white text-lg" />
-                                </div>
+                                <EnvironmentOutlined className="text-slate-600" />
                                 <div>
                                   <Text className="text-xs text-slate-500 block font-medium">
-                                    Agreed Amount
+                                    Sub Venue
                                   </Text>
                                   <Text
                                     strong
-                                    className="text-xl text-slate-800"
-                                    style={{ fontWeight: 700 }}
+                                    className="text-sm text-slate-800"
                                   >
-                                    {formatAmount(eventType.agreedAmount)}
+                                    {eventType.subVenueLocation?.name ||
+                                      eventType.subVenueLocation ||
+                                      "-"}
                                   </Text>
                                 </div>
                               </div>
                             </Col>
+                          )}
+                          {eventType.coordinator && (
+                            <Col span={8}>
+                              <div
+                                className="flex items-center gap-3 p-3 rounded-lg"
+                                style={{
+                                  background: "#f8fafc",
+                                  border: "1px solid #e2e8f0",
+                                }}
+                              >
+                                <UserOutlined className="text-slate-600" />
+                                <div>
+                                  <Text className="text-xs text-slate-500 block font-medium">
+                                    Coordinator
+                                  </Text>
+                                  <Text
+                                    strong
+                                    className="text-sm text-slate-800"
+                                  >
+                                    {eventType.coordinator?.name ||
+                                      eventType.coordinator ||
+                                      "-"}
+                                  </Text>
+                                </div>
+                              </div>
+                            </Col>
+                          )}
+                          {eventType.agreedAmount !== undefined && (
+                            <>
+                              <Col span={24}>
+                                <Divider className="my-2">
+                                  Amount Breakdown
+                                </Divider>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-green-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    Agreed Amount
+                                  </Text>
+                                  <Text strong className="text-green-700">
+                                    {formatAmount(eventType.agreedAmount || 0)}
+                                  </Text>
+                                </div>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-blue-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    Account Amount
+                                  </Text>
+                                  <Text strong className="text-blue-700">
+                                    {formatAmount(eventType.accountAmount || 0)}
+                                  </Text>
+                                </div>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-purple-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    GST (18%)
+                                  </Text>
+                                  <Text strong className="text-purple-700">
+                                    {formatAmount(eventType.accountGst || 0)}
+                                  </Text>
+                                </div>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-pink-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    Account + GST
+                                  </Text>
+                                  <Text strong className="text-pink-700">
+                                    {formatAmount(
+                                      eventType.accountAmountWithGst || 0
+                                    )}
+                                  </Text>
+                                </div>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-yellow-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    Cash Amount
+                                  </Text>
+                                  <Text strong className="text-yellow-700">
+                                    {formatAmount(eventType.cashAmount || 0)}
+                                  </Text>
+                                </div>
+                              </Col>
+                              <Col span={12}>
+                                <div className="p-2 bg-emerald-50 rounded">
+                                  <Text className="text-xs text-gray-500 block">
+                                    Total Payable
+                                  </Text>
+                                  <Text strong className="text-emerald-700">
+                                    {formatAmount(eventType.totalPayable || 0)}
+                                  </Text>
+                                </div>
+                              </Col>
+                            </>
                           )}
                         </Row>
 
@@ -1523,6 +1878,129 @@ const ViewClientsBookings = () => {
                               },
                             },
                             {
+                              title: "Given By",
+                              key: "givenBy",
+                              width: 150,
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                if (isEditing) {
+                                  return (
+                                    <Input
+                                      value={record.givenBy}
+                                      onChange={(e) =>
+                                        handleAdvanceChange(
+                                          globalIndex,
+                                          "givenBy",
+                                          e.target.value
+                                        )
+                                      }
+                                      size="small"
+                                      placeholder="Enter name"
+                                    />
+                                  );
+                                }
+                                return (
+                                  <Text className="text-slate-700">
+                                    {record.givenBy || "-"}
+                                  </Text>
+                                );
+                              },
+                            },
+                            {
+                              title: "Collected By",
+                              key: "collectedBy",
+                              width: 150,
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                if (isEditing) {
+                                  return (
+                                    <Input
+                                      value={record.collectedBy}
+                                      onChange={(e) =>
+                                        handleAdvanceChange(
+                                          globalIndex,
+                                          "collectedBy",
+                                          e.target.value
+                                        )
+                                      }
+                                      size="small"
+                                      placeholder="Enter name"
+                                    />
+                                  );
+                                }
+                                return (
+                                  <Text className="text-slate-700">
+                                    {record.collectedBy || "-"}
+                                  </Text>
+                                );
+                              },
+                            },
+                            {
+                              title: "Mode of Payment",
+                              key: "modeOfPayment",
+                              width: 150,
+                              render: (_, record) => {
+                                const globalIndex = editingAdvances.findIndex(
+                                  (adv) =>
+                                    adv.advanceNumber ===
+                                      record.advanceNumber &&
+                                    adv.eventTypeIndex === index
+                                );
+                                const advanceKey = getAdvanceKey(record);
+                                const isEditing =
+                                  editingAdvanceKey === advanceKey;
+                                if (isEditing) {
+                                  return (
+                                    <Select
+                                      value={record.modeOfPayment}
+                                      onChange={(value) =>
+                                        handleAdvanceChange(
+                                          globalIndex,
+                                          "modeOfPayment",
+                                          value
+                                        )
+                                      }
+                                      size="small"
+                                      className="w-full"
+                                      placeholder="Select mode"
+                                      options={[
+                                        { label: "Cash", value: "Cash" },
+                                        { label: "UPI", value: "UPI" },
+                                        {
+                                          label: "Bank Transfer",
+                                          value: "Bank Transfer",
+                                        },
+                                        { label: "Cheque", value: "Cheque" },
+                                        { label: "Card", value: "Card" },
+                                        { label: "Other", value: "Other" },
+                                      ]}
+                                    />
+                                  );
+                                }
+                                return (
+                                  <Text className="text-slate-700">
+                                    {record.modeOfPayment || "-"}
+                                  </Text>
+                                );
+                              },
+                            },
+                            {
                               title: "Status",
                               key: "status",
                               width: 120,
@@ -1612,7 +2090,7 @@ const ViewClientsBookings = () => {
                               },
                             },
                           ]}
-                          scroll={{ x: 1000 }}
+                          scroll={{ x: 1400 }}
                         />
                       </div>
                     </Card>
