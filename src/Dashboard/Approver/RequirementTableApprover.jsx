@@ -62,7 +62,7 @@ const RequirementTableApprover = () => {
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(
         `${API_BASE_URL}request${queryString}`,
-        config
+        config,
       );
       setRequirements(res.data.items || []);
     } catch (err) {
@@ -81,7 +81,7 @@ const RequirementTableApprover = () => {
     const timeoutId = setTimeout(() => {
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     }, 300);
 
@@ -151,13 +151,13 @@ const RequirementTableApprover = () => {
           amount_paid: paid,
           approver_amount: approved,
         },
-        config
+        config,
       );
       message.success("Updated successfully");
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch (err) {
       message.error("Failed to update amounts");
@@ -169,12 +169,12 @@ const RequirementTableApprover = () => {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "COMPLETED" },
-        config
+        config,
       );
       message.success("Request marked as completed");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch (err) {
       message.error("Failed to mark as completed");
@@ -186,12 +186,12 @@ const RequirementTableApprover = () => {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "REJECTED" },
-        config
+        config,
       );
       message.success("Request marked as rejected");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch (err) {
       message.error("Failed to reject request");
@@ -264,6 +264,28 @@ const RequirementTableApprover = () => {
           }}
         >
           {text}
+        </span>
+      ),
+    },
+    {
+      title: "Vendor Name",
+      dataIndex: ["vendor", "name"],
+      key: "vendor_name",
+      width: 150,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record.vendor?.name || "-"}
+        </span>
+      ),
+    },
+    {
+      title: "Event Reference",
+      dataIndex: "event_reference",
+      key: "event_reference",
+      width: 150,
+      render: (text) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {text || "-"}
         </span>
       ),
     },
@@ -457,8 +479,8 @@ const RequirementTableApprover = () => {
             val === "APPROVED"
               ? "#34d399"
               : val === "PENDING"
-              ? "#fbbf24"
-              : "#f87171"
+                ? "#fbbf24"
+                : "#f87171"
           }
           style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
         >
@@ -508,13 +530,13 @@ const RequirementTableApprover = () => {
   const getPanelHeader = (deptObj) => {
     const items = deptObj.items;
     const approvedCount = items.filter(
-      (r) => r.approver_check === "APPROVED"
+      (r) => r.approver_check === "APPROVED",
     ).length;
     const pendingCount = items.filter(
-      (r) => r.approver_check === "PENDING"
+      (r) => r.approver_check === "PENDING",
     ).length;
     const rejectedCount = items.filter(
-      (r) => r.approver_check === "REJECTED"
+      (r) => r.approver_check === "REJECTED",
     ).length;
 
     return (

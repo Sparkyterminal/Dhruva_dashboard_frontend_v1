@@ -273,6 +273,28 @@ const RequirementsTableAc = () => {
       ),
     },
     {
+      title: "Vendor Name",
+      dataIndex: ["vendor", "name"],
+      key: "vendor_name",
+      width: 150,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record.vendor?.name || "-"}
+        </span>
+      ),
+    },
+    {
+      title: "Event Reference",
+      dataIndex: "event_reference",
+      key: "event_reference",
+      width: 150,
+      render: (text) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {text || "-"}
+        </span>
+      ),
+    },
+    {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
@@ -465,41 +487,55 @@ const RequirementsTableAc = () => {
       key: "actions",
       width: 250,
       fixed: "right",
-      render: (_, row) => (
-        <Space>
-          {row.accounts_check === "PENDING" ? (
-            <>
-              <Button
-                type="primary"
-                size="small"
-                onClick={() => handleComplete(row)}
-                icon={<CheckCircleOutlined />}
-                style={{
-                  background: "#10b981",
-                  borderColor: "#10b981",
-                  fontWeight: 600,
-                  fontSize: 16,
-                }}
-              >
-                Completed
-              </Button>
-              <Button
-                danger
-                size="small"
-                onClick={() => handleReject(row)}
-                icon={<CloseCircleOutlined />}
-                style={{ fontWeight: 700, fontSize: 18 }}
-              >
-                Rejected
-              </Button>
-            </>
-          ) : (
-            <span style={{ fontWeight: 700, fontSize: 18, color: "#555" }}>
-              {row.status}
-            </span>
-          )}
-        </Space>
-      ),
+      render: (_, row) => {
+        const isAmountPaidFilled = row.amount_paid && row.amount_paid > 0;
+
+        return (
+          <Space>
+            {row.accounts_check === "PENDING" ? (
+              <>
+                <Tooltip
+                  title={
+                    !isAmountPaidFilled
+                      ? "Amount paid must be filled before completing"
+                      : ""
+                  }
+                >
+                  <Button
+                    type="primary"
+                    size="small"
+                    onClick={() => handleComplete(row)}
+                    icon={<CheckCircleOutlined />}
+                    disabled={!isAmountPaidFilled}
+                    style={{
+                      background: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+                      borderColor: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+                      fontWeight: 600,
+                      fontSize: 16,
+                      cursor: isAmountPaidFilled ? "pointer" : "not-allowed",
+                    }}
+                  >
+                    Completed
+                  </Button>
+                </Tooltip>
+                <Button
+                  danger
+                  size="small"
+                  onClick={() => handleReject(row)}
+                  icon={<CloseCircleOutlined />}
+                  style={{ fontWeight: 700, fontSize: 18 }}
+                >
+                  Rejected
+                </Button>
+              </>
+            ) : (
+              <span style={{ fontWeight: 700, fontSize: 18, color: "#555" }}>
+                {row.status}
+              </span>
+            )}
+          </Space>
+        );
+      },
     },
   ];
 

@@ -523,7 +523,6 @@
 
 // export default EditVendor;
 
-
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
@@ -587,10 +586,7 @@ const EditVendor = () => {
         // Map the received vendor data keys to form fields accordingly
         const vendor = res.data.vendor;
         form.setFieldsValue({
-          depId:
-            vendor.vendor_belongs_to?.department?.department[0]?.name ||
-            vendor.depId ||
-            null,
+          depId: vendor.vendor_belongs_to?.id || vendor.depId || null,
           specify_category: vendor.specify_cat || null,
           name: vendor.name || "",
           person_category: vendor.person_category || "",
@@ -684,11 +680,14 @@ const EditVendor = () => {
       tds_details: values.tds_details || null,
     };
 
+    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
+
     try {
       await axios.put(`${API_BASE_URL}vendor/${id}`, payload, config);
       message.success("Vendor updated successfully");
       navigate(-1);
     } catch (error) {
+      console.error("Error response:", error.response?.data);
       message.error("Failed to update vendor");
     }
   };
