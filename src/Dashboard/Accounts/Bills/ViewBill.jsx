@@ -1,6 +1,16 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
-import { Button, Card, Table, message, Modal, Input, Tabs, Drawer, Select } from "antd";
+import {
+  Button,
+  Card,
+  Table,
+  message,
+  Modal,
+  Input,
+  Tabs,
+  Drawer,
+  Select,
+} from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -229,7 +239,7 @@ const getDueDaysInfo = (emiDate) => {
 const ViewBill = () => {
   const [bills, setBills] = useState([]);
   const [filteredBills, setFilteredBills] = useState([]);
-  const [emiTypes, setEmiTypes] = useState([]);
+  const [belongsToList, setBelongsToList] = useState([]);
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchText, setSearchText] = useState("");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -254,11 +264,11 @@ const ViewBill = () => {
       const res = await axios.get(`${API_BASE_URL}bills`);
       setBills(res.data || []);
       setFilteredBills(res.data || []);
-      // Extract unique emi types for tabs
-      const types = Array.from(
-        new Set((res.data || []).map((b) => b.emiType || "Other"))
+      // Extract unique belongs_to for tabs
+      const belongsTo = Array.from(
+        new Set((res.data || []).map((b) => b.belongs_to || "Other")),
       );
-      setEmiTypes(types);
+      setBelongsToList(belongsTo);
     } catch (err) {
       message.error("Failed to fetch bills");
     }
@@ -272,16 +282,16 @@ const ViewBill = () => {
     if (activeTab === "ALL") {
       setFilteredBills(
         bills.filter((bill) =>
-          bill.name.toLowerCase().includes(searchText.toLowerCase())
-        )
+          bill.name.toLowerCase().includes(searchText.toLowerCase()),
+        ),
       );
     } else {
       setFilteredBills(
         bills.filter(
           (bill) =>
-            bill.emiType === activeTab &&
-            bill.name.toLowerCase().includes(searchText.toLowerCase())
-        )
+            bill.belongs_to === activeTab &&
+            bill.name.toLowerCase().includes(searchText.toLowerCase()),
+        ),
       );
     }
   }, [activeTab, bills, searchText]);
@@ -304,39 +314,48 @@ const ViewBill = () => {
     return months[monthNumber - 1] || "";
   };
 
+  const isEmiClosed = (bill) => {
+    const now = new Date();
+    const emiEndDate = new Date(bill.emi_end_date);
+    return now > emiEndDate;
+  };
+
   const generateAllMonths = (bill) => {
     if (!bill.createdAt && (!bill.emiStatus || bill.emiStatus.length === 0)) {
       return [];
     }
 
-    const startDate = bill.createdAt
-      ? new Date(bill.createdAt)
-      : new Date(bill.emiStatus[0].year, bill.emiStatus[0].month - 1, 1);
-    const now = new Date();
     const months = [];
-    const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 12, 1); // Show up to 12 months ahead
+    const now = new Date();
+    const emiEndDate = new Date(bill.emi_end_date);
 
-    while (currentDate <= endDate) {
-      const month = currentDate.getMonth() + 1;
-      const year = currentDate.getFullYear();
-      const existingStatus = bill.emiStatus?.find(
-        (s) => s.month === month && s.year === year
-      );
+    // Only show months up to EMI end date, not beyond
+    const endDate =
+      emiEndDate < new Date(now.getFullYear(), now.getMonth() + 12, 1)
+        ? emiEndDate
+        : new Date(now.getFullYear(), now.getMonth() + 12, 1);
 
-      months.push({
-        month,
-        year,
-        paid: existingStatus?.paid || false,
-        amount: existingStatus?.amount || bill.amount,
-        remarks: existingStatus?.remarks || undefined,
-        paymentMode: existingStatus?.paymentMode || undefined,
-      });
+    bill.emiStatus?.forEach((status) => {
+      const statusDate = new Date(status.year, status.month - 1, 1);
+      if (statusDate <= endDate) {
+        months.push({
+          month: status.month,
+          year: status.year,
+          paid: status.paid || false,
+          emiAmount: status.emiAmount || bill.defaultAmount,
+          amountPaid: status.amountPaid || 0,
+          pending: status.pending || status.emiAmount || bill.defaultAmount,
+          remarks: status.remarks || undefined,
+          paymentMode: status.paymentMode || undefined,
+          paymentDate: status.paymentDate || undefined,
+        });
+      }
+    });
 
-      currentDate.setMonth(currentDate.getMonth() + 1);
-    }
-
-    return months;
+    return months.sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
   };
 
   const openEmiStatusModal = (bill) => {
@@ -355,7 +374,7 @@ const ViewBill = () => {
   const isPaid = (bill) => {
     const { month, year } = getCurrentMonthYear();
     const status = bill.emiStatus?.find(
-      (s) => s.month === month && s.year === year
+      (s) => s.month === month && s.year === year,
     );
     return status?.paid || false;
   };
@@ -367,14 +386,14 @@ const ViewBill = () => {
     const currentMonthEmiDate = new Date(
       now.getFullYear(),
       now.getMonth(),
-      emiDate.getDate()
+      emiDate.getDate(),
     );
     return now > currentMonthEmiDate;
   };
 
   // Open pay modal to collect remarks and confirm payment
-  const openPayModal = (billId, billName, amount, month, year, emiDate) => {
-    setPayTarget({ billId, billName, amount, month, year, emiDate });
+  const openPayModal = (billId, billName, emiAmount, month, year, emiDate) => {
+    setPayTarget({ billId, billName, emiAmount, month, year, emiDate });
     setPayRemarks("");
     setPayMode("Cash");
     setPayModalVisible(true);
@@ -382,26 +401,47 @@ const ViewBill = () => {
 
   const confirmPayEMI = async () => {
     if (!payTarget || !payTarget.billId) return;
-    const { billId, billName, amount, month, year } = payTarget;
+    const { billId, billName, emiAmount, month, year } = payTarget;
     const monthName = getMonthName(month);
 
     setPayLoading(true);
     try {
       const config = { headers: { Authorization: user?.access_token } };
-      await axios.put(`${API_BASE_URL}bills/${billId}`, {
-        name: billName,
-        emiDate: payTarget.emiDate || undefined,
-        amount,
-        paid: true,
-        month,
-        year,
-        remarks: payRemarks || undefined,
-        paymentMode: payMode || undefined,
-      }, config);
+      await axios.put(
+        `${API_BASE_URL}bills/${billId}`,
+        {
+          name: billName,
+          emiDate: payTarget.emiDate || undefined,
+          emiAmount,
+          amountPaid: emiAmount,
+          pending: 0,
+          paid: true,
+          month,
+          year,
+          remarks: payRemarks || undefined,
+          paymentMode: payMode || undefined,
+          paymentDate: new Date().toISOString(),
+        },
+        config,
+      );
 
       message.success(`EMI paid successfully for ${monthName} ${year}`);
       // Update drawer state immediately if open (include remarks & paymentMode)
-      setSelectedEmiStatus((prev) => prev.map((s) => (s.month === month && s.year === year ? { ...s, paid: true, remarks: payRemarks || s.remarks, paymentMode: payMode || s.paymentMode } : s)));
+      setSelectedEmiStatus((prev) =>
+        prev.map((s) =>
+          s.month === month && s.year === year
+            ? {
+                ...s,
+                paid: true,
+                amountPaid: emiAmount,
+                pending: 0,
+                remarks: payRemarks || s.remarks,
+                paymentMode: payMode || s.paymentMode,
+                paymentDate: new Date().toISOString(),
+              }
+            : s,
+        ),
+      );
       setPayModalVisible(false);
       setPayTarget(null);
       setPayRemarks("");
@@ -426,11 +466,11 @@ const ViewBill = () => {
     navigate(`${basePath}/addbill`);
   };
 
-  const emiTypeTabs = [
+  const belongsToTabs = [
     { key: "ALL", label: "All" },
-    ...emiTypes.map((type) => ({
-      key: type,
-      label: type,
+    ...belongsToList.map((belongsTo) => ({
+      key: belongsTo,
+      label: belongsTo,
     })),
   ];
 
@@ -444,9 +484,9 @@ const ViewBill = () => {
       ),
     },
     {
-      title: "EMI Type",
-      dataIndex: "emiType",
-      key: "emiType",
+      title: "Belongs To",
+      dataIndex: "belongs_to",
+      key: "belongs_to",
       render: (text) => (
         <span className="text-indigo-700 font-semibold">{text}</span>
       ),
@@ -467,11 +507,11 @@ const ViewBill = () => {
     },
     {
       title: "Amount",
-      dataIndex: "amount",
-      key: "amount",
+      dataIndex: "defaultAmount",
+      key: "defaultAmount",
       render: (amt) => (
         <span className="font-semibold text-indigo-600 text-lg">
-          ₹{amt.toLocaleString()}
+          ₹{amt?.toLocaleString()}
         </span>
       ),
     },
@@ -479,6 +519,16 @@ const ViewBill = () => {
       title: "Status",
       key: "status",
       render: (_, record) => {
+        if (isEmiClosed(record)) {
+          return (
+            <div>
+              <span className="px-3 py-1 rounded-full text-sm font-semibold bg-gray-200 text-gray-700">
+                Closed
+              </span>
+            </div>
+          );
+        }
+
         const paid = isPaid(record);
         const overdue = isOverdue(record);
         const dueDaysInfo = paid
@@ -492,8 +542,8 @@ const ViewBill = () => {
                 paid
                   ? "bg-green-100 text-green-700"
                   : overdue
-                  ? "bg-red-100 text-red-700"
-                  : "bg-yellow-100 text-yellow-700"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-yellow-100 text-yellow-700"
               }`}
             >
               {paid ? "Paid" : overdue ? "Overdue" : "Pending"}
@@ -512,7 +562,7 @@ const ViewBill = () => {
         const { month: currentMonth, year: currentYear } =
           getCurrentMonthYear();
         const currentStatus = record.emiStatus?.find(
-          (s) => s.month === currentMonth && s.year === currentYear
+          (s) => s.month === currentMonth && s.year === currentYear,
         );
         const isCurrentMonthPaid = currentStatus?.paid || false;
 
@@ -527,18 +577,33 @@ const ViewBill = () => {
             >
               👁️
             </motion.button>
-            {!isCurrentMonthPaid ? (
+            {!isEmiClosed(record) && !isCurrentMonthPaid ? (
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => openPayModal(record._id, record.name, record.amount, currentMonth, currentYear, record.emiDate)}
+                onClick={() => {
+                  const emiAmount =
+                    currentStatus?.emiAmount || record.defaultAmount;
+                  openPayModal(
+                    record._id,
+                    record.name,
+                    emiAmount,
+                    currentMonth,
+                    currentYear,
+                    record.emiDate,
+                  );
+                }}
                 className="px-4 py-2 rounded-lg font-semibold shadow-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg transition-all"
               >
                 Pay EMI ({currentMonth}/{currentYear})
               </motion.button>
-            ) : (
+            ) : !isEmiClosed(record) ? (
               <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold">
                 Paid
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-700 font-semibold">
+                Closed
               </span>
             )}
           </div>
@@ -547,7 +612,10 @@ const ViewBill = () => {
     },
   ];
 
-  const totalAmount = bills.reduce((sum, bill) => sum + (bill.amount || 0), 0);
+  const totalAmount = bills.reduce(
+    (sum, bill) => sum + (bill.defaultAmount || 0),
+    0,
+  );
 
   // Organize bills by month for calendar view
   const organizeBillsByMonth = () => {
@@ -563,15 +631,19 @@ const ViewBill = () => {
       const startDate = bill.createdAt
         ? new Date(bill.createdAt)
         : new Date(bill.emiStatus[0].year, bill.emiStatus[0].month - 1, 1);
-      
-      const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+
+      const currentDate = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        1,
+      );
       const endDate = new Date(now.getFullYear(), now.getMonth() + 12, 1);
 
       while (currentDate <= endDate) {
         const month = currentDate.getMonth() + 1;
         const year = currentDate.getFullYear();
         const monthKey = `${year}-${month}`;
-        
+
         if (!monthMap.has(monthKey)) {
           monthMap.set(monthKey, {
             month,
@@ -581,7 +653,7 @@ const ViewBill = () => {
         }
 
         const existingStatus = bill.emiStatus?.find(
-          (s) => s.month === month && s.year === year
+          (s) => s.month === month && s.year === year,
         );
 
         const emiData = {
@@ -617,15 +689,29 @@ const ViewBill = () => {
 
     if (monthDate > now) {
       const daysUntil = Math.ceil((monthDate - today) / (1000 * 60 * 60 * 24));
-      return { type: "upcoming", label: `Due in ${daysUntil} days`, days: daysUntil };
+      return {
+        type: "upcoming",
+        label: `Due in ${daysUntil} days`,
+        days: daysUntil,
+      };
     }
 
     if (today > dueDate) {
       const daysOverdue = Math.floor((today - dueDate) / (1000 * 60 * 60 * 24));
-      return { type: "overdue", label: `Overdue by ${daysOverdue} days`, days: daysOverdue };
+      return {
+        type: "overdue",
+        label: `Overdue by ${daysOverdue} days`,
+        days: daysOverdue,
+      };
     } else if (today < dueDate) {
-      const daysRemaining = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-      return { type: "upcoming", label: `Due in ${daysRemaining} days`, days: daysRemaining };
+      const daysRemaining = Math.ceil(
+        (dueDate - today) / (1000 * 60 * 60 * 24),
+      );
+      return {
+        type: "upcoming",
+        label: `Due in ${daysRemaining} days`,
+        days: daysRemaining,
+      };
     } else {
       return { type: "today", label: "Due today", days: 0 };
     }
@@ -649,16 +735,16 @@ const ViewBill = () => {
 
       const emiDate = new Date(bill.emiDate);
       const dueDay = emiDate.getDate();
-      
+
       // Generate events from bill creation date to 12 months ahead
       const startDate = bill.createdAt
         ? new Date(bill.createdAt)
         : new Date(now.getFullYear(), now.getMonth(), 1);
-      
+
       // Start from the first month after creation, or current month
       let currentMonth = startDate.getMonth();
       let currentYear = startDate.getFullYear();
-      
+
       // If we're starting from creation date, use that month
       if (bill.createdAt) {
         currentMonth = startDate.getMonth();
@@ -667,21 +753,21 @@ const ViewBill = () => {
         currentMonth = now.getMonth();
         currentYear = now.getFullYear();
       }
-      
+
       const endMonth = endDate.getMonth();
       const endYear = endDate.getFullYear();
-      
+
       while (
         currentYear < endYear ||
         (currentYear === endYear && currentMonth <= endMonth)
       ) {
         const month = currentMonth + 1;
         const year = currentYear;
-        
+
         // Handle cases where the day doesn't exist in the month (e.g., Feb 30)
         const daysInMonth = new Date(year, month, 0).getDate();
         const actualDay = Math.min(dueDay, daysInMonth);
-        
+
         // Skip if the date is before creation
         const eventDate = new Date(year, currentMonth, actualDay);
         if (bill.createdAt && eventDate < new Date(bill.createdAt)) {
@@ -694,12 +780,12 @@ const ViewBill = () => {
         }
 
         const existingStatus = bill.emiStatus?.find(
-          (s) => s.month === month && s.year === year
+          (s) => s.month === month && s.year === year,
         );
-        
+
         const isPaid = existingStatus?.paid || false;
-        const amount = existingStatus?.amount || bill.amount;
-        
+        const amount = existingStatus?.emiAmount || bill.defaultAmount;
+
         // Determine color based on status
         let backgroundColor = "#f59e0b"; // yellow for pending
         if (isPaid) {
@@ -716,7 +802,7 @@ const ViewBill = () => {
 
         calendarEvents.push({
           id: `${bill._id}-${year}-${month}`,
-          title: `${bill.name} - ₹${amount.toLocaleString()}`,
+          title: `${bill.name} - ₹${(amount || 0).toLocaleString()}`,
           start: dateString,
           allDay: true,
           backgroundColor: backgroundColor,
@@ -992,15 +1078,19 @@ const ViewBill = () => {
                               if (!bill) return;
 
                               let tooltip = `${billName}\nType: ${emiType}\nAmount: ₹${amount.toLocaleString()}\nStatus: ${paid ? "Paid" : "Pending"}`;
-                              
+
                               if (!paid) {
-                                const dueDaysInfo = getDueDaysInfoForMonth(bill, month, year);
+                                const dueDaysInfo = getDueDaysInfoForMonth(
+                                  bill,
+                                  month,
+                                  year,
+                                );
                                 tooltip += `\n${dueDaysInfo.label}`;
                               }
 
                               info.el.setAttribute("title", tooltip);
                               info.el.style.cursor = "pointer";
-                              
+
                               info.el.addEventListener("click", () => {
                                 openEmiStatusModal(bill);
                               });
@@ -1040,7 +1130,7 @@ const ViewBill = () => {
                       activeKey={activeTab}
                       onChange={setActiveTab}
                       type="card"
-                      items={emiTypeTabs.map((tab) => ({
+                      items={belongsToTabs.map((tab) => ({
                         key: tab.key,
                         label: (
                           <span
@@ -1065,8 +1155,8 @@ const ViewBill = () => {
                         isPaid(record)
                           ? "paid-row"
                           : isOverdue(record)
-                          ? "overdue-row"
-                          : ""
+                            ? "overdue-row"
+                            : ""
                       }
                       pagination={{
                         pageSize: 10,
@@ -1121,7 +1211,7 @@ const ViewBill = () => {
                 const isCurrentMonth =
                   status.month === getCurrentMonthYear().month &&
                   status.year === getCurrentMonthYear().year;
-                
+
                 return (
                   <motion.div
                     key={idx}
@@ -1132,8 +1222,8 @@ const ViewBill = () => {
                       status.paid
                         ? "bg-green-50 border-green-200"
                         : isCurrentMonth
-                        ? "bg-yellow-50 border-yellow-300 shadow-md"
-                        : "bg-white border-gray-200"
+                          ? "bg-yellow-50 border-yellow-300 shadow-md"
+                          : "bg-white border-gray-200"
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -1150,22 +1240,53 @@ const ViewBill = () => {
                         </div>
 
                         <p className="text-2xl font-bold text-indigo-600">
-                          ₹{status.amount?.toLocaleString() || 0}
+                          ₹{status.emiAmount?.toLocaleString() || 0}
                         </p>
 
                         {/* Payment details */}
-                        <div className="mt-2 text-sm text-gray-600 space-y-1">
+                        <div className="mt-3 space-y-2">
+                          {status.paid && (
+                            <div className="text-sm">
+                              <strong className="text-gray-800">
+                                Amount Paid:
+                              </strong>
+                              <p className="text-green-600 font-semibold">
+                                ₹{status.amountPaid?.toLocaleString() || 0}
+                              </p>
+                            </div>
+                          )}
+
                           {status.paymentMode && (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 text-sm">
                               <strong className="text-gray-800">Mode:</strong>
-                              <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">{status.paymentMode}</span>
+                              <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">
+                                {status.paymentMode}
+                              </span>
+                            </div>
+                          )}
+
+                          {status.paymentDate && status.paid && (
+                            <div className="text-xs text-gray-500">
+                              <strong>Paid on:</strong>{" "}
+                              {new Date(status.paymentDate).toLocaleDateString(
+                                "en-IN",
+                                {
+                                  day: "numeric",
+                                  month: "short",
+                                  year: "numeric",
+                                },
+                              )}
                             </div>
                           )}
 
                           {status.remarks && (
-                            <div className="">
-                              <strong className="text-gray-800">Remarks:</strong>
-                              <p className="mt-1 text-gray-600 text-sm whitespace-pre-wrap">{status.remarks}</p>
+                            <div className="text-sm">
+                              <strong className="text-gray-800">
+                                Remarks:
+                              </strong>
+                              <p className="mt-1 text-gray-600 text-sm whitespace-pre-wrap">
+                                {status.remarks}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -1216,7 +1337,16 @@ const ViewBill = () => {
                           <motion.button
                             whileHover={{ scale: 1.03 }}
                             whileTap={{ scale: 0.97 }}
-                            onClick={() => openPayModal(selectedBillId, selectedBillName, status.amount, status.month, status.year, selectedBillEmiDate)}
+                            onClick={() =>
+                              openPayModal(
+                                selectedBillId,
+                                selectedBillName,
+                                status.emiAmount,
+                                status.month,
+                                status.year,
+                                selectedBillEmiDate,
+                              )
+                            }
                             className="px-3 py-1 rounded-lg font-semibold shadow-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg transition-all text-sm"
                           >
                             Pay
@@ -1229,7 +1359,7 @@ const ViewBill = () => {
               })}
             </div>
           )}
-          
+
           {selectedEmiStatus.length > 0 && (
             <div className="mt-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white">
               <div className="flex items-center justify-between">
@@ -1240,12 +1370,12 @@ const ViewBill = () => {
                 </span>
               </div>
               <div className="flex items-center justify-between mt-2">
-                <span className="font-semibold">Total Amount:</span>
+                <span className="font-semibold">Total Amount Paid:</span>
                 <span className="text-xl font-bold">
                   ₹
                   {selectedEmiStatus
                     .filter((s) => s.paid)
-                    .reduce((sum, s) => sum + (s.amount || 0), 0)
+                    .reduce((sum, s) => sum + (s.amountPaid || 0), 0)
                     .toLocaleString()}
                 </span>
               </div>
@@ -1265,13 +1395,19 @@ const ViewBill = () => {
         onOk={confirmPayEMI}
         okText="Pay"
         okButtonProps={{ loading: payLoading }}
-        destroyOnClose
+        destroyOnHidden
       >
         {payTarget && (
           <div className="space-y-4">
-            <p className="text-gray-700">Please confirm payment for <strong>{payTarget.billName}</strong> — <strong>₹{(payTarget.amount || 0).toLocaleString()}</strong> ({getMonthName(payTarget.month)} {payTarget.year}).</p>
+            <p className="text-gray-700">
+              Please confirm payment for <strong>{payTarget.billName}</strong> —{" "}
+              <strong>₹{(payTarget.emiAmount || 0).toLocaleString()}</strong> (
+              {getMonthName(payTarget.month)} {payTarget.year}).
+            </p>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Remarks (optional)</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Remarks (optional)
+              </label>
               <Input.TextArea
                 value={payRemarks}
                 onChange={(e) => setPayRemarks(e.target.value)}
@@ -1282,7 +1418,9 @@ const ViewBill = () => {
             </div>
 
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Mode of Payment</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">
+                Mode of Payment
+              </label>
               <Select
                 value={payMode}
                 onChange={(val) => setPayMode(val)}
@@ -1402,11 +1540,11 @@ const ViewBill = () => {
                       },
                       {
                         title: "Amount",
-                        dataIndex: "amount",
-                        key: "amount",
+                        dataIndex: "defaultAmount",
+                        key: "defaultAmount",
                         render: (amt) => (
                           <span className="font-semibold text-indigo-600 text-lg">
-                            ₹{amt.toLocaleString()}
+                            ₹{amt?.toLocaleString() || 0}
                           </span>
                         ),
                       },
@@ -1421,7 +1559,7 @@ const ViewBill = () => {
                               onClick={() => {
                                 setShowEditModal(false);
                                 navigate(
-                                  `${getBasePath()}/editbill/${record._id}`
+                                  `${getBasePath()}/editbill/${record._id}`,
                                 );
                               }}
                               className="px-4 py-2 bg-linear-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300"
@@ -1442,10 +1580,10 @@ const ViewBill = () => {
                                   onOk: async () => {
                                     try {
                                       await axios.delete(
-                                        `${API_BASE_URL}bills/${record._id}`
+                                        `${API_BASE_URL}bills/${record._id}`,
                                       );
                                       message.success(
-                                        "Bill deleted successfully"
+                                        "Bill deleted successfully",
                                       );
                                       fetchBills();
                                     } catch (err) {

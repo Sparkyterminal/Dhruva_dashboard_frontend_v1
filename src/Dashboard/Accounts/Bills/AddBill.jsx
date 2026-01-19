@@ -1,6 +1,14 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
-import { Form, Input, DatePicker, InputNumber, Button, message, Select } from "antd";
+import {
+  Form,
+  Input,
+  DatePicker,
+  InputNumber,
+  Button,
+  message,
+  Select,
+} from "antd";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../../config";
@@ -94,9 +102,9 @@ const AddBill = () => {
   const navigate = useNavigate();
 
   const handleEmiTypeChange = (value) => {
-    if (value === 'Others') {
+    if (value === "Others") {
       setShowOtherEmiType(true);
-      form.setFieldsValue({ emiTypeOther: '' });
+      form.setFieldsValue({ emiTypeOther: "" });
     } else {
       setShowOtherEmiType(false);
       form.setFieldsValue({ emiTypeOther: undefined });
@@ -104,15 +112,18 @@ const AddBill = () => {
   };
 
   const onFinish = async (values) => {
-    // Format date to YYYY-MM-DD and prepare payload
+    // Format dates to YYYY-MM-DD and prepare payload
     const payload = {
       name: values.name,
+      belongs_to: values.belongsTo,
+      emi_end_date: values.emiEndDate.format("YYYY-MM-DD"),
+      emiType:
+        values.emiType === "Others" ? values.emiTypeOther : values.emiType,
       emiDate: values.emiDate.format("YYYY-MM-DD"),
-      amount: values.amount,
-      emiType: values.emiType === 'Others' ? values.emiTypeOther : values.emiType,
+      defaultAmount: values.amount,
     };
 
-    console.log('Payload being sent:', JSON.stringify(payload, null, 2));
+    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
       const response = await fetch(`${API_BASE_URL}bills`, {
@@ -139,7 +150,7 @@ const AddBill = () => {
   return (
     <div className="min-h-screen w-full bg-linear-to-br from-purple-50 via-blue-50 to-indigo-100 relative font-[cormoreg]">
       <style>{customStyles}</style>
-      
+
       {/* Gradient Background */}
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -168,7 +179,9 @@ const AddBill = () => {
                 Back
               </button>
               <div className="w-20 h-20 bg-linear-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <FileTextOutlined style={{ fontSize: '2.5rem', color: 'white' }} />
+                <FileTextOutlined
+                  style={{ fontSize: "2.5rem", color: "white" }}
+                />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
                 Add New Bill
@@ -194,12 +207,33 @@ const AddBill = () => {
               </Form.Item>
 
               <Form.Item
+                label="Belongs To"
+                name="belongsTo"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select who this belongs to",
+                  },
+                ]}
+              >
+                <Select size="large" placeholder="Select entity">
+                  <Option value="Blue Pulse Ventures Pvt Lmtd.">
+                    Blue Pulse Ventures Pvt Lmtd.
+                  </Option>
+                  <Option value="Sky Blue Event Management India Pvt Lmtd.">
+                    Sky Blue Event Management India Pvt Lmtd.
+                  </Option>
+                  <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
                 label="EMI Type"
                 name="emiType"
                 rules={[{ required: true, message: "Please select EMI type" }]}
               >
-                <Select 
-                  size="large" 
+                <Select
+                  size="large"
                   placeholder="Select EMI type"
                   onChange={handleEmiTypeChange}
                 >
@@ -214,16 +248,28 @@ const AddBill = () => {
                 <Form.Item
                   label="Specify EMI Type"
                   name="emiTypeOther"
-                  rules={[{ required: true, message: "Please specify EMI type" }]}
+                  rules={[
+                    { required: true, message: "Please specify EMI type" },
+                  ]}
                 >
                   <Input size="large" placeholder="Enter EMI type" />
                 </Form.Item>
               )}
 
               <Form.Item
-                label="EMI Date"
+                label="EMI Date(Every Month)"
                 name="emiDate"
                 rules={[{ required: true, message: "Please select EMI date" }]}
+              >
+                <DatePicker size="large" style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item
+                label="EMI End Date"
+                name="emiEndDate"
+                rules={[
+                  { required: true, message: "Please select EMI end date" },
+                ]}
               >
                 <DatePicker size="large" style={{ width: "100%" }} />
               </Form.Item>
@@ -233,15 +279,21 @@ const AddBill = () => {
                 name="amount"
                 rules={[
                   { required: true, message: "Please enter amount" },
-                  { type: "number", min: 1, message: "Amount must be positive" },
+                  {
+                    type: "number",
+                    min: 1,
+                    message: "Amount must be positive",
+                  },
                 ]}
               >
-                <InputNumber 
-                  size="large" 
-                  style={{ width: "100%" }} 
+                <InputNumber
+                  size="large"
+                  style={{ width: "100%" }}
                   min={1}
-                  formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={value => value.replace(/₹\s?|(,*)/g, '')}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
                   placeholder="Enter amount"
                 />
               </Form.Item>

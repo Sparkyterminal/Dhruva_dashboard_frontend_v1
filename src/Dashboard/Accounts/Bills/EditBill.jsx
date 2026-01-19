@@ -4,7 +4,15 @@ import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../../../config";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
-import { message, Form, Input, DatePicker, InputNumber, Button, Select } from "antd";
+import {
+  message,
+  Form,
+  Input,
+  DatePicker,
+  InputNumber,
+  Button,
+  Select,
+} from "antd";
 const { Option } = Select;
 import dayjs from "dayjs";
 import { motion } from "framer-motion";
@@ -90,7 +98,10 @@ const EditBill = () => {
   const [form] = Form.useForm();
   const [showOtherEmiType, setShowOtherEmiType] = useState(false);
 
-  const config = useMemo(() => ({ headers: { Authorization: user?.access_token } }), [user?.access_token]);
+  const config = useMemo(
+    () => ({ headers: { Authorization: user?.access_token } }),
+    [user?.access_token],
+  );
 
   const handleEmiTypeChange = (value) => {
     if (value === "Others") {
@@ -111,10 +122,13 @@ const EditBill = () => {
         // Prefill form fields with fetched data
         form.setFieldsValue({
           name: data.name,
+          belongsTo: data.belongs_to,
           emiType: data.emiType,
-          emiTypeOther: data.emiType === "Others" ? data.emiTypeOther || "" : undefined,
+          emiTypeOther:
+            data.emiType === "Others" ? data.emiTypeOther || "" : undefined,
           emiDate: dayjs(data.emiDate), // convert string to dayjs object
-          amount: data.amount,
+          emiEndDate: dayjs(data.emi_end_date), // convert string to dayjs object
+          amount: data.defaultAmount,
         });
 
         // show/hide Other EMI Type input
@@ -132,13 +146,20 @@ const EditBill = () => {
   const onFinish = async (values) => {
     const payload = {
       name: values.name,
-      emiType: values.emiType === 'Others' ? values.emiTypeOther : values.emiType,
+      belongs_to: values.belongsTo,
+      emiType:
+        values.emiType === "Others" ? values.emiTypeOther : values.emiType,
       emiDate: values.emiDate.format("YYYY-MM-DD"),
-      amount: values.amount,
+      emi_end_date: values.emiEndDate.format("YYYY-MM-DD"),
+      defaultAmount: values.amount,
     };
 
     try {
-      const res = await axios.put(`${API_BASE_URL}bills/${id}`, payload, config);
+      const res = await axios.put(
+        `${API_BASE_URL}bills/${id}`,
+        payload,
+        config,
+      );
       if (res.status === 200) {
         message.success("Bill updated successfully");
         navigate(-1); // Redirect to bills list or desired page after update
@@ -173,8 +194,16 @@ const EditBill = () => {
           <div className="glass-card-bill p-8 md:p-10">
             {/* Header with Icon */}
             <div className="flex flex-col items-center mb-8">
+              <button
+                onClick={() => navigate(-1)}
+                className="self-start mb-4 px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:shadow-md transition-all duration-200"
+              >
+                Back
+              </button>
               <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
-                <FileTextOutlined style={{ fontSize: "2.5rem", color: "white" }} />
+                <FileTextOutlined
+                  style={{ fontSize: "2.5rem", color: "white" }}
+                />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">
                 Edit Bill
@@ -200,6 +229,27 @@ const EditBill = () => {
               </Form.Item>
 
               <Form.Item
+                label="Belongs To"
+                name="belongsTo"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select who this belongs to",
+                  },
+                ]}
+              >
+                <Select size="large" placeholder="Select entity">
+                  <Option value="Blue Pulse Ventures Pvt Lmtd.">
+                    Blue Pulse Ventures Pvt Lmtd.
+                  </Option>
+                  <Option value="Sky Blue Event Management India Pvt Lmtd.">
+                    Sky Blue Event Management India Pvt Lmtd.
+                  </Option>
+                  <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+                </Select>
+              </Form.Item>
+
+              <Form.Item
                 label="EMI Type"
                 name="emiType"
                 rules={[{ required: true, message: "Please select EMI type" }]}
@@ -220,16 +270,28 @@ const EditBill = () => {
                 <Form.Item
                   label="Specify EMI Type"
                   name="emiTypeOther"
-                  rules={[{ required: true, message: "Please specify EMI type" }]}
+                  rules={[
+                    { required: true, message: "Please specify EMI type" },
+                  ]}
                 >
                   <Input size="large" placeholder="Enter EMI type" />
                 </Form.Item>
               )}
 
               <Form.Item
-                label="EMI Date"
+                label="EMI Date(Every Month)"
                 name="emiDate"
                 rules={[{ required: true, message: "Please select EMI date" }]}
+              >
+                <DatePicker size="large" style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item
+                label="EMI End Date"
+                name="emiEndDate"
+                rules={[
+                  { required: true, message: "Please select EMI end date" },
+                ]}
               >
                 <DatePicker size="large" style={{ width: "100%" }} />
               </Form.Item>
@@ -239,7 +301,11 @@ const EditBill = () => {
                 name="amount"
                 rules={[
                   { required: true, message: "Please enter amount" },
-                  { type: "number", min: 1, message: "Amount must be positive" },
+                  {
+                    type: "number",
+                    min: 1,
+                    message: "Amount must be positive",
+                  },
                 ]}
               >
                 <InputNumber

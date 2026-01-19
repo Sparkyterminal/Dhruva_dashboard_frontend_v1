@@ -52,7 +52,7 @@ const RequirementsTableAc = () => {
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(
         `${API_BASE_URL}request${queryString}`,
-        config
+        config,
       );
       setRequirements(res.data.items || []);
     } catch (err) {
@@ -71,7 +71,7 @@ const RequirementsTableAc = () => {
     const timeoutId = setTimeout(() => {
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     }, 300);
 
@@ -105,7 +105,7 @@ const RequirementsTableAc = () => {
       const approvedAmount = row.approver_amount || 0;
       if (Number(editValue) > approvedAmount) {
         message.error(
-          `Amount paid cannot exceed approved amount (₹${approvedAmount})`
+          `Amount paid cannot exceed approved amount (₹${approvedAmount})`,
         );
         return;
       }
@@ -114,25 +114,25 @@ const RequirementsTableAc = () => {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { [editField]: Number(editValue) },
-        config
+        config,
       );
       message.success(
         `${
           editField === "planned_amount" ? "Planned amount" : "Amount paid"
-        } updated`
+        } updated`,
       );
       setEditRowId(null);
       setEditField(null);
       setEditValue(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch {
       message.error(
         `Failed to update ${
           editField === "planned_amount" ? "planned amount" : "amount paid"
-        }`
+        }`,
       );
     }
   };
@@ -142,12 +142,12 @@ const RequirementsTableAc = () => {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "COMPLETED" },
-        config
+        config,
       );
       message.success("Request marked as completed");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch {
       message.error("Failed to mark as completed");
@@ -159,12 +159,12 @@ const RequirementsTableAc = () => {
       await axios.patch(
         `${API_BASE_URL}request/${row.id}`,
         { status: "REJECTED" },
-        config
+        config,
       );
       message.success("Request marked as rejected");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
       );
     } catch {
       message.error("Failed to reject request");
@@ -353,8 +353,8 @@ const RequirementsTableAc = () => {
           status === "APPROVED"
             ? "green"
             : status === "REJECTED"
-            ? "red"
-            : "orange";
+              ? "red"
+              : "orange";
         return (
           <Tag
             color={color}

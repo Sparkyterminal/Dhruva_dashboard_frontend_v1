@@ -1,12 +1,23 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import { Form, Input, Button, Row, Col, message, Select } from "antd";
+import {
+  Form,
+  Input,
+  Button,
+  Row,
+  Col,
+  message,
+  Select,
+  Typography,
+} from "antd";
 const { Option } = Select;
 import { LeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../config";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+
+const { Title } = Typography;
 
 const EditVendor = () => {
   const [form] = Form.useForm();
@@ -19,6 +30,17 @@ const EditVendor = () => {
   };
 
   const [showOtherVendorType, setShowOtherVendorType] = useState(false);
+  const [departments, setDepartments] = useState([]);
+
+  const fetchDepartmentData = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}department`, config);
+      const items = res.data.items || res.data;
+      setDepartments(items || []);
+    } catch (err) {
+      message.error("Failed to fetch departments");
+    }
+  };
 
   const handleVendorTypeChange = (value) => {
     if (value === "Other") {
@@ -39,10 +61,14 @@ const EditVendor = () => {
         // Map the received vendor data keys to form fields accordingly
         const vendor = res.data.vendor;
         form.setFieldsValue({
+          depId:
+            vendor.vendor_belongs_to?.department?.department[0]?.name ||
+            vendor.depId ||
+            null,
+          specify_category: vendor.specify_cat || null,
           name: vendor.name || "",
           person_category: vendor.person_category || "",
           company_name: vendor.company_name || "",
-          referred_by: vendor.referred_by || vendor.refered_by || "",
           temp_address_1: vendor.temp_address_1 || "",
           temp_city: vendor.temp_city || "",
           temp_pin: vendor.temp_pin || "",
@@ -59,14 +85,16 @@ const EditVendor = () => {
           alt_mobile_no: vendor.alt_mobile_no || "",
           email: vendor.email || "",
           vendor_type: vendor.vendor_type || "",
-          vendor_type_other: vendor.vendor_type === "Other" ? vendor.vendor_type_other || "" : undefined,
+          vendor_type_other:
+            vendor.vendor_type === "Other"
+              ? vendor.vendor_type_other || ""
+              : undefined,
           gst_no: vendor.gst_no || "",
           msmed_no: vendor.msmed_no || "",
           pan_no: vendor.pan_no || "",
+          adhar_no: vendor.adhar_no || "",
           bank_name: vendor.bank_name || "",
           beneficiary_name: vendor.beneficiary_name || "",
-          bank_address_1: vendor.bank_address_1 || "",
-          bank_address_2: vendor.bank_address_2 || "",
           bank_pin: vendor.bank_pin || "",
           account_number: vendor.account_number || "",
           ifscode: vendor.ifscode || "",
@@ -83,6 +111,7 @@ const EditVendor = () => {
   };
 
   useEffect(() => {
+    fetchDepartmentData();
     fetchVendorData();
     // eslint-disable-next-line
   }, []);
@@ -92,32 +121,35 @@ const EditVendor = () => {
     // Build payload similar to AddVendor
     const payload = {
       name: values.name,
+      depId: values.depId || null,
+      specify_cat: values.specify_category || null,
       person_category: values.person_category,
       company_name: values.company_name || null,
-      referred_by: values.referred_by || values.refered_by || null,
-      temp_address_1: values.temp_address_1,
-      temp_city: values.temp_city,
-      temp_pin: values.temp_pin,
-      temp_state: values.temp_state,
-      temp_country: values.temp_country,
+      temp_address_1: values.temp_address_1 || null,
+      temp_city: values.temp_city || null,
+      temp_pin: values.temp_pin || null,
+      temp_state: values.temp_state || null,
+      temp_country: values.temp_country || null,
       perm_address_2: values.perm_address_2 || null,
       perm_city: values.perm_city || null,
       perm_pin: values.perm_pin || null,
       perm_state: values.perm_state || null,
       perm_country: values.perm_country || null,
-      cont_person: values.cont_person,
+      cont_person: values.cont_person || null,
       designation: values.designation || null,
-      mobile_no: values.mobile_no,
+      mobile_no: values.mobile_no || null,
       alt_mobile_no: values.alt_mobile_no || null,
-      email: values.email,
-      vendor_type: values.vendor_type === 'Other' ? values.vendor_type_other : values.vendor_type,
-      gst_no: values.gst_no,
-      msmed_no: values.msmed_no,
-      pan_no: values.pan_no,
+      email: values.email || null,
+      vendor_type:
+        values.vendor_type === "Other"
+          ? values.vendor_type_other
+          : values.vendor_type,
+      gst_no: values.gst_no || null,
+      msmed_no: values.msmed_no || null,
+      pan_no: values.pan_no || null,
+      adhar_no: values.adhar_no || null,
       bank_name: values.bank_name,
       beneficiary_name: values.beneficiary_name || null,
-      bank_address_1: values.bank_address_1 || null,
-      bank_address_2: values.bank_address_2 || null,
       bank_pin: values.bank_pin || null,
       account_number: values.account_number,
       ifscode: values.ifscode,
@@ -171,7 +203,44 @@ const EditVendor = () => {
       </h1>
 
       <Form form={form} layout="vertical" onFinish={onFinish} size="large">
+        {/* Department selector: which department the vendor belongs to */}
+        <Row gutter={16} style={{ marginBottom: 8 }}>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="depId"
+              label="Vendor Belongs To"
+              rules={[{ required: true, message: "Please select department" }]}
+            >
+              <Select
+                placeholder="Select department"
+                showSearch
+                optionFilterProp="children"
+              >
+                {departments.map((d) => (
+                  <Option key={d.id || d._id} value={d.id || d._id}>
+                    {d.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="specify_category"
+              label="Specify Category"
+              rules={[{ required: true, message: "Please select category" }]}
+            >
+              <Select placeholder="Select category">
+                <Option value="cash">Cash</Option>
+                <Option value="account">Acccount</Option>
+                <Option value="cash_and_account">Cash&Account</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+
         {/* Vendor Info */}
+        <Title level={5}>Vendor Information</Title>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item
@@ -183,7 +252,13 @@ const EditVendor = () => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={12}>
-            <Form.Item name="person_category" label="Category of Person" rules={[{ required: true, message: 'Please select category of person' }]}>
+            <Form.Item
+              name="person_category"
+              label="Category of Person"
+              rules={[
+                { required: true, message: "Please select category of person" },
+              ]}
+            >
               <Select placeholder="Select category of person">
                 <Option value="Individual">Individual</Option>
                 <Option value="HUF">HUF</Option>
@@ -199,67 +274,41 @@ const EditVendor = () => {
               <Input placeholder="Enter company name (if any)" />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item name="referred_by" label="Referred By">
-              <Input placeholder="Enter referrer name" />
-            </Form.Item>
-          </Col>
         </Row>
 
-        {/* Address (Temporary) */}
-        <h5>Address (Temporary)</h5>
+        {/* Address Section */}
+        <Title level={5}>Address (Temporary)</Title>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
-            <Form.Item
-              name="temp_address_1"
-              label="Address 1"
-              rules={[{ required: true, message: "Please enter temporary address" }]}
-            >
+            <Form.Item name="temp_address_1" label="Address 1">
               <Input placeholder="Temporary address 1" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item
-              name="temp_city"
-              label="City"
-              rules={[{ required: true, message: "Please enter city" }]}
-            >
+            <Form.Item name="temp_city" label="City">
               <Input placeholder="City" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item
-              name="temp_pin"
-              label="PIN Code"
-              rules={[{ required: true, message: "Please enter PIN code" }]}
-            >
+            <Form.Item name="temp_pin" label="PIN Code">
               <Input placeholder="PIN code" />
             </Form.Item>
           </Col>
         </Row>
         <Row gutter={16}>
           <Col xs={24} sm={8}>
-            <Form.Item
-              name="temp_state"
-              label="State"
-              rules={[{ required: true, message: "Please enter state" }]}
-            >
+            <Form.Item name="temp_state" label="State">
               <Input placeholder="State" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
-            <Form.Item
-              name="temp_country"
-              label="Country"
-              rules={[{ required: true, message: "Please enter country" }]}
-            >
+            <Form.Item name="temp_country" label="Country">
               <Input placeholder="Country" />
             </Form.Item>
           </Col>
         </Row>
 
-        {/* Address (Permanent) */}
-        <h5>Address (Permanent)</h5>
+        <Title level={5}>Address (Permanent)</Title>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item name="perm_address_2" label="Address 2">
@@ -279,15 +328,11 @@ const EditVendor = () => {
         </Row>
 
         {/* Contact Info */}
-        <h5>Contact Information</h5>
+        <Title level={5}>Contact Information</Title>
         <Row gutter={16}>
           <Col xs={24} sm={8}>
-            <Form.Item
-              name="cont_person"
-              label="Contact Person"
-              rules={[{ required: true, message: "Please enter contact Company Name" }]}
-            >
-              <Input placeholder="Contact Company Name" />
+            <Form.Item name="cont_person" label="Contact Person">
+              <Input placeholder="Contact person name" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
@@ -296,11 +341,7 @@ const EditVendor = () => {
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item
-              name="mobile_no"
-              label="Mobile No."
-              rules={[{ required: true, message: "Please enter mobile number" }]}
-            >
+            <Form.Item name="mobile_no" label="Mobile No.">
               <Input placeholder="Mobile number" />
             </Form.Item>
           </Col>
@@ -315,7 +356,7 @@ const EditVendor = () => {
             <Form.Item
               name="email"
               label="Email"
-              rules={[{ type: "email", required: true, message: "Please enter valid email" }]}
+              rules={[{ type: "email", message: "Please enter valid email" }]}
             >
               <Input placeholder="Email" />
             </Form.Item>
@@ -323,15 +364,20 @@ const EditVendor = () => {
         </Row>
 
         {/* Vendor Business Info */}
-        <h5>Business Details</h5>
+        <Title level={5}>Business Details</Title>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
             <Form.Item
               name="vendor_type"
               label="Type Of Vendor"
-              rules={[{ required: true, message: "Please select type of vendor" }]}
+              rules={[
+                { required: true, message: "Please select type of vendor" },
+              ]}
             >
-              <Select placeholder="Select type of vendor" onChange={handleVendorTypeChange}>
+              <Select
+                placeholder="Select type of vendor"
+                onChange={handleVendorTypeChange}
+              >
                 <Option value="Material">Material</Option>
                 <Option value="Labour">Labour</Option>
                 <Option value="Composite">Composite</Option>
@@ -342,26 +388,24 @@ const EditVendor = () => {
           </Col>
           {showOtherVendorType && (
             <Col xs={24} sm={12}>
-              <Form.Item name="vendor_type_other" label="Specify Other Type" rules={[{ required: true, message: 'Please specify vendor type' }]}>
+              <Form.Item
+                name="vendor_type_other"
+                label="Specify Other Type"
+                rules={[
+                  { required: true, message: "Please specify vendor type" },
+                ]}
+              >
                 <Input placeholder="Enter vendor type" />
               </Form.Item>
             </Col>
           )}
           <Col xs={24} sm={6}>
-            <Form.Item
-              name="gst_no"
-              label="GST No"
-              rules={[{ required: true, message: "Please enter GST number" }]}
-            >
+            <Form.Item name="gst_no" label="GST No">
               <Input placeholder="GST number" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={6}>
-            <Form.Item
-              name="msmed_no"
-              label="MSMED No"
-              rules={[{ required: true, message: "Please enter MSMED number" }]}
-            >
+            <Form.Item name="msmed_no" label="MSMED No">
               <Input placeholder="MSMED number" />
             </Form.Item>
           </Col>
@@ -374,12 +418,23 @@ const EditVendor = () => {
               <Input placeholder="PAN number" />
             </Form.Item>
           </Col>
+          <Col xs={24} sm={6}>
+            <Form.Item
+              name="adhar_no"
+              label="Aadhar No"
+              rules={[
+                { required: true, message: "Please enter Aadhar number" },
+              ]}
+            >
+              <Input placeholder="Aadhar number" />
+            </Form.Item>
+          </Col>
         </Row>
 
         {/* Bank Section */}
-        <h5>Bank Details</h5>
+        <Title level={5}>Bank Details</Title>
         <Row gutter={16}>
-          <Col xs={24} sm={8}>
+          <Col xs={24} sm={12}>
             <Form.Item
               name="bank_name"
               label="Bank Name"
@@ -388,35 +443,28 @@ const EditVendor = () => {
               <Input placeholder="Bank Name" />
             </Form.Item>
           </Col>
-          <Col xs={24} sm={8}>
-            <Form.Item name="beneficiary_name" label="Beneficiary Name">
+          <Col xs={24} sm={12}>
+            <Form.Item
+              name="beneficiary_name"
+              label="Beneficiary Name/Company Name"
+            >
               <Input placeholder="Beneficiary Name" />
             </Form.Item>
           </Col>
         </Row>
-        {/* <Row gutter={16}>
-          <Col xs={24} sm={12}>
-            <Form.Item name="bank_address_1" label="Bank Address 1">
-              <Input placeholder="Bank Address 1" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} sm={12}>
-            <Form.Item name="bank_address_2" label="Bank Address 2">
-              <Input placeholder="Bank Address 2" />
-            </Form.Item>
-          </Col>
-        </Row> */}
         <Row gutter={16}>
           <Col xs={24} sm={8}>
-            <Form.Item name="bank_pin" label="PIN Code">
-              <Input placeholder="PIN Code" />
+            <Form.Item name="bank_pin" label="Bank PIN Code">
+              <Input placeholder="Bank PIN Code" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
             <Form.Item
               name="account_number"
               label="Account Number"
-              rules={[{ required: true, message: "Please enter account number" }]}
+              rules={[
+                { required: true, message: "Please enter account number" },
+              ]}
             >
               <Input placeholder="Account Number" />
             </Form.Item>
@@ -430,20 +478,23 @@ const EditVendor = () => {
               <Input placeholder="IFSC CODE" />
             </Form.Item>
           </Col>
+        </Row>
+        <Row gutter={16}>
           <Col xs={24} sm={8}>
             <Form.Item name="branch" label="Branch">
               <Input placeholder="Branch" />
             </Form.Item>
           </Col>
-        </Row>
-        <Row gutter={16}>
           <Col xs={24} sm={8}>
             <Form.Item name="payment_terms" label="Payment Terms">
               <Input placeholder="Payment Terms" />
             </Form.Item>
           </Col>
           <Col xs={24} sm={8}>
-            <Form.Item name="tds_details" label="TDS Rate & Section (If Service Vendor)">
+            <Form.Item
+              name="tds_details"
+              label="TDS Rate & Section (If Service Vendor)"
+            >
               <Input placeholder="TDS Rate & Section" />
             </Form.Item>
           </Col>
