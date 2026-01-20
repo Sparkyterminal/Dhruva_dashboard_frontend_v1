@@ -121,7 +121,7 @@ const CalendarClients = () => {
               end: isSameDay
                 ? startDate.toISOString() // Single day event
                 : new Date(
-                    actualEndDate.getTime() + 24 * 60 * 60 * 1000
+                    actualEndDate.getTime() + 24 * 60 * 60 * 1000,
                   ).toISOString(), // Multi-day event
               allDay: true,
               extendedProps: {
@@ -136,6 +136,7 @@ const CalendarClients = () => {
                 agreedAmount: et.agreedAmount || event.agreedAmount || 0,
                 startDate: et.startDate,
                 endDate: et.endDate,
+                eventConfirmation: event.eventConfirmation || "Pending",
               },
               // Use a seed that includes the event id and the specific event-type index so
               // multiple events on the same day can get different but consistent colors
@@ -202,16 +203,27 @@ const CalendarClients = () => {
 
   const renderEventContent = (eventInfo) => {
     try {
-      const { eventName, eventType, venue } =
+      const { eventName, eventType, venue, eventConfirmation } =
         eventInfo.event.extendedProps || {};
 
       // Show only event type if it's different from event name
       const showEventType = formatText(eventName) !== formatText(eventType);
 
+      // Map confirmation to emoji/icon
+      const confirmationEmoji = {
+        "Confirmed Event": "✓",
+        InProgress: "◐",
+        Cancelled: "✕",
+        Pending: "○",
+      };
+
+      const confirmationChar = confirmationEmoji[eventConfirmation] || "○";
+
       return (
         <div className="p-1.5 text-xs overflow-hidden leading-tight">
-          <div className="font-semibold truncate text-white mb-0.5">
-            {formatText(eventName)}
+          <div className="font-semibold truncate text-white mb-0.5 flex items-center gap-1">
+            <span>{confirmationChar}</span>
+            <span>{formatText(eventName)}</span>
           </div>
           {showEventType && (
             <div className="truncate text-white opacity-90 mb-0.5">
@@ -304,7 +316,7 @@ const CalendarClients = () => {
       // Sort event types by start date and then sort events by their earliest start date
       filteredEvents.forEach((ev) => {
         ev.eventTypes.sort(
-          (a, b) => new Date(a.startDate) - new Date(b.startDate)
+          (a, b) => new Date(a.startDate) - new Date(b.startDate),
         );
       });
 
@@ -528,6 +540,31 @@ const CalendarClients = () => {
               {events.length} events
             </div>
           </div>
+
+          {/* Legend */}
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-sm font-semibold text-gray-700 mb-3">
+              Identification of Event Status on calendar:
+            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-green-600">✓</span>
+                <span className="text-sm text-gray-600">Confirmed Event</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-amber-600">◐</span>
+                <span className="text-sm text-gray-600">InProgress</span>
+              </div>
+              {/* <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-red-600">✕</span>
+                <span className="text-sm text-gray-600">Cancelled</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-lg font-bold text-gray-600">○</span>
+                <span className="text-sm text-gray-600">Pending</span>
+              </div> */}
+            </div>
+          </div>
         </div>
 
         {/* Calendar */}
@@ -580,7 +617,7 @@ const CalendarClients = () => {
                 tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
                 if (brideName && groomName) {
                   tooltip += `\n${formatText(brideName)} & ${formatText(
-                    groomName
+                    groomName,
                   )}`;
                 }
                 tooltip += `\nVenue: ${formatText(venue) || "TBD"}`;
@@ -626,16 +663,31 @@ const CalendarClients = () => {
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <span
                           className="px-3 py-1 rounded-full text-sm font-semibold text-white"
                           style={{
                             backgroundColor: getEventColor(
-                              formatText(event.eventName)
+                              formatText(event.eventName),
                             ),
                           }}
                         >
                           {formatText(event.eventName)}
+                        </span>
+                        <span
+                          className="px-3 py-1 rounded-full text-sm font-semibold text-white"
+                          style={{
+                            backgroundColor:
+                              event.eventConfirmation === "Confirmed Event"
+                                ? "#10b981"
+                                : event.eventConfirmation === "InProgress"
+                                  ? "#f59e0b"
+                                  : event.eventConfirmation === "Cancelled"
+                                    ? "#ef4444"
+                                    : "#6b7280",
+                          }}
+                        >
+                          {event.eventConfirmation || "Pending"}
                         </span>
                       </div>
                       <h4 className="text-xl font-bold text-gray-800 mb-1">
@@ -688,7 +740,7 @@ const CalendarClients = () => {
                                   className="w-2 h-2 rounded-full"
                                   style={{
                                     backgroundColor: getEventColor(
-                                      `${event._id}-${idx}`
+                                      `${event._id}-${idx}`,
                                     ),
                                   }}
                                 ></div>
@@ -714,7 +766,7 @@ const CalendarClients = () => {
                                     {formatDate(start)} {formatTime(start)}
                                     {multiDay && end
                                       ? ` → ${formatDate(end)} ${formatTime(
-                                          end
+                                          end,
                                         )}`
                                       : ""}
                                   </span>

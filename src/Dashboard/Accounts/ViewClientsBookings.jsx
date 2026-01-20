@@ -148,7 +148,7 @@ const ViewClientsBookings = () => {
       return (
         record.eventTypes?.reduce(
           (sum, et) => sum + (et.totalPayable || 0),
-          0
+          0,
         ) || 0
       );
     }
@@ -164,7 +164,7 @@ const ViewClientsBookings = () => {
       return (
         record.eventTypes?.reduce(
           (sum, et) => sum + (et.agreedAmount || 0),
-          0
+          0,
         ) || 0
       );
     }
@@ -352,7 +352,7 @@ const ViewClientsBookings = () => {
       // Fetch updated event data to refresh drawer
       const updatedEventResponse = await axios.get(
         `${API_BASE_URL}events/${selectedEvent._id}`,
-        config
+        config,
       );
       const updatedEvent =
         updatedEventResponse.data.event ||
@@ -370,6 +370,28 @@ const ViewClientsBookings = () => {
   };
 
   const columns = [
+    {
+      title: "Event Confirmation",
+      dataIndex: "eventConfirmation",
+      key: "eventConfirmation",
+      width: 140,
+      render: (status) => {
+        const colorMap = {
+          "Confirmed Event": "green",
+          InProgress: "orange",
+          Cancelled: "red",
+          Pending: "blue",
+        };
+        return (
+          <Tag
+            color={colorMap[status] || "default"}
+            className="text-sm font-semibold px-3 py-1"
+          >
+            {status || "N/A"}
+          </Tag>
+        );
+      },
+    },
     {
       title: "Event Name",
       dataIndex: "eventName",
@@ -499,8 +521,8 @@ const ViewClientsBookings = () => {
                 percentage === 100
                   ? "success"
                   : percentage > 0
-                  ? "warning"
-                  : "default"
+                    ? "warning"
+                    : "default"
               }
             >
               {percentage}% Collected
@@ -548,15 +570,15 @@ const ViewClientsBookings = () => {
   const totalBookings = bookings.length;
   const totalPayableRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
-    0
+    0,
   );
   const totalAgreedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalAgreedAmount(curr),
-    0
+    0,
   );
   const totalReceivedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalReceivedAdvances(curr),
-    0
+    0,
   );
   const totalPendingRevenue = bookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
@@ -969,7 +991,7 @@ const ViewClientsBookings = () => {
                           </Text>
                           <Text strong className="text-green-700">
                             {formatAmount(
-                              selectedEvent.eventTypes[0].agreedAmount || 0
+                              selectedEvent.eventTypes[0].agreedAmount || 0,
                             )}
                           </Text>
                         </div>
@@ -981,7 +1003,7 @@ const ViewClientsBookings = () => {
                           </Text>
                           <Text strong className="text-blue-700">
                             {formatAmount(
-                              selectedEvent.eventTypes[0].accountAmount || 0
+                              selectedEvent.eventTypes[0].accountAmount || 0,
                             )}
                           </Text>
                         </div>
@@ -993,7 +1015,7 @@ const ViewClientsBookings = () => {
                           </Text>
                           <Text strong className="text-purple-700">
                             {formatAmount(
-                              selectedEvent.eventTypes[0].accountGst || 0
+                              selectedEvent.eventTypes[0].accountGst || 0,
                             )}
                           </Text>
                         </div>
@@ -1006,7 +1028,7 @@ const ViewClientsBookings = () => {
                           <Text strong className="text-pink-700">
                             {formatAmount(
                               selectedEvent.eventTypes[0]
-                                .accountAmountWithGst || 0
+                                .accountAmountWithGst || 0,
                             )}
                           </Text>
                         </div>
@@ -1018,7 +1040,7 @@ const ViewClientsBookings = () => {
                           </Text>
                           <Text strong className="text-yellow-700">
                             {formatAmount(
-                              selectedEvent.eventTypes[0].cashAmount || 0
+                              selectedEvent.eventTypes[0].cashAmount || 0,
                             )}
                           </Text>
                         </div>
@@ -1030,7 +1052,7 @@ const ViewClientsBookings = () => {
                           </Text>
                           <Text strong className="text-emerald-700">
                             {formatAmount(
-                              selectedEvent.eventTypes[0].totalPayable || 0
+                              selectedEvent.eventTypes[0].totalPayable || 0,
                             )}
                           </Text>
                         </div>
@@ -1252,7 +1274,7 @@ const ViewClientsBookings = () => {
                                   handleAdvanceChange(
                                     index,
                                     "receivedAmount",
-                                    value
+                                    value,
                                   )
                                 }
                                 size="small"
@@ -1261,7 +1283,7 @@ const ViewClientsBookings = () => {
                                 formatter={(value) =>
                                   `₹ ${value}`.replace(
                                     /\B(?=(\d{3})+(?!\d))/g,
-                                    ","
+                                    ",",
                                   )
                                 }
                                 parser={(value) =>
@@ -1300,7 +1322,7 @@ const ViewClientsBookings = () => {
                                   handleAdvanceChange(
                                     index,
                                     "receivedDate",
-                                    date
+                                    date,
                                   )
                                 }
                                 format="DD-MM-YYYY"
@@ -1334,7 +1356,7 @@ const ViewClientsBookings = () => {
                                   handleAdvanceChange(
                                     index,
                                     "givenBy",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 size="small"
@@ -1364,7 +1386,7 @@ const ViewClientsBookings = () => {
                                   handleAdvanceChange(
                                     index,
                                     "collectedBy",
-                                    e.target.value
+                                    e.target.value,
                                   )
                                 }
                                 size="small"
@@ -1394,7 +1416,7 @@ const ViewClientsBookings = () => {
                                   handleAdvanceChange(
                                     index,
                                     "modeOfPayment",
-                                    value
+                                    value,
                                   )
                                 }
                                 size="small"
@@ -1500,11 +1522,11 @@ const ViewClientsBookings = () => {
               </>
             )}
 
-            {!isSingleDisplayEvent(selectedEvent) && (
+            {!isCompletePaymentWedding(selectedEvent) && (
               <>
                 {selectedEvent.eventTypes?.map((eventType, index) => {
                   const eventTypeAdvances = editingAdvances.filter(
-                    (adv) => adv.eventTypeIndex === index
+                    (adv) => adv.eventTypeIndex === index,
                   );
                   return (
                     <Card
@@ -1696,7 +1718,7 @@ const ViewClientsBookings = () => {
                                   </Text>
                                   <Text strong className="text-pink-700">
                                     {formatAmount(
-                                      eventType.accountAmountWithGst || 0
+                                      eventType.accountAmountWithGst || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -1784,7 +1806,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
@@ -1797,7 +1819,7 @@ const ViewClientsBookings = () => {
                                         handleAdvanceChange(
                                           globalIndex,
                                           "receivedAmount",
-                                          value
+                                          value,
                                         )
                                       }
                                       size="small"
@@ -1806,7 +1828,7 @@ const ViewClientsBookings = () => {
                                       formatter={(value) =>
                                         `₹ ${value}`.replace(
                                           /\B(?=(\d{3})+(?!\d))/g,
-                                          ","
+                                          ",",
                                         )
                                       }
                                       parser={(value) =>
@@ -1839,7 +1861,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
@@ -1852,7 +1874,7 @@ const ViewClientsBookings = () => {
                                         handleAdvanceChange(
                                           globalIndex,
                                           "receivedDate",
-                                          date
+                                          date,
                                         )
                                       }
                                       format="DD-MM-YYYY"
@@ -1880,7 +1902,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
@@ -1893,7 +1915,7 @@ const ViewClientsBookings = () => {
                                         handleAdvanceChange(
                                           globalIndex,
                                           "givenBy",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       size="small"
@@ -1917,7 +1939,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
@@ -1930,7 +1952,7 @@ const ViewClientsBookings = () => {
                                         handleAdvanceChange(
                                           globalIndex,
                                           "collectedBy",
-                                          e.target.value
+                                          e.target.value,
                                         )
                                       }
                                       size="small"
@@ -1954,7 +1976,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
@@ -1967,7 +1989,7 @@ const ViewClientsBookings = () => {
                                         handleAdvanceChange(
                                           globalIndex,
                                           "modeOfPayment",
-                                          value
+                                          value,
                                         )
                                       }
                                       size="small"
@@ -2031,7 +2053,7 @@ const ViewClientsBookings = () => {
                                   (adv) =>
                                     adv.advanceNumber ===
                                       record.advanceNumber &&
-                                    adv.eventTypeIndex === index
+                                    adv.eventTypeIndex === index,
                                 );
                                 const advanceKey = getAdvanceKey(record);
                                 const isEditing =
