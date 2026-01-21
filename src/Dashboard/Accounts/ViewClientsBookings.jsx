@@ -1996,15 +1996,9 @@ const ViewClientsBookings = () => {
                                       className="w-full"
                                       placeholder="Select mode"
                                       options={[
-                                        { label: "Cash", value: "Cash" },
-                                        { label: "UPI", value: "UPI" },
-                                        {
-                                          label: "Bank Transfer",
-                                          value: "Bank Transfer",
-                                        },
-                                        { label: "Cheque", value: "Cheque" },
-                                        { label: "Card", value: "Card" },
-                                        { label: "Other", value: "Other" },
+                                        { label: "Cash", value: "cash" },
+                                        { label: "Account", value: "account" },
+                                        
                                       ]}
                                     />
                                   );
