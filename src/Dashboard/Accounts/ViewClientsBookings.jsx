@@ -483,17 +483,17 @@ const ViewClientsBookings = () => {
         </div>
       ),
     },
-    {
-      title: "Total Payable",
-      key: "totalPayable",
-      width: 120,
-      align: "right",
-      render: (_, record) => (
-        <Text strong className="text-green-600 text-base">
-          {formatAmount(getTotalPayable(record))}
-        </Text>
-      ),
-    },
+    // {
+    //   title: "Total Payable",
+    //   key: "totalPayable",
+    //   width: 120,
+    //   align: "right",
+    //   render: (_, record) => (
+    //     <Text strong className="text-green-600 text-base">
+    //       {formatAmount(getTotalPayable(record))}
+    //     </Text>
+    //   ),
+    // },
     {
       title: "Payment Status",
       key: "paymentStatus",
