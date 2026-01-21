@@ -65,7 +65,7 @@ const RequirementTableApprover = () => {
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(
-        `${API_BASE_URL}request${queryString}`,
+        `${API_BASE_URL}request/all${queryString}`,
         config,
       );
       setRequirements(res.data.items || []);
@@ -295,7 +295,7 @@ const RequirementTableApprover = () => {
       width: 150,
       render: (text) => (
         <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
-          {text || "-"}
+          {text?.clientName || "-"}
         </span>
       ),
     },
