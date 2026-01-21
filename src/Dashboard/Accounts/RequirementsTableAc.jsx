@@ -12,6 +12,7 @@ import {
   Collapse,
   DatePicker,
   Tooltip,
+  Select,
 } from "antd";
 import {
   EditOutlined,
@@ -26,6 +27,7 @@ import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
 
 const { Panel } = Collapse;
+const { Option } = Select;
 
 const RequirementsTableAc = () => {
   const user = useSelector((state) => state.user.value);
@@ -96,6 +98,39 @@ const RequirementsTableAc = () => {
   };
 
   const handleEditSave = async (row) => {
+    // For string fields (entity_account, amount_paid_to), don't validate as number
+    if (editField === "entity_account" || editField === "amount_paid_to") {
+      if (!editValue || editValue.trim() === "") {
+        message.error("Please enter a valid value");
+        return;
+      }
+      try {
+        await axios.patch(
+          `${API_BASE_URL}request/${row.id}`,
+          { [editField]: editValue },
+          config,
+        );
+        message.success(
+          `${editField === "entity_account" ? "Entity" : "Paid to"} updated`,
+        );
+        setEditRowId(null);
+        setEditField(null);
+        setEditValue(null);
+        fetchRequirementsData(
+          search,
+          selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        );
+      } catch {
+        message.error(
+          `Failed to update ${
+            editField === "entity_account" ? "entity" : "paid to"
+          }`,
+        );
+      }
+      return;
+    }
+
+    // For numeric fields
     if (editValue == null || isNaN(editValue)) {
       message.error("Please enter a valid number");
       return;
@@ -177,7 +212,14 @@ const RequirementsTableAc = () => {
     setEditValue(row[field] ?? 0);
   };
 
-  const onEditChange = (e) => setEditValue(e.target.value);
+  const onEditChange = (e) => {
+    // Handle both Input change events and Select direct values
+    if (e && e.target) {
+      setEditValue(e.target.value);
+    } else {
+      setEditValue(e);
+    }
+  };
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -483,6 +525,192 @@ const RequirementsTableAc = () => {
       },
     },
     {
+      title: "Entity",
+      dataIndex: "entity_account",
+      key: "entity_account",
+      width: 250,
+      render: (entity_account, row) => {
+        const checkApproved = (v) => {
+          if (v === true) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "APPROVED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "APPROVED") ||
+              v.approved === true
+            );
+          return false;
+        };
+        const checkRejected = (v) => {
+          if (v === false) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "REJECTED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "REJECTED") ||
+              v.rejected === true
+            );
+          return false;
+        };
+
+        const approved =
+          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+        const rejected =
+          checkRejected(row.approver_check) ||
+          checkRejected(row.owner_check) ||
+          row.status === "REJECTED";
+
+        if (rejected) {
+          return (
+            <span style={{ color: "#9ca3af", fontWeight: 700, fontSize: 18 }}>
+              {entity_account || "-"}
+            </span>
+          );
+        }
+
+        if (
+          approved &&
+          row.id === editRowId &&
+          editField === "entity_account"
+        ) {
+          return (
+            <Space>
+              <Select
+                size="small"
+                value={editValue}
+                onChange={onEditChange}
+                style={{ width: 200, fontWeight: 600, fontSize: 16 }}
+                placeholder="Select entity"
+              >
+                <Option value="Blue Pulse Ventures Pvt Lmtd.">
+                  Blue Pulse Ventures Pvt Lmtd.
+                </Option>
+                <Option value="Sky Blue Event Management India Pvt Lmtd.">
+                  Sky Blue Event Management India Pvt Lmtd.
+                </Option>
+                <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+              </Select>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                size="small"
+                onClick={() => handleEditSave(row)}
+                style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+              />
+            </Space>
+          );
+        }
+
+        return (
+          <Space>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+              {entity_account || "-"}
+            </span>
+            {approved ? (
+              <Button
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => startEdit(row, "entity_account")}
+              />
+            ) : (
+              <Tooltip title={"Awaiting approver/owner approval"}>
+                <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
+              </Tooltip>
+            )}
+          </Space>
+        );
+      },
+    },
+    {
+      title: "Paid To",
+      dataIndex: "amount_paid_to",
+      key: "amount_paid_to",
+      width: 200,
+      render: (amount_paid_to, row) => {
+        const checkApproved = (v) => {
+          if (v === true) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "APPROVED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "APPROVED") ||
+              v.approved === true
+            );
+          return false;
+        };
+        const checkRejected = (v) => {
+          if (v === false) return true;
+          if (!v && v !== 0) return false;
+          if (typeof v === "string") return v.toUpperCase() === "REJECTED";
+          if (typeof v === "object")
+            return (
+              (v.status && v.status.toString().toUpperCase() === "REJECTED") ||
+              v.rejected === true
+            );
+          return false;
+        };
+
+        const approved =
+          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+        const rejected =
+          checkRejected(row.approver_check) ||
+          checkRejected(row.owner_check) ||
+          row.status === "REJECTED";
+
+        if (rejected) {
+          return (
+            <span style={{ color: "#9ca3af", fontWeight: 700, fontSize: 18 }}>
+              {amount_paid_to || "-"}
+            </span>
+          );
+        }
+
+        if (
+          approved &&
+          row.id === editRowId &&
+          editField === "amount_paid_to"
+        ) {
+          return (
+            <Space>
+              <Input
+                style={{ width: 150, fontWeight: 600, fontSize: 18 }}
+                value={editValue}
+                onChange={onEditChange}
+                size="small"
+                placeholder="Enter name"
+              />
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                size="small"
+                onClick={() => handleEditSave(row)}
+                style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+              />
+            </Space>
+          );
+        }
+
+        return (
+          <Space>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+              {amount_paid_to || "-"}
+            </span>
+            {approved ? (
+              <Button
+                icon={<EditOutlined />}
+                size="small"
+                onClick={() => startEdit(row, "amount_paid_to")}
+              />
+            ) : (
+              <Tooltip title={"Awaiting approver/owner approval"}>
+                <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
+              </Tooltip>
+            )}
+          </Space>
+        );
+      },
+    },
+    {
       title: "Actions",
       key: "actions",
       width: 250,
@@ -656,7 +884,7 @@ const RequirementsTableAc = () => {
                 columns={columns}
                 dataSource={sortedRequirements(deptObj.items)}
                 pagination={false}
-                scroll={{ x: 1500 }}
+                scroll={{ x: 2000 }}
                 size="middle"
                 rowClassName={rowClassName}
               />

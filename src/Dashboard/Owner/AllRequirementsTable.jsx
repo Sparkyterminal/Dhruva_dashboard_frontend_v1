@@ -42,6 +42,8 @@ const AllRequirementsTable = () => {
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
   const [editApprovedAmount, setEditApprovedAmount] = useState(null);
+  const [editEntityAccount, setEditEntityAccount] = useState(null);
+  const [editAmountPaidTo, setEditAmountPaidTo] = useState(null);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -230,12 +232,60 @@ const AllRequirementsTable = () => {
     setEditPlannedAmount(row.planned_amount);
     setEditAmountPaid(row.amount_paid);
     setEditApprovedAmount(row.approver_amount);
+    setEditEntityAccount(row.entity_account ?? "");
+    setEditAmountPaidTo(row.amount_paid_to ?? "");
   };
 
   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
   const handleApprovedAmountChange = (e) =>
     setEditApprovedAmount(e.target.value);
+  const handleEntityAccountChange = (value) => setEditEntityAccount(value);
+  const handleAmountPaidToChange = (e) => setEditAmountPaidTo(e.target.value);
+
+  const handleEntityAccountSave = async (row) => {
+    if (!editEntityAccount || editEntityAccount.trim() === "") {
+      message.error("Please select an entity");
+      return;
+    }
+    try {
+      await axios.patch(
+        `${API_BASE_URL}request/${row.id}`,
+        { entity_account: editEntityAccount },
+        config,
+      );
+      message.success("Entity updated");
+      setEditRowId(null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+      );
+    } catch (err) {
+      message.error("Failed to update entity");
+    }
+  };
+
+  const handleAmountPaidToSave = async (row) => {
+    if (!editAmountPaidTo || editAmountPaidTo.trim() === "") {
+      message.error("Please enter paid to name");
+      return;
+    }
+    try {
+      await axios.patch(
+        `${API_BASE_URL}request/${row.id}`,
+        { amount_paid_to: editAmountPaidTo },
+        config,
+      );
+      message.success("Paid to updated");
+      setEditRowId(null);
+      fetchRequirementsData(
+        search,
+        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+      );
+    } catch (err) {
+      message.error("Failed to update paid to");
+    }
+  };
 
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -504,6 +554,94 @@ const AllRequirementsTable = () => {
                 style: "currency",
                 currency: "INR",
               }) || "₹0"}
+            </span>
+            <Button
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handlePlannedAmountEdit(row)}
+            />
+          </Space>
+        ),
+    },
+    {
+      title: "Entity",
+      dataIndex: "entity_account",
+      key: "entity_account",
+      width: 250,
+      render: (entity_account, row) =>
+        row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
+          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
+            {entity_account || "-"}
+          </span>
+        ) : row.id === editRowId ? (
+          <Space>
+            <Select
+              size="small"
+              value={editEntityAccount}
+              onChange={handleEntityAccountChange}
+              style={{ width: 200, fontWeight: 600, fontSize: 16 }}
+              placeholder="Select entity"
+            >
+              <Option value="Blue Pulse Ventures Pvt Lmtd.">
+                Blue Pulse Ventures Pvt Lmtd.
+              </Option>
+              <Option value="Sky Blue Event Management India Pvt Lmtd.">
+                Sky Blue Event Management India Pvt Lmtd.
+              </Option>
+              <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+            </Select>
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              size="small"
+              onClick={() => handleEntityAccountSave(row)}
+              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+            />
+          </Space>
+        ) : (
+          <Space>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+              {entity_account || "-"}
+            </span>
+            <Button
+              icon={<EditOutlined />}
+              size="small"
+              onClick={() => handlePlannedAmountEdit(row)}
+            />
+          </Space>
+        ),
+    },
+    {
+      title: "Paid To",
+      dataIndex: "amount_paid_to",
+      key: "amount_paid_to",
+      width: 200,
+      render: (amount_paid_to, row) =>
+        row.owner_check === "APPROVED" || row.owner_check === "REJECTED" ? (
+          <span style={{ color: "#555", fontWeight: 700, fontSize: 18 }}>
+            {amount_paid_to || "-"}
+          </span>
+        ) : row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 150, fontWeight: 600, fontSize: 18 }}
+              value={editAmountPaidTo}
+              onChange={handleAmountPaidToChange}
+              size="small"
+              placeholder="Enter name"
+            />
+            <Button
+              type="primary"
+              icon={<CheckOutlined />}
+              size="small"
+              onClick={() => handleAmountPaidToSave(row)}
+              style={{ background: "#3b82f6", borderColor: "#3b82f6" }}
+            />
+          </Space>
+        ) : (
+          <Space>
+            <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+              {amount_paid_to || "-"}
             </span>
             <Button
               icon={<EditOutlined />}
@@ -962,7 +1100,7 @@ const AllRequirementsTable = () => {
                     columns={columns}
                     dataSource={sortedRequirements(deptObj.items)}
                     pagination={false}
-                    scroll={{ x: 2000 }}
+                    scroll={{ x: 2500 }}
                     size="middle"
                     rowClassName={rowClassName}
                   />

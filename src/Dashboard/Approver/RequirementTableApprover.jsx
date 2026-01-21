@@ -14,6 +14,7 @@ import {
   Tag,
   Collapse,
   DatePicker,
+  Select,
 } from "antd";
 import {
   EditOutlined,
@@ -27,6 +28,7 @@ import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
 
 const { Panel } = Collapse;
+const { Option } = Select;
 
 const RequirementTableApprover = () => {
   const user = useSelector((state) => state.user.value);
@@ -40,6 +42,8 @@ const RequirementTableApprover = () => {
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
   const [editApproverAmount, setEditApproverAmount] = useState(null);
+  const [editEntityAccount, setEditEntityAccount] = useState(null);
+  const [editAmountPaidTo, setEditAmountPaidTo] = useState(null);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -119,11 +123,15 @@ const RequirementTableApprover = () => {
     setEditPlannedAmount(row.planned_amount ?? "");
     setEditAmountPaid(row.amount_paid ?? "");
     setEditApproverAmount(row.approver_amount ?? "");
+    setEditEntityAccount(row.entity_account ?? "");
+    setEditAmountPaidTo(row.amount_paid_to ?? "");
   };
   const handlePlannedAmountChange = (e) => setEditPlannedAmount(e.target.value);
   const handleAmountPaidChange = (e) => setEditAmountPaid(e.target.value);
   const handleApproverAmountChange = (e) =>
     setEditApproverAmount(e.target.value);
+  const handleEntityAccountChange = (value) => setEditEntityAccount(value);
+  const handleAmountPaidToChange = (e) => setEditAmountPaidTo(e.target.value);
 
   // Save the editable fields: planned_amount, amount_paid, and approver_amount
   const handleSaveClick = async (row) => {
@@ -150,6 +158,8 @@ const RequirementTableApprover = () => {
           planned_amount: planned,
           amount_paid: paid,
           approver_amount: approved,
+          entity_account: editEntityAccount || "",
+          amount_paid_to: editAmountPaidTo || "",
         },
         config,
       );
@@ -414,6 +424,58 @@ const RequirementTableApprover = () => {
               style: "currency",
               currency: "INR",
             }) || "₹0"}
+          </span>
+        ),
+    },
+    {
+      title: "Entity",
+      dataIndex: "entity_account",
+      key: "entity_account",
+      width: 250,
+      render: (entity_account, row) =>
+        row.id === editRowId ? (
+          <Space>
+            <Select
+              size="small"
+              value={editEntityAccount}
+              onChange={handleEntityAccountChange}
+              style={{ width: 200, fontWeight: 600, fontSize: 16 }}
+              placeholder="Select entity"
+            >
+              <Option value="Blue Pulse Ventures Pvt Lmtd.">
+                Blue Pulse Ventures Pvt Lmtd.
+              </Option>
+              <Option value="Sky Blue Event Management India Pvt Lmtd.">
+                Sky Blue Event Management India Pvt Lmtd.
+              </Option>
+              <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+            </Select>
+          </Space>
+        ) : (
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+            {entity_account || "-"}
+          </span>
+        ),
+    },
+    {
+      title: "Paid To",
+      dataIndex: "amount_paid_to",
+      key: "amount_paid_to",
+      width: 200,
+      render: (amount_paid_to, row) =>
+        row.id === editRowId ? (
+          <Space>
+            <Input
+              style={{ width: 150, fontWeight: 600, fontSize: 18 }}
+              value={editAmountPaidTo}
+              onChange={handleAmountPaidToChange}
+              size="small"
+              placeholder="Enter name"
+            />
+          </Space>
+        ) : (
+          <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+            {amount_paid_to || "-"}
           </span>
         ),
     },
@@ -796,7 +858,7 @@ const RequirementTableApprover = () => {
                 columns={columns}
                 dataSource={sortedRequirements(deptObj.items)}
                 pagination={false} // No pagination as requested
-                scroll={{ x: 1600 }}
+                scroll={{ x: 2100 }}
                 size="middle"
                 rowClassName={rowClassName}
               />
