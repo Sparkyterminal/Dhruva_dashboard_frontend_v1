@@ -2834,7 +2834,7 @@ const AddInflow = () => {
                     </span>
                   </div>
 
-                  <Form.List name="advances">
+                  {/* <Form.List name="advances">
                     {(fields, { add, remove }) => (
                       <>
                         <div
@@ -3035,7 +3035,135 @@ const AddInflow = () => {
                         </motion.div>
                       </>
                     )}
-                  </Form.List>
+                  </Form.List> */}
+                  <Form.List name="advances">
+  {(fields, { add, remove }) => (
+    <>
+      <Form.Item dependencies={['eventConfirmation']} noStyle>
+        {({ getFieldValue }) => {
+          const eventConfirmation = getFieldValue('eventConfirmation');
+          const isMandatory = eventConfirmation !== 'InProgress';
+
+          return (
+            <>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "80px 1fr 1fr 60px",
+                  gap: 8,
+                  padding: "8px 12px",
+                  background: "#f9fafb",
+                  borderRadius: 8,
+                  marginBottom: 8,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: "#6b7280",
+                }}
+              >
+                <span>No.</span>
+                <span>Amount</span>
+                <span>Date</span>
+                <span>Action</span>
+              </div>
+              {fields.map((field, idx) => (
+                <div
+                  key={field.key}
+                  className="glass-advance-card"
+                  style={{
+                    marginBottom: 8,
+                    padding: "8px 12px",
+                    borderRadius: 8,
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "80px 1fr 1fr 60px",
+                      gap: 8,
+                      alignItems: "center",
+                    }}
+                  >
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        fontSize: 13,
+                      }}
+                    >
+                      #{idx + 1}
+                    </div>
+                    <Form.Item
+                      key={`expectedAmount-${field.key}`}
+                      name={[field.name, "expectedAmount"]}
+                      isListField={field.isListField}
+                      rules={[
+                        {
+                          required: isMandatory,
+                          message: "Enter amount",
+                        },
+                      ]}
+                      style={{ marginBottom: 0 }}
+                    >
+                      <InputNumber
+                        size="large"
+                        style={{ width: "100%" }}
+                        min={0}
+                        formatter={indianFormatter}
+                        parser={indianParser}
+                        placeholder="Enter amount"
+                      />
+                    </Form.Item>
+                    <Form.Item
+                      key={`advanceDate-${field.key}`}
+                      name={[field.name, "advanceDate"]}
+                      isListField={field.isListField}
+                      rules={[
+                        {
+                          required: isMandatory,
+                          message: "Select date",
+                        },
+                      ]}
+                      style={{ marginBottom: 0 }}
+                    >
+                      <DatePicker
+                        size="large"
+                        style={{ width: "100%" }}
+                        format={timeFormat}
+                        showTime={{
+                          use12Hours: true,
+                          format: "hh:mm A",
+                        }}
+                      />
+                    </Form.Item>
+                    <div style={{ textAlign: "center" }}>
+                      {fields.length > 1 && (
+                        <Button
+                          type="text"
+                          danger
+                          icon={<DeleteOutlined />}
+                          onClick={() => remove(field.name)}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <div>
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  block
+                  icon={<PlusOutlined />}
+                >
+                  Add Advance Payment
+                </Button>
+              </div>
+            </>
+          );
+        }}
+      </Form.Item>
+    </>
+  )}
+</Form.List>
                 </motion.div>
               )}
 
