@@ -15,6 +15,7 @@ import {
   Divider,
   Badge,
   Statistic,
+  Tabs,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -44,6 +45,7 @@ const ViewInflow = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [activeTab, setActiveTab] = useState("InProgress");
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -73,7 +75,7 @@ const ViewInflow = () => {
         setLoading(false);
       }
     },
-    [user?.access_token]
+    [user?.access_token],
   );
 
   useEffect(() => {
@@ -143,7 +145,7 @@ const ViewInflow = () => {
       // Other events: sum all event types
       return record.eventTypes.reduce(
         (sum, et) => sum + (et.totalPayable || 0),
-        0
+        0,
       );
     }
   };
@@ -157,7 +159,7 @@ const ViewInflow = () => {
       // Other events: sum all event types
       return record.eventTypes.reduce(
         (sum, et) => sum + (et.agreedAmount || 0),
-        0
+        0,
       );
     }
   };
@@ -244,12 +246,45 @@ const ViewInflow = () => {
         const eventNameStr =
           typeof text === "string" ? text : text?.name || text?.id || "N/A";
         return (
-          <Tag color="purple" className="text-sm font-semibold px-3 py-1">
+          <Tag
+            color="purple"
+            className="text-sm font-semibold px-3 py-1 text-wrap"
+          >
             {eventNameStr}
           </Tag>
         );
       },
     },
+    {
+      title: "Note",
+      key: "note",
+      width: 120,
+      align: "right",
+      render: (_, record) => (
+        <Text strong className="text-black text-wrap">
+          {record.note ? record.note : "N/A"}
+        </Text>
+      ),
+    },
+    ...(activeTab === "InProgress" || activeTab === "Cancelled"
+      ? [
+          {
+            title: "Next Meeting Date",
+            key: "meetingDate",
+            width: 140,
+            render: (_, record) => (
+              <div className="flex items-center gap-1">
+                {/* <CalendarOutlined className="text-blue-500 text-xs" /> */}
+                <Text className="text-sm">
+                  {record.meetingDate
+                    ? formatDate(record.meetingDate)
+                    : "Not Set"}
+                </Text>
+              </div>
+            ),
+          },
+        ]
+      : []),
     {
       title: "Client Details",
       key: "clientDetails",
@@ -327,17 +362,17 @@ const ViewInflow = () => {
         </div>
       ),
     },
-    {
-      title: "Total Payable",
-      key: "totalPayable",
-      width: 120,
-      align: "right",
-      render: (_, record) => (
-        <Text strong className="text-green-600 text-base">
-          {formatAmount(getTotalPayable(record))}
-        </Text>
-      ),
-    },
+    // {
+    //   title: "Total Payable",
+    //   key: "totalPayable",
+    //   width: 120,
+    //   align: "right",
+    //   render: (_, record) => (
+    //     <Text strong className="text-green-600 text-base">
+    //       {formatAmount(getTotalPayable(record))}
+    //     </Text>
+    //   ),
+    // },
     {
       title: "Payment Status",
       key: "paymentStatus",
@@ -365,8 +400,8 @@ const ViewInflow = () => {
                 percentage === 100
                   ? "success"
                   : percentage > 0
-                  ? "warning"
-                  : "default"
+                    ? "warning"
+                    : "default"
               }
             >
               {percentage}% Collected
@@ -418,28 +453,66 @@ const ViewInflow = () => {
   ];
 
   // Calculate statistics
-  const totalBookings = bookings.length;
-  const totalAgreedRevenue = bookings.reduce(
+  const filteredBookings = bookings.filter(
+    (booking) => booking.eventConfirmation === activeTab,
+  );
+  const totalBookings = filteredBookings.length;
+  const totalAgreedRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalAgreedAmount(curr),
-    0
+    0,
   );
-  const totalPayableRevenue = bookings.reduce(
+  const totalPayableRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
-    0
+    0,
   );
-  const totalReceivedRevenue = bookings.reduce(
+  const totalReceivedRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalReceivedAdvances(curr),
-    0
+    0,
   );
-  const totalPendingRevenue = bookings.reduce((acc, curr) => {
+  const totalPendingRevenue = filteredBookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
     const received = getTotalReceivedAdvances(curr);
     return acc + (expected - received);
   }, 0);
-  const totalEventTypes = bookings.reduce(
+  const totalEventTypes = filteredBookings.reduce(
     (acc, curr) => acc + (curr.eventTypes?.length || 0),
-    0
+    0,
   );
+
+  // Tab items
+  const tabItems = [
+    {
+      key: "InProgress",
+      label: (
+        <span>
+          <ClockCircleOutlined /> InProgress (
+          {bookings.filter((b) => b.eventConfirmation === "InProgress").length})
+        </span>
+      ),
+    },
+    {
+      key: "Confirmed Event",
+      label: (
+        <span>
+          <CheckCircleOutlined /> Confirmed Event (
+          {
+            bookings.filter((b) => b.eventConfirmation === "Confirmed Event")
+              .length
+          }
+          )
+        </span>
+      ),
+    },
+    {
+      key: "Cancelled",
+      label: (
+        <span>
+          ❌ Cancelled (
+          {bookings.filter((b) => b.eventConfirmation === "Cancelled").length})
+        </span>
+      ),
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
@@ -609,13 +682,24 @@ const ViewInflow = () => {
 
         {/* Table */}
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl overflow-hidden">
+          <Tabs
+            activeKey={activeTab}
+            onChange={(key) => {
+              setActiveTab(key);
+              setPagination({ ...pagination, current: 1 });
+            }}
+            items={tabItems}
+            size="large"
+            className="mb-4"
+          />
           <Table
             columns={columns}
-            dataSource={bookings}
+            dataSource={filteredBookings}
             loading={loading}
             rowKey="_id"
             pagination={{
               ...pagination,
+              total: filteredBookings.length,
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} bookings`,
               pageSizeOptions: ["10", "20", "50"],
@@ -733,8 +817,8 @@ const ViewInflow = () => {
                       const eventTypeName = !eventType.eventType
                         ? "Main Event"
                         : typeof eventType.eventType === "string"
-                        ? eventType.eventType
-                        : eventType.eventType?.name || "N/A";
+                          ? eventType.eventType
+                          : eventType.eventType?.name || "N/A";
                       return (
                         <Card
                           key={index}
@@ -859,7 +943,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-green-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0]
-                                        .agreedAmount || 0
+                                        .agreedAmount || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -872,7 +956,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-blue-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0]
-                                        .accountAmount || 0
+                                        .accountAmount || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -885,7 +969,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-purple-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0].accountGst ||
-                                        0
+                                        0,
                                     )}
                                   </Text>
                                 </div>
@@ -898,7 +982,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-pink-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0]
-                                        .accountAmountWithGst || 0
+                                        .accountAmountWithGst || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -911,7 +995,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-yellow-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0].cashAmount ||
-                                        0
+                                        0,
                                     )}
                                   </Text>
                                 </div>
@@ -924,7 +1008,7 @@ const ViewInflow = () => {
                                   <Text strong className="text-emerald-700">
                                     {formatAmount(
                                       selectedEvent.eventTypes[0]
-                                        .totalPayable || 0
+                                        .totalPayable || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -1031,7 +1115,7 @@ const ViewInflow = () => {
                                       </Col>
                                     </Row>
                                   </Card>
-                                )
+                                ),
                               )
                             ) : (
                               <Text className="text-xs text-gray-400">
@@ -1053,8 +1137,8 @@ const ViewInflow = () => {
                       const eventTypeName = !eventType.eventType
                         ? "Main Event"
                         : typeof eventType.eventType === "string"
-                        ? eventType.eventType
-                        : eventType.eventType?.name || "N/A";
+                          ? eventType.eventType
+                          : eventType.eventType?.name || "N/A";
                       return (
                         <Card
                           key={index}
@@ -1195,7 +1279,7 @@ const ViewInflow = () => {
                                   </Text>
                                   <Text strong className="text-pink-700">
                                     {formatAmount(
-                                      eventType.accountAmountWithGst || 0
+                                      eventType.accountAmountWithGst || 0,
                                     )}
                                   </Text>
                                 </div>
@@ -1340,8 +1424,8 @@ const ViewInflow = () => {
                 const eventTypeName = !eventType.eventType
                   ? "Engagement"
                   : typeof eventType.eventType === "string"
-                  ? eventType.eventType
-                  : eventType.eventType?.name || "N/A";
+                    ? eventType.eventType
+                    : eventType.eventType?.name || "N/A";
                 return (
                   <Card
                     key={index}
@@ -1480,7 +1564,7 @@ const ViewInflow = () => {
                                   </Text>
                                   <Text strong className="text-pink-700">
                                     {formatAmount(
-                                      eventType.accountAmountWithGst || 0
+                                      eventType.accountAmountWithGst || 0,
                                     )}
                                   </Text>
                                 </div>

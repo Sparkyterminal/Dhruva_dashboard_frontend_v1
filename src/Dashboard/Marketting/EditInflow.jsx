@@ -134,12 +134,12 @@ const EditInflow = () => {
       const list = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.coordinators)
-        ? raw.coordinators
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.coordinators
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       setCoordinators(list);
     } catch (err) {
       console.error("fetchCoordinators error:", err);
@@ -158,12 +158,12 @@ const EditInflow = () => {
       const list = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.venues)
-        ? raw.venues
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.venues
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       setVenues(list);
     } catch (err) {
       console.error("fetchVenues error:", err);
@@ -183,24 +183,24 @@ const EditInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}sub-venue-location`,
-        axiosConfig
+        axiosConfig,
       );
       const raw = res.data;
       const allSubVenues = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.subVenueLocations)
-        ? raw.subVenueLocations
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.subVenueLocations
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       // Filter sub venues by venue ID
       const filtered = allSubVenues.filter(
         (sv) =>
           sv.venue?.id === venueId ||
           sv.venue === venueId ||
-          sv.venueId === venueId
+          sv.venueId === venueId,
       );
       setSubVenues(filtered);
     } catch (err) {
@@ -221,23 +221,23 @@ const EditInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}sub-venue-location`,
-        axiosConfig
+        axiosConfig,
       );
       const raw = res.data;
       const allSubVenues = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.subVenueLocations)
-        ? raw.subVenueLocations
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.subVenueLocations
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       const filtered = allSubVenues.filter(
         (sv) =>
           sv.venue?.id === venueId ||
           sv.venue === venueId ||
-          sv.venueId === venueId
+          sv.venueId === venueId,
       );
       setEventTypeSubVenues((prev) => ({ ...prev, [eventTypeId]: filtered }));
     } catch (err) {
@@ -472,13 +472,24 @@ const EditInflow = () => {
 
   useEffect(() => {
     const fetchAndPopulateEventData = async () => {
-      if (!id || events.length === 0) return;
+      // Wait for events, venues, and coordinators to be loaded first
+      if (!id || events.length === 0 || venues.length === 0) {
+        console.log("⏳ Waiting for data to load...", {
+          id,
+          eventsLoaded: events.length > 0,
+          venuesLoaded: venues.length > 0,
+          coordinatorsLoaded: coordinators.length > 0,
+        });
+        return;
+      }
 
       console.log("🔍 EditInflow - ID from URL params:", id);
       console.log(
         "🔍 EditInflow - Fetching event with URL:",
-        `${API_BASE_URL}events/${id}`
+        `${API_BASE_URL}events/${id}`,
       );
+      console.log("✅ Venues available:", venues.length);
+      console.log("✅ Coordinators available:", coordinators.length);
 
       setInitialLoading(true);
       try {
@@ -539,7 +550,7 @@ const EditInflow = () => {
           try {
             const eventTypesRes = await axios.get(
               `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
-              axiosConfig
+              axiosConfig,
             );
             fetchedEventTypes =
               eventTypesRes.data?.eventTypes || eventTypesRes.data || [];
@@ -580,7 +591,7 @@ const EditInflow = () => {
                 (t) =>
                   t.name === typeName ||
                   t.id === typeIdFromEvent ||
-                  t._id === typeIdFromEvent
+                  t._id === typeIdFromEvent,
               );
               return found?.id || found?._id;
             })
@@ -590,16 +601,10 @@ const EditInflow = () => {
 
           setSelectedEventTypes(selectedTypeIds);
 
-          // Check mode
-          const hasTopLevelAgreedAmount =
-            event.agreedAmount !== undefined && event.agreedAmount !== null;
-          const hasTopLevelAdvances =
-            event.advances && event.advances.length > 0;
-          const mode =
-            hasTopLevelAgreedAmount || hasTopLevelAdvances
-              ? "complete"
-              : "separate";
+          // Check mode from advancePaymentType field
+          const mode = event.advancePaymentType || "separate";
           setAdvanceMode(mode);
+          console.log("🔍 Advance Payment Mode from API:", mode);
 
           // Prepare form values
           // Extract IDs from objects for lead1 and lead2
@@ -623,6 +628,9 @@ const EditInflow = () => {
             lead1: lead1Id,
             lead2: lead2Id,
             note: event.note,
+            meetingDate: event.meetingDate
+              ? dayjs(event.meetingDate)
+              : undefined,
             eventConfirmation: event.eventConfirmation || "InProgress",
             eventTypes: selectedTypeIds,
           };
@@ -644,7 +652,7 @@ const EditInflow = () => {
             if (!typeId) {
               console.warn(
                 `⚠️ Could not determine typeId for event type at index ${idx}:`,
-                et
+                et,
               );
               return;
             }
@@ -656,27 +664,72 @@ const EditInflow = () => {
               endDate: et.endDate ? dayjs(et.endDate) : undefined,
             };
 
-            // Handle venue location - extract ID from object if needed
-            const venueLocation =
-              typeof et.venueLocation === "object"
-                ? et.venueLocation?.id || et.venueLocation?._id
-                : et.venueLocation;
-            const subVenueLocation =
-              typeof et.subVenueLocation === "object"
-                ? et.subVenueLocation?.id || et.subVenueLocation?._id
-                : et.subVenueLocation;
+            // Handle venue location - extract ID or match by name
+            let venueLocation = null;
+            if (typeof et.venueLocation === "object" && et.venueLocation) {
+              // Try to get ID first
+              venueLocation = et.venueLocation.id || et.venueLocation._id;
+              // If no ID, match by name from venues array
+              if (!venueLocation && et.venueLocation.name) {
+                const matchedVenue = venues.find(
+                  (v) => v.name === et.venueLocation.name,
+                );
+                venueLocation = matchedVenue?.id || matchedVenue?._id;
+                console.log(
+                  `🔍 Matched venue by name "${et.venueLocation.name}":`,
+                  venueLocation,
+                );
+              }
+            } else {
+              venueLocation = et.venueLocation;
+            }
+
+            let subVenueLocation = null;
+            if (
+              typeof et.subVenueLocation === "object" &&
+              et.subVenueLocation
+            ) {
+              subVenueLocation =
+                et.subVenueLocation.id || et.subVenueLocation._id;
+              // If no ID, try to match by name
+              if (!subVenueLocation && et.subVenueLocation.name) {
+                const matchedSubVenue = subVenues.find(
+                  (sv) => sv.name === et.subVenueLocation.name,
+                );
+                subVenueLocation = matchedSubVenue?.id || matchedSubVenue?._id;
+              }
+            } else {
+              subVenueLocation = et.subVenueLocation;
+            }
+
             const coordinator =
               typeof et.coordinator === "object"
                 ? et.coordinator?.id || et.coordinator?._id
                 : et.coordinator;
 
+            console.log(
+              `🔍 Event Type ${typeId} Venue Location:`,
+              venueLocation,
+            );
+            console.log(`🔍 Event Type ${typeId} Sub Venue:`, subVenueLocation);
+            console.log(`🔍 Event Type ${typeId} Coordinator:`, coordinator);
+            console.log(
+              `🔍 Event Type ${typeId} Agreed Amount:`,
+              et.agreedAmount,
+            );
+            console.log(
+              `🔍 Event Type ${typeId} Account Amount:`,
+              et.accountAmount,
+            );
+            console.log(`🔍 Event Type ${typeId} Cash Amount:`, et.cashAmount);
+
             eventTypeMeta[typeId] = {
               venueLocation: venueLocation,
               subVenueLocation: subVenueLocation,
               coordinator: coordinator,
-              totalAgreedAmount: et.agreedAmount,
-              accountAmount: et.accountAmount,
-              cashAmount: et.cashAmount,
+              totalAgreedAmount: et.agreedAmount ?? 0,
+              accountAmount: et.accountAmount ?? 0,
+              cashAmount: et.cashAmount ?? 0,
             };
 
             // Fetch sub-venues if venue is set
@@ -707,12 +760,20 @@ const EditInflow = () => {
 
           if (mode === "separate") {
             formValues.eventTypeAdvances = eventTypeAdvances;
+            console.log("🔍 Separate mode - event type meta:", eventTypeMeta);
           } else {
-            // Complete package mode
-            formValues.agreedAmountTotal = event.agreedAmount;
-            formValues.agreedAmountAccount = event.accountAmount;
-            formValues.agreedAmountCash = event.cashAmount;
-            formValues.advances = (event.advances || []).map((adv) => ({
+            // Complete package mode - get amounts and advances from first event type
+            const firstEventType = eventTypesFromEvent[0];
+            formValues.agreedAmountTotal =
+              firstEventType?.agreedAmount ?? event.agreedAmount ?? 0;
+            formValues.agreedAmountAccount =
+              firstEventType?.accountAmount ?? event.accountAmount ?? 0;
+            formValues.agreedAmountCash =
+              firstEventType?.cashAmount ?? event.cashAmount ?? 0;
+
+            const advancesSource =
+              firstEventType?.advances || event.advances || [];
+            formValues.advances = advancesSource.map((adv) => ({
               expectedAmount: adv.expectedAmount,
               advanceDate: adv.advanceDate ? dayjs(adv.advanceDate) : undefined,
               advanceNumber: adv.advanceNumber,
@@ -724,6 +785,19 @@ const EditInflow = () => {
               updatedBy: adv.updatedBy,
               updatedAt: adv.updatedAt,
             }));
+
+            console.log(
+              "🔍 Complete mode - Agreed Amount Total:",
+              formValues.agreedAmountTotal,
+            );
+            console.log(
+              "🔍 Complete mode - Account Amount:",
+              formValues.agreedAmountAccount,
+            );
+            console.log(
+              "🔍 Complete mode - Advances count:",
+              formValues.advances.length,
+            );
           }
 
           // Fetch sub-venues for each event type
@@ -780,6 +854,10 @@ const EditInflow = () => {
             altContactName: event.altContactName,
             lead1: lead1Id,
             lead2: lead2Id,
+            note: event.note,
+            meetingDate: event.meetingDate
+              ? dayjs(event.meetingDate)
+              : undefined,
             eventConfirmation: event.eventConfirmation || "InProgress",
             startDate: eventType.startDate
               ? dayjs(eventType.startDate)
@@ -804,7 +882,7 @@ const EditInflow = () => {
                 remarks: adv.remarks,
                 updatedBy: adv.updatedBy,
                 updatedAt: adv.updatedAt,
-              })
+              }),
             ),
           });
 
@@ -832,7 +910,7 @@ const EditInflow = () => {
 
     fetchAndPopulateEventData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, events]);
+  }, [id, events, venues, coordinators]);
 
   const handleEventNameChange = async (eventId) => {
     const evt =
@@ -860,7 +938,7 @@ const EditInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}event-types/event/${eventId}`,
-        axiosConfig
+        axiosConfig,
       );
       const data = res.data?.eventTypes || res.data || [];
       setEventTypes(data);
@@ -992,7 +1070,7 @@ const EditInflow = () => {
       const perTypePayload = hasEventTypes
         ? (values.eventTypes || []).map((typeId) => {
             const typeMeta = (eventTypes || []).find(
-              (t) => t.id === typeId || t._id === typeId
+              (t) => t.id === typeId || t._id === typeId,
             );
             const typeKey = typeId;
             const startDate = values.eventTypeDates?.[typeKey]?.startDate
@@ -1012,10 +1090,10 @@ const EditInflow = () => {
 
             // AMOUNT CALCULATION (Per Event Type)
             const totalAgreedPer = normalizeAmount(
-              values.eventTypeMeta?.[typeKey]?.totalAgreedAmount
+              values.eventTypeMeta?.[typeKey]?.totalAgreedAmount,
             );
             const accountAmtPer = normalizeAmount(
-              values.eventTypeMeta?.[typeKey]?.accountAmount
+              values.eventTypeMeta?.[typeKey]?.accountAmount,
             );
             const gstRatePer = 0.18; // Fixed 18% GST
             const accountGstPer =
@@ -1031,7 +1109,7 @@ const EditInflow = () => {
             const perEventAdvances =
               advanceMode === "separate"
                 ? buildAdvancesPayload(
-                    values.eventTypeAdvances?.[typeKey] || []
+                    values.eventTypeAdvances?.[typeKey] || [],
                   )
                 : [];
 
@@ -1059,31 +1137,38 @@ const EditInflow = () => {
         hasEventTypes && advanceMode === "separate"
           ? perTypePayload
           : hasEventTypes && advanceMode === "complete"
-          ? perTypePayload.map((et) => ({
-              ...et,
-              // Use common (shared) advances when in complete package mode
-              advances: sharedAdvances,
-            }))
-          : [
-              {
-                eventTypeId: null,
-                eventType: null,
-                startDate: values.startDate
-                  ? values.startDate.toISOString()
-                  : null,
-                endDate: values.endDate ? values.endDate.toISOString() : null,
-                venueLocation: values.venueLocation ?? null,
-                subVenueLocation: values.subVenueLocation ?? null, // FIXED: Added subVenueLocation
-                // FIXED: Correct field names matching backend schema
+            ? perTypePayload.map((et) => ({
+                ...et,
+                // In complete mode, use shared amounts for all event types
                 agreedAmount: totalAgreedShared ?? undefined,
                 accountAmount: accountAmtShared ?? 0,
                 accountGst: accountGstShared,
                 accountAmountWithGst: accountTotalShared,
                 cashAmount: cashAmtShared,
                 totalPayable: totalPayableShared,
+                // Use common (shared) advances when in complete package mode
                 advances: sharedAdvances,
-              },
-            ];
+              }))
+            : [
+                {
+                  eventTypeId: null,
+                  eventType: null,
+                  startDate: values.startDate
+                    ? values.startDate.toISOString()
+                    : null,
+                  endDate: values.endDate ? values.endDate.toISOString() : null,
+                  venueLocation: values.venueLocation ?? null,
+                  subVenueLocation: values.subVenueLocation ?? null, // FIXED: Added subVenueLocation
+                  // FIXED: Correct field names matching backend schema
+                  agreedAmount: totalAgreedShared ?? undefined,
+                  accountAmount: accountAmtShared ?? 0,
+                  accountGst: accountGstShared,
+                  accountAmountWithGst: accountTotalShared,
+                  cashAmount: cashAmtShared,
+                  totalPayable: totalPayableShared,
+                  advances: sharedAdvances,
+                },
+              ];
 
       const payload = {
         eventId: selectedEvent?.id || selectedEvent?._id || null,
@@ -1092,13 +1177,17 @@ const EditInflow = () => {
         contactNumber: values.contactNumber,
         lead1: values.lead1 ?? "",
         lead2: values.lead2 ?? "",
+        note: values.note || undefined,
+        meetingDate: values.meetingDate
+          ? values.meetingDate.toISOString()
+          : undefined,
         ...(values.eventConfirmation && {
           eventConfirmation: values.eventConfirmation,
         }),
         ...(isWeddingLike && {
           brideName: values.brideName,
           groomName: values.groomName,
-          note: values.note,
+          advancePaymentType: advanceMode, // FIXED: Added advancePaymentType for weddings
         }),
         ...(values.altContactNumber && {
           altContactNumber: values.altContactNumber,
@@ -1107,12 +1196,17 @@ const EditInflow = () => {
       };
 
       // Log payload for debugging
-      console.log("Updating payload:", JSON.stringify(payload, null, 2));
+      console.log("🔥 FORM VALUES:", JSON.stringify(values, null, 2));
+      console.log(
+        "🔥 EVENT TYPE META:",
+        JSON.stringify(values.eventTypeMeta, null, 2),
+      );
+      console.log("🔥 Updating payload:", JSON.stringify(payload, null, 2));
 
       const response = await axios.put(
         `${API_BASE_URL}events/${id}/edit`,
         payload,
-        axiosConfig
+        axiosConfig,
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -1129,7 +1223,7 @@ const EditInflow = () => {
 
         if (status === 400) {
           message.error(
-            errorMsg || "Invalid booking data. Please check your inputs."
+            errorMsg || "Invalid booking data. Please check your inputs.",
           );
         } else if (status === 401) {
           message.error("Unauthorized. Please login again.");
@@ -1137,18 +1231,18 @@ const EditInflow = () => {
           message.error("You don't have permission to update bookings.");
         } else if (status === 409) {
           message.error(
-            errorMsg || "Booking conflict. Please check the details."
+            errorMsg || "Booking conflict. Please check the details.",
           );
         } else if (status >= 500) {
           message.error("Server error. Please try again later.");
         } else {
           message.error(
-            errorMsg || "Failed to update booking. Please try again."
+            errorMsg || "Failed to update booking. Please try again.",
           );
         }
       } else if (error.request) {
         message.error(
-          "Network error. Please check your connection and try again."
+          "Network error. Please check your connection and try again.",
         );
       } else {
         message.error("An unexpected error occurred. Please try again.");
@@ -1369,6 +1463,7 @@ const EditInflow = () => {
                   >
                     <Option value="InProgress">InProgress</Option>
                     <Option value="Confirmed Event">Confirmed Event</Option>
+                    <Option value="Cancelled">Cancelled</Option>
                   </Select>
                 </Form.Item>
               </motion.div>
@@ -1583,6 +1678,45 @@ const EditInflow = () => {
                   />
                 </Form.Item>
               </motion.div>
+
+              {/* Meeting Date - Only for InProgress */}
+              <Form.Item noStyle dependencies={["eventConfirmation"]}>
+                {({ getFieldValue }) => {
+                  const eventConfirmation = getFieldValue("eventConfirmation");
+                  return eventConfirmation === "InProgress" ? (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.35 }}
+                    >
+                      <Form.Item label="Meeting Date" name="meetingDate">
+                        <DatePicker
+                          size="large"
+                          style={{ width: "100%" }}
+                          format={timeFormat}
+                          showTime={{ use12Hours: true, format: "hh:mm A" }}
+                          placeholder="Select meeting date"
+                        />
+                      </Form.Item>
+                    </motion.div>
+                  ) : null;
+                }}
+              </Form.Item>
+
+              {/* Note - For all events */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.38 }}
+              >
+                <Form.Item label="Note" name="note">
+                  <Input.TextArea
+                    rows={4}
+                    placeholder="Any special instructions, preferences, or notes for this event (optional)"
+                  />
+                </Form.Item>
+              </motion.div>
+
               {/* Contact Number */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -1681,7 +1815,10 @@ const EditInflow = () => {
                       }}
                     >
                       {venues.map((venue) => (
-                        <Option key={venue.id} value={venue.id}>
+                        <Option
+                          key={venue.id || venue._id}
+                          value={venue.id || venue._id}
+                        >
                           {venue.name}
                         </Option>
                       ))}
@@ -1793,10 +1930,10 @@ const EditInflow = () => {
                     >
                       {({ getFieldValue, setFieldsValue }) => {
                         const agreedAmount = normalizeAmount(
-                          getFieldValue("agreedAmountTotal")
+                          getFieldValue("agreedAmountTotal"),
                         );
                         const accountAmount = normalizeAmount(
-                          getFieldValue("agreedAmountAccount")
+                          getFieldValue("agreedAmountAccount"),
                         );
                         const gstRate = 0.18; // Fixed 18% GST
                         const accountWithGst =
@@ -1813,10 +1950,10 @@ const EditInflow = () => {
                         if (agreedAmount != null && accountAmount != null) {
                           const calculatedCash = Math.max(
                             0,
-                            agreedAmount - accountAmount
+                            agreedAmount - accountAmount,
                           );
                           const currentCash = normalizeAmount(
-                            getFieldValue("agreedAmountCash")
+                            getFieldValue("agreedAmountCash"),
                           );
                           if (currentCash !== calculatedCash) {
                             setTimeout(() => {
@@ -2023,7 +2160,8 @@ const EditInflow = () => {
                       <>
                         {selectedEventTypes.map((eventTypeId) => {
                           const typeMeta = (eventTypes || []).find(
-                            (t) => t.id === eventTypeId || t._id === eventTypeId
+                            (t) =>
+                              t.id === eventTypeId || t._id === eventTypeId,
                           );
                           const label =
                             typeMeta?.name || typeMeta?.label || "Event Type";
@@ -2203,7 +2341,7 @@ const EditInflow = () => {
                                             >
                                               {subVenue.name}
                                             </Option>
-                                          )
+                                          ),
                                         )}
                                       </Select>
                                     </Form.Item>
@@ -2293,14 +2431,14 @@ const EditInflow = () => {
                                           "eventTypeMeta",
                                           key,
                                           "totalAgreedAmount",
-                                        ])
+                                        ]),
                                       );
                                       const accountAmount = normalizeAmount(
                                         getFieldValue([
                                           "eventTypeMeta",
                                           key,
                                           "accountAmount",
-                                        ])
+                                        ]),
                                       );
                                       const gstRate = 0.18; // Fixed 18% GST
                                       const accountWithGst =
@@ -2313,7 +2451,7 @@ const EditInflow = () => {
                                         accountAmount != null
                                           ? Math.max(
                                               0,
-                                              agreedAmount - accountAmount
+                                              agreedAmount - accountAmount,
                                             )
                                           : 0;
                                       const clientPayable =
@@ -2326,14 +2464,14 @@ const EditInflow = () => {
                                       ) {
                                         const calculatedCash = Math.max(
                                           0,
-                                          agreedAmount - accountAmount
+                                          agreedAmount - accountAmount,
                                         );
                                         const currentCash = normalizeAmount(
                                           getFieldValue([
                                             "eventTypeMeta",
                                             key,
                                             "cashAmount",
-                                          ])
+                                          ]),
                                         );
                                         if (currentCash !== calculatedCash) {
                                           setTimeout(() => {
@@ -2595,14 +2733,14 @@ const EditInflow = () => {
                                             "eventTypeMeta",
                                             key,
                                             "totalAgreedAmount",
-                                          ])
+                                          ]),
                                         );
                                         const accountAmount = normalizeAmount(
                                           getFieldValue([
                                             "eventTypeMeta",
                                             key,
                                             "accountAmount",
-                                          ])
+                                          ]),
                                         );
                                         const gstRate = 0.18;
                                         const accountWithGst =
@@ -2615,7 +2753,7 @@ const EditInflow = () => {
                                           accountAmount != null
                                             ? Math.max(
                                                 0,
-                                                agreedAmount - accountAmount
+                                                agreedAmount - accountAmount,
                                               )
                                             : 0;
                                         const clientPayable =
@@ -2628,7 +2766,7 @@ const EditInflow = () => {
                                           ]) || [];
                                         const paid = advs.reduce((sum, a) => {
                                           const amt = normalizeAmount(
-                                            a?.expectedAmount
+                                            a?.expectedAmount,
                                           );
                                           return sum + (amt || 0);
                                         }, 0);
@@ -2670,10 +2808,10 @@ const EditInflow = () => {
                                               >
                                                 {balance >= 0
                                                   ? `₹${formatINR(
-                                                      balance || 0
+                                                      balance || 0,
                                                     )}`
                                                   : `-₹${formatINR(
-                                                      exceeded || 0
+                                                      exceeded || 0,
                                                     )}`}
                                               </span>
                                             </div>
@@ -2714,7 +2852,8 @@ const EditInflow = () => {
                       <>
                         {selectedEventTypes.map((eventTypeId) => {
                           const typeMeta = (eventTypes || []).find(
-                            (t) => t.id === eventTypeId || t._id === eventTypeId
+                            (t) =>
+                              t.id === eventTypeId || t._id === eventTypeId,
                           );
                           const label =
                             typeMeta?.name || typeMeta?.label || "Event Type";
@@ -2894,7 +3033,7 @@ const EditInflow = () => {
                                             >
                                               {subVenue.name}
                                             </Option>
-                                          )
+                                          ),
                                         )}
                                       </Select>
                                     </Form.Item>
@@ -2983,10 +3122,10 @@ const EditInflow = () => {
                           >
                             {({ getFieldValue, setFieldsValue }) => {
                               const agreedAmount = normalizeAmount(
-                                getFieldValue("agreedAmountTotal")
+                                getFieldValue("agreedAmountTotal"),
                               );
                               const accountAmount = normalizeAmount(
-                                getFieldValue("agreedAmountAccount")
+                                getFieldValue("agreedAmountAccount"),
                               );
                               const gstRate = 0.18; // Fixed 18% GST
                               const accountWithGst =
@@ -3006,10 +3145,10 @@ const EditInflow = () => {
                               ) {
                                 const calculatedCash = Math.max(
                                   0,
-                                  agreedAmount - accountAmount
+                                  agreedAmount - accountAmount,
                                 );
                                 const currentCash = normalizeAmount(
-                                  getFieldValue("agreedAmountCash")
+                                  getFieldValue("agreedAmountCash"),
                                 );
                                 if (currentCash !== calculatedCash) {
                                   setTimeout(() => {
@@ -3266,10 +3405,10 @@ const EditInflow = () => {
                                 <Form.Item shouldUpdate noStyle>
                                   {({ getFieldValue }) => {
                                     const agreedAmount = normalizeAmount(
-                                      getFieldValue("agreedAmountTotal")
+                                      getFieldValue("agreedAmountTotal"),
                                     );
                                     const accountAmount = normalizeAmount(
-                                      getFieldValue("agreedAmountAccount")
+                                      getFieldValue("agreedAmountAccount"),
                                     );
                                     const gstRate = 0.18;
                                     const accountWithGst =
@@ -3282,7 +3421,7 @@ const EditInflow = () => {
                                       accountAmount != null
                                         ? Math.max(
                                             0,
-                                            agreedAmount - accountAmount
+                                            agreedAmount - accountAmount,
                                           )
                                         : 0;
                                     const clientPayable =
@@ -3292,7 +3431,7 @@ const EditInflow = () => {
                                       getFieldValue("advances") || [];
                                     const paid = advs.reduce((sum, a) => {
                                       const amt = normalizeAmount(
-                                        a?.expectedAmount
+                                        a?.expectedAmount,
                                       );
                                       return sum + (amt || 0);
                                     }, 0);
@@ -3540,7 +3679,7 @@ const EditInflow = () => {
                           {({ getFieldValue }) => {
                             const totalAgreed =
                               normalizeAmount(
-                                getFieldValue("agreedAmountTotal")
+                                getFieldValue("agreedAmountTotal"),
                               ) ?? 0;
                             const advs = getFieldValue("advances") || [];
                             const paid = advs.reduce((sum, a) => {

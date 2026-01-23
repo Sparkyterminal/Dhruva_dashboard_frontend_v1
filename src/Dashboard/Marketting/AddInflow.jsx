@@ -136,7 +136,7 @@ const AddInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}event-types/event/${eventId}`,
-        axiosConfig
+        axiosConfig,
       );
       const data = res.data?.eventTypes || res.data || [];
       setEventTypes(data);
@@ -283,7 +283,7 @@ const AddInflow = () => {
       const perTypePayload = hasEventTypes
         ? (values.eventTypes || []).map((typeId) => {
             const typeMeta = (eventTypes || []).find(
-              (t) => t.id === typeId || t._id === typeId
+              (t) => t.id === typeId || t._id === typeId,
             );
             const typeKey = typeId;
             const startDate = values.eventTypeDates?.[typeKey]?.startDate
@@ -302,10 +302,10 @@ const AddInflow = () => {
 
             // ✅ EXACT Backend expected fields
             const totalAgreedPer = normalizeAmount(
-              values.eventTypeMeta?.[typeKey]?.totalAgreedAmount
+              values.eventTypeMeta?.[typeKey]?.totalAgreedAmount,
             );
             const accountAmtPer = normalizeAmount(
-              values.eventTypeMeta?.[typeKey]?.accountAmount
+              values.eventTypeMeta?.[typeKey]?.accountAmount,
             );
             const gstRatePer = 0.18;
             const accountGstPer =
@@ -321,7 +321,7 @@ const AddInflow = () => {
             const perEventAdvances =
               advanceMode === "separate"
                 ? buildAdvancesPayload(
-                    values.eventTypeAdvances?.[typeKey] || []
+                    values.eventTypeAdvances?.[typeKey] || [],
                   )
                 : [];
 
@@ -349,26 +349,26 @@ const AddInflow = () => {
         hasEventTypes && advanceMode === "separate"
           ? perTypePayload
           : hasEventTypes && advanceMode === "complete"
-          ? perTypePayload.map((et) => ({ ...et, advances: sharedAdvances }))
-          : [
-              {
-                // No event types - generic booking
-                eventTypeId: null,
-                startDate: values.startDate
-                  ? values.startDate.toISOString()
-                  : null,
-                endDate: values.endDate ? values.endDate.toISOString() : null,
-                venueLocation: values.venueLocation ?? null,
-                subVenueLocation: values.subVenueLocation ?? null,
-                agreedAmount: totalAgreedShared,
-                accountAmount: accountAmtShared ?? 0,
-                accountGst: accountGstShared,
-                accountAmountWithGst: accountTotalShared,
-                cashAmount: cashAmtShared,
-                totalPayable: totalPayableShared,
-                advances: sharedAdvances,
-              },
-            ];
+            ? perTypePayload.map((et) => ({ ...et, advances: sharedAdvances }))
+            : [
+                {
+                  // No event types - generic booking
+                  eventTypeId: null,
+                  startDate: values.startDate
+                    ? values.startDate.toISOString()
+                    : null,
+                  endDate: values.endDate ? values.endDate.toISOString() : null,
+                  venueLocation: values.venueLocation ?? null,
+                  subVenueLocation: values.subVenueLocation ?? null,
+                  agreedAmount: totalAgreedShared,
+                  accountAmount: accountAmtShared ?? 0,
+                  accountGst: accountGstShared,
+                  accountAmountWithGst: accountTotalShared,
+                  cashAmount: cashAmtShared,
+                  totalPayable: totalPayableShared,
+                  advances: sharedAdvances,
+                },
+              ];
 
       const payload = {
         eventId: selectedEvent?.id || selectedEvent?._id,
@@ -382,6 +382,9 @@ const AddInflow = () => {
         lead1: values.lead1 || null,
         lead2: values.lead2 || null,
         note: values.note || undefined,
+        meetingDate: values.meetingDate
+          ? values.meetingDate.toISOString()
+          : undefined,
         eventConfirmation: values.eventConfirmation,
         ...(isWeddingLike && { advancePaymentType: advanceMode }),
       };
@@ -389,49 +392,16 @@ const AddInflow = () => {
       console.log("🔥 FORM VALUES:", JSON.stringify(values, null, 2));
       console.log(
         "🔥 EVENT TYPE META:",
-        JSON.stringify(values.eventTypeMeta, null, 2)
+        JSON.stringify(values.eventTypeMeta, null, 2),
       );
       console.log("🔥 FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
-      // Validation: Ensure amounts are present
-      if (hasEventTypes) {
-        // In complete mode, check if shared amounts were entered
-        if (advanceMode === "complete") {
-          const sharedAgreed = normalizeAmount(values.agreedAmountTotal);
-          const sharedAccount = normalizeAmount(values.agreedAmountAccount);
-          if (
-            sharedAgreed == null ||
-            sharedAgreed === 0 ||
-            sharedAccount == null ||
-            sharedAccount === 0
-          ) {
-            message.warning(
-              "⚠️ Please fill in Agreed Amount and Account Amount for Complete Package"
-            );
-            setLoading(false);
-            return;
-          }
-        } else {
-          // In separate mode, check each event type
-          const invalidTypes = payload.eventTypes.filter(
-            (et) =>
-              (et.agreedAmount == null || et.agreedAmount === 0) &&
-              (et.accountAmount == null || et.accountAmount === 0)
-          );
-          if (invalidTypes.length > 0) {
-            message.warning(
-              "⚠️ Please fill in Agreed Amount and Account Amount for all event types"
-            );
-            setLoading(false);
-            return;
-          }
-        }
-      }
+      // Validation removed: Amounts can be 0 or any value, advances are not mandatory
 
       const response = await axios.post(
         `${API_BASE_URL}events`,
         payload,
-        axiosConfig
+        axiosConfig,
       );
 
       if (response.status === 200 || response.status === 201) {
@@ -460,12 +430,12 @@ const AddInflow = () => {
       const list = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.coordinators)
-        ? raw.coordinators
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.coordinators
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       setCoordinators(list);
     } catch (err) {
       console.error("fetchCoordinators error:", err);
@@ -484,12 +454,12 @@ const AddInflow = () => {
       const list = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.venues)
-        ? raw.venues
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.venues
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       setVenues(list);
     } catch (err) {
       console.error("fetchVenues error:", err);
@@ -509,24 +479,24 @@ const AddInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}sub-venue-location`,
-        axiosConfig
+        axiosConfig,
       );
       const raw = res.data;
       const allSubVenues = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.subVenueLocations)
-        ? raw.subVenueLocations
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.subVenueLocations
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       // Filter sub venues by venue ID
       const filtered = allSubVenues.filter(
         (sv) =>
           sv.venue?.id === venueId ||
           sv.venue === venueId ||
-          sv.venueId === venueId
+          sv.venueId === venueId,
       );
       setSubVenues(filtered);
     } catch (err) {
@@ -547,23 +517,23 @@ const AddInflow = () => {
     try {
       const res = await axios.get(
         `${API_BASE_URL}sub-venue-location`,
-        axiosConfig
+        axiosConfig,
       );
       const raw = res.data;
       const allSubVenues = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.subVenueLocations)
-        ? raw.subVenueLocations
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.subVenueLocations
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       const filtered = allSubVenues.filter(
         (sv) =>
           sv.venue?.id === venueId ||
           sv.venue === venueId ||
-          sv.venueId === venueId
+          sv.venueId === venueId,
       );
       setEventTypeSubVenues((prev) => ({ ...prev, [eventTypeId]: filtered }));
     } catch (err) {
@@ -744,6 +714,7 @@ const AddInflow = () => {
                   >
                     <Option value="InProgress">InProgress</Option>
                     <Option value="Confirmed Event">Confirmed Event</Option>
+                    <Option value="Cancelled">Cancelled</Option>
                   </Select>
                 </Form.Item>
               </motion.div>
@@ -959,6 +930,30 @@ const AddInflow = () => {
                 </Form.Item>
               </motion.div>
 
+              {/* Meeting Date - Only for InProgress */}
+              <Form.Item noStyle dependencies={["eventConfirmation"]}>
+                {({ getFieldValue }) => {
+                  const eventConfirmation = getFieldValue("eventConfirmation");
+                  return eventConfirmation === "InProgress" ? (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: 0.35 }}
+                    >
+                      <Form.Item label="Next Meeting Date" name="meetingDate">
+                        <DatePicker
+                          size="large"
+                          style={{ width: "100%" }}
+                          format={timeFormat}
+                          showTime={{ use12Hours: true, format: "hh:mm A" }}
+                          placeholder="Select meeting date"
+                        />
+                      </Form.Item>
+                    </motion.div>
+                  ) : null;
+                }}
+              </Form.Item>
+
               {/* Contact Number */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -991,7 +986,6 @@ const AddInflow = () => {
                 </Form.Item>
               </motion.div>
 
-              {/* Alternative Contact Number */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -1039,6 +1033,20 @@ const AddInflow = () => {
                 </Form.Item>
               </motion.div>
 
+              {/* Note - For all events */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.46 }}
+              >
+                <Form.Item label="Note" name="note">
+                  <Input.TextArea
+                    rows={4}
+                    placeholder="Any special instructions, preferences, or notes for this event (optional)"
+                  />
+                </Form.Item>
+              </motion.div>
+
               {/* Bride & Groom Details - only when event looks like Wedding */}
               {isWeddingLike && (
                 <>
@@ -1071,19 +1079,6 @@ const AddInflow = () => {
                       ]}
                     >
                       <Input size="large" placeholder="Enter groom name" />
-                    </Form.Item>
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.5 }}
-                  >
-                    <Form.Item label="Note" name="note">
-                      <Input.TextArea
-                        rows={4}
-                        placeholder="Any special instructions, preferences, or notes for this wedding (optional)"
-                      />
                     </Form.Item>
                   </motion.div>
                 </>
@@ -1214,8 +1209,9 @@ const AddInflow = () => {
                         />
                       </Form.Item>
                       <Form.Item
-                        label="Account Amount"
+                        label="Account Amount (If you've agreed to cash only then put as ₹0)"
                         name="agreedAmountAccount"
+                        required={true}
                       >
                         <InputNumber
                           size="large"
@@ -1236,10 +1232,10 @@ const AddInflow = () => {
                     >
                       {({ getFieldValue, setFieldsValue }) => {
                         const agreedAmount = normalizeAmount(
-                          getFieldValue("agreedAmountTotal")
+                          getFieldValue("agreedAmountTotal"),
                         );
                         const accountAmount = normalizeAmount(
-                          getFieldValue("agreedAmountAccount")
+                          getFieldValue("agreedAmountAccount"),
                         );
                         const gstRate = 0.18; // Fixed 18% GST
                         const accountWithGst =
@@ -1256,10 +1252,10 @@ const AddInflow = () => {
                         if (agreedAmount != null && accountAmount != null) {
                           const calculatedCash = Math.max(
                             0,
-                            agreedAmount - accountAmount
+                            agreedAmount - accountAmount,
                           );
                           const currentCash = normalizeAmount(
-                            getFieldValue("agreedAmountCash")
+                            getFieldValue("agreedAmountCash"),
                           );
                           if (currentCash !== calculatedCash) {
                             setTimeout(() => {
@@ -1464,7 +1460,7 @@ const AddInflow = () => {
                     <>
                       {selectedEventTypes.map((eventTypeId) => {
                         const typeMeta = (eventTypes || []).find(
-                          (t) => t.id === eventTypeId || t._id === eventTypeId
+                          (t) => t.id === eventTypeId || t._id === eventTypeId,
                         );
                         const label =
                           typeMeta?.name || typeMeta?.label || "Event Type";
@@ -1637,7 +1633,7 @@ const AddInflow = () => {
                                           >
                                             {subVenue.name}
                                           </Option>
-                                        )
+                                        ),
                                       )}
                                     </Select>
                                   </Form.Item>
@@ -1726,14 +1722,14 @@ const AddInflow = () => {
                                         "eventTypeMeta",
                                         key,
                                         "totalAgreedAmount",
-                                      ])
+                                      ]),
                                     );
                                     const accountAmount = normalizeAmount(
                                       getFieldValue([
                                         "eventTypeMeta",
                                         key,
                                         "accountAmount",
-                                      ])
+                                      ]),
                                     );
                                     const gstRate = 0.18; // Fixed 18% GST
                                     const accountWithGst =
@@ -1746,7 +1742,7 @@ const AddInflow = () => {
                                       accountAmount != null
                                         ? Math.max(
                                             0,
-                                            agreedAmount - accountAmount
+                                            agreedAmount - accountAmount,
                                           )
                                         : 0;
                                     const clientPayable =
@@ -1759,14 +1755,14 @@ const AddInflow = () => {
                                     ) {
                                       const calculatedCash = Math.max(
                                         0,
-                                        agreedAmount - accountAmount
+                                        agreedAmount - accountAmount,
                                       );
                                       const currentCash = normalizeAmount(
                                         getFieldValue([
                                           "eventTypeMeta",
                                           key,
                                           "cashAmount",
-                                        ])
+                                        ]),
                                       );
                                       if (currentCash !== calculatedCash) {
                                         setTimeout(() => {
@@ -2021,14 +2017,14 @@ const AddInflow = () => {
                                           "eventTypeMeta",
                                           key,
                                           "totalAgreedAmount",
-                                        ])
+                                        ]),
                                       );
                                       const accountAmount = normalizeAmount(
                                         getFieldValue([
                                           "eventTypeMeta",
                                           key,
                                           "accountAmount",
-                                        ])
+                                        ]),
                                       );
                                       const gstRate = 0.18;
                                       const accountWithGst =
@@ -2041,7 +2037,7 @@ const AddInflow = () => {
                                         accountAmount != null
                                           ? Math.max(
                                               0,
-                                              agreedAmount - accountAmount
+                                              agreedAmount - accountAmount,
                                             )
                                           : 0;
                                       const clientPayable =
@@ -2054,7 +2050,7 @@ const AddInflow = () => {
                                         ]) || [];
                                       const paid = advs.reduce((sum, a) => {
                                         const amt = normalizeAmount(
-                                          a?.expectedAmount
+                                          a?.expectedAmount,
                                         );
                                         return sum + (amt || 0);
                                       }, 0);
@@ -2095,7 +2091,7 @@ const AddInflow = () => {
                                               {balance >= 0
                                                 ? `₹${formatINR(balance || 0)}`
                                                 : `-₹${formatINR(
-                                                    exceeded || 0
+                                                    exceeded || 0,
                                                   )}`}
                                             </span>
                                           </div>
@@ -2136,7 +2132,7 @@ const AddInflow = () => {
                     <>
                       {selectedEventTypes.map((eventTypeId) => {
                         const typeMeta = (eventTypes || []).find(
-                          (t) => t.id === eventTypeId || t._id === eventTypeId
+                          (t) => t.id === eventTypeId || t._id === eventTypeId,
                         );
                         const label =
                           typeMeta?.name || typeMeta?.label || "Event Type";
@@ -2309,7 +2305,7 @@ const AddInflow = () => {
                                           >
                                             {subVenue.name}
                                           </Option>
-                                        )
+                                        ),
                                       )}
                                     </Select>
                                   </Form.Item>
@@ -2402,10 +2398,10 @@ const AddInflow = () => {
                         >
                           {({ getFieldValue, setFieldsValue }) => {
                             const agreedAmount = normalizeAmount(
-                              getFieldValue("agreedAmountTotal")
+                              getFieldValue("agreedAmountTotal"),
                             );
                             const accountAmount = normalizeAmount(
-                              getFieldValue("agreedAmountAccount")
+                              getFieldValue("agreedAmountAccount"),
                             );
                             const gstRate = 0.18; // Fixed 18% GST
                             const accountWithGst =
@@ -2422,10 +2418,10 @@ const AddInflow = () => {
                             if (agreedAmount != null && accountAmount != null) {
                               const calculatedCash = Math.max(
                                 0,
-                                agreedAmount - accountAmount
+                                agreedAmount - accountAmount,
                               );
                               const currentCash = normalizeAmount(
-                                getFieldValue("agreedAmountCash")
+                                getFieldValue("agreedAmountCash"),
                               );
                               if (currentCash !== calculatedCash) {
                                 setTimeout(() => {
@@ -2690,10 +2686,10 @@ const AddInflow = () => {
                               <Form.Item shouldUpdate noStyle>
                                 {({ getFieldValue }) => {
                                   const agreedAmount = normalizeAmount(
-                                    getFieldValue("agreedAmountTotal")
+                                    getFieldValue("agreedAmountTotal"),
                                   );
                                   const accountAmount = normalizeAmount(
-                                    getFieldValue("agreedAmountAccount")
+                                    getFieldValue("agreedAmountAccount"),
                                   );
                                   const gstRate = 0.18;
                                   const accountWithGst =
@@ -2705,7 +2701,7 @@ const AddInflow = () => {
                                     accountAmount != null
                                       ? Math.max(
                                           0,
-                                          agreedAmount - accountAmount
+                                          agreedAmount - accountAmount,
                                         )
                                       : 0;
                                   const clientPayable =
@@ -2714,7 +2710,7 @@ const AddInflow = () => {
                                   const advs = getFieldValue("advances") || [];
                                   const paid = advs.reduce((sum, a) => {
                                     const amt = normalizeAmount(
-                                      a?.expectedAmount
+                                      a?.expectedAmount,
                                     );
                                     return sum + (amt || 0);
                                   }, 0);
@@ -3037,133 +3033,136 @@ const AddInflow = () => {
                     )}
                   </Form.List> */}
                   <Form.List name="advances">
-  {(fields, { add, remove }) => (
-    <>
-      <Form.Item dependencies={['eventConfirmation']} noStyle>
-        {({ getFieldValue }) => {
-          const eventConfirmation = getFieldValue('eventConfirmation');
-          const isMandatory = eventConfirmation !== 'InProgress';
+                    {(fields, { add, remove }) => (
+                      <>
+                        <Form.Item dependencies={["eventConfirmation"]} noStyle>
+                          {({ getFieldValue }) => {
+                            const eventConfirmation =
+                              getFieldValue("eventConfirmation");
+                            const isMandatory =
+                              eventConfirmation !== "InProgress";
 
-          return (
-            <>
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "80px 1fr 1fr 60px",
-                  gap: 8,
-                  padding: "8px 12px",
-                  background: "#f9fafb",
-                  borderRadius: 8,
-                  marginBottom: 8,
-                  fontSize: 12,
-                  fontWeight: 600,
-                  color: "#6b7280",
-                }}
-              >
-                <span>No.</span>
-                <span>Amount</span>
-                <span>Date</span>
-                <span>Action</span>
-              </div>
-              {fields.map((field, idx) => (
-                <div
-                  key={field.key}
-                  className="glass-advance-card"
-                  style={{
-                    marginBottom: 8,
-                    padding: "8px 12px",
-                    borderRadius: 8,
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "80px 1fr 1fr 60px",
-                      gap: 8,
-                      alignItems: "center",
-                    }}
-                  >
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        fontSize: 13,
-                      }}
-                    >
-                      #{idx + 1}
-                    </div>
-                    <Form.Item
-                      key={`expectedAmount-${field.key}`}
-                      name={[field.name, "expectedAmount"]}
-                      isListField={field.isListField}
-                      rules={[
-                        {
-                          required: isMandatory,
-                          message: "Enter amount",
-                        },
-                      ]}
-                      style={{ marginBottom: 0 }}
-                    >
-                      <InputNumber
-                        size="large"
-                        style={{ width: "100%" }}
-                        min={0}
-                        formatter={indianFormatter}
-                        parser={indianParser}
-                        placeholder="Enter amount"
-                      />
-                    </Form.Item>
-                    <Form.Item
-                      key={`advanceDate-${field.key}`}
-                      name={[field.name, "advanceDate"]}
-                      isListField={field.isListField}
-                      rules={[
-                        {
-                          required: isMandatory,
-                          message: "Select date",
-                        },
-                      ]}
-                      style={{ marginBottom: 0 }}
-                    >
-                      <DatePicker
-                        size="large"
-                        style={{ width: "100%" }}
-                        format={timeFormat}
-                        showTime={{
-                          use12Hours: true,
-                          format: "hh:mm A",
-                        }}
-                      />
-                    </Form.Item>
-                    <div style={{ textAlign: "center" }}>
-                      {fields.length > 1 && (
-                        <Button
-                          type="text"
-                          danger
-                          icon={<DeleteOutlined />}
-                          onClick={() => remove(field.name)}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <div>
-                <Button
-                  type="dashed"
-                  onClick={() => add()}
-                  block
-                  icon={<PlusOutlined />}
-                >
-                  Add Advance Payment
-                </Button>
-              </div>
-            </>
-          );
-        }}
-      </Form.Item>
-    </>
-  )}
-</Form.List>
+                            return (
+                              <>
+                                <div
+                                  style={{
+                                    display: "grid",
+                                    gridTemplateColumns: "80px 1fr 1fr 60px",
+                                    gap: 8,
+                                    padding: "8px 12px",
+                                    background: "#f9fafb",
+                                    borderRadius: 8,
+                                    marginBottom: 8,
+                                    fontSize: 12,
+                                    fontWeight: 600,
+                                    color: "#6b7280",
+                                  }}
+                                >
+                                  <span>No.</span>
+                                  <span>Amount</span>
+                                  <span>Date</span>
+                                  <span>Action</span>
+                                </div>
+                                {fields.map((field, idx) => (
+                                  <div
+                                    key={field.key}
+                                    className="glass-advance-card"
+                                    style={{
+                                      marginBottom: 8,
+                                      padding: "8px 12px",
+                                      borderRadius: 8,
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        display: "grid",
+                                        gridTemplateColumns:
+                                          "80px 1fr 1fr 60px",
+                                        gap: 8,
+                                        alignItems: "center",
+                                      }}
+                                    >
+                                      <div
+                                        style={{
+                                          fontWeight: 600,
+                                          fontSize: 13,
+                                        }}
+                                      >
+                                        #{idx + 1}
+                                      </div>
+                                      <Form.Item
+                                        key={`expectedAmount-${field.key}`}
+                                        name={[field.name, "expectedAmount"]}
+                                        isListField={field.isListField}
+                                        rules={[
+                                          {
+                                            required: isMandatory,
+                                            message: "Enter amount",
+                                          },
+                                        ]}
+                                        style={{ marginBottom: 0 }}
+                                      >
+                                        <InputNumber
+                                          size="large"
+                                          style={{ width: "100%" }}
+                                          min={0}
+                                          formatter={indianFormatter}
+                                          parser={indianParser}
+                                          placeholder="Enter amount"
+                                        />
+                                      </Form.Item>
+                                      <Form.Item
+                                        key={`advanceDate-${field.key}`}
+                                        name={[field.name, "advanceDate"]}
+                                        isListField={field.isListField}
+                                        rules={[
+                                          {
+                                            required: isMandatory,
+                                            message: "Select date",
+                                          },
+                                        ]}
+                                        style={{ marginBottom: 0 }}
+                                      >
+                                        <DatePicker
+                                          size="large"
+                                          style={{ width: "100%" }}
+                                          format={timeFormat}
+                                          showTime={{
+                                            use12Hours: true,
+                                            format: "hh:mm A",
+                                          }}
+                                        />
+                                      </Form.Item>
+                                      <div style={{ textAlign: "center" }}>
+                                        {fields.length > 1 && (
+                                          <Button
+                                            type="text"
+                                            danger
+                                            icon={<DeleteOutlined />}
+                                            onClick={() => remove(field.name)}
+                                          />
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                                <div>
+                                  <Button
+                                    type="dashed"
+                                    onClick={() => add()}
+                                    block
+                                    icon={<PlusOutlined />}
+                                  >
+                                    Add Advance Payment
+                                  </Button>
+                                </div>
+                              </>
+                            );
+                          }}
+                        </Form.Item>
+                      </>
+                    )}
+                  </Form.List>
                 </motion.div>
               )}
 

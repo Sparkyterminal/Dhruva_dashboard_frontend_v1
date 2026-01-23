@@ -30,6 +30,8 @@ import {
   CalendarOutlined,
   EnvironmentOutlined,
   DollarOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
   UserOutlined,
   PhoneOutlined,
   HeartOutlined,
@@ -39,7 +41,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
-import CalendarClients from "../../Components/calendarClients";
+import CalendarClients from "../../Components/CalendarClients";
 import UserWiseClients from "../../Components/UserWiseClients";
 
 const { Title, Text } = Typography;
@@ -59,6 +61,8 @@ const ViewClientsBookings = () => {
     total: 0,
   });
   const [activeTab, setActiveTab] = useState("list");
+  const [eventConfirmationTab, setEventConfirmationTab] =
+    useState("InProgress");
 
   const user = useSelector((state) => state.user.value);
 
@@ -407,6 +411,37 @@ const ViewClientsBookings = () => {
       },
     },
     {
+      title: "Note",
+      key: "note",
+      width: 120,
+      align: "right",
+      render: (_, record) => (
+        <Text strong className="text-black text-wrap">
+          {record.note ? record.note : "N/A"}
+        </Text>
+      ),
+    },
+    ...(eventConfirmationTab === "InProgress" ||
+    eventConfirmationTab === "Cancelled"
+      ? [
+          {
+            title: "Next Meeting Date",
+            key: "meetingDate",
+            width: 140,
+            render: (_, record) => (
+              <div className="flex items-center gap-1">
+                <CalendarOutlined className="text-blue-500 text-xs" />
+                <Text className="text-sm">
+                  {record.meetingDate
+                    ? formatDate(record.meetingDate)
+                    : "Not Set"}
+                </Text>
+              </div>
+            ),
+          },
+        ]
+      : []),
+    {
       title: "Client Details",
       key: "clientDetails",
       width: 180,
@@ -566,21 +601,24 @@ const ViewClientsBookings = () => {
     // },
   ];
 
-  // Calculate statistics
-  const totalBookings = bookings.length;
-  const totalPayableRevenue = bookings.reduce(
+  // Calculate statistics based on filtered bookings
+  const filteredBookings = bookings.filter(
+    (booking) => booking.eventConfirmation === eventConfirmationTab,
+  );
+  const totalBookings = filteredBookings.length;
+  const totalPayableRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
     0,
   );
-  const totalAgreedRevenue = bookings.reduce(
+  const totalAgreedRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalAgreedAmount(curr),
     0,
   );
-  const totalReceivedRevenue = bookings.reduce(
+  const totalReceivedRevenue = filteredBookings.reduce(
     (acc, curr) => acc + getTotalReceivedAdvances(curr),
     0,
   );
-  const totalPendingRevenue = bookings.reduce((acc, curr) => {
+  const totalPendingRevenue = filteredBookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
     const received = getTotalReceivedAdvances(curr);
     return acc + (expected - received);
@@ -592,6 +630,56 @@ const ViewClientsBookings = () => {
       label: "List View",
       children: (
         <div className="space-y-6">
+          {/* Event Confirmation Tabs */}
+          <Tabs
+            activeKey={eventConfirmationTab}
+            onChange={setEventConfirmationTab}
+            items={[
+              {
+                key: "InProgress",
+                label: (
+                  <span>
+                    <ClockCircleOutlined /> InProgress (
+                    {
+                      bookings.filter(
+                        (b) => b.eventConfirmation === "InProgress",
+                      ).length
+                    }
+                    )
+                  </span>
+                ),
+              },
+              {
+                key: "Confirmed Event",
+                label: (
+                  <span>
+                    <CheckCircleOutlined /> Confirmed Event (
+                    {
+                      bookings.filter(
+                        (b) => b.eventConfirmation === "Confirmed Event",
+                      ).length
+                    }
+                    )
+                  </span>
+                ),
+              },
+              {
+                key: "Cancelled",
+                label: (
+                  <span>
+                    ❌ Cancelled (
+                    {
+                      bookings.filter(
+                        (b) => b.eventConfirmation === "Cancelled",
+                      ).length
+                    }
+                    )
+                  </span>
+                ),
+              },
+            ]}
+          />
+
           {/* Statistics Cards */}
           <Row gutter={[16, 16]} className="mb-6" align="stretch">
             <Col xs={24} sm={12} md={6}>
@@ -755,11 +843,13 @@ const ViewClientsBookings = () => {
             >
               <Table
                 columns={columns}
-                dataSource={bookings}
+                dataSource={filteredBookings}
                 loading={loading}
                 rowKey="_id"
                 pagination={{
-                  ...pagination,
+                  current: 1,
+                  pageSize: 10,
+                  total: filteredBookings.length,
                   showSizeChanger: true,
                   showTotal: (total) => (
                     <span className="text-slate-600 text-sm">
@@ -768,7 +858,6 @@ const ViewClientsBookings = () => {
                   ),
                   pageSizeOptions: ["10", "20", "50"],
                 }}
-                onChange={handleTableChange}
                 scroll={{ x: 1200 }}
                 className="custom-table"
               />
@@ -1998,7 +2087,6 @@ const ViewClientsBookings = () => {
                                       options={[
                                         { label: "Cash", value: "cash" },
                                         { label: "Account", value: "account" },
-                                        
                                       ]}
                                     />
                                   );
