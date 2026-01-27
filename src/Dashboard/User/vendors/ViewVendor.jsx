@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { message, Modal, Table, Button, Card, Input } from "antd";
+import { message, Modal, Table, Button, Card, Input, Select } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
@@ -131,6 +131,7 @@ const ViewVendor = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState(null);
 
   const user = useSelector((state) => state.user.value);
   const navigate = useNavigate();
@@ -193,10 +194,13 @@ const ViewVendor = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const fetchRequirementsData = async () => {
+  const fetchRequirementsData = async (category = null) => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, config);
+      const url = category
+        ? `${API_BASE_URL}vendor/all?specify_cat=${category}`
+        : `${API_BASE_URL}vendor/all`;
+      const res = await axios.get(url, config);
       setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");
@@ -206,9 +210,9 @@ const ViewVendor = () => {
   };
 
   useEffect(() => {
-    fetchRequirementsData();
+    fetchRequirementsData(categoryFilter);
     // eslint-disable-next-line
-  }, []);
+  }, [categoryFilter]);
 
   const exportToPDF = (vendor) => {
     const doc = new jsPDF();
@@ -370,12 +374,12 @@ const ViewVendor = () => {
     doc.text(
       "*All the columns should be properly filled up. No column should be kept Blank.",
       14,
-      finalY
+      finalY,
     );
     doc.text(
       "*All registered certificates should be scanned and attached in system.",
       14,
-      finalY + 5
+      finalY + 5,
     );
 
     doc.setFontSize(9);
@@ -516,7 +520,7 @@ const ViewVendor = () => {
         tableRows.push(createRow("Contact Number", vendor.mobile_no));
       if (vendor.alt_mobile_no)
         tableRows.push(
-          createRow("Alternate Mobile Number", vendor.alt_mobile_no)
+          createRow("Alternate Mobile Number", vendor.alt_mobile_no),
         );
       if (vendor.email) tableRows.push(createRow("E-Mail", vendor.email));
 
@@ -550,7 +554,7 @@ const ViewVendor = () => {
           tableRows.push(createRow("Bank Name", vendor.bank_name));
         if (vendor.beneficiary_name)
           tableRows.push(
-            createRow("Beneficiary Name", vendor.beneficiary_name)
+            createRow("Beneficiary Name", vendor.beneficiary_name),
           );
         if (vendor.account_number)
           tableRows.push(createRow("Account Number", vendor.account_number));
@@ -701,8 +705,8 @@ const ViewVendor = () => {
         blob,
         `Vendor_${vendor.name.replace(
           /\s+/g,
-          "_"
-        )}_${new Date().getTime()}.docx`
+          "_",
+        )}_${new Date().getTime()}.docx`,
       );
       message.success("Word document exported successfully!");
     } catch (error) {
@@ -731,7 +735,7 @@ const ViewVendor = () => {
       v.company_name?.toLowerCase().includes(search.toLowerCase()) ||
       v.gst_no?.toLowerCase().includes(search.toLowerCase()) ||
       v.vendor_type?.toLowerCase().includes(search.toLowerCase()) ||
-      v.refered_by?.toLowerCase().includes(search.toLowerCase())
+      v.refered_by?.toLowerCase().includes(search.toLowerCase()),
   );
 
   const columns = [
@@ -1144,6 +1148,21 @@ const ViewVendor = () => {
                   flexDirection: isMobile ? "column" : "row",
                 }}
               >
+                <Select
+                  placeholder="Filter by Category"
+                  allowClear
+                  value={categoryFilter}
+                  onChange={(value) => setCategoryFilter(value)}
+                  className="vendor-search-input"
+                  style={{
+                    width: isMobile ? "100%" : 180,
+                    height: "42px",
+                  }}
+                >
+                  <Option value="cash">Cash</Option>
+                  <Option value="account">Account</Option>
+                  <Option value="cash_and_account">Cash&Account</Option>
+                </Select>
                 <Input
                   prefix={<SearchOutlined style={{ color: "#9079a5" }} />}
                   allowClear

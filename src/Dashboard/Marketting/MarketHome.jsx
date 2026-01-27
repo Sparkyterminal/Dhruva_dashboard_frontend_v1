@@ -13,6 +13,35 @@ import password from "../../assets/passworduser.json";
 import rainbow from "../../assets/Rainbow.json";
 import ViewRequirements from "../User/ViewRequirements";
 
+// Email arrays for conditional rendering
+const CONFIRMED_EVENTS_EMAILS = [
+  "dtiwari@gmail.com",
+  "hemu.jamu86@gmail.com",
+  "mallesh@gmail.com",
+  "muzamilprod@gmail.com",
+  "approvershivakumar@gmail.com",
+  "sushmawbd@gmail.com",
+  "varshabellave@gmail.com",
+  "acchr@gmail.com",
+  "rishi@gmail.com",
+  "manish@gmail.com",
+  "ashwath@gmail.com",
+  "kumarv@gmail.com",
+  "varshashyleshcustomerteam@gmail.com",
+  "sirishavcustomerteam@gmail.com",
+];
+
+const INPROGRESS_EVENTS_EMAILS = [
+  "hemu.jamu86@gmail.com",
+  "varshabellave@gmail.com",
+  "hr@gmail.com",
+  "rishi@gmail.com",
+  "manish@gmail.com",
+  "kumarv@gmail.com",
+  "varshashyleshcustomerteam@gmail.com",
+  "sirishavcustomerteam@gmail.com",
+];
+
 // CSS for Glassmorphism and Animations
 const customStyles = `
   .glass-header {
@@ -61,6 +90,11 @@ const MarketHome = () => {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Check if user email is in the allowed lists
+  const userEmail = user?.email_id?.toLowerCase() || "";
+  const showConfirmedEvents = CONFIRMED_EVENTS_EMAILS.includes(userEmail);
+  const showInProgressEvents = INPROGRESS_EVENTS_EMAILS.includes(userEmail);
 
   // Update time every second
   useEffect(() => {
@@ -358,48 +392,101 @@ const MarketHome = () => {
                 </motion.button>
               </motion.div>
 
-              {/* Events Calendar Button */}
-              {/* <motion.div whileHover="hover" whileTap={{ scale: 0.95 }} className="w-full">
-                <motion.button
-                  onClick={() => navigate("/user/eventcalender")}
-                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-sky-50 to-indigo-50 hover:from-sky-100 hover:to-indigo-100"
-                  variants={{
-                    hover: {
-                      color: "#0ea5e9",
-                      scale: 1.05,
-                    },
-                  }}
-                  style={{
-                    color: "#0369a1",
-                  }}
-                  aria-label="Events Calendar"
+              {/* Confirmed Event Calendar Button - Conditional */}
+              {showConfirmedEvents && (
+                <motion.div
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full"
                 >
-                  <span className="flex items-center gap-2">
-                    <svg
-                      className="w-4 h-4 md:w-5 md:h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Events Calendar
-                  </span>
-                  <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-500"
-                    initial={{ scaleX: 0 }}
+                  <motion.button
+                    onClick={() => navigate("/user/confirmed-events")}
+                    className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
                     variants={{
-                      hover: { scaleX: 1 },
+                      hover: {
+                        color: "#059669",
+                        scale: 1.05,
+                      },
                     }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </motion.button>
-              </motion.div> */}
+                    style={{
+                      color: "#0d9488",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      Confirmed Events
+                    </span>
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
+                      initial={{ scaleX: 0 }}
+                      variants={{
+                        hover: { scaleX: 1 },
+                      }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.button>
+                </motion.div>
+              )}
+
+              {/* In Progress Event Calendar Button - Conditional */}
+              {showInProgressEvents && (
+                <motion.div
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full"
+                >
+                  <motion.button
+                    onClick={() => navigate("/user/inprogress-events")}
+                    className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 hover:from-amber-50 hover:to-amber-100"
+                    variants={{
+                      hover: {
+                        color: "#ea580c",
+                        scale: 1.05,
+                      },
+                    }}
+                    style={{
+                      color: "#f97316",
+                    }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      In Progress Events
+                    </span>
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500"
+                      initial={{ scaleX: 0 }}
+                      variants={{
+                        hover: { scaleX: 1 },
+                      }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.button>
+                </motion.div>
+              )}
 
               {/* View Vendors Button */}
               <motion.div
@@ -455,15 +542,15 @@ const MarketHome = () => {
               >
                 <motion.button
                   onClick={() => navigate("/user/checklists")}
-                  className="w-full justify-center font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100"
+                  className="w-full justify-center font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-purple-50 to-violet-50 hover:from-purple-100 hover:to-violet-100"
                   variants={{
                     hover: {
-                      color: "#059669",
+                      color: "#7c3aed",
                       scale: 1.05,
                     },
                   }}
                   style={{
-                    color: "#10b981",
+                    color: "#8b5cf6",
                   }}
                 >
                   <span className="flex items-center gap-2">
@@ -483,7 +570,7 @@ const MarketHome = () => {
                     Checklists
                   </span>
                   <motion.div
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500"
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"
                     initial={{ scaleX: 0 }}
                     variants={{
                       hover: { scaleX: 1 },

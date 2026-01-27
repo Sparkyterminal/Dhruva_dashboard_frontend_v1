@@ -71,6 +71,8 @@ import EditVenue from "./Dashboard/Marketting/AddVenue/EditVenue";
 import AddSubVenue from "./Dashboard/Marketting/AddSubVenue/AddSubVenue";
 import ViewSubVenue from "./Dashboard/Marketting/AddSubVenue/ViewSubVenue";
 import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
+import CalendarClients from "./Components/CalendarClients";
+import InprogressCalendarPage from "./Pages/InprogressCalendarPage";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -217,6 +219,11 @@ const App = () => {
                 path="/user/editchecklists/:id"
                 element={<EditChecklist />}
               />
+              <Route path="/user/confirmed-events" element={<CalenderPage />} />
+              <Route
+                path="/user/inprogress-events"
+                element={<InprogressCalendarPage />}
+              />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -234,6 +241,12 @@ const App = () => {
               <Route path="/user/eventcalender" element={<CalenderPage />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />
+              <Route path="/user/confirmed-events" element={<CalenderPage />} />
+              <Route
+                path="/user/inprogress-events"
+                element={<InprogressCalendarPage />}
+              />
+
               <Route
                 path="/user/editchecklists/:id"
                 element={<EditChecklist />}

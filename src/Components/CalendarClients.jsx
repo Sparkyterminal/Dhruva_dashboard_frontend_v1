@@ -41,11 +41,13 @@ const CalendarClients = () => {
         }
       }
 
+      // Filter only confirmed events
       eventsData = eventsData.filter((event) => {
         return (
           event &&
           event._id &&
           event.eventName &&
+          event.eventConfirmation === "Confirmed Event" &&
           Array.isArray(event.eventTypes) &&
           event.eventTypes.length > 0
         );
@@ -54,7 +56,7 @@ const CalendarClients = () => {
       setEvents(eventsData);
 
       if (eventsData.length === 0) {
-        message.info("No events found");
+        message.info("No confirmed events found");
       }
     } catch (err) {
       console.error("Error fetching events:", err);
@@ -76,6 +78,13 @@ const CalendarClients = () => {
   useEffect(() => {
     fetchRequirementsData();
   }, [fetchRequirementsData]);
+
+  const getPriority = (eventType) => {
+    const type = formatText(eventType).toLowerCase();
+    if (type.includes("muhurtham")) return 1;
+    if (type.includes("reception")) return 2;
+    return 3;
+  };
 
   const getCalendarEvents = () => {
     const calendarEvents = [];
@@ -103,43 +112,36 @@ const CalendarClients = () => {
             }
 
             const actualEndDate = endDate < startDate ? startDate : endDate;
-
-            // Display event name only if different from event type (coerce objects)
-            const evName = formatText(event.eventName);
-            const etName = formatText(et.eventType);
-            const displayName =
-              evName === etName ? evName : `${evName} - ${etName}`;
-
-            // Check if start and end date are the same day
             const isSameDay =
               startDate.toDateString() === actualEndDate.toDateString();
 
             calendarEvents.push({
               id: `${event._id}-${idx}`,
-              title: displayName,
+              title: "",
               start: startDate.toISOString(),
               end: isSameDay
-                ? startDate.toISOString() // Single day event
+                ? startDate.toISOString()
                 : new Date(
                     actualEndDate.getTime() + 24 * 60 * 60 * 1000,
-                  ).toISOString(), // Multi-day event
+                  ).toISOString(),
               allDay: true,
               extendedProps: {
                 clientName: formatText(event.clientName) || "Unknown Client",
-                eventName: evName || "Untitled Event",
-                eventType: etName || "Unknown Type",
+                eventName: formatText(event.eventName) || "Untitled Event",
+                eventType: formatText(et.eventType) || "",
                 venue: formatText(et.venueLocation) || "TBD",
+                subVenue: formatText(et.subVenueLocation) || "",
+                lead1: formatText(event.lead1) || "",
+                lead2: formatText(event.lead2) || "",
                 brideName: formatText(event.brideName),
                 groomName: formatText(event.groomName),
-                mainEvent: evName || "Untitled Event",
                 hasMultipleTypes: event.eventTypes.length > 1,
                 agreedAmount: et.agreedAmount || event.agreedAmount || 0,
                 startDate: et.startDate,
                 endDate: et.endDate,
                 eventConfirmation: event.eventConfirmation || "Pending",
+                priority: getPriority(et.eventType || event.eventName),
               },
-              // Use a seed that includes the event id and the specific event-type index so
-              // multiple events on the same day can get different but consistent colors
               backgroundColor: getEventColor(`${event._id}-${idx}`),
               borderColor: getEventColor(`${event._id}-${idx}`),
               textColor: "#ffffff",
@@ -148,6 +150,14 @@ const CalendarClients = () => {
             console.error(`Error processing event ${event._id}-${idx}:`, error);
           }
         });
+      });
+
+      // Sort events by priority (Reception=1, Muhurtham=2, others=3)
+      calendarEvents.sort((a, b) => {
+        if (a.start === b.start) {
+          return a.extendedProps.priority - b.extendedProps.priority;
+        }
+        return 0;
       });
     } catch (error) {
       console.error("Error transforming events:", error);
@@ -160,16 +170,16 @@ const CalendarClients = () => {
   const getEventColor = (seed) => {
     const s = String(seed || "");
     const colors = [
-      "#3b82f6", // blue
-      "#10b981", // green
-      "#f59e0b", // amber
-      "#8b5cf6", // purple
-      "#ec4899", // pink
-      "#fb923c", // orange
-      "#34d399", // mint
-      "#60a5fa", // sky
-      "#a78bfa", // violet
-      "#fb7185", // rose
+      "#3b82f6",
+      "#10b981",
+      "#f59e0b",
+      "#8b5cf6",
+      "#ec4899",
+      "#fb923c",
+      "#34d399",
+      "#60a5fa",
+      "#a78bfa",
+      "#fb7185",
     ];
 
     let hash = 0;
@@ -203,37 +213,48 @@ const CalendarClients = () => {
 
   const renderEventContent = (eventInfo) => {
     try {
-      const { eventName, eventType, venue, eventConfirmation } =
+      const { eventName, eventType, lead1, lead2, venue, subVenue, priority } =
         eventInfo.event.extendedProps || {};
 
-      // Show only event type if it's different from event name
-      const showEventType = formatText(eventName) !== formatText(eventType);
-
-      // Map confirmation to emoji/icon
-      const confirmationEmoji = {
-        "Confirmed Event": "✓",
-        InProgress: "◐",
-        Cancelled: "✕",
-        Pending: "○",
-      };
-
-      const confirmationChar = confirmationEmoji[eventConfirmation] || "○";
+      const displayVenue = subVenue || venue;
+      const marginTop = priority === 3 ? "10px" : "0px";
 
       return (
-        <div className="p-1.5 text-xs overflow-hidden leading-tight">
-          <div className="font-semibold truncate text-white mb-0.5 flex items-center gap-1">
-            <span>{confirmationChar}</span>
-            <span>{formatText(eventName)}</span>
+        <div
+          className="p-2 text-xs overflow-hidden leading-snug"
+          style={{
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            marginTop,
+          }}
+        >
+          <div
+            className="font-semibold truncate mb-1"
+            style={{ fontSize: "11px" }}
+          >
+            {formatText(eventName)}
           </div>
-          {showEventType && (
-            <div className="truncate text-white opacity-90 mb-0.5">
+          {eventType && (
+            <div className="truncate mb-1" style={{ fontSize: "10px" }}>
               {formatText(eventType)}
             </div>
           )}
-          {venue && (
-            <div className="truncate opacity-80 flex items-center gap-1 text-white">
+          {lead1 && (
+            <div className="truncate mb-0.5" style={{ fontSize: "10px" }}>
+              {formatText(lead1)}
+            </div>
+          )}
+          {lead2 && (
+            <div className="truncate mb-0.5" style={{ fontSize: "10px" }}>
+              {formatText(lead2)}
+            </div>
+          )}
+          {displayVenue && (
+            <div
+              className="truncate flex items-center gap-1"
+              style={{ fontSize: "10px" }}
+            >
               <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="truncate">{formatText(venue)}</span>
+              <span className="truncate">{formatText(displayVenue)}</span>
             </div>
           )}
         </div>
@@ -254,7 +275,6 @@ const CalendarClients = () => {
     }
 
     try {
-      // Get the first day of the calendar view (includes previous month days)
       const calendarApi = calendarRef.current?.getApi();
       if (!calendarApi) {
         return [];
@@ -271,7 +291,6 @@ const CalendarClients = () => {
           return;
         }
 
-        // Filter event types that fall EXACTLY in the current calendar month
         const eventTypesInMonth = event.eventTypes.filter((et) => {
           if (!et || !et.startDate) {
             return false;
@@ -292,7 +311,6 @@ const CalendarClients = () => {
             const endMonth = end.getMonth();
             const endYear = end.getFullYear();
 
-            // Event type must have start date OR end date in the current month/year
             const startsInCurrentMonth =
               startMonth === month && startYear === year;
             const endsInCurrentMonth = endMonth === month && endYear === year;
@@ -304,7 +322,6 @@ const CalendarClients = () => {
           }
         });
 
-        // Only include event if it has event types in this month
         if (eventTypesInMonth.length > 0) {
           filteredEvents.push({
             ...event,
@@ -313,7 +330,6 @@ const CalendarClients = () => {
         }
       });
 
-      // Sort event types by start date and then sort events by their earliest start date
       filteredEvents.forEach((ev) => {
         ev.eventTypes.sort(
           (a, b) => new Date(a.startDate) - new Date(b.startDate),
@@ -414,12 +430,12 @@ const CalendarClients = () => {
         }
         
         .fc {
-          font-family: inherit;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
         
         .fc .fc-toolbar-title {
-          font-size: 1.75rem;
-          font-weight: 700;
+          font-size: 1.5rem;
+          font-weight: 600;
           color: #1f2937;
         }
         
@@ -433,7 +449,7 @@ const CalendarClients = () => {
         
         .fc .fc-daygrid-day-number {
           padding: 8px;
-          font-weight: 600;
+          font-weight: 500;
           color: #374151;
         }
         
@@ -443,25 +459,25 @@ const CalendarClients = () => {
         
         .fc .fc-col-header-cell {
           background-color: #f9fafb;
-          font-weight: 600;
+          font-weight: 500;
           color: #4b5563;
           padding: 12px 0;
         }
         
         .fc-event {
           cursor: pointer;
-          margin: 2px 0;
-          border-radius: 6px;
+          margin: 3px 2px;
+          border-radius: 4px;
           border-width: 0;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
           opacity: 1 !important;
         }
         
         .fc-event:hover {
-          opacity: 0.95 !important;
+          opacity: 0.9 !important;
           transform: translateY(-1px);
           transition: all 0.2s;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
         
         .fc-event-main {
@@ -497,7 +513,7 @@ const CalendarClients = () => {
         }
         
         .fc-daygrid-day-frame {
-          min-height: 120px !important;
+          min-height: 140px !important;
         }
         
         .fc-daygrid-day-events {
@@ -509,7 +525,7 @@ const CalendarClients = () => {
         }
         
         .fc-daygrid-event-harness {
-          margin-bottom: 3px !important;
+          margin-bottom: 4px !important;
         }
       `}</style>
 
@@ -528,41 +544,14 @@ const CalendarClients = () => {
                 <Calendar className="w-8 h-8 text-white" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-800">
-                  Event Calendar
+                <h1 className="text-3xl font-semibold text-gray-800">
+                  Confirmed Events
                 </h1>
-                <p className="text-gray-600 mt-1">
-                  Manage and view all your events
-                </p>
+                <p className="text-gray-600 mt-1">View all confirmed events</p>
               </div>
             </div>
             <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 rounded-lg">
-              {events.length} events
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm font-semibold text-gray-700 mb-3">
-              Identification of Event Status on calendar:
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-green-600">✓</span>
-                <span className="text-sm text-gray-600">Confirmed Event</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-amber-600">◐</span>
-                <span className="text-sm text-gray-600">InProgress</span>
-              </div>
-              {/* <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-red-600">✕</span>
-                <span className="text-sm text-gray-600">Cancelled</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-gray-600">○</span>
-                <span className="text-sm text-gray-600">Pending</span>
-              </div> */}
+              {events.length} confirmed events
             </div>
           </div>
         </div>
@@ -582,11 +571,10 @@ const CalendarClients = () => {
             eventContent={renderEventContent}
             height="auto"
             dayMaxEvents={false}
-            eventMaxStack={10}
+            eventMaxStack={15}
             datesSet={(dateInfo) => {
               try {
                 if (dateInfo.start) {
-                  // Use the view's current date to get the actual displayed month
                   const calendarApi = calendarRef.current?.getApi();
                   if (calendarApi) {
                     const currentDate = calendarApi.getDate();
@@ -604,23 +592,26 @@ const CalendarClients = () => {
                   eventName,
                   eventType,
                   venue,
+                  subVenue,
+                  lead1,
+                  lead2,
                   brideName,
                   groomName,
                 } = info.event.extendedProps;
 
-                const showEventType =
-                  formatText(eventName) !== formatText(eventType);
-
-                let tooltip = showEventType
-                  ? `${formatText(eventName)} - ${formatText(eventType)}`
-                  : formatText(eventName);
+                let tooltip = `${formatText(eventName)}`;
+                if (eventType) {
+                  tooltip += ` - ${formatText(eventType)}`;
+                }
                 tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
                 if (brideName && groomName) {
                   tooltip += `\n${formatText(brideName)} & ${formatText(
                     groomName,
                   )}`;
                 }
-                tooltip += `\nVenue: ${formatText(venue) || "TBD"}`;
+                if (lead1) tooltip += `\nLead 1: ${formatText(lead1)}`;
+                if (lead2) tooltip += `\nLead 2: ${formatText(lead2)}`;
+                tooltip += `\nVenue: ${formatText(subVenue || venue) || "TBD"}`;
 
                 info.el.setAttribute("title", tooltip);
               } catch (error) {
@@ -636,7 +627,7 @@ const CalendarClients = () => {
             <div className="p-2 rounded-lg" style={{ background: "#667eea" }}>
               <Users className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-800">
+            <h3 className="text-2xl font-semibold text-gray-800">
               Events This Month
             </h3>
           </div>
@@ -648,7 +639,7 @@ const CalendarClients = () => {
                   <Calendar className="w-10 h-10 text-gray-400" />
                 </div>
                 <p className="text-gray-500 text-lg">
-                  No events scheduled for this month
+                  No confirmed events scheduled for this month
                 </p>
               </div>
             ) : (
@@ -665,7 +656,7 @@ const CalendarClients = () => {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <span
-                          className="px-3 py-1 rounded-full text-sm font-semibold text-white"
+                          className="px-3 py-1 rounded-full text-sm font-medium text-white"
                           style={{
                             backgroundColor: getEventColor(
                               formatText(event.eventName),
@@ -674,23 +665,11 @@ const CalendarClients = () => {
                         >
                           {formatText(event.eventName)}
                         </span>
-                        <span
-                          className="px-3 py-1 rounded-full text-sm font-semibold text-white"
-                          style={{
-                            backgroundColor:
-                              event.eventConfirmation === "Confirmed Event"
-                                ? "#10b981"
-                                : event.eventConfirmation === "InProgress"
-                                  ? "#f59e0b"
-                                  : event.eventConfirmation === "Cancelled"
-                                    ? "#ef4444"
-                                    : "#6b7280",
-                          }}
-                        >
-                          {event.eventConfirmation || "Pending"}
+                        <span className="px-3 py-1 rounded-full text-sm font-medium text-white bg-green-600">
+                          Confirmed Event
                         </span>
                       </div>
-                      <h4 className="text-xl font-bold text-gray-800 mb-1">
+                      <h4 className="text-xl font-semibold text-gray-800 mb-1">
                         {formatText(event.clientName)}
                       </h4>
                       <div className="flex items-center gap-3 text-sm text-indigo-600 mb-2">
@@ -716,12 +695,12 @@ const CalendarClients = () => {
 
                   <div className="space-y-3">
                     {event.eventTypes.map((et, idx) => {
-                      const showEventType =
-                        formatText(event.eventName) !==
-                        formatText(et.eventType);
                       const start = et?.startDate;
                       const end = et?.endDate;
                       const multiDay = start && end && start !== end;
+                      const displayVenue =
+                        formatText(et.subVenueLocation) ||
+                        formatText(et.venueLocation);
 
                       return (
                         <div
@@ -730,12 +709,12 @@ const CalendarClients = () => {
                         >
                           <div className="flex items-start gap-4">
                             <div className="flex-shrink-0">
-                              <div className="text-sm font-semibold bg-indigo-600 text-white px-3 py-2 rounded">
+                              <div className="text-sm font-medium bg-indigo-600 text-white px-3 py-2 rounded">
                                 {formatDateShort(start)}
                               </div>
                             </div>
                             <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-gray-800 mb-1 flex items-center gap-2">
+                              <div className="font-medium text-gray-800 mb-1 flex items-center gap-2">
                                 <div
                                   className="w-2 h-2 rounded-full"
                                   style={{
@@ -744,9 +723,8 @@ const CalendarClients = () => {
                                     ),
                                   }}
                                 ></div>
-                                {showEventType
-                                  ? formatText(et.eventType)
-                                  : formatText(event.eventName)}
+                                {formatText(et.eventType) ||
+                                  formatText(event.eventName)}
                               </div>
 
                               <div className="text-sm text-gray-600 mb-2">
@@ -755,7 +733,7 @@ const CalendarClients = () => {
                                     className="w-4 h-4 mt-0.5"
                                     style={{ color: "#667eea" }}
                                   />
-                                  <span>{formatText(et.venueLocation)}</span>
+                                  <span>{displayVenue}</span>
                                 </span>
                                 <span className="inline-flex items-center gap-2">
                                   <Clock
@@ -773,11 +751,6 @@ const CalendarClients = () => {
                                 </span>
                               </div>
                             </div>
-                            {/* <div className="ml-4 text-sm font-medium text-gray-700">
-                              {et.agreedAmount
-                                ? `₹${Number(et.agreedAmount).toLocaleString()}`
-                                : ""}
-                            </div> */}
                           </div>
                         </div>
                       );

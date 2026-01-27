@@ -1,9 +1,9 @@
 import React from "react";
 import { ArrowLeft, CalendarDays } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import CalendarClients from "../Components/CalendarClients";
+import ProgressCalenderClients from "../Components/ProgressCalenderClients";
 
-const CalenderPage = () => {
+const InprogressCalendarPage = () => {
   const navigate = useNavigate();
 
   return (
@@ -35,11 +35,11 @@ const CalenderPage = () => {
 
         {/* Card */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg border border-gray-100 p-4 sm:p-6">
-          <CalendarClients />
+          <ProgressCalenderClients />
         </div>
       </div>
     </div>
   );
 };
 
-export default CalenderPage;
+export default InprogressCalendarPage;

@@ -1289,7 +1289,8 @@ const AddInflow = () => {
                                   <span
                                     style={{ fontSize: 13, color: "#6b7280" }}
                                   >
-                                    Account Amount:
+                                    Account Amount(If you've agreed to cash only
+                                    then put as ₹0):
                                   </span>
                                   <div
                                     style={{
@@ -1688,7 +1689,7 @@ const AddInflow = () => {
                                     />
                                   </Form.Item>
                                   <Form.Item
-                                    label="Account Amount"
+                                    label="Account Amount (If you've agreed to cash only then put as ₹0)"
                                     name={[
                                       "eventTypeMeta",
                                       key,
@@ -1799,7 +1800,8 @@ const AddInflow = () => {
                                                 color: "#6b7280",
                                               }}
                                             >
-                                              Account Amount:
+                                              Account Amount(If you've agreed to
+                                              cash only then put as ₹0):
                                             </span>
                                             <div
                                               style={{
@@ -2370,7 +2372,7 @@ const AddInflow = () => {
                             />
                           </Form.Item>
                           <Form.Item
-                            label="Account Amount"
+                            label="Account Amount (If you've agreed to cash only then put as ₹0)"
                             name="agreedAmountAccount"
                             rules={[
                               {
@@ -2472,7 +2474,8 @@ const AddInflow = () => {
                                     <span
                                       style={{ fontSize: 13, color: "#6b7280" }}
                                     >
-                                      Account Amount:
+                                      Account Amount(If you've agreed to cash
+                                      only then put as ₹0):
                                     </span>
                                     <div
                                       style={{

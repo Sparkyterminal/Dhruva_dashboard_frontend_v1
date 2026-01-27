@@ -30,17 +30,17 @@
 //     border: 1px solid rgba(255,255,255,0.4);
 //     transition: all 0.3s ease;
 //   }
-  
+
 //   .vendors-glass-card:hover {
 //     box-shadow: 0 12px 40px 0 rgba(102,126,234,0.18);
 //     transform: translateY(-2px);
 //   }
-  
+
 //   .vendors-collapse {
 //     background: transparent !important;
 //     border: none !important;
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-item {
 //     background: rgba(255,255,255,0.9);
 //     border-radius: 1rem !important;
@@ -50,12 +50,12 @@
 //     box-shadow: 0 4px 16px rgba(102,126,234,0.08);
 //     transition: all 0.3s ease;
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-item:hover {
 //     box-shadow: 0 8px 24px rgba(102,126,234,0.15);
 //     transform: translateY(-2px);
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-header {
 //     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
 //     color: white !important;
@@ -64,25 +64,25 @@
 //     padding: 16px 24px !important;
 //     border-radius: 1rem 1rem 0 0 !important;
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-header:hover {
 //     background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%) !important;
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-content {
 //     background: white;
 //     border-top: none;
 //   }
-  
+
 //   .vendors-collapse .ant-collapse-content-box {
 //     padding: 20px;
 //   }
-  
+
 //   .vendors-table .ant-table {
 //     border-radius: 0.75rem;
 //     overflow: hidden;
 //   }
-  
+
 //   .vendors-table .ant-table-thead > tr > th {
 //     background: linear-gradient(135deg, #f8f7ff 0%, #f3f1ff 100%);
 //     color: #32255e;
@@ -90,11 +90,11 @@
 //     border: none;
 //     font-size: 14px;
 //   }
-  
+
 //   .vendors-table .ant-table-tbody > tr:hover > td {
 //     background: #faf8fe !important;
 //   }
-  
+
 //   .vendors-btn-primary {
 //     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 //     border: none;
@@ -104,37 +104,37 @@
 //     transition: all 0.3s ease;
 //     color: white;
 //   }
-  
+
 //   .vendors-btn-primary:hover {
 //     background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%) !important;
 //     transform: translateY(-2px);
 //     box-shadow: 0 6px 16px rgba(102,126,234,0.35) !important;
 //     color: white !important;
 //   }
-  
+
 //   .vendors-search-input {
 //     border-radius: 0.65rem;
 //     border: 1.5px solid rgba(102,126,234,0.2);
 //     transition: all 0.3s ease;
 //   }
-  
+
 //   .vendors-search-input:hover,
 //   .vendors-search-input:focus {
 //     border-color: #667eea;
 //     box-shadow: 0 0 0 2px rgba(102,126,234,0.1);
 //   }
-  
+
 //   .vendors-modal .ant-modal-header {
 //     background: linear-gradient(135deg, #f8f7ff 0%, #f3f1ff 100%);
 //     border-radius: 1rem 1rem 0 0;
 //     border: none;
 //   }
-  
+
 //   .vendors-modal .ant-modal-content {
 //     border-radius: 1rem;
 //     overflow: hidden;
 //   }
-  
+
 //   .vendors-stats-card {
 //     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 //     border-radius: 1.25rem;
@@ -172,10 +172,10 @@
 //     setLoading(true);
 //     try {
 //       // Build URL with search query parameter
-//       const url = searchQuery 
+//       const url = searchQuery
 //         ? `${API_BASE_URL}vendor/all?search=${encodeURIComponent(searchQuery)}`
 //         : `${API_BASE_URL}vendor/all`;
-      
+
 //       const res = await axios.get(url, config);
 //       if (res.data.success && res.data.vendors) {
 //         setVendors(res.data.vendors);
@@ -222,7 +222,7 @@
 
 //   const exportSingleVendorToPDF = (vendor) => {
 //     const doc = new jsPDF();
-    
+
 //     doc.setFontSize(14);
 //     doc.setFont("helvetica", "Bold");
 //     doc.text("Request Form For Opening New Vendor Code", 105, 22, { align: "center" });
@@ -283,8 +283,8 @@
 //         1: { cellWidth: 120 }
 //       },
 //       didParseCell: function(data) {
-//         if (data.row.index === 3 || data.row.index === 4 || data.row.index === 10 || 
-//             data.row.index === 16 || data.row.index === 26 || data.row.index === 27 || 
+//         if (data.row.index === 3 || data.row.index === 4 || data.row.index === 10 ||
+//             data.row.index === 16 || data.row.index === 26 || data.row.index === 27 ||
 //             data.row.index === 36) {
 //           data.cell.styles.fillColor = [230, 230, 230];
 //           data.cell.styles.fontStyle = 'bold';
@@ -297,11 +297,11 @@
 //     doc.setFont("helvetica", "italic");
 //     doc.text("*All the columns should be properly filled up. No column should be kept Blank.", 14, finalY);
 //     doc.text("*All registered certificates should be scanned and attached in system.", 14, finalY + 5);
-    
+
 //     doc.setFontSize(9);
 //     doc.setFont("helvetica", "bold");
 //     doc.text("Compulsory Documents to be Attached:", 14, finalY + 15);
-    
+
 //     doc.setFontSize(8);
 //     doc.setFont("helvetica", "normal");
 //     const docs = [
@@ -311,7 +311,7 @@
 //       "4) Copy of cancelled cheque",
 //       "5) MSMED form"
 //     ];
-    
+
 //     let yPos = finalY + 20;
 //     docs.forEach(docItem => {
 //       doc.text(docItem, 14, yPos);
@@ -772,11 +772,11 @@
 //                 }}
 //               />
 //               {loading && (
-//                 <div style={{ 
-//                   marginTop: "8px", 
-//                   color: "#667eea", 
+//                 <div style={{
+//                   marginTop: "8px",
+//                   color: "#667eea",
 //                   fontSize: "13px",
-//                   fontWeight: 500 
+//                   fontWeight: 500
 //                 }}>
 //                   Searching...
 //                 </div>
@@ -946,7 +946,18 @@ import { useSelector } from "react-redux";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { motion } from "framer-motion";
-import { Document, Packer, Paragraph, Table as DocxTable, TableCell, TableRow, WidthType, BorderStyle, AlignmentType, TextRun } from "docx";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table as DocxTable,
+  TableCell,
+  TableRow,
+  WidthType,
+  BorderStyle,
+  AlignmentType,
+  TextRun,
+} from "docx";
 import { saveAs } from "file-saver";
 
 const { Panel } = Collapse;
@@ -1106,10 +1117,10 @@ const ViewVendors = () => {
     setLoading(true);
     try {
       // Build URL with search query parameter
-      const url = searchQuery 
+      const url = searchQuery
         ? `${API_BASE_URL}vendor/all?search=${encodeURIComponent(searchQuery)}`
         : `${API_BASE_URL}vendor/all`;
-      
+
       const res = await axios.get(url, config);
       if (res.data.success && res.data.vendors) {
         setVendors(res.data.vendors);
@@ -1156,10 +1167,12 @@ const ViewVendors = () => {
 
   const exportSingleVendorToPDF = (vendor) => {
     const doc = new jsPDF();
-    
+
     doc.setFontSize(14);
     doc.setFont("helvetica", "bold");
-    doc.text("Request Form For Opening New Vendor Code", 105, 22, { align: "center" });
+    doc.text("Request Form For Opening New Vendor Code", 105, 22, {
+      align: "center",
+    });
 
     const tableData = [];
 
@@ -1177,10 +1190,14 @@ const ViewVendors = () => {
     addRow("Referred By", vendor.refered_by);
 
     // Permanent Address Section
-    const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || 
-                                vendor.perm_city || vendor.perm_pin || 
-                                vendor.perm_state || vendor.perm_country;
-    
+    const hasPermanentAddress =
+      vendor.perm_address_1 ||
+      vendor.perm_address_2 ||
+      vendor.perm_city ||
+      vendor.perm_pin ||
+      vendor.perm_state ||
+      vendor.perm_country;
+
     if (hasPermanentAddress) {
       tableData.push(["", ""]);
       tableData.push(["PERMANENT ADDRESS", ""]);
@@ -1193,10 +1210,13 @@ const ViewVendors = () => {
     }
 
     // Temporary Address Section
-    const hasTemporaryAddress = vendor.temp_address_1 || vendor.temp_city || 
-                                vendor.temp_pin || vendor.temp_state || 
-                                vendor.temp_country;
-    
+    const hasTemporaryAddress =
+      vendor.temp_address_1 ||
+      vendor.temp_city ||
+      vendor.temp_pin ||
+      vendor.temp_state ||
+      vendor.temp_country;
+
     if (hasTemporaryAddress) {
       tableData.push(["", ""]);
       tableData.push(["TEMPORARY ADDRESS", ""]);
@@ -1225,11 +1245,16 @@ const ViewVendors = () => {
     addRow("PAN NO", vendor.pan_no);
 
     // Bank Details Section
-    const hasBankDetails = vendor.bank_name || vendor.beneficiary_name || 
-                           vendor.bank_address_1 || vendor.bank_address_2 || 
-                           vendor.bank_pin || vendor.account_number || 
-                           vendor.ifscode || vendor.branch;
-    
+    const hasBankDetails =
+      vendor.bank_name ||
+      vendor.beneficiary_name ||
+      vendor.bank_address_1 ||
+      vendor.bank_address_2 ||
+      vendor.bank_pin ||
+      vendor.account_number ||
+      vendor.ifscode ||
+      vendor.branch;
+
     if (hasBankDetails) {
       tableData.push(["", ""]);
       tableData.push(["BANK DETAILS", ""]);
@@ -1252,41 +1277,53 @@ const ViewVendors = () => {
       startY: 35,
       head: [],
       body: tableData,
-      theme: 'grid',
+      theme: "grid",
       styles: {
         fontSize: 9,
         cellPadding: 3,
       },
       columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 70 },
-        1: { cellWidth: 120 }
+        0: { fontStyle: "bold", cellWidth: 70 },
+        1: { cellWidth: 120 },
       },
-      didParseCell: function(data) {
+      didParseCell: function (data) {
         const cellText = data.cell.text[0];
         // Section headers
-        if (cellText === "PERMANENT ADDRESS" || cellText === "TEMPORARY ADDRESS" || 
-            cellText === "CONTACT INFORMATION" || cellText === "VENDOR DETAILS" || 
-            cellText === "BANK DETAILS") {
+        if (
+          cellText === "PERMANENT ADDRESS" ||
+          cellText === "TEMPORARY ADDRESS" ||
+          cellText === "CONTACT INFORMATION" ||
+          cellText === "VENDOR DETAILS" ||
+          cellText === "BANK DETAILS"
+        ) {
           data.cell.styles.fillColor = [230, 230, 230];
-          data.cell.styles.fontStyle = 'bold';
+          data.cell.styles.fontStyle = "bold";
         }
         // Empty separator rows
         if (cellText === "" && data.column.index === 0) {
           data.cell.styles.fillColor = [245, 245, 245];
         }
-      }
+      },
     });
 
     const finalY = doc.lastAutoTable.finalY + 10;
     doc.setFontSize(8);
     doc.setFont("helvetica", "italic");
-    doc.text("*All the columns should be properly filled up. No column should be kept Blank.", 14, finalY);
-    doc.text("*All registered certificates should be scanned and attached in system.", 14, finalY + 5);
-    
+    doc.text(
+      "*All the columns should be properly filled up. No column should be kept Blank.",
+      14,
+      finalY,
+    );
+    doc.text(
+      "*All registered certificates should be scanned and attached in system.",
+      14,
+      finalY + 5,
+    );
+
     doc.setFontSize(9);
     doc.setFont("helvetica", "bold");
     doc.text("Compulsory Documents to be Attached:", 14, finalY + 15);
-    
+
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     const docs = [
@@ -1294,11 +1331,11 @@ const ViewVendors = () => {
       "2) Address proof- copy of voter card, Aadhar card, license, passport",
       "3) Copy of GST certificate as applicable",
       "4) Copy of cancelled cheque",
-      "5) MSMED form"
+      "5) MSMED form",
     ];
-    
+
     let yPos = finalY + 20;
-    docs.forEach(docItem => {
+    docs.forEach((docItem) => {
       doc.text(docItem, 14, yPos);
       yPos += 5;
     });
@@ -1308,7 +1345,9 @@ const ViewVendors = () => {
     doc.text("SIGNATURE", 14, yPos + 10);
     doc.line(14, yPos + 15, 80, yPos + 15);
 
-    doc.save(`Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.pdf`);
+    doc.save(
+      `Vendor_${vendor.name.replace(/\s+/g, "_")}_${new Date().getTime()}.pdf`,
+    );
     message.success("PDF exported successfully!");
   };
 
@@ -1320,7 +1359,7 @@ const ViewVendors = () => {
       if (!isHeader && (!value || value.toString().trim() === "")) {
         return null;
       }
-      
+
       return new TableRow({
         children: [
           new TableCell({
@@ -1369,10 +1408,14 @@ const ViewVendors = () => {
     addRow("Referred By", vendor.refered_by);
 
     // Permanent Address Section
-    const hasPermanentAddress = vendor.perm_address_1 || vendor.perm_address_2 || 
-                                vendor.perm_city || vendor.perm_pin || 
-                                vendor.perm_state || vendor.perm_country;
-    
+    const hasPermanentAddress =
+      vendor.perm_address_1 ||
+      vendor.perm_address_2 ||
+      vendor.perm_city ||
+      vendor.perm_pin ||
+      vendor.perm_state ||
+      vendor.perm_country;
+
     if (hasPermanentAddress) {
       rows.push(createRow("", "", false));
       rows.push(createRow("PERMANENT ADDRESS", "", true));
@@ -1385,10 +1428,13 @@ const ViewVendors = () => {
     }
 
     // Temporary Address Section
-    const hasTemporaryAddress = vendor.temp_address_1 || vendor.temp_city || 
-                                vendor.temp_pin || vendor.temp_state || 
-                                vendor.temp_country;
-    
+    const hasTemporaryAddress =
+      vendor.temp_address_1 ||
+      vendor.temp_city ||
+      vendor.temp_pin ||
+      vendor.temp_state ||
+      vendor.temp_country;
+
     if (hasTemporaryAddress) {
       rows.push(createRow("", "", false));
       rows.push(createRow("TEMPORARY ADDRESS", "", true));
@@ -1417,11 +1463,16 @@ const ViewVendors = () => {
     addRow("PAN NO", vendor.pan_no);
 
     // Bank Details Section
-    const hasBankDetails = vendor.bank_name || vendor.beneficiary_name || 
-                           vendor.bank_address_1 || vendor.bank_address_2 || 
-                           vendor.bank_pin || vendor.account_number || 
-                           vendor.ifscode || vendor.branch;
-    
+    const hasBankDetails =
+      vendor.bank_name ||
+      vendor.beneficiary_name ||
+      vendor.bank_address_1 ||
+      vendor.bank_address_2 ||
+      vendor.bank_pin ||
+      vendor.account_number ||
+      vendor.ifscode ||
+      vendor.branch;
+
     if (hasBankDetails) {
       rows.push(createRow("", "", false));
       rows.push(createRow("BANK DETAILS", "", true));
@@ -1517,7 +1568,10 @@ const ViewVendors = () => {
     });
 
     const blob = await Packer.toBlob(doc);
-    saveAs(blob, `Vendor_${vendor.name.replace(/\s+/g, '_')}_${new Date().getTime()}.docx`);
+    saveAs(
+      blob,
+      `Vendor_${vendor.name.replace(/\s+/g, "_")}_${new Date().getTime()}.docx`,
+    );
     message.success("DOCX exported successfully!");
   };
 
@@ -1555,9 +1609,7 @@ const ViewVendors = () => {
 
     autoTable(doc, {
       startY: 50,
-      head: [
-        ["Vendor Name", "Company", "GST No", "Type", "Referred By"],
-      ],
+      head: [["Vendor Name", "Company", "GST No", "Type", "Referred By"]],
       body: tableData,
       theme: "striped",
       headStyles: {
@@ -1582,8 +1634,8 @@ const ViewVendors = () => {
     doc.save(
       `Department_${departmentName.replace(
         /\s+/g,
-        "_"
-      )}_Vendors_${new Date().getTime()}.pdf`
+        "_",
+      )}_Vendors_${new Date().getTime()}.pdf`,
     );
     message.success(`${departmentName} vendors exported successfully!`);
   };
@@ -1761,7 +1813,7 @@ const ViewVendors = () => {
     pushEntry("Person Category", vendor.person_category);
     pushEntry("Company Name", vendor.company_name);
     pushEntry("Referred By", vendor.refered_by);
-    
+
     // Permanent Address
     pushEntry("Permanent Address 1", vendor.perm_address_1);
     pushEntry("Permanent Address 2", vendor.perm_address_2);
@@ -1769,14 +1821,14 @@ const ViewVendors = () => {
     pushEntry("Permanent PIN", vendor.perm_pin);
     pushEntry("Permanent State", vendor.perm_state);
     pushEntry("Permanent Country", vendor.perm_country);
-    
+
     // Temporary Address
     pushEntry("Temporary Address 1", vendor.temp_address_1);
     pushEntry("Temporary City", vendor.temp_city);
     pushEntry("Temporary PIN", vendor.temp_pin);
     pushEntry("Temporary State", vendor.temp_state);
     pushEntry("Temporary Country", vendor.temp_country);
-    
+
     pushEntry("Contact Person", vendor.cont_person);
     pushEntry("Designation", vendor.designation);
     pushEntry("Mobile Number", vendor.mobile_no);
@@ -1786,7 +1838,7 @@ const ViewVendors = () => {
     pushEntry("GST Number", vendor.gst_no);
     pushEntry("MSMED Number", vendor.msmed_no);
     pushEntry("PAN Number", vendor.pan_no);
-    
+
     // Bank Details
     pushEntry("Bank Name", vendor.bank_name);
     pushEntry("Beneficiary Name", vendor.beneficiary_name);
@@ -1796,7 +1848,7 @@ const ViewVendors = () => {
     pushEntry("Account Number", vendor.account_number);
     pushEntry("IFSC Code", vendor.ifscode);
     pushEntry("Branch", vendor.branch);
-    
+
     pushEntry("Payment Terms", vendor.payment_terms);
     pushEntry("TDS Details", vendor.tds_details);
     pushEntry("Vendor Status", vendor.vendor_status);
@@ -1989,12 +2041,14 @@ const ViewVendors = () => {
                 }}
               />
               {loading && (
-                <div style={{ 
-                  marginTop: "8px", 
-                  color: "#667eea", 
-                  fontSize: "13px",
-                  fontWeight: 500 
-                }}>
+                <div
+                  style={{
+                    marginTop: "8px",
+                    color: "#667eea",
+                    fontSize: "13px",
+                    fontWeight: 500,
+                  }}
+                >
                   Searching...
                 </div>
               )}
@@ -2091,7 +2145,7 @@ const ViewVendors = () => {
                         style={{ backgroundColor: "#ffffff", marginTop: "4px" }}
                       />
                     </Panel>
-                  )
+                  ),
                 )}
               </Collapse>
             )}
@@ -2108,10 +2162,7 @@ const ViewVendors = () => {
           open={modalVisible}
           onCancel={() => setModalVisible(false)}
           footer={[
-            <Button
-              key="close"
-              onClick={() => setModalVisible(false)}
-            >
+            <Button key="close" onClick={() => setModalVisible(false)}>
               Close
             </Button>,
             selectedVendor && (

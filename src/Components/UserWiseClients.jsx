@@ -121,7 +121,7 @@ const UserWiseClients = () => {
     });
 
     const sortedUsers = Array.from(userMap.values()).sort(
-      (a, b) => b.eventCount - a.eventCount
+      (a, b) => b.eventCount - a.eventCount,
     );
 
     return sortedUsers;
@@ -173,7 +173,7 @@ const UserWiseClients = () => {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+      <div className="flex items-center justify-center h-screen bg-white">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
           <div className="text-lg text-gray-700">Loading leaderboard...</div>
@@ -183,7 +183,7 @@ const UserWiseClients = () => {
   }
 
   return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen p-6 bg-white">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">

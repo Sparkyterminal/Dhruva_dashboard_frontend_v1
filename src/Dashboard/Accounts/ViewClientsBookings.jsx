@@ -43,6 +43,7 @@ import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import CalendarClients from "../../Components/CalendarClients";
 import UserWiseClients from "../../Components/UserWiseClients";
+import ProgressCalenderClients from "../../Components/ProgressCalenderClients";
 
 const { Title, Text } = Typography;
 
@@ -868,8 +869,13 @@ const ViewClientsBookings = () => {
     },
     {
       key: "calendar",
-      label: "Calendar View",
+      label: "Confirmed Events Calendar",
       children: <CalendarClients />,
+    },
+    {
+      key: "Progresscalendar",
+      label: "Inprogress/Cancelled Events Calendar",
+      children: <ProgressCalenderClients />,
     },
     {
       key: "leaderboard",
