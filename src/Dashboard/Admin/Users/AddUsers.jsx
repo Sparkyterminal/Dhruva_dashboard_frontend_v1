@@ -126,9 +126,7 @@
 //             <Select.Option value="OWNER">OWNER</Select.Option>
 //             <Select.Option value="APPROVER">APPROVER</Select.Option>
 //             <Select.Option value="DEPARTMENT">DEPARTMENT</Select.Option>
-//             {/* <Select.Option value="ACCOUNTS">ACCOUNTS</Select.Option>
-//             <Select.Option value="MARKETING">MARKETING</Select.Option> */}
-
+//             <Select.Option value="CA">CA</Select.Option>
 //           </Select>
 //         </Form.Item>
 //         <Form.Item
@@ -222,12 +220,10 @@ const AddUsers = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  // ✅ Fetch departments from API
   const fetchDepartmentData = async () => {
     setFetchingDepartments(true);
     try {
       const res = await axios.get(`${API_BASE_URL}department/all`, config);
-      // your API response key is "departments"
       setDepartments(res.data.departments || []);
     } catch (err) {
       console.error(err);
@@ -242,7 +238,6 @@ const AddUsers = () => {
     // eslint-disable-next-line
   }, []);
 
-  // ✅ Submit handler
   const onFinish = async (values) => {
     setLoading(true);
     try {
@@ -271,7 +266,6 @@ const AddUsers = () => {
     }
   };
 
-  // ✅ Show loading state while fetching departments
   if (fetchingDepartments) {
     return (
       <Card
@@ -322,6 +316,7 @@ const AddUsers = () => {
             <Select.Option value="OWNER">OWNER</Select.Option>
             <Select.Option value="APPROVER">APPROVER</Select.Option>
             <Select.Option value="DEPARTMENT">DEPARTMENT</Select.Option>
+            <Select.Option value="CA">CA</Select.Option>
           </Select>
         </Form.Item>
 
@@ -333,7 +328,6 @@ const AddUsers = () => {
           <Input placeholder="Enter designation" />
         </Form.Item>
 
-        {/* ✅ Conditionally show Department dropdown */}
         {selectedRole === "DEPARTMENT" && (
           <Form.Item
             label="Department"

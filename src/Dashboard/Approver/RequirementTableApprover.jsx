@@ -531,6 +531,26 @@ const RequirementTableApprover = () => {
       },
     },
     {
+      title: "CA Check",
+      dataIndex: "ca_check",
+      key: "ca_check",
+      width: 140,
+      render: (val) => (
+        <Tag
+          color={
+            val === "APPROVED"
+              ? "#34d399"
+              : val === "PENDING"
+                ? "#fbbf24"
+                : "#f87171"
+          }
+          style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+        >
+          {val || "PENDING"}
+        </Tag>
+      ),
+    },
+    {
       title: "Accounts Check",
       dataIndex: "accounts_check",
       key: "accounts_check",

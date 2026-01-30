@@ -16,9 +16,6 @@ import ViewUsers from "./Dashboard/Admin/Users/ViewUsers";
 import AddDepartment from "./Dashboard/Admin/Departments/AddDepartment";
 import EditDepartments from "./Dashboard/Admin/Departments/EditDepartments";
 import ViewDepartment from "./Dashboard/Admin/Departments/ViewDepartment";
-import AddMeetings from "./Dashboard/Admin/Meetings/AddMeetings";
-import EditMeetings from "./Dashboard/Admin/Meetings/EditMeetings";
-import ViewMeetings from "./Dashboard/Admin/Meetings/ViewMeetings";
 
 // User / Department
 import Home from "./Dashboard/User/Home";
@@ -73,6 +70,10 @@ import ViewSubVenue from "./Dashboard/Marketting/AddSubVenue/ViewSubVenue";
 import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
 import CalendarClients from "./Components/CalendarClients";
 import InprogressCalendarPage from "./Pages/InprogressCalendarPage";
+import CAHomePage from "./Dashboard/CA/CAHomePage";
+import RequirementTableApprover from "./Dashboard/Approver/RequirementTableApprover";
+import RequirementsTableAc from "./Dashboard/Accounts/RequirementsTableAc";
+import CARequirementsTable from "./Dashboard/CA/CARequirementsTable";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -83,6 +84,7 @@ const App = () => {
   const isAdmin = ROLES.ADMIN === user?.role;
   const isDepartment = ROLES.DEPARTMENT === user?.role;
   const isOwner = ROLES.OWNER === user?.role;
+  const isCA = ROLES.CA === user?.role;
   const isApprover = ROLES.APPROVER === user?.role;
   const isMarketing = user?.departments?.[0]?.name === "MARKETING";
   const isAccounts = user?.departments?.[0]?.name === "ACCOUNTS";
@@ -134,9 +136,6 @@ const App = () => {
                   element={<EditDepartments />}
                 />
                 <Route path="viewdepartment" element={<ViewDepartment />} />
-                <Route path="addmeeting" element={<AddMeetings />} />
-                <Route path="editmeeting/:id" element={<EditMeetings />} />
-                <Route path="viewmeetings" element={<ViewMeetings />} />
                 <Route path="addprojectcoordinator" element={<AddPC />} />
                 <Route path="editprojectcoordinator/:id" element={<EditPC />} />
                 <Route path="viewprojectcoordinator" element={<ViewPC />} />
@@ -179,7 +178,7 @@ const App = () => {
               <Route path="/user/meetings" element={<Meetings />} />
               <Route
                 path="/user/allrequirements"
-                element={<AllRequirementsTable />}
+                element={<RequirementsTableAc />}
               />
               <Route
                 path="/user/departments/:id"
@@ -327,13 +326,46 @@ const App = () => {
               <Route path="/approver/viewbills" element={<ViewBill />} />
               <Route
                 path="/approver/allrequirements"
-                element={<AllRequirementsTable />}
+                element={<RequirementTableApprover />}
               />
 
               <Route
                 path="*"
                 element={<Navigate to="/approver/home" replace />}
               />
+            </>
+          ) : isCA ? (
+            <>
+              <Route path="/user/home" element={<CAHomePage />} />
+              <Route path="/user/departments" element={<Departments />} />
+              <Route
+                path="/user/departments/:id"
+                element={<Departmentwise />}
+              />
+              <Route path="/user/changepassword" element={<ChangePassword />} />
+              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/viewvendors" element={<ViewVendor />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/addchecklists" element={<AddChecklist />} />
+              <Route
+                path="/user/editchecklists/:id"
+                element={<EditChecklist />}
+              />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} />
+              <Route
+                path="/user/viewclientbookings"
+                element={<ViewClientsBookings />}
+              />
+              <Route path="/user/addbill" element={<AddBill />} />
+              <Route path="/user/editbill/:id" element={<EditBill />} />
+              <Route path="/user/viewbills" element={<ViewBill />} />
+              <Route
+                path="/user/allrequirements"
+                element={<CARequirementsTable />}
+              />
+
+              <Route path="*" element={<Navigate to="/user/home" replace />} />
             </>
           ) : (
             /* 🚫 Fallback */

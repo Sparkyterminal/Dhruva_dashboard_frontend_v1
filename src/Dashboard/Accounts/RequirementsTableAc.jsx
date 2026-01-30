@@ -430,6 +430,29 @@ const RequirementsTableAc = () => {
       },
     },
     {
+      title: "CA Check",
+      dataIndex: "ca_check",
+      key: "ca_check",
+      width: 160,
+      render: (ca_check) => {
+        const status = ca_check || "PENDING";
+        const color =
+          status === "APPROVED"
+            ? "green"
+            : status === "REJECTED"
+              ? "red"
+              : "orange";
+        return (
+          <Tag
+            color={color}
+            style={{ borderRadius: 8, fontWeight: 700, fontSize: 14 }}
+          >
+            {status}
+          </Tag>
+        );
+      },
+    },
+    {
       title: "Amount Paid",
       dataIndex: "amount_paid",
       key: "amount_paid",

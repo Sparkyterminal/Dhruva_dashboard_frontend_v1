@@ -100,7 +100,7 @@ const EditUsers = () => {
       const res = await axios.patch(
         `${API_BASE_URL}user/${id}`,
         payload,
-        config
+        config,
       );
       if (res.status === 200 || res.status === 201) {
         message.success("User updated successfully ✅");
@@ -162,6 +162,7 @@ const EditUsers = () => {
             <Select.Option value="DEPARTMENT">DEPARTMENT</Select.Option>
             <Select.Option value="OWNER">OWNER</Select.Option>
             <Select.Option value="ADMIN">ADMIN</Select.Option>
+            <Select.Option value="CA">CA</Select.Option>
           </Select>
         </Form.Item>
         <Form.Item

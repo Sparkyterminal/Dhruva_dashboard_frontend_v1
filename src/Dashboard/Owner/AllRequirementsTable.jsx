@@ -714,6 +714,37 @@ const AllRequirementsTable = () => {
       ),
     },
     {
+      title: "CA Check",
+      dataIndex: "ca_check",
+      key: "ca_check",
+      width: 140,
+      render: (status) => (
+        <Tag
+          color={
+            status === "APPROVED"
+              ? "#d1fae5"
+              : status === "REJECTED"
+                ? "#fee2e2"
+                : "#fef3c7"
+          }
+          style={{
+            color:
+              status === "APPROVED"
+                ? "#065f46"
+                : status === "REJECTED"
+                  ? "#991b1b"
+                  : "#92400e",
+            borderRadius: 6,
+            border: "none",
+            fontWeight: 700,
+            fontSize: 14,
+          }}
+        >
+          {status || "PENDING"}
+        </Tag>
+      ),
+    },
+    {
       title: "Updated At",
       dataIndex: "updatedAt",
       key: "updatedAt",
