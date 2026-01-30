@@ -18,4 +18,5 @@ export const ROLES = {
   APPROVER: "APPROVER",
   MARKETING: "MARKETING",
   ACCOUNTS: "ACCOUNTS",
+  CA : "CA"
 };
