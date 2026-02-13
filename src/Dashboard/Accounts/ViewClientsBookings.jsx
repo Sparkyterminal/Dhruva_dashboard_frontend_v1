@@ -71,18 +71,18 @@ const ViewClientsBookings = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  const fetchRequirementsData = async (page = 1, pageSize = 10) => {
+  const fetchRequirementsData = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API_BASE_URL}events`, {
         ...config,
-        params: { page, limit: pageSize },
       });
-      setBookings(res.data.events || res.data.data || res.data || []);
+      const allBookings = res.data.events || res.data.data || res.data || [];
+      setBookings(allBookings);
       setPagination({
-        current: res.data.currentPage || res.data.page || page,
-        pageSize: res.data.limit || res.data.pageSize || pageSize,
-        total: res.data.total || res.data.totalEvents || 0,
+        current: 1,
+        pageSize: 10,
+        total: allBookings.length,
       });
     } catch (err) {
       message.error("Failed to fetch client bookings");
@@ -98,7 +98,11 @@ const ViewClientsBookings = () => {
   }, []);
 
   const handleTableChange = (paginationConfig) => {
-    fetchRequirementsData(paginationConfig.current, paginationConfig.pageSize);
+    setPagination({
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize,
+      total: filteredBookings.length,
+    });
   };
 
   const formatDate = (dateString) => {
@@ -848,17 +852,18 @@ const ViewClientsBookings = () => {
                 loading={loading}
                 rowKey="_id"
                 pagination={{
-                  current: 1,
-                  pageSize: 10,
+                  current: pagination.current,
+                  pageSize: pagination.pageSize,
                   total: filteredBookings.length,
                   showSizeChanger: true,
-                  showTotal: (total) => (
+                  showTotal: (total, range) => (
                     <span className="text-slate-600 text-sm">
-                      Total {total} bookings
+                      Showing {range[0]}-{range[1]} of {total} bookings
                     </span>
                   ),
                   pageSizeOptions: ["10", "20", "50"],
                 }}
+                onChange={handleTableChange}
                 scroll={{ x: 1200 }}
                 className="custom-table"
               />

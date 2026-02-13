@@ -49,7 +49,7 @@ import ViewBill from "./Dashboard/Accounts/Bills/ViewBill";
 import ViewClientsBookings from "./Dashboard/Accounts/ViewClientsBookings";
 import Departmentwise from "./Dashboard/Accounts/Departmentwise";
 import PlayBook from "./Dashboard/Accounts/playbook";
-import ViewVendors from "./Dashboard/Accounts/ViewVendors";
+// import ViewVendors from "./Dashboard/Accounts/ViewVendors";
 import ViewChecklist from "./Components/ViewChecklist";
 import EditChecklist from "./Components/EditChecklist";
 import AddChecklist from "./Components/AddChecklist";
@@ -68,12 +68,17 @@ import EditVenue from "./Dashboard/Marketting/AddVenue/EditVenue";
 import AddSubVenue from "./Dashboard/Marketting/AddSubVenue/AddSubVenue";
 import ViewSubVenue from "./Dashboard/Marketting/AddSubVenue/ViewSubVenue";
 import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
+import ViewLeads from "./Dashboard/Marketting/ClientLeadsTrack/ViewLeads";
+import EditLeads from "./Dashboard/Marketting/ClientLeadsTrack/EditLeads";
 import CalendarClients from "./Components/CalendarClients";
 import InprogressCalendarPage from "./Pages/InprogressCalendarPage";
 import CAHomePage from "./Dashboard/CA/CAHomePage";
 import RequirementTableApprover from "./Dashboard/Approver/RequirementTableApprover";
 import RequirementsTableAc from "./Dashboard/Accounts/RequirementsTableAc";
 import CARequirementsTable from "./Dashboard/CA/CARequirementsTable";
+import BudgetReportHome from "./Dashboard/Accounts/budgetreport/BudgetReportHome";
+import BudgetReportEventWise from "./Dashboard/Accounts/budgetreport/BudgetReportEventWise";
+import EditBudgetReport from "./Dashboard/Accounts/budgetreport/EditBudgetReport";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -184,6 +189,9 @@ const App = () => {
                 path="/user/departments/:id"
                 element={<DepartmentsTable />}
               />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
               <Route path="/user" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
@@ -211,6 +219,8 @@ const App = () => {
               <Route path="/user/addsubvenue" element={<AddSubVenue />} />
               <Route path="/user/viewsubvenue" element={<ViewSubVenue />} />
               <Route path="/user/editsubvenue/:id" element={<EditSubVenue />} />
+              <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route path="/user/client-leads/edit/:id" element={<EditLeads />} />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route path="/user/addchecklists" element={<AddChecklist />} />

@@ -482,7 +482,9 @@ const RequirementsTableAc = () => {
         };
 
         const approved =
-          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+          checkApproved(row.approver_check) ||
+          checkApproved(row.owner_check) ||
+          checkApproved(row.ca_check);
         const rejected =
           checkRejected(row.approver_check) ||
           checkRejected(row.owner_check) ||
@@ -539,7 +541,7 @@ const RequirementsTableAc = () => {
                 onClick={() => startEdit(row, "amount_paid")}
               />
             ) : (
-              <Tooltip title={"Awaiting approver/owner approval"}>
+              <Tooltip title={"Awaiting approver/owner/CA approval"}>
                 <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
               </Tooltip>
             )}
@@ -577,7 +579,9 @@ const RequirementsTableAc = () => {
         };
 
         const approved =
-          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+          checkApproved(row.approver_check) ||
+          checkApproved(row.owner_check) ||
+          checkApproved(row.ca_check);
         const rejected =
           checkRejected(row.approver_check) ||
           checkRejected(row.owner_check) ||
@@ -636,7 +640,7 @@ const RequirementsTableAc = () => {
                 onClick={() => startEdit(row, "entity_account")}
               />
             ) : (
-              <Tooltip title={"Awaiting approver/owner approval"}>
+              <Tooltip title={"Awaiting approver/owner/CA approval"}>
                 <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
               </Tooltip>
             )}
@@ -674,7 +678,9 @@ const RequirementsTableAc = () => {
         };
 
         const approved =
-          checkApproved(row.approver_check) || checkApproved(row.owner_check);
+          checkApproved(row.approver_check) ||
+          checkApproved(row.owner_check) ||
+          checkApproved(row.ca_check);
         const rejected =
           checkRejected(row.approver_check) ||
           checkRejected(row.owner_check) ||
@@ -725,7 +731,7 @@ const RequirementsTableAc = () => {
                 onClick={() => startEdit(row, "amount_paid_to")}
               />
             ) : (
-              <Tooltip title={"Awaiting approver/owner approval"}>
+              <Tooltip title={"Awaiting approver/owner/CA approval"}>
                 <LockOutlined style={{ color: "#9ca3af", fontSize: 18 }} />
               </Tooltip>
             )}

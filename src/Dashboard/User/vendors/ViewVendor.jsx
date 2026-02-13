@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { message, Modal, Table, Button, Card, Input, Select } from "antd";
+import { message, Table, Button, Card, Input, Select } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
@@ -31,6 +31,7 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../../../../config";
+import VendorViewDrawer from "./VendorViewDrawer";
 
 const customStyles = `
   .vendor-glass-card {
@@ -128,7 +129,7 @@ const ViewVendor = () => {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedVendor, setSelectedVendor] = useState(null);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState(null);
@@ -715,13 +716,13 @@ const ViewVendor = () => {
     }
   };
 
-  const showModal = (vendor) => {
+  const openDrawer = (vendor) => {
     setSelectedVendor(vendor);
-    setIsModalVisible(true);
+    setDrawerVisible(true);
   };
 
-  const handleCancel = () => {
-    setIsModalVisible(false);
+  const closeDrawer = () => {
+    setDrawerVisible(false);
     setSelectedVendor(null);
   };
 
@@ -816,7 +817,7 @@ const ViewVendor = () => {
           <Button
             type="text"
             icon={<EyeOutlined />}
-            onClick={() => showModal(record)}
+            onClick={() => openDrawer(record)}
             style={{
               color: "#667eea",
               borderRadius: "6px",
@@ -944,7 +945,7 @@ const ViewVendor = () => {
             >
               <Button
                 icon={<EyeOutlined />}
-                onClick={() => showModal(vendor)}
+                onClick={() => openDrawer(vendor)}
                 style={{
                   borderRadius: "8px",
                   border: "1.5px solid #667eea30",
@@ -1252,141 +1253,15 @@ const ViewVendor = () => {
         </motion.div>
       </div>
 
-      {/* Modal to show vendor details */}
-      <Modal
-        title={
-          <span style={{ fontSize: "22px", fontWeight: 700, color: "#32255e" }}>
-            Vendor Details
-          </span>
-        }
-        open={isModalVisible}
-        onCancel={handleCancel}
-        footer={[
-          <Button
-            key="pdf"
-            icon={<FilePdfOutlined />}
-            onClick={() => {
-              exportToPDF(selectedVendor);
-              handleCancel();
-            }}
-            style={{
-              background: "#e74c3c",
-              color: "white",
-              border: "none",
-              borderRadius: "0.65rem",
-              height: "40px",
-            }}
-          >
-            Export PDF
-          </Button>,
-          <Button
-            key="word"
-            icon={<FileWordOutlined />}
-            onClick={() => {
-              exportToWord(selectedVendor);
-              handleCancel();
-            }}
-            style={{
-              background: "#2b579a",
-              color: "white",
-              border: "none",
-              borderRadius: "0.65rem",
-              height: "40px",
-            }}
-          >
-            Export Word
-          </Button>,
-          <Button
-            key="close"
-            onClick={handleCancel}
-            className="vendor-btn-primary"
-            style={{ height: "40px" }}
-          >
-            Close
-          </Button>,
-        ]}
-        width={isMobile ? "95%" : 700}
-        className="vendor-modal"
-        style={{ top: isMobile ? 20 : 40 }}
-      >
-        {selectedVendor && (
-          <div
-            style={{
-              display: "grid",
-              gap: "12px",
-              maxHeight: isMobile ? "60vh" : "65vh",
-              overflowY: "auto",
-              padding: "8px",
-            }}
-          >
-            {(() => {
-              const preferred = ["vendor_code", "name", "company_name"];
-              const entries = Object.entries(selectedVendor)
-                .filter(([, v]) => v !== undefined && v !== null && v !== "")
-                .sort((a, b) => {
-                  const ai = preferred.indexOf(a[0]);
-                  const bi = preferred.indexOf(b[0]);
-                  if (ai !== -1 || bi !== -1)
-                    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
-                  return a[0].localeCompare(b[0]);
-                });
-
-              const formatLabel = (key) =>
-                key
-                  .replace(/_/g, " ")
-                  .replace(/\b\w/g, (ch) => ch.toUpperCase());
-
-              const formatValue = (val) => {
-                if (val === true || val === false) return val.toString();
-                if (typeof val === "object") {
-                  if (val === null) return "";
-                  if (val.id) return val.id;
-                  try {
-                    return JSON.stringify(val);
-                  } catch (e) {
-                    return String(val);
-                  }
-                }
-                return String(val);
-              };
-
-              return entries.map(([key, value], index) => (
-                <div
-                  key={key}
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: isMobile ? "1fr" : "180px 1fr",
-                    gap: "12px",
-                    padding: "14px",
-                    background: index % 2 === 0 ? "#faf8fe" : "#fff",
-                    borderRadius: "10px",
-                    transition: "all 0.2s",
-                  }}
-                >
-                  <span
-                    style={{
-                      color: "#32255e",
-                      fontWeight: 700,
-                      fontSize: "15px",
-                    }}
-                  >
-                    {formatLabel(key)}
-                  </span>
-                  <span
-                    style={{
-                      wordBreak: "break-word",
-                      color: "#5b5270",
-                      fontSize: "15px",
-                    }}
-                  >
-                    {formatValue(value)}
-                  </span>
-                </div>
-              ));
-            })()}
-          </div>
-        )}
-      </Modal>
+      <VendorViewDrawer
+        open={drawerVisible}
+        onClose={closeDrawer}
+        vendor={selectedVendor}
+        isMobile={isMobile}
+        config={config}
+        onExportPdf={exportToPDF}
+        onExportDocx={exportToWord}
+      />
     </div>
   );
 };
