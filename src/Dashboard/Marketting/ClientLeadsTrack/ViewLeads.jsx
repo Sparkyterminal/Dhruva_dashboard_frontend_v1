@@ -10,23 +10,11 @@ import { API_BASE_URL } from "../../../../config";
 
 const { Title } = Typography;
 
-/** Get next meeting (first by date) or latest for display */
-function getNextMeetingDisplay(meetings) {
-  if (!meetings?.length) return "—";
-  const withDates = meetings
-    .filter((m) => m.date)
-    .map((m) => ({
-      date: new Date(m.date),
-      notes: m.notes || "",
-    }))
-    .sort((a, b) => a.date - b.date);
-  if (withDates.length === 0) {
-    const withNotes = meetings.find((m) => m.notes);
-    return withNotes ? withNotes.notes : "—";
-  }
-  const next = withDates[0];
-  const dateStr = next.date.toLocaleDateString("en-IN", { dateStyle: "medium" });
-  return next.notes ? `${dateStr} — ${next.notes}` : dateStr;
+/** Get notes display */
+function getNotesDisplay(notes) {
+  if (!notes) return "—";
+  // Show first 100 characters with ellipsis if longer
+  return notes.length > 100 ? `${notes.substring(0, 100)}...` : notes;
 }
 
 const ViewLeads = () => {
@@ -164,10 +152,15 @@ const ViewLeads = () => {
       render: (t) => t || "—",
     },
     {
-      title: "Next meeting date with notes",
-      key: "nextMeeting",
-      width: 260,
-      render: (_, record) => getNextMeetingDisplay(record.meetings),
+      title: "Notes",
+      key: "notes",
+      width: 300,
+      ellipsis: true,
+      render: (_, record) => (
+        <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          {getNotesDisplay(record.notes)}
+        </span>
+      ),
     },
     {
       title: "Action",
@@ -325,33 +318,10 @@ const ViewLeads = () => {
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 8 }}>Meeting dates & notes</div>
-                {viewingLead.meetings?.length ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                    {viewingLead.meetings.map((m, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          padding: 12,
-                          background: "#f8fafc",
-                          borderRadius: 8,
-                          border: "1px solid #e2e8f0",
-                        }}
-                      >
-                        <div style={{ fontSize: 13, color: "#475569", marginBottom: 4 }}>
-                          {m.date
-                            ? new Date(m.date).toLocaleDateString("en-IN", { dateStyle: "medium" })
-                            : "No date"}
-                        </div>
-                        <div style={{ fontSize: 14, color: "#0f172a", whiteSpace: "pre-wrap" }}>
-                          {m.notes || "—"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div style={{ fontSize: 15, color: "#94a3b8" }}>No meetings added.</div>
-                )}
+                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>Notes</div>
+                <div style={{ fontSize: 15, color: "#0f172a", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                  {viewingLead.notes || "—"}
+                </div>
               </div>
             </div>
         ) : null}

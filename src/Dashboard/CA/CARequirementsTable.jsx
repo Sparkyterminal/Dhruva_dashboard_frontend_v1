@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -15,6 +15,7 @@ import {
   Card,
   Row,
   Col,
+  Tabs,
 } from "antd";
 import {
   CheckCircleOutlined,
@@ -29,13 +30,31 @@ import { API_BASE_URL } from "../../../config";
 
 const { Panel } = Collapse;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 const CARequirementsTable = () => {
   const user = useSelector((state) => state.user.value);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [createdDateRange, setCreatedDateRange] = useState(null);
+  const [requiredDateRange, setRequiredDateRange] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(undefined);
+  const [selectedVendorId, setSelectedVendorId] = useState(undefined);
+  const [events, setEvents] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const eventSearchRef = useRef(null);
+  const vendorSearchRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const PAGE_SIZE = 30;
 
   // Editable row IDs and values for planned_amount, amount_paid, and approver_amount
   const [editRowId, setEditRowId] = useState(null);
@@ -50,60 +69,211 @@ const CARequirementsTable = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  // Calculate statistics (CA context: completed = CA approved, pending = CA pending)
-  const stats = {
-    total: requirements.length,
-    pending: requirements.filter((r) => r.ca_check === "PENDING").length,
-    completed: requirements.filter((r) => r.ca_check === "APPROVED").length,
-    caRejected: requirements.filter((r) => r.ca_check === "REJECTED").length,
+  const fetchEvents = async (query = "") => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}events`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      setEvents(res.data.events || res.data.data || res.data || []);
+    } catch {
+      message.error("Failed to fetch events");
+    } finally {
+      setEventsLoading(false);
+    }
   };
 
-  const fetchRequirementsData = async (searchQuery = "", date = null) => {
-    setLoading(true);
+  const fetchVendors = async (query = "") => {
+    setVendorsLoading(true);
     try {
-      let url = `${API_BASE_URL}request/all`;
+      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      const list = res.data.vendors || res.data || [];
+      setVendors(Array.isArray(list) ? list : []);
+    } catch {
+      message.error("Failed to fetch vendors");
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents("");
+    fetchVendors();
+  }, []);
+
+  const getCaCheckParam = () => {
+    if (activeTab === "all") return undefined;
+    if (activeTab === "pending") return "PENDING";
+    if (activeTab === "completed") return "APPROVED";
+    if (activeTab === "rejected") return "REJECTED";
+    return undefined;
+  };
+
+  const fetchRequirementsData = async (
+    searchQuery = "",
+    createdStart = null,
+    createdEnd = null,
+    requiredStart = null,
+    requiredEnd = null,
+    eventId = null,
+    vendorId = null,
+    pageNum = 1,
+    append = false,
+  ) => {
+    if (!append) setLoading(true);
+    else setLoadingMore(true);
+    try {
       const params = new URLSearchParams();
-
+      const caCheck = getCaCheckParam();
+      if (caCheck) params.append("ca_check", caCheck);
       if (searchQuery) params.append("search", searchQuery);
-      if (date) params.append("date", date);
+      if (createdStart) params.append("startDate", createdStart);
+      if (createdEnd) params.append("endDate", createdEnd);
+      if (requiredStart) params.append("required_date_start", requiredStart);
+      if (requiredEnd) params.append("required_date_end", requiredEnd);
+      if (eventId) params.append("event", eventId);
+      if (vendorId) params.append("vendor", vendorId);
+      params.append("page", String(pageNum));
+      params.append("limit", String(PAGE_SIZE));
 
-      if (params.toString()) url += `?${params.toString()}`;
-
-      const res = await axios.get(url, config);
-      setRequirements(res.data.items || []);
+      const queryString = params.toString() ? `?${params.toString()}` : "";
+      const res = await axios.get(`${API_BASE_URL}request/all${queryString}`, config);
+      const data = res.data;
+      let items = [];
+      if (data.departments && typeof data.departments === "object") {
+        Object.entries(data.departments).forEach(([deptName, arr]) => {
+          (Array.isArray(arr) ? arr : []).forEach((item) => {
+            items.push({
+              ...item,
+              department: item.department || { id: deptName, name: deptName },
+            });
+          });
+        });
+      } else if (Array.isArray(data.items)) {
+        items = data.items;
+      }
+      const total = data.totalItems ?? data.total ?? items.length;
+      if (data.stats && typeof data.stats === "object") {
+        setStats({
+          total: data.stats.total ?? data.totalItems ?? total,
+          pending: data.stats.pending ?? 0,
+          approved: data.stats.approved ?? data.stats.completed ?? 0,
+          rejected: data.stats.rejected ?? 0,
+        });
+      }
+      setTotalItems(total);
+      if (append) {
+        setRequirements((prev) => {
+          const next = [...prev, ...items];
+          setHasMore(next.length < total);
+          return next;
+        });
+      } else {
+        setRequirements(items);
+        setHasMore(items.length >= PAGE_SIZE && items.length < total);
+      }
     } catch (err) {
       console.error(err);
       message.error("Failed to fetch requirements");
+      if (append) setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchRequirementsData();
-    // eslint-disable-next-line
-  }, []);
+    setPage(1);
+    setHasMore(true);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      1,
+      false,
+    );
+  }, [activeTab]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
+      setPage(1);
+      setHasMore(true);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-    // eslint-disable-next-line
-  }, [search, selectedDate]);
+  }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
 
-  // Group requirements by department id
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      nextPage,
+      true,
+    );
+  };
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loadingMore && !loading) loadMore();
+      },
+      { rootMargin: "200px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, page, search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
+
+  // Compute stats from loaded data (Total from API, Pending/Approved/Rejected from requirements)
+  useEffect(() => {
+    const total = totalItems || requirements.length;
+    const pending = requirements.filter(
+      (r) => r.ca_check === "PENDING" || (r.status && r.status === "PENDING")
+    ).length;
+    const approved = requirements.filter(
+      (r) => r.ca_check === "APPROVED" || (r.status && r.status === "COMPLETED")
+    ).length;
+    const rejected = requirements.filter(
+      (r) => r.ca_check === "REJECTED" || (r.status && r.status === "REJECTED")
+    ).length;
+    setStats((prev) =>
+      prev.total === total && prev.pending === pending && prev.approved === approved && prev.rejected === rejected
+        ? prev
+        : { total, pending, approved, rejected }
+    );
+  }, [requirements, totalItems]);
+
+  // Group requirements by department (backend sends data per tab)
   const requirementsByDept = requirements.reduce((acc, req) => {
     const deptId = req.department?.id || "no-dept";
-    if (!acc[deptId]) {
-      acc[deptId] = {
-        department: req.department,
-        requirements: [],
-      };
-    }
+    if (!acc[deptId]) acc[deptId] = { department: req.department, requirements: [] };
     acc[deptId].requirements.push(req);
     return acc;
   }, {});
@@ -117,8 +287,22 @@ const CARequirementsTable = () => {
     });
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
+  const handleCreatedDateRangeChange = (dates) => {
+    setCreatedDateRange(dates?.length === 2 ? dates : null);
+  };
+
+  const handleRequiredDateRangeChange = (dates) => {
+    setRequiredDateRange(dates?.length === 2 ? dates : null);
+  };
+
+  const handleEventSearch = (value) => {
+    if (eventSearchRef.current) clearTimeout(eventSearchRef.current);
+    eventSearchRef.current = setTimeout(() => fetchEvents(value || ""), 300);
+  };
+
+  const handleVendorSearch = (value) => {
+    if (vendorSearchRef.current) clearTimeout(vendorSearchRef.current);
+    vendorSearchRef.current = setTimeout(() => fetchVendors(value || ""), 300);
   };
 
   // Start editing planned_amount, amount_paid, and approver_amount for a row
@@ -155,7 +339,14 @@ const CARequirementsTable = () => {
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       console.error(err);
@@ -174,7 +365,14 @@ const CARequirementsTable = () => {
       message.success("CA Approved ✅");
       await fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       console.error(err);
@@ -195,7 +393,14 @@ const CARequirementsTable = () => {
       message.success("CA Rejected ❌");
       await fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       console.error(err);
@@ -544,66 +749,66 @@ const CARequirementsTable = () => {
         return "-";
       },
     },
-    {
-      title: "Accounts Check",
-      dataIndex: "accounts_check",
-      key: "accounts_check",
-      width: 140,
-      render: (val) => (
-        <Tag
-          color={
-            val === "APPROVED"
-              ? "#34d399"
-              : val === "PENDING"
-                ? "#fbbf24"
-                : "#f87171"
-          }
-          style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-        >
-          {val || "-"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Owner Check",
-      dataIndex: "owner_check",
-      key: "owner_check",
-      width: 140,
-      render: (val) => (
-        <Tag
-          color={
-            val === "APPROVED"
-              ? "#34d399"
-              : val === "PENDING"
-                ? "#fbbf24"
-                : "#f87171"
-          }
-          style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-        >
-          {val || "-"}
-        </Tag>
-      ),
-    },
-    {
-      title: "Status",
-      dataIndex: "status",
-      key: "status",
-      width: 140,
-      render: (val) => (
-        <Tag
-          color={
-            val === "COMPLETED"
-              ? "#34d399"
-              : val === "PENDING"
-                ? "#fbbf24"
-                : "#f87171"
-          }
-          style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
-        >
-          {val || "-"}
-        </Tag>
-      ),
-    },
+    // {
+    //   title: "Accounts Check",
+    //   dataIndex: "accounts_check",
+    //   key: "accounts_check",
+    //   width: 140,
+    //   render: (val) => (
+    //     <Tag
+    //       color={
+    //         val === "APPROVED"
+    //           ? "#34d399"
+    //           : val === "PENDING"
+    //             ? "#fbbf24"
+    //             : "#f87171"
+    //       }
+    //       style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+    //     >
+    //       {val || "-"}
+    //     </Tag>
+    //   ),
+    // },
+    // {
+    //   title: "Owner Check",
+    //   dataIndex: "owner_check",
+    //   key: "owner_check",
+    //   width: 140,
+    //   render: (val) => (
+    //     <Tag
+    //       color={
+    //         val === "APPROVED"
+    //           ? "#34d399"
+    //           : val === "PENDING"
+    //             ? "#fbbf24"
+    //             : "#f87171"
+    //       }
+    //       style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+    //     >
+    //       {val || "-"}
+    //     </Tag>
+    //   ),
+    // },
+    // {
+    //   title: "Status",
+    //   dataIndex: "status",
+    //   key: "status",
+    //   width: 140,
+    //   render: (val) => (
+    //     <Tag
+    //       color={
+    //         val === "COMPLETED"
+    //           ? "#34d399"
+    //           : val === "PENDING"
+    //             ? "#fbbf24"
+    //             : "#f87171"
+    //       }
+    //       style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+    //     >
+    //       {val || "-"}
+    //     </Tag>
+    //   ),
+    // },
     {
       title: "Actions",
       key: "actions",
@@ -779,112 +984,147 @@ const CARequirementsTable = () => {
         <h1 className="ca-title">CA Dashboard</h1>
         <p className="ca-subtitle">Review and approve requirements</p>
 
-        <Row gutter={[24, 24]} style={{ marginBottom: 32 }}>
-          <Col xs={24} sm={12} md={8}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Total Requirements
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 700 }}>{stats.total}</div>
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={12} md={6}>
+            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Total</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Pending
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 700 }}>
-                {stats.pending}
-              </div>
+          <Col xs={24} sm={12} md={6}>
+            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Pending</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.pending}</div>
             </Card>
           </Col>
-          <Col xs={24} sm={12} md={8}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Completed
-              </div>
-              <div style={{ fontSize: 32, fontWeight: 700 }}>
-                {stats.completed}
-              </div>
+          <Col xs={24} sm={12} md={6}>
+            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Approved</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.approved}</div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Rejected</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.rejected}</div>
             </Card>
           </Col>
         </Row>
 
-        <div className="ca-filter-card">
+        <div className="ca-filter-card" style={{ marginBottom: 24 }}>
           <Space size="middle" wrap>
             <Input
               placeholder="Search by purpose, requester..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
-              style={{ width: 320, borderRadius: 10 }}
+              style={{ width: 280, borderRadius: 10 }}
               size="large"
               allowClear
             />
-            <DatePicker
-              value={selectedDate}
-              onChange={handleDateChange}
+            <span style={{ fontWeight: 600, marginRight: 4 }}>Created date:</span>
+            <RangePicker
+              value={createdDateRange}
+              onChange={handleCreatedDateRangeChange}
               format="DD-MM-YYYY"
-              style={{ width: 200, borderRadius: 10 }}
+              style={{ borderRadius: 10 }}
               size="large"
-              placeholder="Select date"
+              placeholder={["Start date", "End date"]}
+            />
+            <span style={{ fontWeight: 600, marginRight: 4 }}>Required date:</span>
+            <RangePicker
+              value={requiredDateRange}
+              onChange={handleRequiredDateRangeChange}
+              format="DD-MM-YYYY"
+              style={{ borderRadius: 10 }}
+              size="large"
+              placeholder={["Start date", "End date"]}
+            />
+            <Select
+              placeholder="Select event"
+              allowClear
+              showSearch
+              value={selectedEventId ?? undefined}
+              onChange={setSelectedEventId}
+              onSearch={handleEventSearch}
+              loading={eventsLoading}
+              filterOption={false}
+              optionFilterProp="label"
+              style={{ width: 240, borderRadius: 10 }}
+              size="large"
+              options={events.map((ev) => ({
+                value: ev.id || ev._id,
+                label: ev.clientName || ev.name || ev.client_name || String(ev.id || ev._id),
+              }))}
+            />
+            <Select
+              placeholder="Select vendor"
+              allowClear
+              showSearch
+              value={selectedVendorId ?? undefined}
+              onChange={setSelectedVendorId}
+              onSearch={handleVendorSearch}
+              loading={vendorsLoading}
+              filterOption={false}
+              optionFilterProp="label"
+              style={{ width: 240, borderRadius: 10 }}
+              size="large"
+              options={vendors.map((v) => ({
+                value: v.id || v._id,
+                label: v.name || String(v.id || v._id),
+              }))}
             />
           </Space>
         </div>
 
-        {loading ? (
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          size="large"
+          style={{ marginBottom: 16 }}
+          items={[
+            { key: "all", label: "All" },
+            { key: "pending", label: "Pending" },
+            { key: "completed", label: "Completed" },
+            { key: "rejected", label: "Rejected" },
+          ]}
+        />
+
+        {loading && requirements.length === 0 ? (
           <div style={{ textAlign: "center", padding: 60 }}>
             <Spin size="large" />
           </div>
         ) : (
-          <Collapse
-            defaultActiveKey={Object.keys(requirementsByDept)}
-            accordion={false}
-            bordered={false}
-            expandIconPosition="end"
-          >
-            {Object.entries(requirementsByDept).map(
-              ([deptId, deptObj]) => (
-                <Panel key={deptId} header={getPanelHeader(deptObj)}>
-                  <Table
-                    columns={columns}
-                    dataSource={sortedRequirements(deptObj.requirements)}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={false}
-                    scroll={{ x: 2800 }}
-                    size="middle"
-                    bordered
-                    rowClassName={rowClassName}
-                  />
-                </Panel>
-              ),
-            )}
-          </Collapse>
+          <>
+            <Collapse
+              defaultActiveKey={Object.keys(requirementsByDept)}
+              accordion={false}
+              bordered={false}
+              expandIconPosition="end"
+            >
+              {Object.entries(requirementsByDept).map(
+                ([deptId, deptObj]) => (
+                  <Panel key={deptId} header={getPanelHeader(deptObj)}>
+                    <Table
+                      columns={columns}
+                      dataSource={sortedRequirements(deptObj.requirements)}
+                      rowKey="id"
+                      loading={loading}
+                      pagination={false}
+                      scroll={{ x: 2800 }}
+                      size="middle"
+                      bordered
+                      rowClassName={rowClassName}
+                    />
+                  </Panel>
+                ),
+              )}
+            </Collapse>
+            <div ref={loadMoreRef} style={{ height: 20, textAlign: "center", padding: 8 }}>
+              {loadingMore && <Spin size="small" />}
+              {!hasMore && requirements.length > 0 && <span style={{ color: "#888" }}>No more data</span>}
+            </div>
+          </>
         )}
       </div>
     </div>

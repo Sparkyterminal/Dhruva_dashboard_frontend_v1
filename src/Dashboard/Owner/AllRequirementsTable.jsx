@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import {
@@ -15,13 +15,14 @@ import {
   Tag,
   Collapse,
   DatePicker,
+  Tabs,
+  Spin,
 } from "antd";
 import {
   EditOutlined,
   CheckOutlined,
   CloseCircleOutlined,
   CheckCircleOutlined,
-  ReloadOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
@@ -30,14 +31,32 @@ import { API_BASE_URL } from "../../../config";
 
 const { Option } = Select;
 const { Panel } = Collapse;
+const { RangePicker } = DatePicker;
 
 const AllRequirementsTable = () => {
   const user = useSelector((state) => state.user.value);
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [createdDateRange, setCreatedDateRange] = useState(null);
+  const [requiredDateRange, setRequiredDateRange] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(undefined);
+  const [selectedVendorId, setSelectedVendorId] = useState(undefined);
+  const [events, setEvents] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const [selectedDept, setSelectedDept] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, rejected: 0 });
+  const eventSearchRef = useRef(null);
+  const vendorSearchRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const PAGE_SIZE = 30;
   const [editRowId, setEditRowId] = useState(null);
   const [editPlannedAmount, setEditPlannedAmount] = useState(null);
   const [editAmountPaid, setEditAmountPaid] = useState(null);
@@ -49,50 +68,210 @@ const AllRequirementsTable = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  // Calculate statistics
-  const stats = {
-    total: requirements.length,
-    pending: requirements.filter((r) => r.owner_check === "PENDING").length,
-    completed: requirements.filter((r) => r.owner_check === "APPROVED").length,
+  const fetchEvents = async (query = "") => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}events`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      setEvents(res.data.events || res.data.data || res.data || []);
+    } catch {
+      message.error("Failed to fetch events");
+    } finally {
+      setEventsLoading(false);
+    }
   };
 
-  const fetchRequirementsData = async (searchQuery = "", date = null) => {
-    setLoading(true);
+  const fetchVendors = async (query = "") => {
+    setVendorsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      const list = res.data.vendors || res.data || [];
+      setVendors(Array.isArray(list) ? list : []);
+    } catch {
+      message.error("Failed to fetch vendors");
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents("");
+    fetchVendors();
+  }, []);
+
+  const getOwnerCheckParam = () => {
+    if (activeTab === "all") return undefined;
+    if (activeTab === "pending") return "PENDING";
+    if (activeTab === "completed") return "APPROVED";
+    if (activeTab === "rejected") return "REJECTED";
+    return undefined;
+  };
+
+  const fetchRequirementsData = async (
+    searchQuery = "",
+    createdStart = null,
+    createdEnd = null,
+    requiredStart = null,
+    requiredEnd = null,
+    eventId = null,
+    vendorId = null,
+    pageNum = 1,
+    append = false,
+  ) => {
+    if (!append) setLoading(true);
+    else setLoadingMore(true);
     try {
       const params = new URLSearchParams();
+      const ownerCheck = getOwnerCheckParam();
+      if (ownerCheck) params.append("owner_check", ownerCheck);
       if (searchQuery) params.append("search", searchQuery);
-      if (date) params.append("singleDate", date);
+      if (createdStart) params.append("startDate", createdStart);
+      if (createdEnd) params.append("endDate", createdEnd);
+      if (requiredStart) params.append("required_date_start", requiredStart);
+      if (requiredEnd) params.append("required_date_end", requiredEnd);
+      if (eventId) params.append("event", eventId);
+      if (vendorId) params.append("vendor", vendorId);
+      params.append("page", String(pageNum));
+      params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(
         `${API_BASE_URL}request/all${queryString}`,
         config,
       );
-      setRequirements(res.data.items || []);
+      const data = res.data;
+      let items = [];
+      if (data.departments && typeof data.departments === "object") {
+        Object.entries(data.departments).forEach(([deptName, arr]) => {
+          (Array.isArray(arr) ? arr : []).forEach((item) => {
+            items.push({
+              ...item,
+              department: item.department || { id: deptName, name: deptName },
+            });
+          });
+        });
+      } else if (Array.isArray(data.items)) {
+        items = data.items;
+      }
+      const total = data.totalItems ?? data.total ?? items.length;
+      if (data.stats && typeof data.stats === "object") {
+        setStats({
+          total: data.stats.total ?? data.totalItems ?? total,
+          pending: data.stats.pending ?? 0,
+          completed: data.stats.completed ?? data.stats.approved ?? 0,
+          rejected: data.stats.rejected ?? 0,
+        });
+      }
+      setTotalItems(total);
+      if (append) {
+        setRequirements((prev) => {
+          const next = [...prev, ...items];
+          setHasMore(next.length < total);
+          return next;
+        });
+      } else {
+        setRequirements(items);
+        setHasMore(items.length >= PAGE_SIZE && items.length < total);
+      }
     } catch (err) {
       message.error("Failed to fetch requirements");
+      if (append) setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchRequirementsData("", dayjs().format("YYYY-MM-DD"));
-  }, []);
+    setPage(1);
+    setHasMore(true);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      1,
+      false,
+    );
+  }, [activeTab]);
 
   useEffect(() => {
-    // Fetch data on each search input change with a slight debounce
     const timeoutId = setTimeout(() => {
+      setPage(1);
+      setHasMore(true);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     }, 300);
-
     return () => clearTimeout(timeoutId);
-  }, [search, selectedDate]);
+  }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
 
-  // Group requirements by department id
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      nextPage,
+      true,
+    );
+  };
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loadingMore && !loading) loadMore();
+      },
+      { rootMargin: "200px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, page, search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
+
+  // Compute stats from loaded data (Total from API, Pending/Approved/Rejected from requirements)
+  useEffect(() => {
+    const total = totalItems || requirements.length;
+    const pending = requirements.filter(
+      (r) => r.owner_check === "PENDING" || (r.status && r.status === "PENDING")
+    ).length;
+    const completed = requirements.filter(
+      (r) => r.owner_check === "APPROVED" || (r.status && r.status === "COMPLETED")
+    ).length;
+    const rejected = requirements.filter(
+      (r) => r.owner_check === "REJECTED" || (r.status && r.status === "REJECTED")
+    ).length;
+    setStats((prev) =>
+      prev.total === total && prev.pending === pending && prev.completed === completed && prev.rejected === rejected
+        ? prev
+        : { total, pending, completed, rejected }
+    );
+  }, [requirements, totalItems]);
+
+  // Group requirements by department (backend sends data per tab)
   const requirementsByDept = requirements.reduce((acc, req) => {
     const deptId = req.department?.id || "unknown";
     if (!acc[deptId]) acc[deptId] = { department: req.department, items: [] };
@@ -119,13 +298,23 @@ const AllRequirementsTable = () => {
     });
   };
 
-  const handleSearch = (e) => setSearch(e.target.value);
-  const handleSearchSubmit = () =>
-    fetchRequirementsData({
-      search,
-      department: selectedDept,
-    });
-  const handleDeptChange = (value) => setSelectedDept(value);
+  const handleCreatedDateRangeChange = (dates) => {
+    setCreatedDateRange(dates?.length === 2 ? dates : null);
+  };
+
+  const handleRequiredDateRangeChange = (dates) => {
+    setRequiredDateRange(dates?.length === 2 ? dates : null);
+  };
+
+  const handleEventSearch = (value) => {
+    if (eventSearchRef.current) clearTimeout(eventSearchRef.current);
+    eventSearchRef.current = setTimeout(() => fetchEvents(value || ""), 300);
+  };
+
+  const handleVendorSearch = (value) => {
+    if (vendorSearchRef.current) clearTimeout(vendorSearchRef.current);
+    vendorSearchRef.current = setTimeout(() => fetchVendors(value || ""), 300);
+  };
 
   const handlePlannedAmountSave = async (row) => {
     if (editPlannedAmount == null || isNaN(editPlannedAmount)) {
@@ -140,10 +329,17 @@ const AllRequirementsTable = () => {
       );
       message.success("Planned amount updated");
       setEditRowId(null);
-      fetchRequirementsData({
+      fetchRequirementsData(
         search,
-        department: selectedDept,
-      });
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
+      );
     } catch (err) {
       message.error("Failed to update planned amount");
     }
@@ -164,7 +360,14 @@ const AllRequirementsTable = () => {
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       message.error("Failed to update amount paid");
@@ -186,7 +389,14 @@ const AllRequirementsTable = () => {
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       message.error("Failed to update approved amount");
@@ -201,10 +411,17 @@ const AllRequirementsTable = () => {
         config,
       );
       message.success("Request approved");
-      fetchRequirementsData({
+      fetchRequirementsData(
         search,
-        department: selectedDept,
-      });
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
+      );
     } catch (err) {
       message.error("Failed to approve request");
     }
@@ -218,10 +435,17 @@ const AllRequirementsTable = () => {
         config,
       );
       message.success("Request rejected");
-      fetchRequirementsData({
+      fetchRequirementsData(
         search,
-        department: selectedDept,
-      });
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
+      );
     } catch (err) {
       message.error("Failed to reject request");
     }
@@ -258,7 +482,14 @@ const AllRequirementsTable = () => {
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       message.error("Failed to update entity");
@@ -280,15 +511,18 @@ const AllRequirementsTable = () => {
       setEditRowId(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch (err) {
       message.error("Failed to update paid to");
     }
-  };
-
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
   };
 
   const columns = [
@@ -972,118 +1206,35 @@ const AllRequirementsTable = () => {
           Request's Dashboard
         </h1>
 
-        {/* Statistics Cards */}
-        <Row
-          gutter={[24, 24]}
-          style={{
-            marginBottom: 32,
-            maxWidth: 900,
-            marginLeft: "auto",
-            marginRight: "auto",
-          }}
-        >
-          <Col xs={24} sm={8}>
-            <Card
-              className="stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                borderColor: "transparent",
-                color: "#ffffff",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Total Requests
-                  </div>
-                  <div
-                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-                  >
-                    {stats.total}
-                  </div>
-                </div>
-              </div>
+        {/* Statistics Cards: Total, Pending, Approved, Rejected */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Total</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
             </Card>
           </Col>
-          <Col xs={24} sm={8}>
-            <Card
-              className="stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
-                borderColor: "transparent",
-                color: "#ffffff",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Pending
-                  </div>
-                  <div
-                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-                  >
-                    {stats.pending}
-                  </div>
-                </div>
-              </div>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Pending</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.pending}</div>
             </Card>
           </Col>
-          <Col xs={24} sm={8}>
-            <Card
-              className="stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
-                borderColor: "transparent",
-                color: "#ffffff",
-              }}
-            >
-              <div
-                style={{ display: "flex", alignItems: "flex-start", gap: 12 }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: 20,
-                      fontWeight: 700,
-                      color: "#ffffff",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Completed
-                  </div>
-                  <div
-                    style={{ color: "#ffffff", fontSize: 34, fontWeight: 700 }}
-                  >
-                    {stats.completed}
-                  </div>
-                </div>
-              </div>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Approved</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.completed}</div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Rejected</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.rejected}</div>
             </Card>
           </Col>
         </Row>
 
-        {/* Filters */}
+        {/* Filters: Search, Date Range, Event, Vendor */}
         <div
           className="filter-section"
           style={{
@@ -1092,6 +1243,7 @@ const AllRequirementsTable = () => {
             padding: 24,
             borderRadius: 16,
             display: "flex",
+            flexWrap: "wrap",
             alignItems: "center",
             gap: 16,
           }}
@@ -1101,18 +1253,75 @@ const AllRequirementsTable = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
-            style={{ width: 320, borderRadius: 8 }}
+            style={{ width: 280, borderRadius: 8 }}
             size="large"
           />
-          <DatePicker
-            value={selectedDate}
-            onChange={handleDateChange}
+          <span style={{ fontWeight: 600, marginRight: 4 }}>Created date:</span>
+          <RangePicker
+            value={createdDateRange}
+            onChange={handleCreatedDateRangeChange}
             format="DD-MM-YYYY"
-            style={{ width: 200, borderRadius: 8 }}
+            style={{ borderRadius: 8 }}
             size="large"
-            placeholder="Select date"
+            placeholder={["Start date", "End date"]}
+          />
+          <span style={{ fontWeight: 600, marginRight: 4 }}>Required date:</span>
+          <RangePicker
+            value={requiredDateRange}
+            onChange={handleRequiredDateRangeChange}
+            format="DD-MM-YYYY"
+            style={{ borderRadius: 8 }}
+            size="large"
+            placeholder={["Start date", "End date"]}
+          />
+          <Select
+            placeholder="Select event"
+            allowClear
+            showSearch
+            value={selectedEventId ?? undefined}
+            onChange={setSelectedEventId}
+            onSearch={handleEventSearch}
+            loading={eventsLoading}
+            filterOption={false}
+            optionFilterProp="label"
+            style={{ width: 240, borderRadius: 8 }}
+            size="large"
+            options={events.map((ev) => ({
+              value: ev.id || ev._id,
+              label: ev.clientName || ev.name || ev.client_name || String(ev.id || ev._id),
+            }))}
+          />
+          <Select
+            placeholder="Select vendor"
+            allowClear
+            showSearch
+            value={selectedVendorId ?? undefined}
+            onChange={setSelectedVendorId}
+            onSearch={handleVendorSearch}
+            loading={vendorsLoading}
+            filterOption={false}
+            optionFilterProp="label"
+            style={{ width: 240, borderRadius: 8 }}
+            size="large"
+            options={vendors.map((v) => ({
+              value: v.id || v._id,
+              label: v.name || String(v.id || v._id),
+            }))}
           />
         </div>
+
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          size="large"
+          style={{ marginBottom: 16 }}
+          items={[
+            { key: "all", label: "All" },
+            { key: "pending", label: "Pending" },
+            { key: "completed", label: "Completed" },
+            { key: "rejected", label: "Rejected" },
+          ]}
+        />
 
         {/* Accordion grouped by department */}
         <Collapse
@@ -1140,6 +1349,10 @@ const AllRequirementsTable = () => {
             </Panel>
           ))}
         </Collapse>
+        <div ref={loadMoreRef} style={{ height: 20, textAlign: "center", padding: 8 }}>
+          {loadingMore && <Spin size="small" />}
+          {!hasMore && requirements.length > 0 && <span style={{ color: "#888" }}>No more data</span>}
+        </div>
       </div>
     </div>
   );

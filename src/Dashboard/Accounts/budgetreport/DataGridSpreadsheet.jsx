@@ -910,6 +910,8 @@ const DataGridSpreadsheet = ({
         assetsPurchase: Boolean(row.assetsPurchase),
         directPayment: Boolean(row.directPayment),
         actualPaidAmount: Number(row.actualPaidAmount) || 0,
+        finalAccount: reportId ? (Number(row.finalAccount) || 0) : 0,
+        finalCash: reportId ? (Number(row.finalCash) || 0) : 0,
       });
     });
 

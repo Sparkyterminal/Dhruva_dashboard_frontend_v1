@@ -160,8 +160,6 @@ const ViewVendor = () => {
     }
 
     const normalized = candidates.map((s) => String(s).toUpperCase());
-    if (normalized.includes("OWNER")) return "/owner/addvendor";
-    if (normalized.includes("APPROVER")) return "/approver/addvendor";
     return "/user/addvendor";
   };
 
@@ -182,8 +180,6 @@ const ViewVendor = () => {
       } else if (typeof user.roles === "string") candidates.push(user.roles);
     }
     const normalized = candidates.map((s) => String(s).toUpperCase());
-    if (normalized.includes("OWNER")) return `/owner/editvendor/${id}`;
-    if (normalized.includes("APPROVER")) return `/approver/editvendor/${id}`;
     return `/user/editvendor/${id}`;
   };
 

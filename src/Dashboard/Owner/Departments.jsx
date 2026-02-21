@@ -91,12 +91,10 @@ const Departments = () => {
 
     switch (role) {
       case "OWNER":
-        route = `/owner/departments/${departmentId}`;
-        break;
       case "APPROVER":
-        route = `/approver/departments/${departmentId}`;
-        break;
       default:
+        route = `/user/departments/${departmentId}`;
+        break;
         route = `/user/departments/${departmentId}`;
     }
 

@@ -4,51 +4,20 @@
     "status": "Inprogress",
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210. Requirement: Corporate event for 200 pax.",
     "eventTypeDetails": "Event type: Conference. Venue preference: Bangalore. Date range: Q2 2025.",
-    "meetings": [
-      {
-        "date": "2025-03-15T00:00:00.000Z",
-        "notes": "Initial discussion. Sent proposal."
-      },
-      {
-        "date": "2025-03-22T00:00:00.000Z",
-        "notes": "Follow-up call. Client requested revised quote."
-      }
-    ]
+    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call scheduled for 22nd March. Client showed interest in premium package. Need to discuss budget constraints and finalize venue selection."
   },
   "updatePayload": {
     "status": "Confirmed",
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210. Confirmed venue and dates.",
     "eventTypeDetails": "Event type: Conference. Venue: XYZ Hall, Bangalore. Date: 2025-04-10.",
-    "meetings": [
-      {
-        "date": "2025-03-15T00:00:00.000Z",
-        "notes": "Initial discussion. Sent proposal."
-      },
-      {
-        "date": "2025-03-22T00:00:00.000Z",
-        "notes": "Follow-up call. Client requested revised quote."
-      },
-      {
-        "date": "2025-04-01T00:00:00.000Z",
-        "notes": "Final confirmation. Advance received."
-      }
-    ]
+    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call completed on 22nd March. Client requested revised quote which was provided. Final confirmation received on 1st April. Advance payment of ₹50,000 received via bank transfer. Venue booking confirmed at XYZ Hall for 10th April 2025. All requirements discussed and documented."
   },
   "listItemResponse": {
     "_id": "507f1f77bcf86cd799439011",
     "status": "Inprogress",
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210.",
     "eventTypeDetails": "Event type: Conference. Venue preference: Bangalore.",
-    "meetings": [
-      {
-        "date": "2025-03-15T00:00:00.000Z",
-        "notes": "Initial discussion. Sent proposal."
-      },
-      {
-        "date": "2025-03-22T00:00:00.000Z",
-        "notes": "Follow-up call."
-      }
-    ],
+    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call scheduled for 22nd March. Client showed interest in premium package. Need to discuss budget constraints and finalize venue selection.",
     "createdAt": "2025-03-10T08:00:00.000Z",
     "updatedAt": "2025-03-12T10:30:00.000Z",
     "createdBy": "userId_if_needed"
@@ -57,6 +26,6 @@
     "status": "Enum: 'Inprogress' | 'Confirmed' | 'Cancelled'",
     "clientDetails": "String (text area)",
     "eventTypeDetails": "String (text area)",
-    "meetings": "Array of { date: ISO8601 string, notes: string }"
+    "notes": "String (unlimited characters, text area)"
   }
 }

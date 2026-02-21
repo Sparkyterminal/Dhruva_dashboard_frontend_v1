@@ -383,8 +383,6 @@ const ViewChecklist = () => {
       } else if (typeof user.roles === "string") candidates.push(user.roles);
     }
     const normalized = candidates.map((s) => String(s).toUpperCase());
-    if (normalized.includes("OWNER")) return "/owner/addchecklists";
-    if (normalized.includes("APPROVER")) return "/approver/addchecklists";
     return "/user/addchecklists";
   };
 
@@ -405,9 +403,6 @@ const ViewChecklist = () => {
       } else if (typeof user.roles === "string") candidates.push(user.roles);
     }
     const normalized = candidates.map((s) => String(s).toUpperCase());
-    if (normalized.includes("OWNER")) return `/owner/editchecklists/${id}`;
-    if (normalized.includes("APPROVER"))
-      return `/approver/editchecklists/${id}`;
     return `/user/editchecklists/${id}`;
   };
 

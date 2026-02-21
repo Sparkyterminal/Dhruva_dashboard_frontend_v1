@@ -456,8 +456,6 @@ const ViewBill = () => {
   };
 
   const getBasePath = () => {
-    if (user?.role === "APPROVER") return "/approver";
-    if (user?.role === "OWNER") return "/owner";
     return "/user";
   };
 

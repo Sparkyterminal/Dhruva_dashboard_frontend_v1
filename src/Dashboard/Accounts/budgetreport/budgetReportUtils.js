@@ -27,6 +27,8 @@ export const emptyChildRow = (groupName) => ({
   assetsPurchase: false,
   directPayment: false,
   actualPaidAmount: 0,
+  finalAccount: 0,
+  finalCash: 0,
 });
 
 export const buildGroupRow = (name) => ({
@@ -70,6 +72,8 @@ export const parseBudgetDataToRowData = (budgetData) => {
         ...emptyChildRow(groupName),
         ...row,
         id: row.id || generateId(),
+        finalAccount: row.finalAccount != null ? Number(row.finalAccount) : 0,
+        finalCash: row.finalCash != null ? Number(row.finalCash) : 0,
       });
     });
   });

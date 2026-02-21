@@ -57,7 +57,7 @@ const HomeOwner = () => {
   };
 
   const handleChangePassword = () => {
-    navigate("/owner/changepassword");
+    navigate("/user/changepassword");
   };
 
   const formatTime = (date) =>
@@ -79,38 +79,48 @@ const HomeOwner = () => {
   const navigationMenus = [
     {
       label: "Requirements",
-      route: "/owner/allrequirements",
+      route: "/user/allrequirements",
       animation: requirementsAnimation,
     },
     {
       label: "Daybook",
-      route: "/owner/daybook",
+      route: "/user/daybook",
       animation: requirementsAnimation, // Replace with playbook animation
     },
     {
       label: "Vendors",
-      route: "/owner/viewvendors",
+      route: "/user/viewvendors",
       animation: requirementsAnimation, // Replace with Vendors animation
     },
     {
       label: "Client Bookings",
-      route: "/owner/viewclientbookings",
+      route: "/user/viewclientbookings",
       animation: requirementsAnimation, // Replace with bookings animation
     },
     {
       label: "Bills",
-      route: "/owner/viewbills",
+      route: "/user/viewbills",
       animation: requirementsAnimation, // Replace with bills animation
     },
     {
       label: "Checklists",
-      route: "/owner/checklists",
+      route: "/user/checklists",
       animation: requirementsAnimation, // Replace with bills animation
     },
     {
       label: "Departments",
-      route: "/owner/departments",
+      route: "/user/departments",
       animation: requirementsAnimation, // Replace with departments animation
+    },
+    {
+      label: "Budget Report",
+      route: "/user/budgetreport/eventwise",
+      animation: requirementsAnimation, // Replace with budget report animation
+    },
+    {
+      label: "Leads Tracker",
+      route: "/user/client-leads",
+      animation: requirementsAnimation, // Replace with leads tracker animation
     },
   ];
 

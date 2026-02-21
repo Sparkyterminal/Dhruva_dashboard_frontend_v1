@@ -104,7 +104,7 @@ const BudgetReportEventWise = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 220,
+      width: 280,
       fixed: "right",
       render: (_, record) => (
         <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
@@ -121,6 +121,15 @@ const BudgetReportEventWise = () => {
             onClick={() => navigate(`/user/budgetreport/edit/${record._id}`)}
           >
             Edit report
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() =>
+              navigate(`/user/budgetreport/accounts/${record._id}`)
+            }
+          >
+            Accounts edit
           </Button>
         </div>
       ),

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Form, Select, Input, Button, Card, DatePicker, Space } from "antd";
-import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
-import dayjs from "dayjs";
+import { Form, Select, Input, Button } from "antd";
 
 const { TextArea } = Input;
 const STATUS_OPTIONS = [
@@ -12,24 +10,19 @@ const STATUS_OPTIONS = [
 
 /**
  * Reusable form for Add/Edit Client Lead.
- * initialValues: { status, clientDetails, eventTypeDetails, meetings: [{ date, notes }] }
+ * initialValues: { status, clientDetails, eventTypeDetails, notes: string }
  */
 const LeadForm = ({ initialValues, onSubmit, submitLabel = "Submit", loading = false }) => {
   const [form] = Form.useForm();
-  const [meetings, setMeetings] = useState([{ date: null, notes: "" }]);
+  const [notes, setNotes] = useState("");
 
   useEffect(() => {
-    if (initialValues?.meetings?.length) {
-      setMeetings(
-        initialValues.meetings.map((m) => ({
-          date: m.date ? dayjs(m.date) : null,
-          notes: m.notes || "",
-        }))
-      );
+    if (initialValues?.notes) {
+      setNotes(initialValues.notes || "");
     } else if (!initialValues) {
-      setMeetings([{ date: null, notes: "" }]);
+      setNotes("");
     }
-  }, [initialValues?.meetings]);
+  }, [initialValues?.notes]);
 
   useEffect(() => {
     if (initialValues) {
@@ -41,21 +34,10 @@ const LeadForm = ({ initialValues, onSubmit, submitLabel = "Submit", loading = f
     }
   }, [initialValues, form]);
 
-  const addMeeting = () => {
-    setMeetings((prev) => [...prev, { date: null, notes: "" }]);
-  };
-
-  const removeMeeting = (index) => {
-    setMeetings((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleFinish = (values) => {
     const payload = {
       ...values,
-      meetings: meetings.map((m) => ({
-        date: m.date ? m.date.toISOString() : null,
-        notes: m.notes || "",
-      })).filter((m) => m.date || m.notes),
+      notes: notes || "",
     };
     onSubmit?.(payload);
   };
@@ -99,57 +81,20 @@ const LeadForm = ({ initialValues, onSubmit, submitLabel = "Submit", loading = f
         <TextArea rows={3} placeholder="Event type details" />
       </Form.Item>
 
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <span style={{ fontWeight: 600 }}>Meeting dates & notes</span>
-          <Button type="dashed" icon={<PlusOutlined />} onClick={addMeeting} size="small">
-            Add meeting
-          </Button>
-        </div>
-        {meetings.map((meeting, index) => (
-          <Card
-            key={index}
-            size="small"
-            style={{ marginBottom: 8 }}
-            extra={
-              meetings.length > 1 ? (
-                <Button
-                  type="text"
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => removeMeeting(index)}
-                />
-              ) : null
-            }
-          >
-            <Space direction="vertical" style={{ width: "100%" }} size="small">
-              <DatePicker
-                value={meeting.date}
-                onChange={(d) =>
-                  setMeetings((prev) =>
-                    prev.map((m, i) => (i === index ? { ...m, date: d } : m))
-                  )
-                }
-                style={{ width: "100%" }}
-                placeholder="Meeting date"
-              />
-              <Input.TextArea
-                value={meeting.notes}
-                onChange={(e) =>
-                  setMeetings((prev) =>
-                    prev.map((m, i) =>
-                      i === index ? { ...m, notes: e.target.value } : m
-                    )
-                  )
-                }
-                placeholder="Notes"
-                rows={2}
-              />
-            </Space>
-          </Card>
-        ))}
-      </div>
+      <Form.Item
+        label="Notes"
+        style={{ marginBottom: 16 }}
+      >
+        <TextArea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Enter notes (unlimited characters)"
+          rows={6}
+          showCount
+          maxLength={undefined}
+          style={{ resize: "vertical" }}
+        />
+      </Form.Item>
 
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={loading}>

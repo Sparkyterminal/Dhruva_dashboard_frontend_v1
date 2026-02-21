@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import {
@@ -13,6 +13,11 @@ import {
   DatePicker,
   Tooltip,
   Select,
+  Card,
+  Row,
+  Col,
+  Tabs,
+  Spin,
 } from "antd";
 import {
   EditOutlined,
@@ -28,6 +33,7 @@ import { API_BASE_URL } from "../../../config";
 
 const { Panel } = Collapse;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
 const RequirementsTableAc = () => {
   const user = useSelector((state) => state.user.value);
@@ -35,52 +41,245 @@ const RequirementsTableAc = () => {
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
-  const [selectedDate, setSelectedDate] = useState(dayjs());
+  const [createdDateRange, setCreatedDateRange] = useState(null);
+  const [requiredDateRange, setRequiredDateRange] = useState(null);
+  const [selectedEventId, setSelectedEventId] = useState(undefined);
+  const [selectedVendorId, setSelectedVendorId] = useState(undefined);
+  const [events, setEvents] = useState([]);
+  const [vendors, setVendors] = useState([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [vendorsLoading, setVendorsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
   const [editRowId, setEditRowId] = useState(null);
   const [editField, setEditField] = useState(null);
   const [editValue, setEditValue] = useState(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const eventSearchRef = useRef(null);
+  const vendorSearchRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const PAGE_SIZE = 30;
 
   const config = {
     headers: { Authorization: user?.access_token },
   };
 
-  const fetchRequirementsData = async (searchQuery = "", date = null) => {
-    setLoading(true);
+  const fetchEvents = async (query = "") => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}events`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      setEvents(res.data.events || res.data.data || res.data || []);
+    } catch {
+      message.error("Failed to fetch events");
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
+  const fetchVendors = async (query = "") => {
+    setVendorsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+        ...config,
+        params: query ? { search: query } : {},
+      });
+      const list = res.data.vendors || res.data || [];
+      setVendors(Array.isArray(list) ? list : []);
+    } catch {
+      message.error("Failed to fetch vendors");
+    } finally {
+      setVendorsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchEvents("");
+    fetchVendors("");
+  }, []);
+
+  const getAccountsCheckParam = () => {
+    if (activeTab === "all") return undefined;
+    if (activeTab === "pending") return "PENDING";
+    if (activeTab === "completed") return "approved";
+    if (activeTab === "rejected") return "rejected";
+    return undefined;
+  };
+
+  const fetchRequirementsData = async (
+    searchQuery = "",
+    createdStart = null,
+    createdEnd = null,
+    requiredStart = null,
+    requiredEnd = null,
+    eventId = null,
+    vendorId = null,
+    pageNum = 1,
+    append = false,
+  ) => {
+    if (!append) setLoading(true);
+    else setLoadingMore(true);
     try {
       const params = new URLSearchParams();
+      const accountsCheck = getAccountsCheckParam();
+      if (accountsCheck) params.append("accounts_check", accountsCheck);
       if (searchQuery) params.append("search", searchQuery);
-      if (date) params.append("singleDate", date);
+      if (createdStart) params.append("startDate", createdStart);
+      if (createdEnd) params.append("endDate", createdEnd);
+      if (requiredStart) params.append("required_date_start", requiredStart);
+      if (requiredEnd) params.append("required_date_end", requiredEnd);
+      if (eventId) params.append("event", eventId);
+      if (vendorId) params.append("vendor", vendorId);
+      params.append("page", String(pageNum));
+      params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(
         `${API_BASE_URL}request/all${queryString}`,
         config,
       );
-      setRequirements(res.data.items || []);
+      const data = res.data;
+      let items = [];
+      if (data.departments && typeof data.departments === "object") {
+        Object.entries(data.departments).forEach(([deptName, arr]) => {
+          (Array.isArray(arr) ? arr : []).forEach((item) => {
+            items.push({
+              ...item,
+              department: item.department || { id: deptName, name: deptName },
+            });
+          });
+        });
+      } else if (Array.isArray(data.items)) {
+        items = data.items;
+      }
+      const total = data.totalItems ?? data.total ?? items.length;
+      if (data.stats && typeof data.stats === "object") {
+        setStats({
+          total: data.stats.total ?? data.totalItems ?? total,
+          pending: data.stats.pending ?? 0,
+          approved: data.stats.approved ?? data.stats.completed ?? 0,
+          rejected: data.stats.rejected ?? 0,
+        });
+      }
+      setTotalItems(total);
+      if (append) {
+        setRequirements((prev) => {
+          const next = [...prev, ...items];
+          setHasMore(next.length < total);
+          return next;
+        });
+      } else {
+        setRequirements(items);
+        setHasMore(items.length >= PAGE_SIZE && items.length < total);
+      }
     } catch (err) {
       message.error("Failed to fetch requirements");
+      if (append) setHasMore(false);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   };
 
   useEffect(() => {
-    fetchRequirementsData("", dayjs().format("YYYY-MM-DD"));
-  }, []);
+    setPage(1);
+    setHasMore(true);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      1,
+      false,
+    );
+  }, [activeTab]);
 
   useEffect(() => {
-    // Fetch data on each search input change with a slight debounce
     const timeoutId = setTimeout(() => {
+      setPage(1);
+      setHasMore(true);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+        requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     }, 300);
-
     return () => clearTimeout(timeoutId);
-  }, [search, selectedDate]);
+  }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
 
-  // Group requirements by department id
+  const loadMore = () => {
+    if (loadingMore || !hasMore) return;
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      nextPage,
+      true,
+    );
+  };
+
+  useEffect(() => {
+    const sentinel = loadMoreRef.current;
+    if (!sentinel) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && hasMore && !loadingMore && !loading) {
+          loadMore();
+        }
+      },
+      { rootMargin: "200px", threshold: 0 },
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loading, page, search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
+
+  // Compute stats from loaded data (Total from API, Pending/Approved/Rejected from requirements)
+  useEffect(() => {
+    const total = totalItems || requirements.length;
+    const pending = requirements.filter(
+      (r) =>
+        r.status === "PENDING" ||
+        (r.accounts_check && String(r.accounts_check).toUpperCase() === "PENDING")
+    ).length;
+    const approved = requirements.filter(
+      (r) =>
+        r.status === "COMPLETED" ||
+        (r.accounts_check && (String(r.accounts_check).toUpperCase() === "APPROVED" || String(r.accounts_check).toLowerCase() === "approved"))
+    ).length;
+    const rejected = requirements.filter(
+      (r) =>
+        r.status === "REJECTED" ||
+        (r.accounts_check && String(r.accounts_check).toUpperCase() === "REJECTED")
+    ).length;
+    setStats((prev) =>
+      prev.total === total && prev.pending === pending && prev.approved === approved && prev.rejected === rejected
+        ? prev
+        : { total, pending, approved, rejected }
+    );
+  }, [requirements, totalItems]);
+
+  // Group requirements by department (backend now sends data per tab; no client-side filter)
   const requirementsByDept = requirements.reduce((acc, req) => {
     const deptId = req.department?.id || "unknown";
     if (!acc[deptId]) acc[deptId] = { department: req.department, items: [] };
@@ -118,7 +317,14 @@ const RequirementsTableAc = () => {
         setEditValue(null);
         fetchRequirementsData(
           search,
-          selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+          createdDateRange?.[0]?.format("YYYY-MM-DD"),
+          createdDateRange?.[1]?.format("YYYY-MM-DD"),
+          requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+          requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+          selectedEventId || null,
+          selectedVendorId || null,
+          1,
+          false,
         );
       } catch {
         message.error(
@@ -161,7 +367,14 @@ const RequirementsTableAc = () => {
       setEditValue(null);
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch {
       message.error(
@@ -182,7 +395,14 @@ const RequirementsTableAc = () => {
       message.success("Request marked as completed");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch {
       message.error("Failed to mark as completed");
@@ -199,7 +419,14 @@ const RequirementsTableAc = () => {
       message.success("Request marked as rejected");
       fetchRequirementsData(
         search,
-        selectedDate ? selectedDate.format("YYYY-MM-DD") : null,
+        createdDateRange?.[0]?.format("YYYY-MM-DD"),
+        createdDateRange?.[1]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
+        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
+        selectedEventId || null,
+        selectedVendorId || null,
+        1,
+        false,
       );
     } catch {
       message.error("Failed to reject request");
@@ -221,9 +448,24 @@ const RequirementsTableAc = () => {
     }
   };
 
-  const handleDateChange = (date) => {
-    setSelectedDate(date);
+  const handleCreatedDateRangeChange = (dates) => {
+    setCreatedDateRange(dates?.length === 2 ? dates : null);
   };
+
+  const handleRequiredDateRangeChange = (dates) => {
+    setRequiredDateRange(dates?.length === 2 ? dates : null);
+  };
+
+  const handleEventSearch = (value) => {
+    if (eventSearchRef.current) clearTimeout(eventSearchRef.current);
+    eventSearchRef.current = setTimeout(() => fetchEvents(value || ""), 300);
+  };
+
+  const handleVendorSearch = (value) => {
+    if (vendorSearchRef.current) clearTimeout(vendorSearchRef.current);
+    vendorSearchRef.current = setTimeout(() => fetchVendors(value || ""), 300);
+  };
+
 
   const columns = [
     {
@@ -869,7 +1111,36 @@ const RequirementsTableAc = () => {
         >
           Request's Dashboard
         </h1>
-        {/* Search and Date Filter */}
+
+        {/* Statistics Cards */}
+        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Total</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Pending</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.pending}</div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Approved</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.approved}</div>
+            </Card>
+          </Col>
+          <Col xs={24} sm={12} md={6}>
+            <Card hoverable style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", borderColor: "transparent", color: "#fff" }}>
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Rejected</div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.rejected}</div>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Filters: Search, Date Range, Event, Vendor */}
         <div
           style={{
             marginBottom: 24,
@@ -877,6 +1148,7 @@ const RequirementsTableAc = () => {
             padding: 24,
             borderRadius: 16,
             display: "flex",
+            flexWrap: "wrap",
             alignItems: "center",
             gap: 16,
           }}
@@ -886,40 +1158,103 @@ const RequirementsTableAc = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             prefix={<SearchOutlined style={{ color: "#9ca3af" }} />}
-            style={{ width: 320, borderRadius: 8 }}
+            style={{ width: 280, borderRadius: 8 }}
             size="large"
           />
-          <DatePicker
-            value={selectedDate}
-            onChange={handleDateChange}
+          <span style={{ fontWeight: 600, marginRight: 4 }}>Created date:</span>
+          <RangePicker
+            value={createdDateRange}
+            onChange={handleCreatedDateRangeChange}
             format="DD-MM-YYYY"
-            style={{ width: 200, borderRadius: 8 }}
+            style={{ borderRadius: 8 }}
             size="large"
-            placeholder="Select date"
+            placeholder={["Start date", "End date"]}
+          />
+          <span style={{ fontWeight: 600, marginRight: 4 }}>Required date:</span>
+          <RangePicker
+            value={requiredDateRange}
+            onChange={handleRequiredDateRangeChange}
+            format="DD-MM-YYYY"
+            style={{ borderRadius: 8 }}
+            size="large"
+            placeholder={["Start date", "End date"]}
+          />
+          <Select
+            placeholder="Select event"
+            allowClear
+            showSearch
+            value={selectedEventId ?? undefined}
+            onChange={setSelectedEventId}
+            onSearch={handleEventSearch}
+            loading={eventsLoading}
+            filterOption={false}
+            optionFilterProp="label"
+            style={{ width: 240, borderRadius: 8 }}
+            size="large"
+            options={events.map((ev) => ({
+              value: ev.id || ev._id,
+              label: ev.clientName || ev.name || ev.client_name || String(ev.id || ev._id),
+            }))}
+          />
+          <Select
+            placeholder="Select vendor"
+            allowClear
+            showSearch
+            value={selectedVendorId ?? undefined}
+            onChange={setSelectedVendorId}
+            onSearch={handleVendorSearch}
+            loading={vendorsLoading}
+            filterOption={false}
+            optionFilterProp="label"
+            style={{ width: 240, borderRadius: 8 }}
+            size="large"
+            options={vendors.map((v) => ({
+              value: v.id || v._id,
+              label: v.name || String(v.id || v._id),
+            }))}
           />
         </div>
 
-        <Collapse
-          accordion={false}
-          bordered={false}
-          expandIconPosition="end"
-          defaultActiveKey={Object.keys(requirementsByDept)}
-        >
-          {Object.entries(requirementsByDept).map(([deptId, deptObj]) => (
-            <Panel key={deptId} header={getPanelHeader(deptObj)}>
-              <Table
-                rowKey="id"
-                loading={loading}
-                columns={columns}
-                dataSource={sortedRequirements(deptObj.items)}
-                pagination={false}
-                scroll={{ x: 2000 }}
-                size="middle"
-                rowClassName={rowClassName}
-              />
-            </Panel>
-          ))}
-        </Collapse>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          size="large"
+          style={{ marginBottom: 16 }}
+          items={[
+            { key: "all", label: "All" },
+            { key: "pending", label: "Pending" },
+            { key: "completed", label: "Completed" },
+            { key: "rejected", label: "Rejected" },
+          ]}
+        />
+
+        <div ref={scrollContainerRef}>
+          <Collapse
+            accordion={false}
+            bordered={false}
+            expandIconPosition="end"
+            defaultActiveKey={Object.keys(requirementsByDept)}
+          >
+            {Object.entries(requirementsByDept).map(([deptId, deptObj]) => (
+              <Panel key={deptId} header={getPanelHeader(deptObj)}>
+                <Table
+                  rowKey="id"
+                  loading={loading}
+                  columns={columns}
+                  dataSource={sortedRequirements(deptObj.items)}
+                  pagination={false}
+                  scroll={{ x: 2000 }}
+                  size="middle"
+                  rowClassName={rowClassName}
+                />
+              </Panel>
+            ))}
+          </Collapse>
+          <div ref={loadMoreRef} style={{ height: 20, textAlign: "center", padding: 8 }}>
+            {loadingMore && <Spin size="small" />}
+            {!hasMore && requirements.length > 0 && <span style={{ color: "#888" }}>No more data</span>}
+          </div>
+        </div>
       </div>
     </div>
   );

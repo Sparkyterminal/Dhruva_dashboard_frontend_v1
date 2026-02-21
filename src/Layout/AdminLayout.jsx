@@ -127,7 +127,7 @@ const AdminLayout = () => {
       key: "/dashboard/viewprojectcoordinator",
       icon: <UserOutlined style={{ color: DARK_FOREST_GREEN }} />,
       label: <span style={{ color: TEXT_DARK }}>View Project Coordinator</span>,
-    }
+    },
   ];
 
   // Sidebar menu items for USER

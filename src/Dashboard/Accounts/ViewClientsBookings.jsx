@@ -46,6 +46,7 @@ import UserWiseClients from "../../Components/UserWiseClients";
 import ProgressCalenderClients from "../../Components/ProgressCalenderClients";
 
 const { Title, Text } = Typography;
+const { RangePicker } = DatePicker;
 
 const ViewClientsBookings = () => {
   const navigate = useNavigate();
@@ -64,6 +65,10 @@ const ViewClientsBookings = () => {
   const [activeTab, setActiveTab] = useState("list");
   const [eventConfirmationTab, setEventConfirmationTab] =
     useState("InProgress");
+  // List View filters for events API
+  const [filterEventName, setFilterEventName] = useState(undefined);
+  const [filterDateRange, setFilterDateRange] = useState(null);
+  const [eventNameOptions, setEventNameOptions] = useState([]); // populated from initial/data
 
   const user = useSelector((state) => state.user.value);
 
@@ -71,10 +76,15 @@ const ViewClientsBookings = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  const fetchRequirementsData = async () => {
+  const fetchRequirementsData = async (eventName, startDate, endDate) => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const params = new URLSearchParams();
+      if (eventName) params.append("eventName", eventName);
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      const queryString = params.toString() ? `?${params.toString()}` : "";
+      const res = await axios.get(`${API_BASE_URL}events${queryString}`, {
         ...config,
       });
       const allBookings = res.data.events || res.data.data || res.data || [];
@@ -83,6 +93,17 @@ const ViewClientsBookings = () => {
         current: 1,
         pageSize: 10,
         total: allBookings.length,
+      });
+      // Build unique event names for dropdown (merge with existing options so filter doesn't hide options)
+      setEventNameOptions((prev) => {
+        const names = new Set(prev.map((o) => o.value));
+        allBookings.forEach((b) => {
+          const name = getEventName(b.eventName);
+          if (name && name !== "N/A") names.add(name);
+        });
+        return Array.from(names)
+          .sort((a, b) => String(a).localeCompare(String(b)))
+          .map((n) => ({ label: n, value: n }));
       });
     } catch (err) {
       message.error("Failed to fetch client bookings");
@@ -93,9 +114,11 @@ const ViewClientsBookings = () => {
   };
 
   useEffect(() => {
-    fetchRequirementsData();
+    const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
+    const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
+    fetchRequirementsData(filterEventName, start, end);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [filterEventName, filterDateRange]);
 
   const handleTableChange = (paginationConfig) => {
     setPagination({
@@ -355,8 +378,10 @@ const ViewClientsBookings = () => {
       // Exit edit mode
       setEditingAdvanceKey(null);
 
-      // Refresh table data
-      await fetchRequirementsData(pagination.current, pagination.pageSize);
+      // Refresh table data (use current list-view filters)
+      const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
+      const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
+      await fetchRequirementsData(filterEventName, start, end);
 
       // Fetch updated event data to refresh drawer
       const updatedEventResponse = await axios.get(
@@ -635,6 +660,59 @@ const ViewClientsBookings = () => {
       label: "List View",
       children: (
         <div className="space-y-6">
+          {/* List View filters: Event name + Date range */}
+          <Card
+            className="border-0"
+            style={{
+              borderRadius: "14px",
+              background: "white",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+            }}
+            bodyStyle={{ padding: "16px 24px" }}
+          >
+            <Row gutter={[16, 12]} align="middle">
+              <Col xs={24} sm={8} md={6}>
+                <Text strong className="text-slate-600 text-sm block mb-1">
+                  Event Name
+                </Text>
+                <Select
+                  allowClear
+                  placeholder="All events"
+                  value={filterEventName ?? undefined}
+                  onChange={setFilterEventName}
+                  options={eventNameOptions}
+                  style={{ width: "100%" }}
+                  size="large"
+                />
+              </Col>
+              <Col xs={24} sm={12} md={10}>
+                <Text strong className="text-slate-600 text-sm block mb-1">
+                  Date Range
+                </Text>
+                <RangePicker
+                  value={filterDateRange}
+                  onChange={setFilterDateRange}
+                  format="DD-MM-YYYY"
+                  style={{ width: "100%" }}
+                  size="large"
+                  placeholder={["Start date", "End date"]}
+                />
+              </Col>
+              <Col xs={24} sm={4} md={4}>
+                <Button
+                  size="large"
+                  onClick={() => {
+                    setFilterEventName(undefined);
+                    setFilterDateRange(null);
+                  }}
+                  style={{ marginTop: 30 }}
+                >
+                  Clear filters
+                </Button>
+              </Col>
+            </Row>
+          </Card>
+
           {/* Event Confirmation Tabs */}
           <Tabs
             activeKey={eventConfirmationTab}

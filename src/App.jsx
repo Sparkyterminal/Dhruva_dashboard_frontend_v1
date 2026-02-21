@@ -79,6 +79,7 @@ import CARequirementsTable from "./Dashboard/CA/CARequirementsTable";
 import BudgetReportHome from "./Dashboard/Accounts/budgetreport/BudgetReportHome";
 import BudgetReportEventWise from "./Dashboard/Accounts/budgetreport/BudgetReportEventWise";
 import EditBudgetReport from "./Dashboard/Accounts/budgetreport/EditBudgetReport";
+import AccountsBudgetReportMgmt from "./Dashboard/Accounts/budgetreport/AccountsBudgetReportMgmt";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -192,6 +193,9 @@ const App = () => {
               <Route path="/user/budgetreport" element={<BudgetReportHome />} />
               <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
               <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/budgetreport/accounts/:id" element={<AccountsBudgetReportMgmt />} />
+              <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route path="/user/client-leads/edit/:id" element={<EditLeads />} />
               <Route path="/user" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
@@ -234,6 +238,10 @@ const App = () => {
                 element={<InprogressCalendarPage />}
               />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/budgetreport/accounts/:id" element={<AccountsBudgetReportMgmt />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
@@ -260,93 +268,108 @@ const App = () => {
                 path="/user/editchecklists/:id"
                 element={<EditChecklist />}
               />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/budgetreport/accounts/:id" element={<AccountsBudgetReportMgmt />} />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isOwner ? (
             /* 👑 OWNER ROUTES */
             <>
-              <Route path="/owner" element={<HomeOwner />} />
-              <Route path="/owner/departments" element={<Departments />} />
+              <Route path="/user" element={<HomeOwner />} />
+              <Route path="/user/departments" element={<Departments />} />
               <Route
-                path="/owner/departments/:id"
+                path="/user/departments/:id"
                 element={<Departmentwise />}
               />
               <Route
-                path="/owner/changepassword"
+                path="/user/changepassword"
                 element={<ChangePassword />}
               />
-              <Route path="/owner/daybook" element={<PlayBook />} />
-              <Route path="/owner/addvendor" element={<AddVendor />} />
-              <Route path="/owner/viewvendors" element={<ViewVendor />} />
-              <Route path="/owner/editvendor/:id" element={<EditVendor />} />
+              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/viewvendors" element={<ViewVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route
-                path="/owner/viewclientbookings"
+                path="/user/viewclientbookings"
                 element={<ViewClientsBookings />}
               />
-              <Route path="/owner/checklists" element={<ViewChecklist />} />
-              <Route path="/owner/addchecklists" element={<AddChecklist />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
+              <Route path="/user/addchecklists" element={<AddChecklist />} />
               <Route
-                path="/owner/editchecklists/:id"
+                path="/user/editchecklists/:id"
                 element={<EditChecklist />}
               />
-              <Route path="/owner/addbill" element={<AddBill />} />
-              <Route path="/owner/editbill/:id" element={<EditBill />} />
-              <Route path="/owner/viewbills" element={<ViewBill />} />
-              <Route path="/owner/meetings" element={<Meetings />} />
+              <Route path="/user/addbill" element={<AddBill />} />
+              <Route path="/user/editbill/:id" element={<EditBill />} />
+              <Route path="/user/viewbills" element={<ViewBill />} />
+              <Route path="/user/meetings" element={<Meetings />} />
               <Route
-                path="/owner/allrequirements"
+                path="/user/allrequirements"
                 element={<AllRequirementsTable />}
               />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/budgetreport/accounts/:id" element={<AccountsBudgetReportMgmt />} />
+              <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route path="/user/client-leads/edit/:id" element={<EditLeads />} />
 
-              <Route path="*" element={<Navigate to="/owner" replace />} />
+              <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isApprover ? (
             /* ✅ APPROVER ROUTES */
             <>
-              <Route path="/approver/home" element={<ApproverHome />} />
-              <Route path="/approver/departments" element={<Departments />} />
+              <Route path="/user" element={<ApproverHome />} />
+              <Route path="/user/departments" element={<Departments />} />
               <Route
-                path="/approver/departments/:id"
+                path="/user/departments/:id"
                 element={<Departmentwise />}
               />
               <Route
-                path="/approver/changepassword"
+                path="/user/changepassword"
                 element={<ChangePassword />}
               />
-              <Route path="/approver/daybook" element={<PlayBook />} />
-              <Route path="/approver/addvendor" element={<AddVendor />} />
-              <Route path="/approver/viewvendors" element={<ViewVendor />} />
-              <Route path="/approver/checklists" element={<ViewChecklist />} />
+              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/addvendor" element={<AddVendor />} />
+              <Route path="/user/viewvendors" element={<ViewVendor />} />
+              <Route path="/user/checklists" element={<ViewChecklist />} />
               <Route
-                path="/approver/addchecklists"
+                path="/user/addchecklists"
                 element={<AddChecklist />}
               />
               <Route
-                path="/approver/editchecklists/:id"
+                path="/user/editchecklists/:id"
                 element={<EditChecklist />}
               />
-              <Route path="/approver/editvendor/:id" element={<EditVendor />} />
+              <Route path="/user/editvendor/:id" element={<EditVendor />} />
               <Route
-                path="/approver/viewclientbookings"
+                path="/user/viewclientbookings"
                 element={<ViewClientsBookings />}
               />
-              <Route path="/approver/addbill" element={<AddBill />} />
-              <Route path="/approver/editbill/:id" element={<EditBill />} />
-              <Route path="/approver/viewbills" element={<ViewBill />} />
+              <Route path="/user/addbill" element={<AddBill />} />
+              <Route path="/user/editbill/:id" element={<EditBill />} />
+              <Route path="/user/viewbills" element={<ViewBill />} />
               <Route
-                path="/approver/allrequirements"
+                path="/user/allrequirements"
                 element={<RequirementTableApprover />}
               />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route path="/user/client-leads/edit/:id" element={<EditLeads />} />
 
               <Route
                 path="*"
-                element={<Navigate to="/approver/home" replace />}
+                element={<Navigate to="/user" replace />}
               />
             </>
           ) : isCA ? (
             <>
-              <Route path="/user/home" element={<CAHomePage />} />
+              <Route path="/user" element={<CAHomePage />} />
               <Route path="/user/departments" element={<Departments />} />
               <Route
                 path="/user/departments/:id"
@@ -374,8 +397,12 @@ const App = () => {
                 path="/user/allrequirements"
                 element={<CARequirementsTable />}
               />
+              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport/eventwise" element={<BudgetReportEventWise />} />
+              <Route path="/user/budgetreport/edit/:id" element={<EditBudgetReport />} />
+              <Route path="/user/budgetreport/accounts/:id" element={<AccountsBudgetReportMgmt />} />
 
-              <Route path="*" element={<Navigate to="/user/home" replace />} />
+              <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : (
             /* 🚫 Fallback */
