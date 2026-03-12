@@ -6,11 +6,20 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { logout } from "../../reducers/users";
 import Meetings from "./Meetings";
-import Lottie from "lottie-react";
-import requirementsAnimation from "../../assets/requirements.json";
-import logouticon from "../../assets/logout.json";
-import profile from "../../assets/Profile.json";
-import eye from "../../assets/Eye.json";
+import {
+  UnorderedListOutlined,
+  BookOutlined,
+  ShopOutlined,
+  CalendarOutlined,
+  FileTextOutlined,
+  CheckSquareOutlined,
+  TeamOutlined,
+  BarChartOutlined,
+  UserAddOutlined,
+  UserOutlined,
+  KeyOutlined,
+  LogoutOutlined,
+} from "@ant-design/icons";
 
 // CSS for Glassmorphism and Focus Animation
 const customStyles = `
@@ -75,53 +84,16 @@ const HomeOwner = () => {
       day: "numeric",
     });
 
-  // Navigation menu items
   const navigationMenus = [
-    {
-      label: "Requirements",
-      route: "/user/allrequirements",
-      animation: requirementsAnimation,
-    },
-    {
-      label: "Daybook",
-      route: "/user/daybook",
-      animation: requirementsAnimation, // Replace with playbook animation
-    },
-    {
-      label: "Vendors",
-      route: "/user/viewvendors",
-      animation: requirementsAnimation, // Replace with Vendors animation
-    },
-    {
-      label: "Client Bookings",
-      route: "/user/viewclientbookings",
-      animation: requirementsAnimation, // Replace with bookings animation
-    },
-    {
-      label: "Bills",
-      route: "/user/viewbills",
-      animation: requirementsAnimation, // Replace with bills animation
-    },
-    {
-      label: "Checklists",
-      route: "/user/checklists",
-      animation: requirementsAnimation, // Replace with bills animation
-    },
-    {
-      label: "Departments",
-      route: "/user/departments",
-      animation: requirementsAnimation, // Replace with departments animation
-    },
-    {
-      label: "Budget Report",
-      route: "/user/budgetreport/eventwise",
-      animation: requirementsAnimation, // Replace with budget report animation
-    },
-    {
-      label: "Leads Tracker",
-      route: "/user/client-leads",
-      animation: requirementsAnimation, // Replace with leads tracker animation
-    },
+    { label: "Requirements", route: "/user/allrequirements", icon: UnorderedListOutlined },
+    { label: "Daybook", route: "/user/daybook", icon: BookOutlined },
+    { label: "Vendors", route: "/user/viewvendors", icon: ShopOutlined },
+    { label: "Client Bookings", route: "/user/viewclientbookings", icon: CalendarOutlined },
+    { label: "Bills", route: "/user/viewbills", icon: FileTextOutlined },
+    { label: "Checklists", route: "/user/checklists", icon: CheckSquareOutlined },
+    { label: "Departments", route: "/user/departments", icon: TeamOutlined },
+    { label: "Budget Report", route: "/user/budgetreport/eventwise", icon: BarChartOutlined },
+    { label: "Leads Tracker", route: "/user/client-leads", icon: UserAddOutlined },
   ];
 
   const menuItems = [
@@ -132,12 +104,7 @@ const HomeOwner = () => {
           className="flex items-center gap-2 px-2 py-1"
           onClick={handleChangePassword}
         >
-          <Lottie
-            animationData={eye}
-            style={{ width: 22, height: 22, marginRight: 2 }}
-            loop={true}
-            autoplay={true}
-          />
+          <KeyOutlined style={{ fontSize: 18, marginRight: 8 }} />
           <span>Change Password</span>
         </div>
       ),
@@ -149,12 +116,7 @@ const HomeOwner = () => {
           className="flex items-center gap-2 px-2 py-1 text-red-600 cursor-pointer"
           onClick={handleLogout}
         >
-          <Lottie
-            animationData={logouticon}
-            style={{ width: 22, height: 22, marginRight: 2 }}
-            loop={true}
-            autoplay={true}
-          />
+          <LogoutOutlined style={{ fontSize: 18, marginRight: 8 }} />
           <span>Logout</span>
         </div>
       ),
@@ -190,7 +152,7 @@ const HomeOwner = () => {
               <div className="flex items-center gap-4">
                 <div>
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
-                    Welcome Mr. Dhruva
+                    Welcome
                   </h1>
                   <div className="text-gray-600 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6">
                     <motion.div
@@ -233,13 +195,11 @@ const HomeOwner = () => {
                   trigger={["click"]}
                   placement="bottomRight"
                 >
-                  <div className="cursor-pointer flex items-center justify-center">
-                    <Lottie
-                      animationData={profile}
-                      style={{ width: 56, height: 56, borderRadius: "50%" }}
-                      loop={true}
-                      autoplay={true}
-                    />
+                  <div
+                    className="cursor-pointer flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md hover:shadow-lg transition-shadow"
+                    style={{ minWidth: 56, minHeight: 56 }}
+                  >
+                    <UserOutlined style={{ fontSize: 28 }} />
                   </div>
                 </Dropdown>
               </motion.div>
@@ -247,46 +207,23 @@ const HomeOwner = () => {
 
             {/* Bottom Row: Navigation Menu */}
             <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 pt-4 border-t border-gray-200">
-              {navigationMenus.map((menu, index) => (
-                <motion.div
-                  key={index}
-                  className="shrink-0 select-none"
-                  whileHover="hover"
-                  whileTap={{ scale: 0.96 }}
-                >
-                  <motion.a
+              {navigationMenus.map((menu, index) => {
+                const Icon = menu.icon;
+                return (
+                  <a
+                    key={index}
                     href="#"
                     onClick={(e) => {
                       e.preventDefault();
                       navigate(menu.route);
                     }}
-                    className="font-semibold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-200"
-                    initial={false}
-                    variants={{
-                      hover: {
-                        color: "#ff7300",
-                        textDecoration: "underline",
-                        textUnderlineOffset: 5,
-                        letterSpacing: "0.1em",
-                      },
-                    }}
-                    style={{
-                      color: "#000000",
-                      textDecoration: "none",
-                    }}
+                    className="font-semibold text-base md:text-lg tracking-wide cursor-pointer flex items-center gap-2 shrink-0 select-none text-black no-underline hover:text-[#ff7300]"
                   >
-                    <span className="flex items-center gap-2">
-                      <Lottie
-                        animationData={menu.animation}
-                        style={{ width: 20, height: 20, marginBottom: 2 }}
-                        loop={true}
-                        autoplay={true}
-                      />
-                      {menu.label}
-                    </span>
-                  </motion.a>
-                </motion.div>
-              ))}
+                    <Icon style={{ fontSize: 20, flexShrink: 0 }} />
+                    {menu.label}
+                  </a>
+                );
+              })}
             </div>
           </div>
         </motion.div>

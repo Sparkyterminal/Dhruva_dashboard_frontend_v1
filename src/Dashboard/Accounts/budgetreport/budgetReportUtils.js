@@ -29,6 +29,8 @@ export const emptyChildRow = (groupName) => ({
   actualPaidAmount: 0,
   finalAccount: 0,
   finalCash: 0,
+  finalTds: 0,
+  finalNetAmount: 0,
 });
 
 export const buildGroupRow = (name) => ({
@@ -74,6 +76,8 @@ export const parseBudgetDataToRowData = (budgetData) => {
         id: row.id || generateId(),
         finalAccount: row.finalAccount != null ? Number(row.finalAccount) : 0,
         finalCash: row.finalCash != null ? Number(row.finalCash) : 0,
+        finalTds: row.finalTds != null ? Number(row.finalTds) : (row.tds != null ? Number(row.tds) : 0),
+        finalNetAmount: row.finalNetAmount != null ? Number(row.finalNetAmount) : (row.netAmount != null ? Number(row.netAmount) : 0),
       });
     });
   });

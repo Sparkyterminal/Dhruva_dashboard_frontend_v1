@@ -4,6 +4,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { Table, Button, Drawer, Card, Typography, Popconfirm, message, Spin } from "antd";
 import { PlusOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import dayjs from "dayjs";
 import AddLeads from "./AddLeads";
 import LeadForm from "./LeadForm";
 import { API_BASE_URL } from "../../../../config";
@@ -15,6 +16,13 @@ function getNotesDisplay(notes) {
   if (!notes) return "—";
   // Show first 100 characters with ellipsis if longer
   return notes.length > 100 ? `${notes.substring(0, 100)}...` : notes;
+}
+
+/** Format date for display (YYYY-MM-DD or ISO string to DD MMM YYYY) */
+function formatDateDisplay(dateStr) {
+  if (!dateStr) return "—";
+  const d = dayjs(dateStr);
+  return d.isValid() ? d.format("DD MMM YYYY") : "—";
 }
 
 const ViewLeads = () => {
@@ -150,6 +158,32 @@ const ViewLeads = () => {
       key: "eventTypeDetails",
       ellipsis: true,
       render: (t) => t || "—",
+    },
+    // {
+    //   title: "Start date",
+    //   dataIndex: "startDate",
+    //   key: "startDate",
+    //   width: 120,
+    //   render: (_, record) => formatDateDisplay(record.startDate),
+    // },
+    // {
+    //   title: "End date",
+    //   dataIndex: "endDate",
+    //   key: "endDate",
+    //   width: 120,
+    //   render: (_, record) => formatDateDisplay(record.endDate),
+    // },
+    {
+      title: "Assign to",
+      dataIndex: ["assignedTo", "name"],
+      key: "assignedTo",
+      width: 140,
+      ellipsis: true,
+      render: (_, record) => {
+        const a = record.assignedTo;
+        if (!a) return "—";
+        return typeof a === "object" ? (a.name || a.email || "—") : a;
+      },
     },
     {
       title: "Notes",
@@ -306,6 +340,16 @@ const ViewLeads = () => {
                 <div style={{ fontSize: 15, color: "#0f172a" }}>{viewingLead.status || "—"}</div>
               </div>
               <div>
+                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>Assign to</div>
+                <div style={{ fontSize: 15, color: "#0f172a" }}>
+                  {viewingLead.assignedTo
+                    ? typeof viewingLead.assignedTo === "object"
+                      ? viewingLead.assignedTo?.name || viewingLead.assignedTo?.email || "—"
+                      : viewingLead.assignedTo
+                    : "—"}
+                </div>
+              </div>
+              <div>
                 <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>Client details</div>
                 <div style={{ fontSize: 15, color: "#0f172a", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                   {viewingLead.clientDetails || "—"}
@@ -316,6 +360,14 @@ const ViewLeads = () => {
                 <div style={{ fontSize: 15, color: "#0f172a", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
                   {viewingLead.eventTypeDetails || "—"}
                 </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>Start date</div>
+                <div style={{ fontSize: 15, color: "#0f172a" }}>{formatDateDisplay(viewingLead.startDate)}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>End date</div>
+                <div style={{ fontSize: 15, color: "#0f172a" }}>{formatDateDisplay(viewingLead.endDate)}</div>
               </div>
               <div>
                 <div style={{ fontSize: 12, color: "#64748b", fontWeight: 600, marginBottom: 4 }}>Notes</div>

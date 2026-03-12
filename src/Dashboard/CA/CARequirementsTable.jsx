@@ -34,8 +34,9 @@ const { RangePicker } = DatePicker;
 
 const CARequirementsTable = () => {
   const user = useSelector((state) => state.user.value);
-  const [requirements, setRequirements] = useState([]);
+  const [departmentData, setDepartmentData] = useState({});
   const [loading, setLoading] = useState(false);
+  const [loadingMoreDeptId, setLoadingMoreDeptId] = useState(null);
   const [search, setSearch] = useState("");
   const [createdDateRange, setCreatedDateRange] = useState(null);
   const [requiredDateRange, setRequiredDateRange] = useState(null);
@@ -46,14 +47,10 @@ const CARequirementsTable = () => {
   const [eventsLoading, setEventsLoading] = useState(false);
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
   const [totalItems, setTotalItems] = useState(0);
   const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
   const eventSearchRef = useRef(null);
   const vendorSearchRef = useRef(null);
-  const loadMoreRef = useRef(null);
   const PAGE_SIZE = 30;
 
   // Editable row IDs and values for planned_amount, amount_paid, and approver_amount
@@ -122,10 +119,11 @@ const CARequirementsTable = () => {
     eventId = null,
     vendorId = null,
     pageNum = 1,
+    departmentId = null,
     append = false,
   ) => {
-    if (!append) setLoading(true);
-    else setLoadingMore(true);
+    if (!departmentId) setLoading(true);
+    else if (append) setLoadingMoreDeptId(departmentId);
     try {
       const params = new URLSearchParams();
       const caCheck = getCaCheckParam();
@@ -137,26 +135,86 @@ const CARequirementsTable = () => {
       if (requiredEnd) params.append("required_date_end", requiredEnd);
       if (eventId) params.append("event", eventId);
       if (vendorId) params.append("vendor", vendorId);
+      if (departmentId) params.append("department", departmentId);
       params.append("page", String(pageNum));
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
       const res = await axios.get(`${API_BASE_URL}request/all${queryString}`, config);
       const data = res.data;
-      let items = [];
+      const pagination = data.pagination || {};
+      const hasNextPage = pagination.hasNextPage ?? (pagination.totalItems > (pagination.currentPage || pageNum) * (pagination.size || PAGE_SIZE));
+
       if (data.departments && typeof data.departments === "object") {
-        Object.entries(data.departments).forEach(([deptName, arr]) => {
-          (Array.isArray(arr) ? arr : []).forEach((item) => {
-            items.push({
-              ...item,
-              department: item.department || { id: deptName, name: deptName },
-            });
+        if (departmentId && append) {
+          const list = [];
+          Object.entries(data.departments).forEach(([, arr]) => {
+            (Array.isArray(arr) ? arr : []).forEach((item) => list.push({ ...item, department: item.department || {} }));
           });
-        });
+          if (list.length > 0) {
+            setDepartmentData((prev) => {
+              const existing = prev[departmentId];
+              if (!existing) return prev;
+              return {
+                ...prev,
+                [departmentId]: {
+                  ...existing,
+                  items: [...existing.items, ...list],
+                  page: pageNum,
+                  hasMore: hasNextPage,
+                },
+              };
+            });
+          }
+        } else if (departmentId && !append) {
+          let normalized = [];
+          Object.entries(data.departments).forEach(([deptName, arr]) => {
+            (Array.isArray(arr) ? arr : []).forEach((item) =>
+              normalized.push({ ...item, department: item.department || { id: deptName, name: deptName } })
+            );
+          });
+          if (normalized.length > 0) {
+            setDepartmentData((prev) => ({
+              ...prev,
+              [departmentId]: {
+                department: normalized[0]?.department || { id: departmentId, name: "Department" },
+                items: normalized,
+                page: pageNum,
+                hasMore: hasNextPage,
+              },
+            }));
+          }
+        } else {
+          const nextDepts = {};
+          Object.entries(data.departments).forEach(([deptName, arr]) => {
+            const list = Array.isArray(arr) ? arr : [];
+            if (list.length === 0) return;
+            const d = list[0].department || { id: deptName, name: deptName };
+            const id = d.id || deptName;
+            nextDepts[id] = {
+              department: d,
+              items: list.map((item) => ({ ...item, department: item.department || d })),
+              page: 1,
+              hasMore: hasNextPage,
+            };
+          });
+          setDepartmentData(nextDepts);
+        }
       } else if (Array.isArray(data.items)) {
-        items = data.items;
+        if (!departmentId) {
+          const byDept = (data.items || []).reduce((acc, item) => {
+            const d = item.department || { id: "unknown", name: "Unknown" };
+            const id = d.id || "unknown";
+            if (!acc[id]) acc[id] = { department: d, items: [], page: 1, hasMore: true };
+            acc[id].items.push(item);
+            return acc;
+          }, {});
+          setDepartmentData(byDept);
+        }
       }
-      const total = data.totalItems ?? data.total ?? items.length;
+
+      const total = pagination.totalItems ?? data.totalItems ?? data.total ?? 0;
+      setTotalItems(total);
       if (data.stats && typeof data.stats === "object") {
         setStats({
           total: data.stats.total ?? data.totalItems ?? total,
@@ -165,30 +223,39 @@ const CARequirementsTable = () => {
           rejected: data.stats.rejected ?? 0,
         });
       }
-      setTotalItems(total);
-      if (append) {
-        setRequirements((prev) => {
-          const next = [...prev, ...items];
-          setHasMore(next.length < total);
-          return next;
-        });
-      } else {
-        setRequirements(items);
-        setHasMore(items.length >= PAGE_SIZE && items.length < total);
-      }
     } catch (err) {
       console.error(err);
       message.error("Failed to fetch requirements");
-      if (append) setHasMore(false);
+      if (departmentId && append) {
+        setDepartmentData((prev) => {
+          const existing = prev[departmentId];
+          return existing ? { ...prev, [departmentId]: { ...existing, hasMore: false } } : prev;
+        });
+      }
     } finally {
       setLoading(false);
-      setLoadingMore(false);
+      setLoadingMoreDeptId(null);
     }
   };
 
-  useEffect(() => {
-    setPage(1);
-    setHasMore(true);
+  const loadMoreForDepartment = (deptId) => {
+    const dept = departmentData[deptId];
+    if (!dept || dept.hasMore === false || loadingMoreDeptId) return;
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      (dept.page || 1) + 1,
+      deptId,
+      true,
+    );
+  };
+
+  const refetchDepartment = (deptId) => {
     fetchRequirementsData(
       search,
       createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
@@ -198,14 +265,28 @@ const CARequirementsTable = () => {
       selectedEventId || null,
       selectedVendorId || null,
       1,
+      deptId,
+      false,
+    );
+  };
+
+  useEffect(() => {
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      1,
+      null,
       false,
     );
   }, [activeTab]);
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      setPage(1);
-      setHasMore(true);
       fetchRequirementsData(
         search,
         createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
@@ -215,52 +296,23 @@ const CARequirementsTable = () => {
         selectedEventId || null,
         selectedVendorId || null,
         1,
+        null,
         false,
       );
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
 
-  const loadMore = () => {
-    if (loadingMore || !hasMore) return;
-    const nextPage = page + 1;
-    setPage(nextPage);
-    fetchRequirementsData(
-      search,
-      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
-      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
-      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
-      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
-      selectedEventId || null,
-      selectedVendorId || null,
-      nextPage,
-      true,
-    );
-  };
-
+  const allItems = Object.values(departmentData).flatMap((d) => d.items || []);
   useEffect(() => {
-    const sentinel = loadMoreRef.current;
-    if (!sentinel) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !loadingMore && !loading) loadMore();
-      },
-      { rootMargin: "200px", threshold: 0 },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, loadingMore, loading, page, search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
-
-  // Compute stats from loaded data (Total from API, Pending/Approved/Rejected from requirements)
-  useEffect(() => {
-    const total = totalItems || requirements.length;
-    const pending = requirements.filter(
+    const total = totalItems || allItems.length;
+    const pending = allItems.filter(
       (r) => r.ca_check === "PENDING" || (r.status && r.status === "PENDING")
     ).length;
-    const approved = requirements.filter(
+    const approved = allItems.filter(
       (r) => r.ca_check === "APPROVED" || (r.status && r.status === "COMPLETED")
     ).length;
-    const rejected = requirements.filter(
+    const rejected = allItems.filter(
       (r) => r.ca_check === "REJECTED" || (r.status && r.status === "REJECTED")
     ).length;
     setStats((prev) =>
@@ -268,15 +320,9 @@ const CARequirementsTable = () => {
         ? prev
         : { total, pending, approved, rejected }
     );
-  }, [requirements, totalItems]);
+  }, [departmentData, totalItems]);
 
-  // Group requirements by department (backend sends data per tab)
-  const requirementsByDept = requirements.reduce((acc, req) => {
-    const deptId = req.department?.id || "no-dept";
-    if (!acc[deptId]) acc[deptId] = { department: req.department, requirements: [] };
-    acc[deptId].requirements.push(req);
-    return acc;
-  }, {});
+  const requirementsByDept = departmentData;
 
   const sortedRequirements = (list) => {
     return list.sort((a, b) => {
@@ -337,17 +383,7 @@ const CARequirementsTable = () => {
 
       message.success("Updated successfully ✅");
       setEditRowId(null);
-      fetchRequirementsData(
-        search,
-        createdDateRange?.[0]?.format("YYYY-MM-DD"),
-        createdDateRange?.[1]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
-        selectedEventId || null,
-        selectedVendorId || null,
-        1,
-        false,
-      );
+      refetchDepartment(row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to update ❌");
@@ -363,17 +399,7 @@ const CARequirementsTable = () => {
         config,
       );
       message.success("CA Approved ✅");
-      await fetchRequirementsData(
-        search,
-        createdDateRange?.[0]?.format("YYYY-MM-DD"),
-        createdDateRange?.[1]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
-        selectedEventId || null,
-        selectedVendorId || null,
-        1,
-        false,
-      );
+      await refetchDepartment(row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to approve ❌");
@@ -391,17 +417,7 @@ const CARequirementsTable = () => {
         config,
       );
       message.success("CA Rejected ❌");
-      await fetchRequirementsData(
-        search,
-        createdDateRange?.[0]?.format("YYYY-MM-DD"),
-        createdDateRange?.[1]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[0]?.format("YYYY-MM-DD"),
-        requiredDateRange?.[1]?.format("YYYY-MM-DD"),
-        selectedEventId || null,
-        selectedVendorId || null,
-        1,
-        false,
-      );
+      await refetchDepartment(row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to reject ❌");
@@ -499,6 +515,17 @@ const CARequirementsTable = () => {
       render: (date) => (
         <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
           {date ? dayjs(date).format("DD-MM-YYYY") : "-"}
+        </span>
+      ),
+    },
+    {
+      title: "Expected In",
+      dataIndex: "transation_in",
+      key: "transation_in",
+      width: 120,
+      render: (text) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {text || "-"}
         </span>
       ),
     },
@@ -616,6 +643,30 @@ const CARequirementsTable = () => {
         );
       },
     },
+    {
+      title: "Balance",
+      key: "balance",
+      width: 180,
+      render: (_, row) => {
+        const amount = Number(row?.amount) || 0;
+        const paid = Number(row?.amount_paid) || 0;
+        const balance = amount - paid;
+        return (
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 700,
+              color: balance < 0 ? "#dc2626" : "#000",
+            }}
+          >
+            {balance.toLocaleString("en-IN", {
+              style: "currency",
+              currency: "INR",
+            })}
+          </span>
+        );
+      },
+    },
 
     {
       title: "Entity Account",
@@ -641,6 +692,8 @@ const CARequirementsTable = () => {
                 Sky Blue Event Management India Pvt Lmtd.
               </Option>
               <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+              <Option value="MM account">MM account</Option>
+              <Option value="Cash Payment">Cash Payment</Option>
             </Select>
           );
         }
@@ -849,7 +902,7 @@ const CARequirementsTable = () => {
   };
 
   const getPanelHeader = (deptObj) => {
-    const items = deptObj.requirements;
+    const items = deptObj.items || [];
     const approvedCount = items.filter((r) => r.ca_check === "APPROVED").length;
     const pendingCount = items.filter((r) => r.ca_check === "PENDING").length;
     const rejectedCount = items.filter((r) => r.ca_check === "REJECTED").length;
@@ -1090,41 +1143,47 @@ const CARequirementsTable = () => {
           ]}
         />
 
-        {loading && requirements.length === 0 ? (
+        {loading && !Object.keys(departmentData).length ? (
           <div style={{ textAlign: "center", padding: 60 }}>
             <Spin size="large" />
           </div>
         ) : (
-          <>
-            <Collapse
-              defaultActiveKey={Object.keys(requirementsByDept)}
-              accordion={false}
-              bordered={false}
-              expandIconPosition="end"
-            >
-              {Object.entries(requirementsByDept).map(
-                ([deptId, deptObj]) => (
-                  <Panel key={deptId} header={getPanelHeader(deptObj)}>
-                    <Table
-                      columns={columns}
-                      dataSource={sortedRequirements(deptObj.requirements)}
-                      rowKey="id"
-                      loading={loading}
-                      pagination={false}
-                      scroll={{ x: 2800 }}
-                      size="middle"
-                      bordered
-                      rowClassName={rowClassName}
-                    />
-                  </Panel>
-                ),
-              )}
-            </Collapse>
-            <div ref={loadMoreRef} style={{ height: 20, textAlign: "center", padding: 8 }}>
-              {loadingMore && <Spin size="small" />}
-              {!hasMore && requirements.length > 0 && <span style={{ color: "#888" }}>No more data</span>}
-            </div>
-          </>
+          <Collapse
+            defaultActiveKey={Object.keys(requirementsByDept)}
+            accordion={false}
+            bordered={false}
+            expandIconPosition="end"
+          >
+            {Object.entries(requirementsByDept).map(
+              ([deptId, deptObj]) => (
+                <Panel key={deptId} header={getPanelHeader(deptObj)}>
+                  <Table
+                    columns={columns}
+                    dataSource={sortedRequirements(deptObj.items ? [...deptObj.items] : [])}
+                    rowKey="id"
+                    loading={loading && !Object.keys(departmentData).length}
+                    pagination={false}
+                    scroll={{ x: 2800 }}
+                    size="middle"
+                    bordered
+                    rowClassName={rowClassName}
+                  />
+                  {deptObj.hasMore && (
+                    <div style={{ textAlign: "center", padding: 12 }}>
+                      <Button
+                        type="default"
+                        onClick={() => loadMoreForDepartment(deptId)}
+                        loading={loadingMoreDeptId === deptId}
+                        disabled={!!loadingMoreDeptId}
+                      >
+                        Load more
+                      </Button>
+                    </div>
+                  )}
+                </Panel>
+              ),
+            )}
+          </Collapse>
         )}
       </div>
     </div>

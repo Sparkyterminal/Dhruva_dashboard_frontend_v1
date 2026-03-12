@@ -13,9 +13,10 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config";
-import { message, Drawer, Tabs, Card, Tag, Typography, Table } from "antd";
+import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker } from "antd";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
+import dayjs from "dayjs";
 
 const { Text, Title } = Typography;
 
@@ -26,6 +27,7 @@ const UserWiseClients = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUserEvents, setSelectedUserEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("mostBooked");
+  const [selectedMonthYear, setSelectedMonthYear] = useState(null); // null = All time; dayjs = that month
   const user = useSelector((state) => state.user.value);
 
   const config = {
@@ -136,11 +138,30 @@ const UserWiseClients = () => {
     }, 0);
   };
 
-  // Get user stats for Most Booked tab
-  const getUserStatsMostBooked = () => {
+  // Event date for month filter: first event type startDate or createdAt
+  const getEventDate = (event) => {
+    const firstEt = event?.eventTypes?.[0];
+    const dateStr = firstEt?.startDate || event?.createdAt;
+    if (!dateStr) return null;
+    const d = dayjs(dateStr);
+    return d.isValid() ? d : null;
+  };
+
+  // Filter events to those in the given month (1-based month)
+  const getEventsForMonth = (eventsList, year, month) => {
+    if (!year || !month) return eventsList;
+    return eventsList.filter((event) => {
+      const d = getEventDate(event);
+      if (!d) return false;
+      return d.year() === year && d.month() + 1 === month;
+    });
+  };
+
+  // Get user stats for Most Booked tab (accepts events list for month filtering)
+  const getUserStatsMostBooked = (eventsList) => {
     const userMap = new Map();
 
-    events.forEach((event) => {
+    (eventsList || events).forEach((event) => {
       if (event.createdBy) {
         const userId = event.createdBy.id;
         const firstName = formatText(event.createdBy.first_name) || "Unknown";
@@ -183,11 +204,11 @@ const UserWiseClients = () => {
     return sortedUsers;
   };
 
-  // Get user stats for Most Amount Booked tab (only confirmed events)
-  const getUserStatsMostAmount = () => {
+  // Get user stats for Most Amount Booked tab (only confirmed events; accepts events list for month filtering)
+  const getUserStatsMostAmount = (eventsList) => {
     const userMap = new Map();
 
-    events.forEach((event) => {
+    (eventsList || events).forEach((event) => {
       // Only include confirmed events
       if (event.eventConfirmation === "Confirmed Event" && event.createdBy) {
         const userId = event.createdBy.id;
@@ -251,8 +272,11 @@ const UserWiseClients = () => {
     }
   };
 
-  const userStatsMostBooked = getUserStatsMostBooked();
-  const userStatsMostAmount = getUserStatsMostAmount();
+  const eventsToUse = selectedMonthYear
+    ? getEventsForMonth(events, selectedMonthYear.year(), selectedMonthYear.month() + 1)
+    : events;
+  const userStatsMostBooked = getUserStatsMostBooked(eventsToUse);
+  const userStatsMostAmount = getUserStatsMostAmount(eventsToUse);
 
   if (loading) {
     return (
@@ -501,6 +525,20 @@ const UserWiseClients = () => {
           }}
           bodyStyle={{ padding: "24px" }}
         >
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+            <Text className="text-gray-600 text-base">
+              Filter by month (applies to both Most Booked and Most Amount Booked)
+            </Text>
+            <DatePicker
+              picker="month"
+              value={selectedMonthYear}
+              onChange={(date) => setSelectedMonthYear(date || null)}
+              allowClear
+              placeholder="All time"
+              format="MMM YYYY"
+              className="min-w-[140px]"
+            />
+          </div>
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}

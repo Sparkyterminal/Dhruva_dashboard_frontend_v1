@@ -4,13 +4,17 @@
     "status": "Inprogress",
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210. Requirement: Corporate event for 200 pax.",
     "eventTypeDetails": "Event type: Conference. Venue preference: Bangalore. Date range: Q2 2025.",
-    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call scheduled for 22nd March. Client showed interest in premium package. Need to discuss budget constraints and finalize venue selection."
+    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call scheduled for 22nd March. Client showed interest in premium package. Need to discuss budget constraints and finalize venue selection.",
+    "startDate": "2025-04-01",
+    "endDate": "2025-04-05"
   },
   "updatePayload": {
     "status": "Confirmed",
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210. Confirmed venue and dates.",
     "eventTypeDetails": "Event type: Conference. Venue: XYZ Hall, Bangalore. Date: 2025-04-10.",
-    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call completed on 22nd March. Client requested revised quote which was provided. Final confirmation received on 1st April. Advance payment of ₹50,000 received via bank transfer. Venue booking confirmed at XYZ Hall for 10th April 2025. All requirements discussed and documented."
+    "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call completed on 22nd March. Client requested revised quote which was provided. Final confirmation received on 1st April. Advance payment of ₹50,000 received via bank transfer. Venue booking confirmed at XYZ Hall for 10th April 2025. All requirements discussed and documented.",
+    "startDate": "2025-04-01",
+    "endDate": "2025-04-05"
   },
   "listItemResponse": {
     "_id": "507f1f77bcf86cd799439011",
@@ -18,6 +22,8 @@
     "clientDetails": "Client name: ABC Corp. Contact: John, +91 9876543210.",
     "eventTypeDetails": "Event type: Conference. Venue preference: Bangalore.",
     "notes": "Initial discussion held on 15th March. Sent proposal document. Follow-up call scheduled for 22nd March. Client showed interest in premium package. Need to discuss budget constraints and finalize venue selection.",
+    "startDate": "2025-04-01",
+    "endDate": "2025-04-05",
     "createdAt": "2025-03-10T08:00:00.000Z",
     "updatedAt": "2025-03-12T10:30:00.000Z",
     "createdBy": "userId_if_needed"
@@ -26,6 +32,8 @@
     "status": "Enum: 'Inprogress' | 'Confirmed' | 'Cancelled'",
     "clientDetails": "String (text area)",
     "eventTypeDetails": "String (text area)",
-    "notes": "String (unlimited characters, text area)"
+    "notes": "String (unlimited characters, text area)",
+    "startDate": "String, optional, ISO date YYYY-MM-DD (e.g. 2025-04-01)",
+    "endDate": "String, optional, ISO date YYYY-MM-DD (e.g. 2025-04-05)"
   }
 }

@@ -9,12 +9,15 @@ import {
   message,
   Card,
   DatePicker,
+  Modal,
 } from "antd";
 import { ArrowLeft } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { PlusOutlined } from "@ant-design/icons";
+import AddVendor from "./vendors/AddVendor";
 
 const { Option } = Select;
 
@@ -28,6 +31,7 @@ const AddRequirements = () => {
   const [events, setEvents] = useState([]);
   const [eventsLoading, setEventsLoading] = useState(false);
   const searchTimeout = useRef(null);
+  const [vendorModalOpen, setVendorModalOpen] = useState(false);
 
   const deptId = user?.departments?.length ? user.departments[0].id : null;
 
@@ -166,9 +170,20 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
-                  Vendor{" "}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                    Vendor{" "}
+                  </span>
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => setVendorModalOpen(true)}
+                    style={{ padding: 0, fontWeight: 700 }}
+                  >
+                    Add vendor
+                  </Button>
+                </div>
               }
               name="vendor"
             >
@@ -202,6 +217,33 @@ const AddRequirements = () => {
                 ))}
               </Select>
             </Form.Item>
+
+            <Modal
+              open={vendorModalOpen}
+              onCancel={() => setVendorModalOpen(false)}
+              footer={null}
+              width={900}
+              destroyOnClose
+              title="Add Vendor"
+            >
+              <AddVendor
+                inModal
+                defaultDepId={deptId}
+                onCancel={() => setVendorModalOpen(false)}
+                onSuccess={async (created) => {
+                  await fetchVendors();
+                  const createdId =
+                    created?.id ||
+                    created?._id ||
+                    created?.vendor?.id ||
+                    created?.vendor?._id;
+                  if (createdId) {
+                    form.setFieldsValue({ vendor: createdId });
+                  }
+                  setVendorModalOpen(false);
+                }}
+              />
+            </Modal>
 
             <Form.Item
               label={

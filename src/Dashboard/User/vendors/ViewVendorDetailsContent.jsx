@@ -17,6 +17,7 @@ const ViewVendorDetailsContent = ({ vendor, isMobile = false }) => {
   pushEntry("Vendor Name", vendor.name);
   pushEntry("Person Category", vendor.person_category);
   pushEntry("Company Name", vendor.company_name);
+  pushEntry("Material Description", vendor.material_desc);
   pushEntry("Referred By", vendor.refered_by);
 
   pushEntry("Permanent Address 1", vendor.perm_address_1);

@@ -912,6 +912,8 @@ const DataGridSpreadsheet = ({
         actualPaidAmount: Number(row.actualPaidAmount) || 0,
         finalAccount: reportId ? (Number(row.finalAccount) || 0) : 0,
         finalCash: reportId ? (Number(row.finalCash) || 0) : 0,
+        finalTds: reportId ? (Number(row.finalTds) || 0) : 0,
+        finalNetAmount: reportId ? (Number(row.finalNetAmount) || 0) : 0,
       });
     });
 
@@ -941,7 +943,7 @@ const DataGridSpreadsheet = ({
         totalGroups: Object.keys(groupedData).length,
       },
     };
-  }, [rowData, selectedEventId, pinnedBottomRowData]);
+  }, [rowData, selectedEventId, pinnedBottomRowData, reportId]);
 
   /* ── Submit to backend (POST new or PUT update) ── */
   const submitToBackend = useCallback(async () => {

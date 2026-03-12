@@ -10,6 +10,7 @@ import {
   Select,
   message,
 } from "antd";
+const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../config";
@@ -19,7 +20,7 @@ import { useSelector } from "react-redux";
 const { Title } = Typography;
 const { Option } = Select;
 
-const AddVendor = () => {
+const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) => {
   const [form] = Form.useForm();
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
@@ -37,6 +38,9 @@ const AddVendor = () => {
       // API may return array directly or under `items`
       const items = res.data.items || res.data;
       setDepartments(items || []);
+      if (defaultDepId) {
+        form.setFieldsValue({ depId: defaultDepId });
+      }
       // console.log('departments', items);
     } catch (err) {
       message.error("Failed to fetch departments");
@@ -89,6 +93,7 @@ const AddVendor = () => {
       branch: values.branch || null,
       payment_terms: values.payment_terms || null,
       tds_details: values.tds_details || null,
+      material_desc: values.material_desc || null,
     };
 
     console.log("Selected Department ID:", values.depId);
@@ -97,12 +102,15 @@ const AddVendor = () => {
     axios
       .post(`${API_BASE_URL}vendor`, payload, config)
       .then((response) => {
-        console.log("Vendor added successfully:", response.data);
+        message.success("Vendor added successfully");
         form.resetFields();
         setShowOtherVendorType(false);
+        onSuccess?.(response.data);
+        if (inModal) onCancel?.();
       })
       .catch((error) => {
         console.error("Failed to add vendor:", error);
+        message.error("Failed to add vendor");
       });
   };
 
@@ -126,27 +134,31 @@ const AddVendor = () => {
         paddingTop: 10,
       }}
     >
-      <Row align="middle" style={{ paddingBottom: 16 }}>
-        <Col>
-          <Button
-            type="link"
-            onClick={() => navigate(-1)}
-            icon={<LeftOutlined />}
-            style={{ fontSize: 20, padding: 0 }}
-          >
-            <span
-              style={{ borderBottom: "none" }}
-              className="back-button-text font-[cormoreg]"
+      {!inModal && (
+        <Row align="middle" style={{ paddingBottom: 16 }}>
+          <Col>
+            <Button
+              type="link"
+              onClick={() => navigate(-1)}
+              icon={<LeftOutlined />}
+              style={{ fontSize: 20, padding: 0 }}
             >
-              Back
-            </span>
-          </Button>
-        </Col>
-      </Row>
+              <span
+                style={{ borderBottom: "none" }}
+                className="back-button-text font-[cormoreg]"
+              >
+                Back
+              </span>
+            </Button>
+          </Col>
+        </Row>
+      )}
 
-      <Title level={3} style={{ textAlign: "center", marginBottom: 24 }}>
-        Add Vendor Details
-      </Title>
+      {!inModal && (
+        <Title level={3} style={{ textAlign: "center", marginBottom: 24 }}>
+          Add Vendor Details
+        </Title>
+      )}
 
       <Form form={form} layout="vertical" onFinish={onFinish} size="large">
         {/* Department selector: which department the vendor belongs to */}
@@ -181,6 +193,16 @@ const AddVendor = () => {
                 <Option value="account">Acccount</Option>
                 <Option value="cash_and_account">Cash&Account</Option>
               </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16} style={{ marginBottom: 8 }}>
+          <Col xs={24}>
+            <Form.Item name="material_desc" label="Material Description">
+              <TextArea
+                rows={4}
+                placeholder="Enter material description"
+              />
             </Form.Item>
           </Col>
         </Row>

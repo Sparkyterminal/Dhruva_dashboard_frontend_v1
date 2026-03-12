@@ -536,6 +536,7 @@ import {
   Typography,
 } from "antd";
 const { Option } = Select;
+const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../config";
@@ -623,6 +624,7 @@ const EditVendor = () => {
           branch: vendor.branch || "",
           payment_terms: vendor.payment_terms || "",
           tds_details: vendor.tds_details || "",
+          material_desc: vendor.material_desc || "",
         });
 
         if (vendor.vendor_type === "Other") setShowOtherVendorType(true);
@@ -678,6 +680,7 @@ const EditVendor = () => {
       branch: values.branch || null,
       payment_terms: values.payment_terms || null,
       tds_details: values.tds_details || null,
+      material_desc: values.material_desc || null,
     };
 
     console.log("Payload being sent:", JSON.stringify(payload, null, 2));
@@ -760,6 +763,16 @@ const EditVendor = () => {
                 <Option value="account">Acccount</Option>
                 <Option value="cash_and_account">Cash&Account</Option>
               </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row gutter={16} style={{ marginBottom: 8 }}>
+          <Col xs={24}>
+            <Form.Item name="material_desc" label="Material Description">
+              <TextArea
+                rows={4}
+                placeholder="Enter material description"
+              />
             </Form.Item>
           </Col>
         </Row>

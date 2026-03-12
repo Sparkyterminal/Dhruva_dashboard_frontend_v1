@@ -17,7 +17,6 @@ import {
   Descriptions,
   Divider,
   Badge,
-  Statistic,
   Tabs,
   InputNumber,
   Input,
@@ -26,16 +25,11 @@ import {
 import {
   ArrowLeftOutlined,
   EditOutlined,
-  EyeOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
-  DollarOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
   UserOutlined,
   PhoneOutlined,
   HeartOutlined,
-  TeamOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
@@ -44,6 +38,18 @@ import { useSelector } from "react-redux";
 import CalendarClients from "../../Components/CalendarClients";
 import UserWiseClients from "../../Components/UserWiseClients";
 import ProgressCalenderClients from "../../Components/ProgressCalenderClients";
+import {
+  formatDate,
+  formatAmount,
+  getEventName,
+  isCompletePaymentWedding,
+  getTotalPayable,
+  getTotalAgreedAmount,
+  getTotalExpectedAdvances,
+  getTotalReceivedAdvances,
+} from "./clientBookings/clientBookingsUtils";
+import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
+import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -124,120 +130,8 @@ const ViewClientsBookings = () => {
     setPagination({
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-      total: filteredBookings.length,
+      total: bookings.filter((b) => b.eventConfirmation === eventConfirmationTab).length,
     });
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return dayjs(dateString).format("DD MMM YYYY");
-  };
-
-  const formatAmount = (amount) => {
-    if (!amount && amount !== 0) return "₹0";
-    return `₹${amount.toLocaleString("en-IN")}`;
-  };
-
-  // Helper function to get event name (handles both string and object format)
-  const getEventName = (eventName) => {
-    if (typeof eventName === "string") return eventName;
-    return eventName?.name || "N/A";
-  };
-
-  // Helper function to check if should display as single/complete event
-  const isSingleDisplayEvent = (record) => {
-    const eventNameStr = getEventName(record.eventName);
-    // If Wedding with 'complete' advancePaymentType, treat as single event display
-    if (
-      eventNameStr === "Wedding" &&
-      record.advancePaymentType === "complete"
-    ) {
-      return true;
-    }
-    // Non-wedding events are always single display
-    if (eventNameStr !== "Wedding") {
-      return true;
-    }
-    // Wedding with 'separate' shows each event type separately
-    return false;
-  };
-
-  // Helper function to check if Wedding with complete advancePaymentType
-  const isCompletePaymentWedding = (record) => {
-    const eventNameStr = getEventName(record.eventName);
-    return (
-      eventNameStr === "Wedding" && record.advancePaymentType === "complete"
-    );
-  };
-
-  // Calculate total payable for a booking
-  const getTotalPayable = (record) => {
-    if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type (represents whole package)
-      return record.eventTypes?.[0]?.totalPayable || 0;
-    } else {
-      // Other events: sum all event types
-      return (
-        record.eventTypes?.reduce(
-          (sum, et) => sum + (et.totalPayable || 0),
-          0,
-        ) || 0
-      );
-    }
-  };
-
-  // Calculate total agreed amount for a booking (for display purposes)
-  const getTotalAgreedAmount = (record) => {
-    if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type (represents whole package)
-      return record.eventTypes?.[0]?.agreedAmount || 0;
-    } else {
-      // Other events: sum all event types
-      return (
-        record.eventTypes?.reduce(
-          (sum, et) => sum + (et.agreedAmount || 0),
-          0,
-        ) || 0
-      );
-    }
-  };
-
-  // Calculate total expected advances
-  const getTotalExpectedAdvances = (record) => {
-    let total = 0;
-    if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type advances
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.expectedAmount || 0;
-      });
-    } else {
-      // Other events: sum advances from all event types
-      record.eventTypes?.forEach((et) => {
-        et.advances?.forEach((adv) => {
-          total += adv.expectedAmount || 0;
-        });
-      });
-    }
-    return total;
-  };
-
-  // Calculate total received advances
-  const getTotalReceivedAdvances = (record) => {
-    let total = 0;
-    if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type advances
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.receivedAmount || 0;
-      });
-    } else {
-      // Other events: sum received advances from all event types
-      record.eventTypes?.forEach((et) => {
-        et.advances?.forEach((adv) => {
-          total += adv.receivedAmount || 0;
-        });
-      });
-    }
-    return total;
   };
 
   const showEventDetailsDrawer = (record) => {
@@ -403,551 +297,25 @@ const ViewClientsBookings = () => {
     }
   };
 
-  const columns = [
-    {
-      title: "Event Confirmation",
-      dataIndex: "eventConfirmation",
-      key: "eventConfirmation",
-      width: 140,
-      render: (status) => {
-        const colorMap = {
-          "Confirmed Event": "green",
-          InProgress: "orange",
-          Cancelled: "red",
-          Pending: "blue",
-        };
-        return (
-          <Tag
-            color={colorMap[status] || "default"}
-            className="text-sm font-semibold px-3 py-1"
-          >
-            {status || "N/A"}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Event Name",
-      dataIndex: "eventName",
-      key: "eventName",
-      width: 140,
-      render: (text) => {
-        const eventNameStr = getEventName(text);
-        return (
-          <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-            {eventNameStr}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: "Note",
-      key: "note",
-      width: 120,
-      align: "right",
-      render: (_, record) => (
-        <Text strong className="text-black text-wrap">
-          {record.note ? record.note : "N/A"}
-        </Text>
-      ),
-    },
-    ...(eventConfirmationTab === "InProgress" ||
-    eventConfirmationTab === "Cancelled"
-      ? [
-          {
-            title: "Next Meeting Date",
-            key: "meetingDate",
-            width: 140,
-            render: (_, record) => (
-              <div className="flex items-center gap-1">
-                <CalendarOutlined className="text-blue-500 text-xs" />
-                <Text className="text-sm">
-                  {record.meetingDate
-                    ? formatDate(record.meetingDate)
-                    : "Not Set"}
-                </Text>
-              </div>
-            ),
-          },
-        ]
-      : []),
-    {
-      title: "Client Details",
-      key: "clientDetails",
-      width: 180,
-      render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <UserOutlined className="text-blue-500" />
-            <Text strong className="text-base">
-              {record.clientName}
-            </Text>
-          </div>
-          {record.brideName && record.groomName && (
-            <div className="flex items-center gap-2">
-              <HeartOutlined className="text-pink-500" />
-              <Text className="text-sm text-gray-600">
-                {record.brideName} & {record.groomName}
-              </Text>
-            </div>
-          )}
-        </div>
-      ),
-    },
-    {
-      title: "Contact",
-      key: "contact",
-      width: 130,
-      render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1">
-            <PhoneOutlined className="text-green-500 text-xs" />
-            <Text className="text-sm">{record.contactNumber}</Text>
-          </div>
-          {record.altContactNumber &&
-            record.altContactNumber !== record.contactNumber && (
-              <div className="flex items-center gap-1">
-                <PhoneOutlined className="text-orange-500 text-xs" />
-                <Text className="text-sm text-gray-500">
-                  {record.altContactNumber}
-                </Text>
-              </div>
-            )}
-        </div>
-      ),
-    },
-    {
-      title: "Leads",
-      key: "leads",
-      width: 120,
-      render: (_, record) => (
-        <div className="space-y-1">
-          {record.lead1 && (
-            <div className="flex items-center gap-1">
-              <TeamOutlined className="text-blue-500 text-xs" />
-              <Text className="text-sm">
-                {typeof record.lead1 === "string"
-                  ? record.lead1
-                  : record.lead1?.name || "N/A"}
-              </Text>
-            </div>
-          )}
-          {record.lead2 && (
-            <div className="flex items-center gap-1">
-              <TeamOutlined className="text-purple-500 text-xs" />
-              <Text className="text-sm">
-                {typeof record.lead2 === "string"
-                  ? record.lead2
-                  : record.lead2?.name || "N/A"}
-              </Text>
-            </div>
-          )}
-          {!record.lead1 && !record.lead2 && (
-            <Text className="text-xs text-gray-400">No leads</Text>
-          )}
-        </div>
-      ),
-    },
-    // {
-    //   title: "Total Payable",
-    //   key: "totalPayable",
-    //   width: 120,
-    //   align: "right",
-    //   render: (_, record) => (
-    //     <Text strong className="text-green-600 text-base">
-    //       {formatAmount(getTotalPayable(record))}
-    //     </Text>
-    //   ),
-    // },
-    {
-      title: "Payment Status",
-      key: "paymentStatus",
-      width: 150,
-      render: (_, record) => {
-        const expected = getTotalExpectedAdvances(record);
-        const received = getTotalReceivedAdvances(record);
-        const percentage =
-          expected > 0 ? Math.round((received / expected) * 100) : 0;
-
-        return (
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Received:</Text>
-              <Text strong className="text-sm text-green-600">
-                {formatAmount(received)}
-              </Text>
-            </div>
-            <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Balance:</Text>
-              <Text className="text-sm">{formatAmount(expected)}</Text>
-            </div>
-            <Tag
-              color={
-                percentage === 100
-                  ? "success"
-                  : percentage > 0
-                    ? "warning"
-                    : "default"
-              }
-            >
-              {percentage}% Collected
-            </Tag>
-          </div>
-        );
-      },
-    },
-    {
-      title: "Event Types",
-      key: "eventTypes",
-      width: 110,
-      align: "center",
-      render: (_, record) => (
-        <Button
-          type="primary"
-          icon={<EyeOutlined />}
-          onClick={() => showEventDetailsDrawer(record)}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
-        >
-          View ({record.eventTypes?.length || 0})
-        </Button>
-      ),
-    },
-    // {
-    //   title: "Actions",
-    //   key: "actions",
-    //   fixed: "right",
-    //   width: 90,
-    //   align: "center",
-    //   render: (_, record) => (
-    //     <Button
-    //       type="default"
-    //       icon={<EditOutlined />}
-    //       onClick={() => navigate(`/user/editclient/${record._id}`)}
-    //       className="border-blue-400 text-blue-600 hover:bg-blue-50"
-    //     >
-    //       Edit
-    //     </Button>
-    //   ),
-    // },
-  ];
-
-  // Calculate statistics based on filtered bookings
-  const filteredBookings = bookings.filter(
-    (booking) => booking.eventConfirmation === eventConfirmationTab,
-  );
-  const totalBookings = filteredBookings.length;
-  const totalPayableRevenue = filteredBookings.reduce(
-    (acc, curr) => acc + getTotalPayable(curr),
-    0,
-  );
-  const totalAgreedRevenue = filteredBookings.reduce(
-    (acc, curr) => acc + getTotalAgreedAmount(curr),
-    0,
-  );
-  const totalReceivedRevenue = filteredBookings.reduce(
-    (acc, curr) => acc + getTotalReceivedAdvances(curr),
-    0,
-  );
-  const totalPendingRevenue = filteredBookings.reduce((acc, curr) => {
-    const expected = getTotalExpectedAdvances(curr);
-    const received = getTotalReceivedAdvances(curr);
-    return acc + (expected - received);
-  }, 0);
-
   const tabItems = [
     {
       key: "list",
       label: "List View",
       children: (
-        <div className="space-y-6">
-          {/* List View filters: Event name + Date range */}
-          <Card
-            className="border-0"
-            style={{
-              borderRadius: "14px",
-              background: "white",
-              boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-            }}
-            bodyStyle={{ padding: "16px 24px" }}
-          >
-            <Row gutter={[16, 12]} align="middle">
-              <Col xs={24} sm={8} md={6}>
-                <Text strong className="text-slate-600 text-sm block mb-1">
-                  Event Name
-                </Text>
-                <Select
-                  allowClear
-                  placeholder="All events"
-                  value={filterEventName ?? undefined}
-                  onChange={setFilterEventName}
-                  options={eventNameOptions}
-                  style={{ width: "100%" }}
-                  size="large"
-                />
-              </Col>
-              <Col xs={24} sm={12} md={10}>
-                <Text strong className="text-slate-600 text-sm block mb-1">
-                  Date Range
-                </Text>
-                <RangePicker
-                  value={filterDateRange}
-                  onChange={setFilterDateRange}
-                  format="DD-MM-YYYY"
-                  style={{ width: "100%" }}
-                  size="large"
-                  placeholder={["Start date", "End date"]}
-                />
-              </Col>
-              <Col xs={24} sm={4} md={4}>
-                <Button
-                  size="large"
-                  onClick={() => {
-                    setFilterEventName(undefined);
-                    setFilterDateRange(null);
-                  }}
-                  style={{ marginTop: 30 }}
-                >
-                  Clear filters
-                </Button>
-              </Col>
-            </Row>
-          </Card>
-
-          {/* Event Confirmation Tabs */}
-          <Tabs
-            activeKey={eventConfirmationTab}
-            onChange={setEventConfirmationTab}
-            items={[
-              {
-                key: "InProgress",
-                label: (
-                  <span>
-                    <ClockCircleOutlined /> InProgress (
-                    {
-                      bookings.filter(
-                        (b) => b.eventConfirmation === "InProgress",
-                      ).length
-                    }
-                    )
-                  </span>
-                ),
-              },
-              {
-                key: "Confirmed Event",
-                label: (
-                  <span>
-                    <CheckCircleOutlined /> Confirmed Event (
-                    {
-                      bookings.filter(
-                        (b) => b.eventConfirmation === "Confirmed Event",
-                      ).length
-                    }
-                    )
-                  </span>
-                ),
-              },
-              {
-                key: "Cancelled",
-                label: (
-                  <span>
-                    ❌ Cancelled (
-                    {
-                      bookings.filter(
-                        (b) => b.eventConfirmation === "Cancelled",
-                      ).length
-                    }
-                    )
-                  </span>
-                ),
-              },
-            ]}
-          />
-
-          {/* Statistics Cards */}
-          <Row gutter={[16, 16]} className="mb-6" align="stretch">
-            <Col xs={24} sm={12} md={6}>
-              <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 }}
-              >
-                <Card
-                  className="border-0 h-full"
-                  style={{
-                    borderRadius: "14px",
-                    background: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    borderLeft: "4px solid #6366f1",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Statistic
-                    title={
-                      <Text className="text-slate-500 text-sm font-medium">
-                        Total Bookings
-                      </Text>
-                    }
-                    value={totalBookings}
-                    valueStyle={{
-                      color: "#1e293b",
-                      fontSize: "28px",
-                      fontWeight: "700",
-                      marginTop: "8px",
-                    }}
-                  />
-                </Card>
-              </motion.div>
-            </Col>
-
-            <Col xs={24} sm={12} md={6}>
-              <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-              >
-                <Card
-                  className="border-0 h-full"
-                  style={{
-                    borderRadius: "14px",
-                    background: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    borderLeft: "4px solid #10b981",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Statistic
-                    title={
-                      <Text className="text-slate-500 text-sm font-medium">
-                        Total Payable
-                      </Text>
-                    }
-                    value={totalPayableRevenue}
-                    valueStyle={{
-                      color: "#1e293b",
-                      fontSize: "28px",
-                      fontWeight: "700",
-                      marginTop: "8px",
-                    }}
-                    formatter={(value) => formatAmount(value)}
-                  />
-                </Card>
-              </motion.div>
-            </Col>
-
-            <Col xs={24} sm={12} md={6}>
-              <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.25 }}
-              >
-                <Card
-                  className="border-0 h-full"
-                  style={{
-                    borderRadius: "14px",
-                    background: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    borderLeft: "4px solid #f59e0b",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Statistic
-                    title={
-                      <Text className="text-slate-500 text-sm font-medium">
-                        Pending Amount
-                      </Text>
-                    }
-                    value={totalPendingRevenue}
-                    valueStyle={{
-                      color: "#1e293b",
-                      fontSize: "28px",
-                      fontWeight: "700",
-                      marginTop: "8px",
-                    }}
-                    formatter={(value) => formatAmount(value)}
-                  />
-                </Card>
-              </motion.div>
-            </Col>
-
-            <Col xs={24} sm={12} md={6}>
-              <motion.div
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.2 }}
-              >
-                <Card
-                  className="border-0 h-full"
-                  style={{
-                    borderRadius: "14px",
-                    background: "white",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-                    borderLeft: "4px solid #22c55e",
-                  }}
-                  bodyStyle={{ padding: "20px" }}
-                >
-                  <Statistic
-                    title={
-                      <Text className="text-slate-500 text-sm font-medium">
-                        Amount Received
-                      </Text>
-                    }
-                    value={totalReceivedRevenue}
-                    valueStyle={{
-                      color: "#1e293b",
-                      fontSize: "28px",
-                      fontWeight: "700",
-                      marginTop: "8px",
-                    }}
-                    formatter={(value) => formatAmount(value)}
-                  />
-                </Card>
-              </motion.div>
-            </Col>
-          </Row>
-
-          {/* Table */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
-          >
-            <Card
-              className="border-0"
-              style={{
-                borderRadius: "14px",
-                background: "white",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-              }}
-              bodyStyle={{ padding: "24px" }}
-            >
-              <Table
-                columns={columns}
-                dataSource={filteredBookings}
-                loading={loading}
-                rowKey="_id"
-                pagination={{
-                  current: pagination.current,
-                  pageSize: pagination.pageSize,
-                  total: filteredBookings.length,
-                  showSizeChanger: true,
-                  showTotal: (total, range) => (
-                    <span className="text-slate-600 text-sm">
-                      Showing {range[0]}-{range[1]} of {total} bookings
-                    </span>
-                  ),
-                  pageSizeOptions: ["10", "20", "50"],
-                }}
-                onChange={handleTableChange}
-                scroll={{ x: 1200 }}
-                className="custom-table"
-              />
-            </Card>
-          </motion.div>
-        </div>
+        <ClientBookingsListTab
+          bookings={bookings}
+          loading={loading}
+          filterEventName={filterEventName}
+          filterDateRange={filterDateRange}
+          eventNameOptions={eventNameOptions}
+          eventConfirmationTab={eventConfirmationTab}
+          setFilterEventName={setFilterEventName}
+          setFilterDateRange={setFilterDateRange}
+          setEventConfirmationTab={setEventConfirmationTab}
+          pagination={pagination}
+          handleTableChange={handleTableChange}
+          showEventDetailsDrawer={showEventDetailsDrawer}
+        />
       ),
     },
     {
@@ -958,7 +326,7 @@ const ViewClientsBookings = () => {
     {
       key: "Progresscalendar",
       label: "Inprogress/Cancelled Events Calendar",
-      children: <ProgressCalenderClients />,
+      children: <InprogressCalendarPage />,
     },
     {
       key: "leaderboard",

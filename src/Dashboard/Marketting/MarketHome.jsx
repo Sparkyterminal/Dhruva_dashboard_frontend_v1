@@ -23,6 +23,8 @@ const CONFIRMED_EVENTS_EMAILS = [
   "sushmawbd@gmail.com",
   "varshabellave@gmail.com",
   "acchr@gmail.com",
+  "nagendra@gmail.com",
+  "hr@gmail.com",
   "rishi@gmail.com",
   "manish@gmail.com",
   "ashwath@gmail.com",
@@ -34,10 +36,12 @@ const CONFIRMED_EVENTS_EMAILS = [
 const INPROGRESS_EVENTS_EMAILS = [
   "hemu.jamu86@gmail.com",
   "varshabellave@gmail.com",
+  "nagendra@gmail.com",
   "hr@gmail.com",
   "rishi@gmail.com",
   "manish@gmail.com",
   "kumarv@gmail.com",
+  "sushmawbd@gmail.com",
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
 ];
@@ -617,6 +621,52 @@ const MarketHome = () => {
                   </span>
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-purple-500"
+                    initial={{ scaleX: 0 }}
+                    variants={{
+                      hover: { scaleX: 1 },
+                    }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </motion.button>
+              </motion.div>
+
+              {/* Budget Report Button */}
+              <motion.div
+                whileHover="hover"
+                whileTap={{ scale: 0.95 }}
+                className="w-full"
+              >
+                <motion.button
+                  onClick={() => navigate("/user/budgetreport/eventwise")}
+                  className="w-full justify-center font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-slate-50 to-zinc-50 hover:from-slate-100 hover:to-zinc-100"
+                  variants={{
+                    hover: {
+                      color: "#475569",
+                      scale: 1.05,
+                    },
+                  }}
+                  style={{
+                    color: "#64748b",
+                  }}
+                >
+                  <span className="flex items-center gap-2">
+                    <svg
+                      className="w-4 h-4 md:w-5 md:h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Budget Report
+                  </span>
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-500"
                     initial={{ scaleX: 0 }}
                     variants={{
                       hover: { scaleX: 1 },

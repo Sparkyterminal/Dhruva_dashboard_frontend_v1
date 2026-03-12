@@ -121,6 +121,8 @@ const AccountsBudgetReportMgmt = () => {
             rowKey: `${groupName}-${indexInGroup}`,
             vendorName: row.vendorName || row.vendorCode || "—",
             actualPaidAmount: actual,
+            finalTds: Number(row.finalTds) ?? Number(row.tds) ?? 0,
+            finalNetAmount: Number(row.finalNetAmount) ?? Number(row.netAmount) ?? 0,
             accountAuto: 0,
             cashAuto: actual,
             finalAccount: Number(row.finalAccount) || 0,
@@ -183,8 +185,10 @@ const AccountsBudgetReportMgmt = () => {
     const finalByKey = {};
     vendorRows.forEach((r) => {
       finalByKey[r.rowKey] = {
-        finalAccount: r.finalAccount,
-        finalCash: r.finalCash,
+        finalAccount: Number(r.finalAccount) || 0,
+        finalCash: Number(r.finalCash) || 0,
+        finalTds: Number(r.finalTds) || 0,
+        finalNetAmount: Number(r.finalNetAmount) || 0,
       };
     });
 
@@ -197,6 +201,8 @@ const AccountsBudgetReportMgmt = () => {
           ...row,
           finalAccount: f ? f.finalAccount : Number(row.finalAccount) || 0,
           finalCash: f ? f.finalCash : Number(row.finalCash) || 0,
+          finalTds: f ? f.finalTds : (Number(row.finalTds) ?? Number(row.tds) ?? 0),
+          finalNetAmount: f ? f.finalNetAmount : (Number(row.finalNetAmount) ?? Number(row.netAmount) ?? 0),
         };
       });
     });
@@ -260,6 +266,71 @@ const AccountsBudgetReportMgmt = () => {
         align: "right",
         render: (val) => formatINR(val),
       },
+      ...(isEditing
+        ? [
+            {
+              title: "TDS (₹)",
+              dataIndex: "finalTds",
+              key: "finalTds",
+              width: 140,
+              align: "right",
+              render: (val, record) => (
+                <InputNumber
+                  min={0}
+                  step={100}
+                  value={val}
+                  onChange={(v) =>
+                    updateFinalAmounts(record.rowKey, "finalTds", v)
+                  }
+                  style={{ width: "100%" }}
+                  formatter={(v) =>
+                    `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(v) => String(v).replace(/,/g, "")}
+                />
+              ),
+            },
+            {
+              title: "Net Amount (₹)",
+              dataIndex: "finalNetAmount",
+              key: "finalNetAmount",
+              width: 140,
+              align: "right",
+              render: (val, record) => (
+                <InputNumber
+                  min={0}
+                  step={100}
+                  value={val}
+                  onChange={(v) =>
+                    updateFinalAmounts(record.rowKey, "finalNetAmount", v)
+                  }
+                  style={{ width: "100%" }}
+                  formatter={(v) =>
+                    `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(v) => String(v).replace(/,/g, "")}
+                />
+              ),
+            },
+          ]
+        : [
+            {
+              title: "TDS (₹)",
+              dataIndex: "finalTds",
+              key: "finalTds",
+              width: 140,
+              align: "right",
+              render: (val) => formatINR(val),
+            },
+            {
+              title: "Net Amount (₹)",
+              dataIndex: "finalNetAmount",
+              key: "finalNetAmount",
+              width: 140,
+              align: "right",
+              render: (val) => formatINR(val),
+            },
+          ]),
       {
         title: "Account (Auto)",
         dataIndex: "accountAuto",
@@ -365,6 +436,14 @@ const AccountsBudgetReportMgmt = () => {
   );
   const totalFinalCash = vendorRows.reduce(
     (s, r) => s + (Number(r.finalCash) || 0),
+    0,
+  );
+  const totalFinalTds = vendorRows.reduce(
+    (s, r) => s + (Number(r.finalTds) || 0),
+    0,
+  );
+  const totalFinalNetAmount = vendorRows.reduce(
+    (s, r) => s + (Number(r.finalNetAmount) || 0),
     0,
   );
 
@@ -479,15 +558,21 @@ const AccountsBudgetReportMgmt = () => {
                   {formatINR(totalActual)}
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={2} align="right">
-                  {formatINR(totalAccountAuto)}
+                  {formatINR(totalFinalTds)}
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={3} align="right">
-                  {formatINR(Math.max(0, totalCashAuto))}
+                  {formatINR(totalFinalNetAmount)}
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={4} align="right">
-                  {formatINR(totalFinalAccount)}
+                  {formatINR(totalAccountAuto)}
                 </Table.Summary.Cell>
                 <Table.Summary.Cell index={5} align="right">
+                  {formatINR(Math.max(0, totalCashAuto))}
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={6} align="right">
+                  {formatINR(totalFinalAccount)}
+                </Table.Summary.Cell>
+                <Table.Summary.Cell index={7} align="right">
                   {formatINR(totalFinalCash)}
                 </Table.Summary.Cell>
               </Table.Summary.Row>

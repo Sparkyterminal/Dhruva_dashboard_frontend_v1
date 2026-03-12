@@ -22,6 +22,8 @@ const CONFIRMED_EVENTS_EMAILS = [
   "sushmawbd@gmail.com",
   "varshabellave@gmail.com",
   "acchr@gmail.com",
+  "nagendra@gmail.com",
+  "hr@gmail.com",
   "rishi@gmail.com",
   "manish@gmail.com",
   "ashwath@gmail.com",
@@ -34,6 +36,7 @@ const INPROGRESS_EVENTS_EMAILS = [
   "hemu.jamu86@gmail.com",
   "varshabellave@gmail.com",
   "hr@gmail.com",
+  "nagendra@gmail.com",
   "rishi@gmail.com",
   "manish@gmail.com",
   "kumarv@gmail.com",
@@ -203,22 +206,21 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Center Section - Action Buttons */}
-            <div className="flex flex-wrap justify-center gap-3 md:gap-4 shrink-0">
+            {/* Center Section - Action Buttons (Market-style grid) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full px-2">
               {/* Add Requirement Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover="hover"
+                whileTap={{ scale: 0.95 }}
+                className="w-full"
+              >
                 <motion.button
                   onClick={() => navigate("/user/sendrequest")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-orange-50 hover:to-orange-100"
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 hover:from-orange-50 hover:to-orange-100"
                   variants={{
-                    hover: {
-                      color: "#ff7300",
-                      scale: 1.05,
-                    },
+                    hover: { color: "#ff7300", scale: 1.05 },
                   }}
-                  style={{
-                    color: "#4f46e5",
-                  }}
+                  style={{ color: "#4f46e5" }}
                 >
                   <span className="flex items-center gap-2">
                     <svg
@@ -239,9 +241,7 @@ const Home = () => {
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500"
                     initial={{ scaleX: 0 }}
-                    variants={{
-                      hover: { scaleX: 1 },
-                    }}
+                    variants={{ hover: { scaleX: 1 } }}
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>
@@ -249,19 +249,16 @@ const Home = () => {
 
               {/* Confirmed Event Calendar Button - Conditional */}
               {showConfirmedEvents && (
-                <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full"
+                >
                   <motion.button
                     onClick={() => navigate("/user/confirmed-events")}
-                    className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
-                    variants={{
-                      hover: {
-                        color: "#059669",
-                        scale: 1.05,
-                      },
-                    }}
-                    style={{
-                      color: "#0d9488",
-                    }}
+                    className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
+                    variants={{ hover: { color: "#059669", scale: 1.05 } }}
+                    style={{ color: "#0d9488" }}
                   >
                     <span className="flex items-center gap-2">
                       <svg
@@ -282,9 +279,7 @@ const Home = () => {
                     <motion.div
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
                       initial={{ scaleX: 0 }}
-                      variants={{
-                        hover: { scaleX: 1 },
-                      }}
+                      variants={{ hover: { scaleX: 1 } }}
                       transition={{ duration: 0.3 }}
                     />
                   </motion.button>
@@ -293,19 +288,16 @@ const Home = () => {
 
               {/* In Progress Event Calendar Button - Conditional */}
               {showInProgressEvents && (
-                <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+                <motion.div
+                  whileHover="hover"
+                  whileTap={{ scale: 0.95 }}
+                  className="w-full"
+                >
                   <motion.button
                     onClick={() => navigate("/user/inprogress-events")}
-                    className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-50 hover:to-rose-100"
-                    variants={{
-                      hover: {
-                        color: "#be123c",
-                        scale: 1.05,
-                      },
-                    }}
-                    style={{
-                      color: "#e11d48",
-                    }}
+                    className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 hover:from-rose-50 hover:to-rose-100"
+                    variants={{ hover: { color: "#be123c", scale: 1.05 } }}
+                    style={{ color: "#e11d48" }}
                   >
                     <span className="flex items-center gap-2">
                       <svg
@@ -326,9 +318,7 @@ const Home = () => {
                     <motion.div
                       className="absolute bottom-0 left-0 right-0 h-0.5 bg-rose-500"
                       initial={{ scaleX: 0 }}
-                      variants={{
-                        hover: { scaleX: 1 },
-                      }}
+                      variants={{ hover: { scaleX: 1 } }}
                       transition={{ duration: 0.3 }}
                     />
                   </motion.button>
@@ -336,19 +326,16 @@ const Home = () => {
               )}
 
               {/* Checklists Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover="hover"
+                whileTap={{ scale: 0.95 }}
+                className="w-full"
+              >
                 <motion.button
                   onClick={() => navigate("/user/checklists")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-50 hover:to-amber-100"
-                  variants={{
-                    hover: {
-                      color: "#b45309",
-                      scale: 1.05,
-                    },
-                  }}
-                  style={{
-                    color: "#c2410c",
-                  }}
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-amber-50 to-yellow-50 hover:from-amber-50 hover:to-amber-100"
+                  variants={{ hover: { color: "#b45309", scale: 1.05 } }}
+                  style={{ color: "#c2410c" }}
                   aria-label="Checklists"
                 >
                   <span className="flex items-center gap-2">
@@ -370,28 +357,23 @@ const Home = () => {
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500"
                     initial={{ scaleX: 0 }}
-                    variants={{
-                      hover: { scaleX: 1 },
-                    }}
+                    variants={{ hover: { scaleX: 1 } }}
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>
               </motion.div>
 
               {/* View Vendors Button */}
-              <motion.div whileHover="hover" whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover="hover"
+                whileTap={{ scale: 0.95 }}
+                className="w-full"
+              >
                 <motion.button
                   onClick={() => navigate("/user/viewvendors")}
-                  className="font-bold text-base md:text-lg tracking-wide relative cursor-pointer transition-all duration-300 px-5 py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-sky-50 hover:to-sky-100"
-                  variants={{
-                    hover: {
-                      color: "#0284c7",
-                      scale: 1.05,
-                    },
-                  }}
-                  style={{
-                    color: "#0891b2",
-                  }}
+                  className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-blue-50 to-cyan-50 hover:from-sky-50 hover:to-sky-100"
+                  variants={{ hover: { color: "#0284c7", scale: 1.05 } }}
+                  style={{ color: "#0891b2" }}
                 >
                   <span className="flex items-center gap-2">
                     <svg
@@ -412,9 +394,7 @@ const Home = () => {
                   <motion.div
                     className="absolute bottom-0 left-0 right-0 h-0.5 bg-sky-500"
                     initial={{ scaleX: 0 }}
-                    variants={{
-                      hover: { scaleX: 1 },
-                    }}
+                    variants={{ hover: { scaleX: 1 } }}
                     transition={{ duration: 0.3 }}
                   />
                 </motion.button>

@@ -2,9 +2,11 @@
 // export const API_BASE_URL = "http://localhost:4010/";
 // export const BASE_URL = "/";
 // export const SOCKET_URL = "http://localhost:4010";
-export const API_BASE_URL = "https://www.fanroom.xyz/api/";
+export const API_BASE_URL =
+  "https://e3v7ih8ojg.execute-api.ap-south-1.amazonaws.com/api/";
 export const BASE_URL = "/";
-export const SOCKET_URL = "http://www.fanroom.xyz/api/";
+export const SOCKET_URL =
+  "https://e3v7ih8ojg.execute-api.ap-south-1.amazonaws.com/api/";
 export const BASE_LINK = "/";
 export const SOCKET_PATH = "/";
 export const DEFAULT_IP_ADDRESS = "127.0.0.1";
@@ -18,5 +20,5 @@ export const ROLES = {
   APPROVER: "APPROVER",
   MARKETING: "MARKETING",
   ACCOUNTS: "ACCOUNTS",
-  CA : "CA"
+  CA: "CA",
 };

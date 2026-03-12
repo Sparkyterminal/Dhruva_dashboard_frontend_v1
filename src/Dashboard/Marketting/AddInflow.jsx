@@ -12,6 +12,7 @@ import {
   Tag,
   Radio,
   Table,
+  Modal,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -25,6 +26,8 @@ import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import AddEvent from "./EventsNames/AddEvent";
+import AddVenue from "./AddVenue/AddVenue";
 
 const { Option } = Select;
 
@@ -62,6 +65,8 @@ const AddInflow = () => {
   const [subVenuesLoading, setSubVenuesLoading] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState(null);
   const [eventTypeSubVenues, setEventTypeSubVenues] = useState({}); // { eventTypeId: subVenues[] }
+  const [addEventModalOpen, setAddEventModalOpen] = useState(false);
+  const [addVenueModalOpen, setAddVenueModalOpen] = useState(false);
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
   const axiosConfig = { headers: { Authorization: user?.access_token } };
@@ -542,21 +547,22 @@ const AddInflow = () => {
     }
   };
 
+  const fetchEventNames = async () => {
+    setEventsLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}event-names`, axiosConfig);
+      const data = res.data?.events || res.data || [];
+      setEvents(data);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load events");
+    } finally {
+      setEventsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchEvents = async () => {
-      setEventsLoading(true);
-      try {
-        const res = await axios.get(`${API_BASE_URL}event-names`, axiosConfig);
-        const data = res.data?.events || res.data || [];
-        setEvents(data);
-      } catch (err) {
-        console.error(err);
-        message.error("Failed to load events");
-      } finally {
-        setEventsLoading(false);
-      }
-    };
-    fetchEvents();
+    fetchEventNames();
     fetchCoordinators();
     fetchVenues();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -726,7 +732,27 @@ const AddInflow = () => {
                 transition={{ delay: 0.25 }}
               >
                 <Form.Item
-                  label="Event Name"
+                  label={
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 12,
+                      }}
+                    >
+                      <span>Event Name</span>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => setAddEventModalOpen(true)}
+                        style={{ padding: 0, fontWeight: 700 }}
+                      >
+                        Add event
+                      </Button>
+                    </div>
+                  }
                   name="eventName"
                   rules={[
                     { required: true, message: "Please select event name" },
@@ -746,6 +772,23 @@ const AddInflow = () => {
                     ))}
                   </Select>
                 </Form.Item>
+
+                <Modal
+                  open={addEventModalOpen}
+                  onCancel={() => setAddEventModalOpen(false)}
+                  footer={null}
+                  destroyOnClose
+                  title="Add Event Name"
+                >
+                  <AddEvent
+                    inModal
+                    onCancel={() => setAddEventModalOpen(false)}
+                    onSuccess={async () => {
+                      await fetchEventNames();
+                      setAddEventModalOpen(false);
+                    }}
+                  />
+                </Modal>
               </motion.div>
 
               {/* Event Types from API (Multiple Selection, only when available) */}
@@ -1092,7 +1135,27 @@ const AddInflow = () => {
                   transition={{ delay: 0.5 }}
                 >
                   <Form.Item
-                    label="Venue Location"
+                    label={
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 12,
+                        }}
+                      >
+                        <span>Venue Location</span>
+                        <Button
+                          type="link"
+                          size="small"
+                          icon={<PlusOutlined />}
+                          onClick={() => setAddVenueModalOpen(true)}
+                          style={{ padding: 0, fontWeight: 700 }}
+                        >
+                          Add venue
+                        </Button>
+                      </div>
+                    }
                     name="venueLocation"
                     rules={[
                       {
@@ -1125,6 +1188,22 @@ const AddInflow = () => {
                       ))}
                     </Select>
                   </Form.Item>
+
+                  <Modal
+                    open={addVenueModalOpen}
+                    onCancel={() => setAddVenueModalOpen(false)}
+                    footer={null}
+                    destroyOnClose
+                    title="Add Venue"
+                  >
+                    <AddVenue
+                      onCancel={() => setAddVenueModalOpen(false)}
+                      onSuccess={async () => {
+                        await fetchVenues();
+                        setAddVenueModalOpen(false);
+                      }}
+                    />
+                  </Modal>
                   {selectedVenueId && subVenues.length > 0 && (
                     <Form.Item
                       label="Sub Venue Location"
