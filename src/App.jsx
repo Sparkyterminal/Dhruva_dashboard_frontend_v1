@@ -1,8 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ROLES } from "../config";
 import verifyToken from "./verifyToken";
+import { decodeToken } from "react-jwt";
+import { logout } from "./reducers/users";
+import { message } from "antd";
+import { useNavigate } from "react-router-dom";
 
 // Pages & Components
 import Login from "./Login/Login";
@@ -85,6 +89,9 @@ const App = () => {
   const [auth, setAuth] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const user = useSelector((state) => state.user.value);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const logoutTimerRef = useRef(null);
 
   // Role Checks
   const isAdmin = ROLES.ADMIN === user?.role;
@@ -113,6 +120,44 @@ const App = () => {
     }
     checkAuth();
   }, [user?.is_logged_in, user?.access_token]);
+
+  useEffect(() => {
+    if (logoutTimerRef.current) {
+      clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
+    }
+
+    if (!user?.is_logged_in || !user?.access_token) return;
+
+    const decoded = decodeToken(user.access_token);
+    const expSeconds = decoded?.exp;
+    if (!expSeconds || typeof expSeconds !== "number") return;
+
+    const expiresAtMs = expSeconds * 1000;
+    const nowMs = Date.now();
+    const msUntilExpiry = expiresAtMs - nowMs;
+
+    const doLogout = () => {
+      dispatch(logout());
+      setAuth(false);
+      message.warning("Session expired. Please login again.");
+      navigate("/login", { replace: true });
+    };
+
+    if (msUntilExpiry <= 0) {
+      doLogout();
+      return;
+    }
+
+    // Small buffer to avoid edge timing issues
+    const timeoutMs = Math.max(0, msUntilExpiry + 250);
+    logoutTimerRef.current = setTimeout(doLogout, timeoutMs);
+
+    return () => {
+      if (logoutTimerRef.current) clearTimeout(logoutTimerRef.current);
+      logoutTimerRef.current = null;
+    };
+  }, [user?.is_logged_in, user?.access_token, dispatch, navigate]);
 
   if (isLoading || auth === null) {
     return <LoadingPage />;
