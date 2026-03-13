@@ -24,6 +24,7 @@ import {
   formatDate,
   formatAmount,
   getTotalPayable,
+  getTotalAgreedAmount,
   getTotalExpectedAdvances,
   getTotalReceivedAdvances,
 } from "./clientBookingsUtils";
@@ -32,7 +33,7 @@ import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
 
 const { Text } = Typography;
 
-const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEventNameFn, getTotalExpectedFn, getTotalReceivedFn, onViewDetails) => [
+const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEventNameFn, getTotalAgreedFn, getTotalExpectedFn, getTotalReceivedFn, onViewDetails) => [
   {
     title: "Event Confirmation",
     dataIndex: "eventConfirmation",
@@ -69,17 +70,17 @@ const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEve
       );
     },
   },
-  {
-    title: "Note",
-    key: "note",
-    width: 120,
-    align: "right",
-    render: (_, record) => (
-      <Text strong className="text-black text-wrap">
-        {record.note ? record.note : "N/A"}
-      </Text>
-    ),
-  },
+  // {
+  //   title: "Note",
+  //   key: "note",
+  //   width: 120,
+  //   align: "right",
+  //   render: (_, record) => (
+  //     <Text strong className="text-black text-wrap">
+  //       {record.note ? record.note : "N/A"}
+  //     </Text>
+  //   ),
+  // },
   ...(eventConfirmationTab === "InProgress" || eventConfirmationTab === "Cancelled"
     ? [
         {
@@ -177,6 +178,17 @@ const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEve
     ),
   },
   {
+    title: "Agreed Amount",
+    key: "agreedAmount",
+    width: 130,
+    align: "right",
+    render: (_, record) => (
+      <Text strong className="text-slate-800">
+        {formatAmountFn(getTotalAgreedFn(record))}
+      </Text>
+    ),
+  },
+  {
     title: "Payment Status",
     key: "paymentStatus",
     width: 150,
@@ -263,6 +275,7 @@ const ClientBookingsListTab = ({
     formatDate,
     formatAmount,
     getEventName,
+    getTotalAgreedAmount,
     getTotalExpectedAdvances,
     getTotalReceivedAdvances,
     showEventDetailsDrawer,

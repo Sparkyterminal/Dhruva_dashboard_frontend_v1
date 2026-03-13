@@ -30,6 +30,7 @@ const CONFIRMED_EVENTS_EMAILS = [
   "kumarv@gmail.com",
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
+  "companyweddings@gmail.com",
 ];
 
 const INPROGRESS_EVENTS_EMAILS = [
@@ -42,6 +43,7 @@ const INPROGRESS_EVENTS_EMAILS = [
   "kumarv@gmail.com",
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
+  "companyweddings@gmail.com",
 ];
 
 // CSS for Glassmorphism and Animations

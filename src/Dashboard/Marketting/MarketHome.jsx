@@ -21,6 +21,7 @@ const CONFIRMED_EVENTS_EMAILS = [
   "muzamilprod@gmail.com",
   "approvershivakumar@gmail.com",
   "sushmawbd@gmail.com",
+  "companyweddings@gmail.com",
   "varshabellave@gmail.com",
   "acchr@gmail.com",
   "nagendra@gmail.com",
@@ -36,6 +37,7 @@ const CONFIRMED_EVENTS_EMAILS = [
 const INPROGRESS_EVENTS_EMAILS = [
   "hemu.jamu86@gmail.com",
   "varshabellave@gmail.com",
+  "companyweddings@gmail.com",
   "nagendra@gmail.com",
   "hr@gmail.com",
   "rishi@gmail.com",
