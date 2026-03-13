@@ -48,7 +48,12 @@ const CARequirementsTable = () => {
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [totalItems, setTotalItems] = useState(0);
-  const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0, rejected: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+  });
   const eventSearchRef = useRef(null);
   const vendorSearchRef = useRef(null);
   const PAGE_SIZE = 30;
@@ -140,16 +145,24 @@ const CARequirementsTable = () => {
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(`${API_BASE_URL}request/all${queryString}`, config);
+      const res = await axios.get(
+        `${API_BASE_URL}request/all${queryString}`,
+        config,
+      );
       const data = res.data;
       const pagination = data.pagination || {};
-      const hasNextPage = pagination.hasNextPage ?? (pagination.totalItems > (pagination.currentPage || pageNum) * (pagination.size || PAGE_SIZE));
+      const hasNextPage =
+        pagination.hasNextPage ??
+        pagination.totalItems >
+          (pagination.currentPage || pageNum) * (pagination.size || PAGE_SIZE);
 
       if (data.departments && typeof data.departments === "object") {
         if (departmentId && append) {
           const list = [];
           Object.entries(data.departments).forEach(([, arr]) => {
-            (Array.isArray(arr) ? arr : []).forEach((item) => list.push({ ...item, department: item.department || {} }));
+            (Array.isArray(arr) ? arr : []).forEach((item) =>
+              list.push({ ...item, department: item.department || {} }),
+            );
           });
           if (list.length > 0) {
             setDepartmentData((prev) => {
@@ -168,16 +181,26 @@ const CARequirementsTable = () => {
           }
         } else if (departmentId && !append) {
           let normalized = [];
+          let responseDeptKey = null;
           Object.entries(data.departments).forEach(([deptName, arr]) => {
+            responseDeptKey = deptName;
             (Array.isArray(arr) ? arr : []).forEach((item) =>
-              normalized.push({ ...item, department: item.department || { id: deptName, name: deptName } })
+              normalized.push({
+                ...item,
+                department: item.department || { id: deptName, name: deptName, _id: item.department?._id || departmentId },
+              }),
             );
           });
-          if (normalized.length > 0) {
+          if (normalized.length > 0 && responseDeptKey) {
+            const stateKey = responseDeptKey;
             setDepartmentData((prev) => ({
               ...prev,
-              [departmentId]: {
-                department: normalized[0]?.department || { id: departmentId, name: "Department" },
+              [stateKey]: {
+                department: normalized[0]?.department || {
+                  id: departmentId,
+                  _id: departmentId,
+                  name: responseDeptKey,
+                },
                 items: normalized,
                 page: pageNum,
                 hasMore: hasNextPage,
@@ -193,7 +216,10 @@ const CARequirementsTable = () => {
             const id = d.id || deptName;
             nextDepts[id] = {
               department: d,
-              items: list.map((item) => ({ ...item, department: item.department || d })),
+              items: list.map((item) => ({
+                ...item,
+                department: item.department || d,
+              })),
               page: 1,
               hasMore: hasNextPage,
             };
@@ -201,11 +227,43 @@ const CARequirementsTable = () => {
           setDepartmentData(nextDepts);
         }
       } else if (Array.isArray(data.items)) {
-        if (!departmentId) {
-          const byDept = (data.items || []).reduce((acc, item) => {
+        const items = data.items || [];
+        if (departmentId) {
+          setDepartmentData((prev) => {
+            const stateKey =
+              items[0]?.department?.name ||
+              (() => {
+                const entry = Object.entries(prev || {}).find(
+                  ([, v]) =>
+                    v?.department?._id === departmentId ||
+                    v?.department?.id === departmentId,
+                );
+                return entry ? entry[0] : departmentId;
+              })();
+            const existing = prev[stateKey] || prev[departmentId];
+            const dept =
+              existing?.department ||
+              items[0]?.department ||
+              { id: departmentId, _id: departmentId, name: stateKey };
+            return {
+              ...prev,
+              [stateKey]: {
+                department: dept,
+                items: items.map((item) => ({
+                  ...item,
+                  department: item.department || dept,
+                })),
+                page: pageNum,
+                hasMore: hasNextPage,
+              },
+            };
+          });
+        } else {
+          const byDept = items.reduce((acc, item) => {
             const d = item.department || { id: "unknown", name: "Unknown" };
             const id = d.id || "unknown";
-            if (!acc[id]) acc[id] = { department: d, items: [], page: 1, hasMore: true };
+            if (!acc[id])
+              acc[id] = { department: d, items: [], page: 1, hasMore: true };
             acc[id].items.push(item);
             return acc;
           }, {});
@@ -229,7 +287,9 @@ const CARequirementsTable = () => {
       if (departmentId && append) {
         setDepartmentData((prev) => {
           const existing = prev[departmentId];
-          return existing ? { ...prev, [departmentId]: { ...existing, hasMore: false } } : prev;
+          return existing
+            ? { ...prev, [departmentId]: { ...existing, hasMore: false } }
+            : prev;
         });
       }
     } finally {
@@ -256,7 +316,7 @@ const CARequirementsTable = () => {
   };
 
   const refetchDepartment = (deptId) => {
-    fetchRequirementsData(
+    return fetchRequirementsData(
       search,
       createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
       createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
@@ -301,24 +361,34 @@ const CARequirementsTable = () => {
       );
     }, 500);
     return () => clearTimeout(delayDebounceFn);
-  }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
+  }, [
+    search,
+    createdDateRange,
+    requiredDateRange,
+    selectedEventId,
+    selectedVendorId,
+  ]);
 
   const allItems = Object.values(departmentData).flatMap((d) => d.items || []);
   useEffect(() => {
     const total = totalItems || allItems.length;
     const pending = allItems.filter(
-      (r) => r.ca_check === "PENDING" || (r.status && r.status === "PENDING")
+      (r) => r.ca_check === "PENDING" || (r.status && r.status === "PENDING"),
     ).length;
     const approved = allItems.filter(
-      (r) => r.ca_check === "APPROVED" || (r.status && r.status === "COMPLETED")
+      (r) =>
+        r.ca_check === "APPROVED" || (r.status && r.status === "COMPLETED"),
     ).length;
     const rejected = allItems.filter(
-      (r) => r.ca_check === "REJECTED" || (r.status && r.status === "REJECTED")
+      (r) => r.ca_check === "REJECTED" || (r.status && r.status === "REJECTED"),
     ).length;
     setStats((prev) =>
-      prev.total === total && prev.pending === pending && prev.approved === approved && prev.rejected === rejected
+      prev.total === total &&
+      prev.pending === pending &&
+      prev.approved === approved &&
+      prev.rejected === rejected
         ? prev
-        : { total, pending, approved, rejected }
+        : { total, pending, approved, rejected },
     );
   }, [departmentData, totalItems]);
 
@@ -353,7 +423,8 @@ const CARequirementsTable = () => {
 
   // Start editing planned_amount, amount_paid, and approver_amount for a row
   const handleEditClick = (row) => {
-    setEditRowId(row.id);
+    const id = row._id || row.id;
+    setEditRowId(id);
     setEditPlannedAmount(row.planned_amount || "");
     setEditAmountPaid(row.amount_paid || "");
     setEditApproverAmount(row.approver_amount || "");
@@ -379,11 +450,12 @@ const CARequirementsTable = () => {
         amount_paid_to: editAmountPaidTo || row.amount_paid_to,
       };
 
-      await axios.patch(`${API_BASE_URL}request/${row.id}`, payload, config);
+      const id = row._id || row.id;
+      await axios.patch(`${API_BASE_URL}request/${id}`, payload, config);
 
       message.success("Updated successfully ✅");
       setEditRowId(null);
-      refetchDepartment(row.department?.id);
+      refetchDepartment(row.department?._id || row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to update ❌");
@@ -391,15 +463,16 @@ const CARequirementsTable = () => {
   };
 
   const handleComplete = async (row) => {
-    setApprovingId(row.id);
+    const id = row._id || row.id;
+    setApprovingId(id);
     try {
       await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+        `${API_BASE_URL}request/${id}`,
         { ca_check: "APPROVED", ca_approved: true },
         config,
       );
       message.success("CA Approved ✅");
-      await refetchDepartment(row.department?.id);
+      await refetchDepartment(row.department?._id || row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to approve ❌");
@@ -409,15 +482,16 @@ const CARequirementsTable = () => {
   };
 
   const handleReject = async (row) => {
-    setApprovingId(row.id);
+    const id = row._id || row.id;
+    setApprovingId(id);
     try {
       await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+        `${API_BASE_URL}request/${id}`,
         { ca_check: "REJECTED", ca_approved: false },
         config,
       );
       message.success("CA Rejected ❌");
-      await refetchDepartment(row.department?.id);
+      await refetchDepartment(row.department?._id || row.department?.id);
     } catch (err) {
       console.error(err);
       message.error("Failed to reject ❌");
@@ -577,7 +651,7 @@ const CARequirementsTable = () => {
       key: "planned_amount",
       width: 180,
       render: (val, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Input
               value={editPlannedAmount}
@@ -601,7 +675,7 @@ const CARequirementsTable = () => {
       key: "approver_amount",
       width: 180,
       render: (val, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Input
               value={editApproverAmount}
@@ -625,7 +699,7 @@ const CARequirementsTable = () => {
       key: "amount_paid",
       width: 180,
       render: (val, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Input
               value={editAmountPaid}
@@ -674,7 +748,7 @@ const CARequirementsTable = () => {
       key: "entity_account",
       width: 220,
       render: (val, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Select
               value={editEntityAccount}
@@ -710,7 +784,7 @@ const CARequirementsTable = () => {
       key: "amount_paid_to",
       width: 180,
       render: (val, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Input
               value={editAmountPaidTo}
@@ -753,7 +827,7 @@ const CARequirementsTable = () => {
       key: "ca_check",
       width: 200,
       render: (_, row) => {
-        const isApproving = approvingId === row.id;
+        const isApproving = approvingId === (row._id || row.id);
         if (row.ca_check === "PENDING") {
           return (
             <Space>
@@ -868,7 +942,7 @@ const CARequirementsTable = () => {
       width: 100,
       fixed: "right",
       render: (_, row) => {
-        if (editRowId === row.id) {
+        if (editRowId === (row._id || row.id)) {
           return (
             <Button
               type="primary"
@@ -1039,27 +1113,73 @@ const CARequirementsTable = () => {
 
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Total</div>
+            <Card
+              className="ca-stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                Total
+              </div>
               <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Pending</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.pending}</div>
+            <Card
+              className="ca-stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                Pending
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.pending}
+              </div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Approved</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.approved}</div>
+            <Card
+              className="ca-stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                Approved
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.approved}
+              </div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card className="ca-stat-card" hoverable style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>Rejected</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.rejected}</div>
+            <Card
+              className="ca-stat-card"
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
+                Rejected
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.rejected}
+              </div>
             </Card>
           </Col>
         </Row>
@@ -1075,7 +1195,9 @@ const CARequirementsTable = () => {
               size="large"
               allowClear
             />
-            <span style={{ fontWeight: 600, marginRight: 4 }}>Created date:</span>
+            <span style={{ fontWeight: 600, marginRight: 4 }}>
+              Created date:
+            </span>
             <RangePicker
               value={createdDateRange}
               onChange={handleCreatedDateRangeChange}
@@ -1084,7 +1206,9 @@ const CARequirementsTable = () => {
               size="large"
               placeholder={["Start date", "End date"]}
             />
-            <span style={{ fontWeight: 600, marginRight: 4 }}>Required date:</span>
+            <span style={{ fontWeight: 600, marginRight: 4 }}>
+              Required date:
+            </span>
             <RangePicker
               value={requiredDateRange}
               onChange={handleRequiredDateRangeChange}
@@ -1107,7 +1231,11 @@ const CARequirementsTable = () => {
               size="large"
               options={events.map((ev) => ({
                 value: ev.id || ev._id,
-                label: ev.clientName || ev.name || ev.client_name || String(ev.id || ev._id),
+                label:
+                  ev.clientName ||
+                  ev.name ||
+                  ev.client_name ||
+                  String(ev.id || ev._id),
               }))}
             />
             <Select
@@ -1154,35 +1282,35 @@ const CARequirementsTable = () => {
             bordered={false}
             expandIconPosition="end"
           >
-            {Object.entries(requirementsByDept).map(
-              ([deptId, deptObj]) => (
-                <Panel key={deptId} header={getPanelHeader(deptObj)}>
-                  <Table
-                    columns={columns}
-                    dataSource={sortedRequirements(deptObj.items ? [...deptObj.items] : [])}
-                    rowKey="id"
-                    loading={loading && !Object.keys(departmentData).length}
-                    pagination={false}
-                    scroll={{ x: 2800 }}
-                    size="middle"
-                    bordered
-                    rowClassName={rowClassName}
-                  />
-                  {deptObj.hasMore && (
-                    <div style={{ textAlign: "center", padding: 12 }}>
-                      <Button
-                        type="default"
-                        onClick={() => loadMoreForDepartment(deptId)}
-                        loading={loadingMoreDeptId === deptId}
-                        disabled={!!loadingMoreDeptId}
-                      >
-                        Load more
-                      </Button>
-                    </div>
+            {Object.entries(requirementsByDept).map(([deptId, deptObj]) => (
+              <Panel key={deptId} header={getPanelHeader(deptObj)}>
+                <Table
+                  columns={columns}
+                  dataSource={sortedRequirements(
+                    deptObj.items ? [...deptObj.items] : [],
                   )}
-                </Panel>
-              ),
-            )}
+                  rowKey="id"
+                  loading={loading && !Object.keys(departmentData).length}
+                  pagination={false}
+                  scroll={{ x: 2800 }}
+                  size="middle"
+                  bordered
+                  rowClassName={rowClassName}
+                />
+                {deptObj.hasMore && (
+                  <div style={{ textAlign: "center", padding: 12 }}>
+                    <Button
+                      type="default"
+                      onClick={() => loadMoreForDepartment(deptId)}
+                      loading={loadingMoreDeptId === deptId}
+                      disabled={!!loadingMoreDeptId}
+                    >
+                      Load more
+                    </Button>
+                  </div>
+                )}
+              </Panel>
+            ))}
           </Collapse>
         )}
       </div>
