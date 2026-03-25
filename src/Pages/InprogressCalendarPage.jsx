@@ -2,7 +2,6 @@ import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProgressCalenderClients from "../Components/ProgressCalenderClients";
-import LeadsCalendar from "../Components/LeadsCalendar";
 
 const InprogressCalendarPage = () => {
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ const InprogressCalendarPage = () => {
 
         {/* Inprogress / Cancelled Events Calendar */}
         <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg border border-gray-100 p-4 sm:p-6">
-          <LeadsCalendar />
+          <ProgressCalenderClients />
         </div>
       </div>
     </div>

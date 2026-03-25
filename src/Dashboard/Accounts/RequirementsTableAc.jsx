@@ -66,6 +66,9 @@ const RequirementsTableAc = () => {
     headers: { Authorization: user?.access_token },
   };
 
+  const getRequestId = (row) => row?._id ?? row?.id;
+  const getDepartmentKey = (dept) => dept?._id ?? dept?.id;
+
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
@@ -195,7 +198,7 @@ const RequirementsTableAc = () => {
             const list = Array.isArray(arr) ? arr : [];
             if (list.length === 0) return;
             const d = list[0].department || { id: deptName, name: deptName };
-            const id = d.id || deptName;
+            const id = getDepartmentKey(d) || deptName;
             nextDepts[id] = {
               department: d,
               items: list.map((item) => ({ ...item, department: item.department || d })),
@@ -210,7 +213,7 @@ const RequirementsTableAc = () => {
         if (!departmentId) {
           const byDept = (data.items || []).reduce((acc, item) => {
             const d = item.department || { id: "unknown", name: "Unknown" };
-            const id = d.id || "unknown";
+            const id = getDepartmentKey(d) || "unknown";
             if (!acc[id]) acc[id] = { department: d, items: [], page: 1, hasMore: true };
             acc[id].items.push(item);
             return acc;
@@ -355,7 +358,7 @@ const RequirementsTableAc = () => {
       }
       try {
         await axios.patch(
-          `${API_BASE_URL}request/${row.id}`,
+          `${API_BASE_URL}request/${getRequestId(row)}`,
           { [editField]: editValue },
           config,
         );
@@ -365,7 +368,7 @@ const RequirementsTableAc = () => {
         setEditRowId(null);
         setEditField(null);
         setEditValue(null);
-        refetchDepartment(row.department?.id);
+        refetchDepartment(getDepartmentKey(row.department));
       } catch {
         message.error(
           `Failed to update ${
@@ -393,7 +396,7 @@ const RequirementsTableAc = () => {
     }
     try {
       await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+        `${API_BASE_URL}request/${getRequestId(row)}`,
         { [editField]: Number(editValue) },
         config,
       );
@@ -405,7 +408,7 @@ const RequirementsTableAc = () => {
       setEditRowId(null);
       setEditField(null);
       setEditValue(null);
-      refetchDepartment(row.department?.id);
+      refetchDepartment(getDepartmentKey(row.department));
     } catch {
       message.error(
         `Failed to update ${
@@ -418,12 +421,12 @@ const RequirementsTableAc = () => {
   const handleComplete = async (row) => {
     try {
       await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+        `${API_BASE_URL}request/${getRequestId(row)}`,
         { status: "COMPLETED" },
         config,
       );
       message.success("Request marked as completed");
-      refetchDepartment(row.department?.id);
+      refetchDepartment(getDepartmentKey(row.department));
     } catch {
       message.error("Failed to mark as completed");
     }
@@ -432,19 +435,19 @@ const RequirementsTableAc = () => {
   const handleReject = async (row) => {
     try {
       await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+        `${API_BASE_URL}request/${getRequestId(row)}`,
         { status: "REJECTED" },
         config,
       );
       message.success("Request marked as rejected");
-      refetchDepartment(row.department?.id);
+      refetchDepartment(getDepartmentKey(row.department));
     } catch {
       message.error("Failed to reject request");
     }
   };
 
   const startEdit = (row, field) => {
-    setEditRowId(row.id);
+    setEditRowId(getRequestId(row));
     setEditField(field);
     setEditValue(row[field] ?? 0);
   };
@@ -623,7 +626,7 @@ const RequirementsTableAc = () => {
               currency: "INR",
             }) || "₹0"}
           </span>
-        ) : row.id === editRowId && editField === "planned_amount" ? (
+        ) : getRequestId(row) === editRowId && editField === "planned_amount" ? (
           <Space>
             <Input
               style={{ width: 120, fontWeight: 600, fontSize: 18 }}
@@ -766,7 +769,7 @@ const RequirementsTableAc = () => {
         }
 
         // If approved -> allow edit
-        if (approved && row.id === editRowId && editField === "amount_paid") {
+        if (approved && getRequestId(row) === editRowId && editField === "amount_paid") {
           const approvedAmount = row.approver_amount || 0;
           return (
             <Space>
@@ -884,7 +887,7 @@ const RequirementsTableAc = () => {
 
         if (
           approved &&
-          row.id === editRowId &&
+          getRequestId(row) === editRowId &&
           editField === "entity_account"
         ) {
           return (
@@ -985,7 +988,7 @@ const RequirementsTableAc = () => {
 
         if (
           approved &&
-          row.id === editRowId &&
+          getRequestId(row) === editRowId &&
           editField === "amount_paid_to"
         ) {
           return (
@@ -1285,7 +1288,7 @@ const RequirementsTableAc = () => {
             {Object.entries(requirementsByDept).map(([deptId, deptObj]) => (
               <Panel key={deptId} header={getPanelHeader(deptObj)}>
                 <Table
-                  rowKey="id"
+                  rowKey={(r, i) => getRequestId(r) ?? `row-${i}`}
                   loading={loading && !Object.keys(departmentData).length}
                   columns={columns}
                   dataSource={sortedRequirements(deptObj.items ? [...deptObj.items] : [])}

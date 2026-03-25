@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { API_BASE_URL } from "../../../config";
 import {
   message,
@@ -47,6 +47,7 @@ import {
   getTotalAgreedAmount,
   getTotalExpectedAdvances,
   getTotalReceivedAdvances,
+  CLIENT_BOOKINGS_LIST_TAB_API_STATUS,
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
@@ -65,12 +66,12 @@ const ViewClientsBookings = () => {
   const [editingAdvanceKey, setEditingAdvanceKey] = useState(null); // Track which advance is being edited
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize: 20,
     total: 0,
   });
   const [activeTab, setActiveTab] = useState("list");
-  const [eventConfirmationTab, setEventConfirmationTab] =
-    useState("InProgress");
+  const [listStatusTab, setListStatusTab] = useState("all");
+  const [bookingsSummary, setBookingsSummary] = useState(null);
   // List View filters for events API
   const [filterEventName, setFilterEventName] = useState(undefined);
   const [filterDateRange, setFilterDateRange] = useState(null);
@@ -82,28 +83,40 @@ const ViewClientsBookings = () => {
     headers: { Authorization: user?.access_token },
   };
 
-  const fetchRequirementsData = async (eventName, startDate, endDate) => {
+  const fetchBookingsList = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (eventName) params.append("eventName", eventName);
-      if (startDate) params.append("startDate", startDate);
-      if (endDate) params.append("endDate", endDate);
-      const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(`${API_BASE_URL}events${queryString}`, {
+      const params = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+      };
+      const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
+      if (statusParam) params.status = statusParam;
+      if (filterEventName) params.eventName = filterEventName;
+      const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
+      const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
+      if (start) params.startDate = start;
+      if (end) params.endDate = end;
+
+      const res = await axios.get(`${API_BASE_URL}events`, {
         ...config,
+        params,
       });
-      const allBookings = res.data.events || res.data.data || res.data || [];
-      setBookings(allBookings);
-      setPagination({
-        current: 1,
-        pageSize: 10,
-        total: allBookings.length,
-      });
-      // Build unique event names for dropdown (merge with existing options so filter doesn't hide options)
+      const data = res.data || {};
+      const events = Array.isArray(data.events) ? data.events : [];
+      setBookings(events);
+      setBookingsSummary(
+        data.summary && typeof data.summary === "object" ? data.summary : null,
+      );
+      setPagination((prev) => ({
+        ...prev,
+        current: data.page ?? prev.current,
+        pageSize: data.limit ?? prev.pageSize,
+        total: data.totalEvents ?? data.total ?? events.length,
+      }));
       setEventNameOptions((prev) => {
         const names = new Set(prev.map((o) => o.value));
-        allBookings.forEach((b) => {
+        events.forEach((b) => {
           const name = getEventName(b.eventName);
           if (name && name !== "N/A") names.add(name);
         });
@@ -114,24 +127,45 @@ const ViewClientsBookings = () => {
     } catch (err) {
       message.error("Failed to fetch client bookings");
       console.error(err);
+      setBookings([]);
+      setBookingsSummary(null);
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    pagination.current,
+    pagination.pageSize,
+    listStatusTab,
+    filterEventName,
+    filterDateRange,
+    user?.access_token,
+  ]);
 
   useEffect(() => {
-    const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
-    const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
-    fetchRequirementsData(filterEventName, start, end);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filterEventName, filterDateRange]);
+    fetchBookingsList();
+  }, [fetchBookingsList]);
+
+  const onListStatusTabChange = (key) => {
+    setListStatusTab(key);
+    setPagination((p) => ({ ...p, current: 1 }));
+  };
+
+  const handleFilterEventNameChange = (value) => {
+    setFilterEventName(value);
+    setPagination((p) => ({ ...p, current: 1 }));
+  };
+
+  const handleFilterDateRangeChange = (value) => {
+    setFilterDateRange(value);
+    setPagination((p) => ({ ...p, current: 1 }));
+  };
 
   const handleTableChange = (paginationConfig) => {
-    setPagination({
+    setPagination((prev) => ({
+      ...prev,
       current: paginationConfig.current,
       pageSize: paginationConfig.pageSize,
-      total: bookings.filter((b) => b.eventConfirmation === eventConfirmationTab).length,
-    });
+    }));
   };
 
   const showEventDetailsDrawer = (record) => {
@@ -273,9 +307,7 @@ const ViewClientsBookings = () => {
       setEditingAdvanceKey(null);
 
       // Refresh table data (use current list-view filters)
-      const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
-      const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
-      await fetchRequirementsData(filterEventName, start, end);
+      await fetchBookingsList();
 
       // Fetch updated event data to refresh drawer
       const updatedEventResponse = await axios.get(
@@ -308,10 +340,11 @@ const ViewClientsBookings = () => {
           filterEventName={filterEventName}
           filterDateRange={filterDateRange}
           eventNameOptions={eventNameOptions}
-          eventConfirmationTab={eventConfirmationTab}
-          setFilterEventName={setFilterEventName}
-          setFilterDateRange={setFilterDateRange}
-          setEventConfirmationTab={setEventConfirmationTab}
+          listStatusTab={listStatusTab}
+          onListStatusTabChange={onListStatusTabChange}
+          setFilterEventName={handleFilterEventNameChange}
+          setFilterDateRange={handleFilterDateRangeChange}
+          bookingsSummary={bookingsSummary}
           pagination={pagination}
           handleTableChange={handleTableChange}
           showEventDetailsDrawer={showEventDetailsDrawer}

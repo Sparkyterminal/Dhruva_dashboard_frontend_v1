@@ -8,6 +8,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
+import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
@@ -28,30 +29,22 @@ const CalendarClients = () => {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`);
+      const authHeaders = { Authorization: user.access_token };
+      const allConfirmed = await fetchAllMyEventsPages(
+        axios,
+        API_BASE_URL,
+        authHeaders,
+        { status: "confirmed", limit: 100 },
+      );
 
-      let eventsData = [];
-      if (res.data) {
-        if (Array.isArray(res.data.events)) {
-          eventsData = res.data.events;
-        } else if (Array.isArray(res.data.data)) {
-          eventsData = res.data.data;
-        } else if (Array.isArray(res.data)) {
-          eventsData = res.data;
-        }
-      }
-
-      // Filter only confirmed events
-      eventsData = eventsData.filter((event) => {
-        return (
+      const eventsData = allConfirmed.filter(
+        (event) =>
           event &&
-          event._id &&
           event.eventName &&
           event.eventConfirmation === "Confirmed Event" &&
           Array.isArray(event.eventTypes) &&
-          event.eventTypes.length > 0
-        );
-      });
+          event.eventTypes.length > 0,
+      );
 
       setEvents(eventsData);
 

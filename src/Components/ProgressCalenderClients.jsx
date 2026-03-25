@@ -8,6 +8,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
+import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
 
 const ProgressCalenderClients = () => {
   const [events, setEvents] = useState([]);
@@ -28,29 +29,30 @@ const ProgressCalenderClients = () => {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`);
+      const authHeaders = { Authorization: user.access_token };
+      const [inProgressList, cancelledList] = await Promise.all([
+        fetchAllMyEventsPages(axios, API_BASE_URL, authHeaders, {
+          status: "inprogress",
+          limit: 100,
+        }),
+        fetchAllMyEventsPages(axios, API_BASE_URL, authHeaders, {
+          status: "cancelled",
+          limit: 100,
+        }),
+      ]);
 
-      let eventsData = [];
-      if (res.data) {
-        if (Array.isArray(res.data.events)) {
-          eventsData = res.data.events;
-        } else if (Array.isArray(res.data.data)) {
-          eventsData = res.data.data;
-        } else if (Array.isArray(res.data)) {
-          eventsData = res.data;
-        }
-      }
+      const byId = new Map();
+      [...inProgressList, ...cancelledList].forEach((event) => {
+        if (event?._id) byId.set(String(event._id), event);
+      });
 
-      // Filter only InProgress and Cancelled events
-      eventsData = eventsData.filter((event) => {
-        return (
+      const eventsData = Array.from(byId.values()).filter(
+        (event) =>
           event &&
-          event._id &&
           event.eventName &&
           (event.eventConfirmation === "InProgress" ||
-            event.eventConfirmation === "Cancelled")
-        );
-      });
+            event.eventConfirmation === "Cancelled"),
+      );
 
       setEvents(eventsData);
 

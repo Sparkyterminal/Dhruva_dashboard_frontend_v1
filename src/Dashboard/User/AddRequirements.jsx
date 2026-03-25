@@ -59,11 +59,12 @@ const AddRequirements = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axios.get(`${API_BASE_URL}events/minimal`, {
         ...config,
         params: query ? { search: query } : {},
       });
 
+      // Expected response: { totalEvents, events: [...] }
       setEvents(res.data.events || res.data.data || res.data || []);
     } catch (err) {
       console.error("Failed to fetch events", err);
@@ -274,11 +275,39 @@ const AddRequirements = () => {
                     typeof ev.eventName === "string"
                       ? ev.eventName
                       : ev.eventName?.name || ev.name || ev.title || "Untitled";
-                  const clientName = ev.clientName || "";
+                  const clientName = ev.client?.clientName || ev.clientName || "";
                   const value = ev._id || ev.id;
+
+                  const slugify = (s) =>
+                    String(s || "")
+                      .trim()
+                      .toLowerCase()
+                      .replace(/\s+/g, "-");
+
+                  // Keep spaces inside event name (for display), only lowercase.
+                  // Example: "Home Decor" -> "home decor"
+                  const formatEventName = (s) =>
+                    String(s || "").trim().toLowerCase();
+
+                  const statusRaw =
+                    ev.eventConfirmation ||
+                    ev.status ||
+                    ev.client?.eventConfirmation ||
+                    "";
+                  const statusKey =
+                    statusRaw === "Confirmed Event"
+                      ? "confirmed"
+                      : statusRaw === "InProgress"
+                        ? "inprogress"
+                        : statusRaw === "Cancelled" || statusRaw === "Canceled"
+                          ? "cancelled"
+                          : slugify(statusRaw) || "unknown";
+
                   return (
                     <Option key={value} value={value}>
-                      {`${eventName} — ${clientName}`}
+                      {`${statusKey}-${formatEventName(
+                        eventName,
+                      )}-${slugify(clientName)}`}
                     </Option>
                   );
                 })}

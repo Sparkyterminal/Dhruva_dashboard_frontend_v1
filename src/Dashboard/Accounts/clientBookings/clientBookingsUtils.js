@@ -1,5 +1,46 @@
 import dayjs from "dayjs";
 
+/** Maps list-view tab keys to API `status` query (omit for all). */
+export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
+  all: undefined,
+  confirmed: "confirmed",
+  inprogress: "inprogress",
+  cancelled: "cancelled",
+};
+
+/**
+ * Load every page from events for the given query (e.g. calendar).
+ */
+export async function fetchAllMyEventsPages(
+  axiosInstance,
+  apiBaseUrl,
+  authHeaders,
+  extraParams = {},
+) {
+  const limit = extraParams.limit != null ? extraParams.limit : 100;
+  const all = [];
+  let page = 1;
+  const maxPages = 500;
+  while (page <= maxPages) {
+    const res = await axiosInstance.get(`${apiBaseUrl}events`, {
+      headers: authHeaders,
+      params: { ...extraParams, page, limit },
+    });
+    const d = res.data || {};
+    const batch = Array.isArray(d.events) ? d.events : [];
+    all.push(...batch);
+    const totalPages = Number(d.totalPages);
+    if (Number.isFinite(totalPages) && totalPages >= 1 && page >= totalPages) {
+      break;
+    }
+    if (batch.length === 0 || batch.length < limit) {
+      break;
+    }
+    page += 1;
+  }
+  return all;
+}
+
 export const formatDate = (dateString) => {
   if (!dateString) return "-";
   return dayjs(dateString).format("DD MMM YYYY");

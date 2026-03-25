@@ -17,6 +17,8 @@ import {
   HeartOutlined,
   TeamOutlined,
   EyeOutlined,
+  AppstoreOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import {
@@ -24,7 +26,6 @@ import {
   formatDate,
   formatAmount,
   getTotalPayable,
-  getTotalAgreedAmount,
   getTotalExpectedAdvances,
   getTotalReceivedAdvances,
 } from "./clientBookingsUtils";
@@ -33,7 +34,7 @@ import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
 
 const { Text } = Typography;
 
-const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEventNameFn, getTotalAgreedFn, getTotalExpectedFn, getTotalReceivedFn, onViewDetails) => [
+const buildColumns = (listStatusTab, formatDateFn, formatAmountFn, getEventNameFn, getTotalBookedFn, getTotalExpectedFn, getTotalReceivedFn, onViewDetails) => [
   {
     title: "Event Confirmation",
     dataIndex: "eventConfirmation",
@@ -81,7 +82,7 @@ const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEve
   //     </Text>
   //   ),
   // },
-  ...(eventConfirmationTab === "InProgress" || eventConfirmationTab === "Cancelled"
+  ...(listStatusTab === "inprogress" || listStatusTab === "cancelled"
     ? [
         {
           title: "Next Meeting Date",
@@ -178,13 +179,13 @@ const buildColumns = (eventConfirmationTab, formatDateFn, formatAmountFn, getEve
     ),
   },
   {
-    title: "Agreed Amount",
-    key: "agreedAmount",
+    title: "Booked Amount",
+    key: "bookedAmount",
     width: 130,
     align: "right",
     render: (_, record) => (
       <Text strong className="text-slate-800">
-        {formatAmountFn(getTotalAgreedFn(record))}
+        {formatAmountFn(getTotalBookedFn(record))}
       </Text>
     ),
   },
@@ -244,38 +245,36 @@ const ClientBookingsListTab = ({
   filterEventName,
   filterDateRange,
   eventNameOptions,
-  eventConfirmationTab,
-  setFilterEventName,
-  setFilterDateRange,
-  setEventConfirmationTab,
+  listStatusTab,
+  onListStatusTabChange,
   pagination,
   handleTableChange,
   showEventDetailsDrawer,
+  bookingsSummary,
+  setFilterEventName,
+  setFilterDateRange,
 }) => {
-  const filteredBookings = bookings.filter(
-    (booking) => booking.eventConfirmation === eventConfirmationTab,
-  );
-  const totalBookings = filteredBookings.length;
-  const totalPayableRevenue = filteredBookings.reduce(
+  const totalBookings = bookings.length;
+  const totalPayableRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
     0,
   );
-  const totalReceivedRevenue = filteredBookings.reduce(
+  const totalReceivedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalReceivedAdvances(curr),
     0,
   );
-  const totalPendingRevenue = filteredBookings.reduce((acc, curr) => {
+  const totalPendingRevenue = bookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
     const received = getTotalReceivedAdvances(curr);
     return acc + (expected - received);
   }, 0);
 
   const columns = buildColumns(
-    eventConfirmationTab,
+    listStatusTab,
     formatDate,
     formatAmount,
     getEventName,
-    getTotalAgreedAmount,
+    getTotalPayable,
     getTotalExpectedAdvances,
     getTotalReceivedAdvances,
     showEventDetailsDrawer,
@@ -296,33 +295,53 @@ const ClientBookingsListTab = ({
       />
 
       <Tabs
-        activeKey={eventConfirmationTab}
-        onChange={setEventConfirmationTab}
+        activeKey={listStatusTab}
+        onChange={onListStatusTabChange}
         items={[
           {
-            key: "InProgress",
+            key: "all",
             label: (
               <span>
-                <ClockCircleOutlined /> InProgress (
-                {bookings.filter((b) => b.eventConfirmation === "InProgress").length})
+                <AppstoreOutlined /> All
+                {listStatusTab === "all" && bookingsSummary?.totalBookings != null && (
+                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                )}
               </span>
             ),
           },
           {
-            key: "Confirmed Event",
+            key: "confirmed",
             label: (
               <span>
-                <CheckCircleOutlined /> Confirmed Event (
-                {bookings.filter((b) => b.eventConfirmation === "Confirmed Event").length})
+                <CheckCircleOutlined /> Confirmed
+                {listStatusTab === "confirmed" &&
+                  bookingsSummary?.totalBookings != null && (
+                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                )}
               </span>
             ),
           },
           {
-            key: "Cancelled",
+            key: "inprogress",
             label: (
               <span>
-                ❌ Cancelled (
-                {bookings.filter((b) => b.eventConfirmation === "Cancelled").length})
+                <ClockCircleOutlined /> In progress
+                {listStatusTab === "inprogress" &&
+                  bookingsSummary?.totalBookings != null && (
+                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                )}
+              </span>
+            ),
+          },
+          {
+            key: "cancelled",
+            label: (
+              <span>
+                <CloseCircleOutlined /> Cancelled
+                {listStatusTab === "cancelled" &&
+                  bookingsSummary?.totalBookings != null && (
+                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                )}
               </span>
             ),
           },
@@ -330,6 +349,7 @@ const ClientBookingsListTab = ({
       />
 
       <ClientBookingsStatsCards
+        summary={bookingsSummary}
         totalBookings={totalBookings}
         totalPayableRevenue={totalPayableRevenue}
         totalPendingRevenue={totalPendingRevenue}
@@ -353,13 +373,13 @@ const ClientBookingsListTab = ({
         >
           <Table
             columns={columns}
-            dataSource={filteredBookings}
+            dataSource={bookings}
             loading={loading}
             rowKey="_id"
             pagination={{
               current: pagination.current,
               pageSize: pagination.pageSize,
-              total: filteredBookings.length,
+              total: pagination.total,
               showSizeChanger: true,
               showTotal: (total, range) => (
                 <span className="text-slate-600 text-sm">

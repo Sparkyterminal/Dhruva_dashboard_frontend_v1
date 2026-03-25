@@ -2,11 +2,22 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { Table, Button, Drawer, Card, Typography, Popconfirm, message, Spin } from "antd";
-import { PlusOutlined, ArrowLeftOutlined } from "@ant-design/icons";
+import {
+  Table,
+  Button,
+  Drawer,
+  Card,
+  Typography,
+  Popconfirm,
+  message,
+  Spin,
+  Tabs,
+} from "antd";
+import { PlusOutlined, ArrowLeftOutlined, CalendarOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import AddLeads from "./AddLeads";
 import LeadForm from "./LeadForm";
+import LeadsCalendar from "../../../Components/LeadsCalendar";
 import { API_BASE_URL } from "../../../../config";
 
 const { Title } = Typography;
@@ -40,6 +51,7 @@ const ViewLeads = () => {
   const [viewDrawerOpen, setViewDrawerOpen] = useState(false);
   const [viewingLead, setViewingLead] = useState(null);
   const [viewFetching, setViewFetching] = useState(false);
+  const [activeViewTab, setActiveViewTab] = useState("list");
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -237,8 +249,26 @@ const ViewLeads = () => {
   ];
 
   return (
-    <div style={{ padding: 24, maxWidth: 1200, margin: "0 auto" }}>
-      <Card bordered={false} bodyStyle={{ padding: "24px 28px" }}>
+    <div
+      style={{
+        padding: 24,
+        maxWidth: 1280,
+        margin: "0 auto",
+        minHeight: "100vh",
+        background:
+          "linear-gradient(135deg, rgba(239,246,255,0.65) 0%, rgba(245,243,255,0.7) 45%, rgba(253,242,248,0.65) 100%)",
+      }}
+    >
+      <Card
+        bordered={false}
+        style={{
+          borderRadius: 20,
+          boxShadow: "0 10px 30px rgba(15, 23, 42, 0.08)",
+          background: "rgba(255, 255, 255, 0.9)",
+          backdropFilter: "blur(8px)",
+        }}
+        bodyStyle={{ padding: "24px 28px" }}
+      >
         <div
           style={{
             display: "flex",
@@ -265,18 +295,56 @@ const ViewLeads = () => {
             type="primary"
             icon={<PlusOutlined />}
             onClick={() => setDrawerOpen(true)}
+            style={{ borderRadius: 10 }}
           >
             Add leads
           </Button>
         </div>
 
-        <Table
-          rowKey={(r) => r._id ?? r.id}
-          columns={columns}
-          dataSource={leads}
-          loading={loading}
-          pagination={{ pageSize: 10, showSizeChanger: true, showTotal: (t) => `${t} leads` }}
-          locale={{ emptyText: "No leads yet. Click “Add leads” to create one." }}
+        <Tabs
+          activeKey={activeViewTab}
+          onChange={setActiveViewTab}
+          size="large"
+          items={[
+            {
+              key: "list",
+              label: `List View (${leads.length})`,
+              children: (
+                <Table
+                  rowKey={(r) => r._id ?? r.id}
+                  columns={columns}
+                  dataSource={leads}
+                  loading={loading}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (t) => `${t} leads`,
+                  }}
+                  locale={{ emptyText: "No leads yet. Click “Add leads” to create one." }}
+                />
+              ),
+            },
+            {
+              key: "calendar",
+              label: (
+                <span>
+                  <CalendarOutlined /> Calendar View
+                </span>
+              ),
+              children: (
+                <div
+                  style={{
+                    border: "1px solid #e2e8f0",
+                    borderRadius: 14,
+                    padding: 14,
+                    background: "#ffffff",
+                  }}
+                >
+                  <LeadsCalendar />
+                </div>
+              ),
+            },
+          ]}
         />
       </Card>
 

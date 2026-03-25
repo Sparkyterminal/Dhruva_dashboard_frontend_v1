@@ -21,69 +21,126 @@ import dayjs from "dayjs";
 const { Text, Title } = Typography;
 
 const UserWiseClients = () => {
-  const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUserEvents, setSelectedUserEvents] = useState([]);
   const [activeTab, setActiveTab] = useState("mostBooked");
   const [selectedMonthYear, setSelectedMonthYear] = useState(null); // null = All time; dayjs = that month
+  const [mostBookedRows, setMostBookedRows] = useState([]);
+  const [mostAmountRows, setMostAmountRows] = useState([]);
+  const [mostBookedMeta, setMostBookedMeta] = useState({
+    page: 1,
+    limit: 20,
+    totalPages: 1,
+    totalUsers: 0,
+  });
+  const [mostAmountMeta, setMostAmountMeta] = useState({
+    page: 1,
+    limit: 20,
+    totalPages: 1,
+    totalUsers: 0,
+  });
   const user = useSelector((state) => state.user.value);
 
-  const config = {
-    headers: { Authorization: user?.access_token },
-  };
+  const fetchLeaderboard = useCallback(
+    async ({ mode, page, limit, month }) => {
+      if (!user?.access_token) {
+        message.error("Authentication required. Please login again.");
+        return;
+      }
 
-  const fetchRequirementsData = useCallback(async () => {
-    if (!user?.access_token) {
-      message.error("Authentication required. Please login again.");
-      return;
-    }
+      setLoading(true);
+      try {
+        const params = {
+          mode,
+          page,
+          limit,
+        };
+        if (month) params.month = month;
 
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}events`, config);
+        const res = await axios.get(
+          `${API_BASE_URL}events/leaderboard`,
+          {
+            headers: { Authorization: user.access_token },
+            params,
+          },
+        );
 
-      let eventsData = [];
-      if (res.data) {
-        if (Array.isArray(res.data.events)) {
-          eventsData = res.data.events;
-        } else if (Array.isArray(res.data.data)) {
-          eventsData = res.data.data;
-        } else if (Array.isArray(res.data)) {
-          eventsData = res.data;
+        const d = res.data || {};
+        const leaderboard = Array.isArray(d.leaderboard)
+          ? d.leaderboard
+          : [];
+
+        const totalPages = d.totalPages ?? 1;
+        const totalUsers = d.totalUsers ?? 0;
+
+        if (mode === "mostBooked") {
+          setMostBookedRows(leaderboard);
+          setMostBookedMeta({
+            page: d.page ?? page,
+            limit: d.limit ?? limit,
+            totalPages,
+            totalUsers,
+          });
+        } else {
+          setMostAmountRows(leaderboard);
+          setMostAmountMeta({
+            page: d.page ?? page,
+            limit: d.limit ?? limit,
+            totalPages,
+            totalUsers,
+          });
         }
-      }
 
-      eventsData = eventsData.filter((event) => {
-        return event && event._id && event.eventName;
+        if (leaderboard.length === 0) {
+          message.info("No leaderboard data found");
+        }
+      } catch (err) {
+        console.error("Error fetching leaderboard:", err);
+        message.error(
+          err?.response?.data?.message ||
+            "Failed to fetch leaderboard. Please try again later.",
+        );
+        if (mode === "mostBooked") setMostBookedRows([]);
+        else setMostAmountRows([]);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [user?.access_token],
+  );
+
+  const fetchActiveLeaderboard = useCallback(() => {
+    const month = selectedMonthYear ? selectedMonthYear.format("YYYY-MM") : null;
+    if (activeTab === "mostBooked") {
+      fetchLeaderboard({
+        mode: "mostBooked",
+        page: mostBookedMeta.page,
+        limit: mostBookedMeta.limit,
+        month,
       });
-
-      setEvents(eventsData);
-
-      if (eventsData.length === 0) {
-        message.info("No events found");
-      }
-    } catch (err) {
-      console.error("Error fetching events:", err);
-      if (err.response?.status === 401) {
-        message.error("Session expired. Please login again.");
-      } else if (err.response?.status === 403) {
-        message.error("You don't have permission to view events.");
-      } else if (err.response?.data?.message) {
-        message.error(err.response.data.message);
-      } else {
-        message.error("Failed to fetch events. Please try again later.");
-      }
-      setEvents([]);
-    } finally {
-      setLoading(false);
+    } else {
+      fetchLeaderboard({
+        mode: "mostAmount",
+        page: mostAmountMeta.page,
+        limit: mostAmountMeta.limit,
+        month,
+      });
     }
-  }, [user?.access_token]);
+  }, [
+    activeTab,
+    fetchLeaderboard,
+    mostAmountMeta.limit,
+    mostAmountMeta.page,
+    mostBookedMeta.limit,
+    mostBookedMeta.page,
+    selectedMonthYear,
+  ]);
 
   useEffect(() => {
-    fetchRequirementsData();
-  }, [fetchRequirementsData]);
+    fetchActiveLeaderboard();
+  }, [fetchActiveLeaderboard]);
 
   const formatText = (v) => {
     try {
@@ -161,7 +218,7 @@ const UserWiseClients = () => {
   const getUserStatsMostBooked = (eventsList) => {
     const userMap = new Map();
 
-    (eventsList || events).forEach((event) => {
+    (eventsList || []).forEach((event) => {
       if (event.createdBy) {
         const userId = event.createdBy.id;
         const firstName = formatText(event.createdBy.first_name) || "Unknown";
@@ -208,7 +265,7 @@ const UserWiseClients = () => {
   const getUserStatsMostAmount = (eventsList) => {
     const userMap = new Map();
 
-    (eventsList || events).forEach((event) => {
+    (eventsList || []).forEach((event) => {
       // Only include confirmed events
       if (event.eventConfirmation === "Confirmed Event" && event.createdBy) {
         const userId = event.createdBy.id;
@@ -243,9 +300,30 @@ const UserWiseClients = () => {
     return sortedUsers;
   };
 
-  const handleUserClick = (userData) => {
-    setSelectedUser(userData);
-    setSelectedUserEvents(userData.events);
+  const handleUserClick = (row) => {
+    // API returns different shapes per mode; normalize what the drawer expects.
+    if (activeTab === "mostBooked") {
+      const first = row?.user?.first_name || row?.user?.firstName || "";
+      const last = row?.user?.last_name || row?.user?.lastName || "";
+      setSelectedUser({
+        ...(row?.user || {}),
+        fullName: `${first} ${last}`.trim(),
+        inProgress: row?.inProgress ?? 0,
+        confirmed: row?.confirmed ?? 0,
+        cancelled: row?.cancelled ?? 0,
+        total: row?.total ?? 0,
+      });
+      setSelectedUserEvents([]);
+    } else {
+      const first = row?.user?.first_name || row?.user?.firstName || "";
+      const last = row?.user?.last_name || row?.user?.lastName || "";
+      setSelectedUser({
+        ...(row?.user || {}),
+        fullName: `${first} ${last}`.trim(),
+        totalAmount: row?.totalAmountBooked ?? row?.totalAmount ?? 0,
+      });
+      setSelectedUserEvents(Array.isArray(row?.events) ? row.events : []);
+    }
     setDrawerVisible(true);
   };
 
@@ -272,11 +350,8 @@ const UserWiseClients = () => {
     }
   };
 
-  const eventsToUse = selectedMonthYear
-    ? getEventsForMonth(events, selectedMonthYear.year(), selectedMonthYear.month() + 1)
-    : events;
-  const userStatsMostBooked = getUserStatsMostBooked(eventsToUse);
-  const userStatsMostAmount = getUserStatsMostAmount(eventsToUse);
+  const userStatsMostBooked = mostBookedRows;
+  const userStatsMostAmount = mostAmountRows;
 
   if (loading) {
     return (
@@ -324,9 +399,11 @@ const UserWiseClients = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-gray-900">
-              {record.firstName}
+              {record?.user?.first_name || record?.user?.firstName || "-"}
             </div>
-            <div className="text-sm text-gray-500">{record.lastName}</div>
+            <div className="text-sm text-gray-500">
+              {record?.user?.last_name || record?.user?.lastName || ""}
+            </div>
           </div>
         </div>
       ),
@@ -427,9 +504,11 @@ const UserWiseClients = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-gray-900">
-              {record.firstName}
+              {record?.user?.first_name || record?.user?.firstName || "-"}
             </div>
-            <div className="text-sm text-gray-500">{record.lastName}</div>
+            <div className="text-sm text-gray-500">
+              {record?.user?.last_name || record?.user?.lastName || ""}
+            </div>
           </div>
         </div>
       ),
@@ -441,7 +520,7 @@ const UserWiseClients = () => {
       width: 180,
       render: (_, record) => (
         <span className="inline-flex items-center justify-center px-4 py-2 rounded-full text-lg font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700">
-          {formatAmount(record.totalAmount)}
+          {formatAmount(record.totalAmountBooked ?? record.totalAmount ?? 0)}
         </span>
       ),
     },
@@ -452,7 +531,7 @@ const UserWiseClients = () => {
       width: 130,
       render: (_, record) => (
         <Tag color="blue" className="text-sm font-semibold">
-          {record.events.length}
+          {record?.eventsCount ?? record?.events?.length ?? 0}
         </Tag>
       ),
     },
@@ -564,15 +643,38 @@ const UserWiseClients = () => {
                       <Table
                         columns={mostBookedColumns}
                         dataSource={userStatsMostBooked}
-                        rowKey="id"
+                        rowKey={(row) =>
+                          row?.user?._id || row?.user?.id || row?.rank
+                        }
                         pagination={{
-                          pageSize: 10,
+                          current: mostBookedMeta.page,
+                          pageSize: mostBookedMeta.limit,
+                          total: mostBookedMeta.totalUsers,
                           showSizeChanger: true,
+                          pageSizeOptions: ["10", "20", "50"],
                           showTotal: (total) => (
                             <span className="text-slate-600 text-sm">
                               Total {total} users
                             </span>
                           ),
+                        }}
+                        onChange={(paginationConfig) => {
+                          const month = selectedMonthYear
+                            ? selectedMonthYear.format("YYYY-MM")
+                            : null;
+                          const page = paginationConfig.current ?? 1;
+                          const limit = paginationConfig.pageSize ?? 20;
+                          setMostBookedMeta((prev) => ({
+                            ...prev,
+                            page,
+                            limit,
+                          }));
+                          fetchLeaderboard({
+                            mode: "mostBooked",
+                            page,
+                            limit,
+                            month,
+                          });
                         }}
                         className="modern-table"
                       />
@@ -601,15 +703,38 @@ const UserWiseClients = () => {
                       <Table
                         columns={mostAmountColumns}
                         dataSource={userStatsMostAmount}
-                        rowKey="id"
+                        rowKey={(row) =>
+                          row?.user?._id || row?.user?.id || row?.rank
+                        }
                         pagination={{
-                          pageSize: 10,
+                          current: mostAmountMeta.page,
+                          pageSize: mostAmountMeta.limit,
+                          total: mostAmountMeta.totalUsers,
                           showSizeChanger: true,
+                          pageSizeOptions: ["10", "20", "50"],
                           showTotal: (total) => (
                             <span className="text-slate-600 text-sm">
                               Total {total} users
                             </span>
                           ),
+                        }}
+                        onChange={(paginationConfig) => {
+                          const month = selectedMonthYear
+                            ? selectedMonthYear.format("YYYY-MM")
+                            : null;
+                          const page = paginationConfig.current ?? 1;
+                          const limit = paginationConfig.pageSize ?? 20;
+                          setMostAmountMeta((prev) => ({
+                            ...prev,
+                            page,
+                            limit,
+                          }));
+                          fetchLeaderboard({
+                            mode: "mostAmount",
+                            page,
+                            limit,
+                            month,
+                          });
                         }}
                         className="modern-table"
                       />
@@ -634,7 +759,7 @@ const UserWiseClients = () => {
               <div className="text-lg font-bold">{selectedUser?.fullName}</div>
               <div className="text-sm text-gray-500 font-normal">
                 {activeTab === "mostBooked"
-                  ? `${selectedUserEvents.length} Events`
+                  ? `${selectedUser?.total || 0} Total Bookings`
                   : `${formatAmount(selectedUser?.totalAmount || 0)} Total`}
               </div>
             </div>
@@ -646,7 +771,7 @@ const UserWiseClients = () => {
         width={700}
         closeIcon={<X className="w-5 h-5" />}
       >
-        {selectedUserEvents.length === 0 ? (
+        {selectedUserEvents.length === 0 && activeTab !== "mostBooked" ? (
           <div className="text-center py-12">
             <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <Text className="text-gray-500">No events found</Text>
@@ -705,54 +830,61 @@ const UserWiseClients = () => {
                 </div>
 
                 {/* Events List */}
-                <Table
-                  dataSource={selectedUserEvents}
-                  rowKey="_id"
-                  pagination={false}
-                  columns={[
-                    {
-                      title: "#",
-                      key: "index",
-                      width: 60,
-                      render: (_, __, index) => (
-                        <Tag color="blue">{index + 1}</Tag>
-                      ),
-                    },
-                    {
-                      title: "Event Name",
-                      key: "eventName",
-                      render: (_, record) => (
-                        <Text strong>{getEventName(record.eventName)}</Text>
-                      ),
-                    },
-                    {
-                      title: "Client Name",
-                      key: "clientName",
-                      render: (_, record) => (
-                        <Text>{formatText(record.clientName) || "N/A"}</Text>
-                      ),
-                    },
-                    {
-                      title: "Status",
-                      key: "status",
-                      width: 120,
-                      render: (_, record) => {
-                        const status = record.eventConfirmation;
-                        const colorMap = {
-                          "Confirmed Event": "green",
-                          InProgress: "orange",
-                          Cancelled: "red",
-                        };
-                        return (
-                          <Tag color={colorMap[status] || "default"}>
-                            {status}
-                          </Tag>
-                        );
+                {selectedUserEvents.length === 0 ? (
+                  <Text type="secondary">
+                    Event list is not included in the API response for{" "}
+                    Most Booked leaderboard.
+                  </Text>
+                ) : (
+                  <Table
+                    dataSource={selectedUserEvents}
+                    rowKey="_id"
+                    pagination={false}
+                    columns={[
+                      {
+                        title: "#",
+                        key: "index",
+                        width: 60,
+                        render: (_, __, index) => (
+                          <Tag color="blue">{index + 1}</Tag>
+                        ),
                       },
-                    },
-                  ]}
-                  size="small"
-                />
+                      {
+                        title: "Event Name",
+                        key: "eventName",
+                        render: (_, record) => (
+                          <Text strong>{getEventName(record.eventName)}</Text>
+                        ),
+                      },
+                      {
+                        title: "Client Name",
+                        key: "clientName",
+                        render: (_, record) => (
+                          <Text>{formatText(record.clientName) || "N/A"}</Text>
+                        ),
+                      },
+                      {
+                        title: "Status",
+                        key: "status",
+                        width: 120,
+                        render: (_, record) => {
+                          const status = record.eventConfirmation;
+                          const colorMap = {
+                            "Confirmed Event": "green",
+                            InProgress: "orange",
+                            Cancelled: "red",
+                          };
+                          return (
+                            <Tag color={colorMap[status] || "default"}>
+                              {status}
+                            </Tag>
+                          );
+                        },
+                      },
+                    ]}
+                    size="small"
+                  />
+                )}
               </>
             ) : (
               <>
@@ -805,13 +937,13 @@ const UserWiseClients = () => {
                       ),
                     },
                     {
-                      title: "Agreed Amount",
-                      key: "agreedAmount",
+                      title: "Amount Booked",
+                      key: "amountBooked",
                       align: "right",
                       width: 150,
                       render: (_, record) => (
                         <Text strong className="text-green-600">
-                          {formatAmount(record.agreedAmount || 0)}
+                          {formatAmount(record.amountBooked || 0)}
                         </Text>
                       ),
                     },

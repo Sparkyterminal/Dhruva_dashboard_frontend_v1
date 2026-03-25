@@ -59,7 +59,7 @@ const ViewInflow = () => {
       setLoading(true);
       const config = { headers: { Authorization: user?.access_token } };
       try {
-        const res = await axios.get(`${API_BASE_URL}events/my-events`, config, {
+        const res = await axios.get(`${API_BASE_URL}events`, config, {
           params: { page, limit: pageSize },
         });
         setBookings(res.data.events || res.data.data || res.data || []);

@@ -52,7 +52,7 @@ import EditBill from "./Dashboard/Accounts/Bills/EditBill";
 import ViewBill from "./Dashboard/Accounts/Bills/ViewBill";
 import ViewClientsBookings from "./Dashboard/Accounts/ViewClientsBookings";
 import Departmentwise from "./Dashboard/Accounts/Departmentwise";
-import PlayBook from "./Dashboard/Accounts/playbook";
+// import Daybookhome from "./Dashboard/Accounts/Daybookhome";
 // import ViewVendors from "./Dashboard/Accounts/ViewVendors";
 import ViewChecklist from "./Components/ViewChecklist";
 import EditChecklist from "./Components/EditChecklist";
@@ -84,6 +84,7 @@ import BudgetReportHome from "./Dashboard/Accounts/budgetreport/BudgetReportHome
 import BudgetReportEventWise from "./Dashboard/Accounts/budgetreport/BudgetReportEventWise";
 import EditBudgetReport from "./Dashboard/Accounts/budgetreport/EditBudgetReport";
 import AccountsBudgetReportMgmt from "./Dashboard/Accounts/budgetreport/AccountsBudgetReportMgmt";
+import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -209,7 +210,7 @@ const App = () => {
                 element={<Departmentwise />}
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
-              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/daybook" element={<Daybookhome />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -363,7 +364,7 @@ const App = () => {
                 element={<Departmentwise />}
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
-              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/daybook" element={<Daybookhome />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -416,7 +417,7 @@ const App = () => {
                 element={<Departmentwise />}
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
-              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/daybook" element={<Daybookhome />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
@@ -463,7 +464,7 @@ const App = () => {
                 element={<Departmentwise />}
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
-              <Route path="/user/daybook" element={<PlayBook />} />
+              <Route path="/user/daybook" element={<Daybookhome />} />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
