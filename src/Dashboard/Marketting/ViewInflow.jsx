@@ -15,6 +15,9 @@ import {
   Divider,
   Badge,
   Statistic,
+  Select,
+  Radio,
+  Grid,
   Tabs,
 } from "antd";
 import {
@@ -36,6 +39,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
+import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
 
 const { Title, Text } = Typography;
 
@@ -45,7 +49,11 @@ const ViewInflow = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [activeTab, setActiveTab] = useState("InProgress");
+  const [listStatusTab, setListStatusTab] = useState("inprogress");
+  const [eventsScope, setEventsScope] = useState("mine"); // mine => /events/my-events, all => /events
+  const [filterEventName, setFilterEventName] = useState(undefined);
+  const [eventNameOptions, setEventNameOptions] = useState([]);
+  const [mineSummary, setMineSummary] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -53,37 +61,109 @@ const ViewInflow = () => {
   });
 
   const user = useSelector((state) => state.user.value);
+  const screens = Grid.useBreakpoint();
+  const statsValueFontSize = screens.xl
+    ? 30
+    : screens.lg
+      ? 26
+      : screens.md
+        ? 22
+        : 18;
+  const statsValueCommonStyle = {
+    lineHeight: 1.1,
+    wordBreak: "break-word",
+    overflowWrap: "anywhere",
+    whiteSpace: "normal",
+  };
 
-  const fetchRequirementsData = useCallback(
-    async (page = 1, pageSize = 10) => {
-      setLoading(true);
-      const config = { headers: { Authorization: user?.access_token } };
-      try {
-        const res = await axios.get(`${API_BASE_URL}events`, config, {
-          params: { page, limit: pageSize },
+  const fetchRequirementsData = useCallback(async () => {
+    setLoading(true);
+    const config = { headers: { Authorization: user?.access_token } };
+    try {
+      const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
+      const params = {
+        page: pagination.current,
+        limit: pagination.pageSize,
+        ...(statusParam ? { status: statusParam } : {}),
+        ...(filterEventName ? { eventName: filterEventName } : {}),
+      };
+
+      const endpoint =
+        eventsScope === "all"
+          ? `${API_BASE_URL}events`
+          : `${API_BASE_URL}events/my-events`;
+
+      // IMPORTANT: axios.get(url, config) where `config.params` carries query params
+      const res = await axios.get(endpoint, { ...config, params });
+
+      const events = Array.isArray(res.data?.events)
+        ? res.data.events
+        : Array.isArray(res.data?.data)
+          ? res.data.data
+          : Array.isArray(res.data)
+            ? res.data
+            : [];
+
+      setBookings(events);
+
+      // If already using `events` endpoint (All scope), derive dropdown options from this response.
+      // When using Mine scope, we fetch dropdown options separately (see `fetchEventNameOptions`).
+      if (eventsScope === "all") {
+        const uniqueNames = new Set();
+        (Array.isArray(events) ? events : []).forEach((ev) => {
+          const name =
+            typeof ev.eventName === "string"
+              ? ev.eventName
+              : ev.eventName?.name || "N/A";
+          if (name && name !== "N/A") uniqueNames.add(name);
         });
-        setBookings(res.data.events || res.data.data || res.data || []);
-        setPagination({
-          current: res.data.currentPage || res.data.page || page,
-          pageSize: res.data.limit || res.data.pageSize || pageSize,
-          total: res.data.total || res.data.totalEvents || 0,
-        });
-      } catch (err) {
-        message.error("Failed to fetch client bookings");
-        console.error(err);
-      } finally {
-        setLoading(false);
+        if (filterEventName) uniqueNames.add(filterEventName);
+        setEventNameOptions(
+          Array.from(uniqueNames)
+            .sort((a, b) => String(a).localeCompare(String(b)))
+            .map((n) => ({ label: n, value: n })),
+        );
       }
-    },
-    [user?.access_token],
-  );
+
+      setPagination((prev) => ({
+        ...prev,
+        current: res.data.currentPage || res.data.page || pagination.current,
+        pageSize: res.data.limit || res.data.pageSize || pagination.pageSize,
+        total: res.data.total || res.data.totalEvents || 0,
+      }));
+
+      // Only `/events/my-events` returns `summary` (as per your example)
+      if (eventsScope === "mine") {
+        setMineSummary(res.data?.summary || null);
+      } else {
+        setMineSummary(null);
+      }
+    } catch (err) {
+      message.error("Failed to fetch client bookings");
+      console.error(err);
+      setMineSummary(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    user?.access_token,
+    pagination.current,
+    pagination.pageSize,
+    listStatusTab,
+    eventsScope,
+    filterEventName,
+  ]);
 
   useEffect(() => {
     fetchRequirementsData();
   }, [fetchRequirementsData]);
 
   const handleTableChange = (paginationConfig) => {
-    fetchRequirementsData(paginationConfig.current, paginationConfig.pageSize);
+    setPagination((prev) => ({
+      ...prev,
+      current: paginationConfig.current,
+      pageSize: paginationConfig.pageSize,
+    }));
   };
 
   const formatDate = (dateString) => {
@@ -109,6 +189,50 @@ const ViewInflow = () => {
     if (typeof eventName === "string") return eventName;
     return eventName?.name || "N/A";
   };
+
+  const fetchEventNameOptions = useCallback(async () => {
+    try {
+      if (eventsScope === "all") return;
+
+      const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
+      const config = { headers: { Authorization: user?.access_token } };
+
+      // Like list view: pull event names from `events` endpoint (not `my-events`)
+      const res = await axios.get(`${API_BASE_URL}events`, {
+        ...config,
+        params: {
+          page: 1,
+          limit: 200,
+          ...(statusParam ? { status: statusParam } : {}),
+        },
+      });
+
+      const events = Array.isArray(res.data?.events)
+        ? res.data.events
+        : res.data?.data;
+
+      const uniqueNames = new Set();
+      (Array.isArray(events) ? events : []).forEach((ev) => {
+        const name = getEventName(ev.eventName);
+        if (name && name !== "N/A") uniqueNames.add(name);
+      });
+
+      if (filterEventName) uniqueNames.add(filterEventName);
+
+      setEventNameOptions(
+        Array.from(uniqueNames)
+          .sort((a, b) => String(a).localeCompare(String(b)))
+          .map((n) => ({ label: n, value: n })),
+      );
+    } catch (err) {
+      // Dropdown is optional; keep UI usable even if this fails.
+      console.error(err);
+    }
+  }, [user?.access_token, listStatusTab, filterEventName, eventsScope]);
+
+  useEffect(() => {
+    fetchEventNameOptions();
+  }, [fetchEventNameOptions]);
 
   // Helper function to check if should display as single/complete event
   const isSingleDisplayEvent = (record) => {
@@ -266,7 +390,7 @@ const ViewInflow = () => {
         </Text>
       ),
     },
-    ...(activeTab === "InProgress" || activeTab === "Cancelled"
+    ...(listStatusTab === "inprogress" || listStatusTab === "cancelled"
       ? [
           {
             title: "Next Meeting Date",
@@ -453,62 +577,64 @@ const ViewInflow = () => {
   ];
 
   // Calculate statistics
-  const filteredBookings = bookings.filter(
-    (booking) => booking.eventConfirmation === activeTab,
-  );
-  const totalBookings = filteredBookings.length;
-  const totalAgreedRevenue = filteredBookings.reduce(
+  const totalBookings = bookings.length;
+  const totalAgreedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalAgreedAmount(curr),
     0,
   );
-  const totalPayableRevenue = filteredBookings.reduce(
+  const totalPayableRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
     0,
   );
-  const totalReceivedRevenue = filteredBookings.reduce(
+  const totalReceivedRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalReceivedAdvances(curr),
     0,
   );
-  const totalPendingRevenue = filteredBookings.reduce((acc, curr) => {
+  const totalPendingRevenue = bookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
     const received = getTotalReceivedAdvances(curr);
     return acc + (expected - received);
   }, 0);
-  const totalEventTypes = filteredBookings.reduce(
+  const totalEventTypes = bookings.reduce(
     (acc, curr) => acc + (curr.eventTypes?.length || 0),
     0,
   );
 
+  // Summary from `/events/my-events` (Mine scope)
+  const mineTotalBookings = Number(mineSummary?.totalBookings || 0);
+  const mineTotalExpectedAdvance = Number(
+    mineSummary?.totalExpectedAdvance || 0,
+  );
+  const mineTotalReceivedAmount = Number(mineSummary?.totalReceivedAmount || 0);
+  const mineTotalPendingAdvance = Number(mineSummary?.totalPendingAdvance || 0);
+  const mineTotalPayableSum = Number(mineSummary?.totalPayableSum || 0);
+
   // Tab items
   const tabItems = [
     {
-      key: "InProgress",
+      key: "inprogress",
       label: (
         <span>
-          <ClockCircleOutlined /> InProgress (
-          {bookings.filter((b) => b.eventConfirmation === "InProgress").length})
+          <ClockCircleOutlined /> InProgress
+          {listStatusTab === "inprogress" ? ` (${bookings.length})` : ""}
         </span>
       ),
     },
     {
-      key: "Confirmed Event",
+      key: "confirmed",
       label: (
         <span>
-          <CheckCircleOutlined /> Confirmed Event (
-          {
-            bookings.filter((b) => b.eventConfirmation === "Confirmed Event")
-              .length
-          }
-          )
+          <CheckCircleOutlined /> Confirmed Event
+          {listStatusTab === "confirmed" ? ` (${bookings.length})` : ""}
         </span>
       ),
     },
     {
-      key: "Cancelled",
+      key: "cancelled",
       label: (
         <span>
-          ❌ Cancelled (
-          {bookings.filter((b) => b.eventConfirmation === "Cancelled").length})
+          ❌ Cancelled
+          {listStatusTab === "cancelled" ? ` (${bookings.length})` : ""}
         </span>
       ),
     },
@@ -554,139 +680,228 @@ const ViewInflow = () => {
           </Row>
         </Card>
 
-        {/* Statistics Cards */}
-        <Row gutter={[24, 24]} className="mt-4" align="stretch">
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{
-                background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
-                color: "white",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                  >
-                    Total Bookings
-                  </Text>
-                }
-                value={totalBookings}
-                prefix="📊"
-                valueStyle={{
+        {/* Statistics Cards (Mine only) */}
+        {eventsScope === "mine" && mineSummary && (
+          <div className="mt-4 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
+                  background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
                   color: "white",
-                  fontSize: 32,
-                  fontWeight: "bold",
                 }}
-              />
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                Active client bookings
-              </Text>
-            </Card>
-          </Col>
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Total Bookings
+                    </Text>
+                  }
+                  value={mineTotalBookings}
+                  prefix="📊"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Bookings matching current filters
+                </Text>
+              </Card>
+            </div>
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
+                  background: "linear-gradient(135deg,#10b981,#059669)",
+                  color: "white",
+                }}
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Total Payable
+                    </Text>
+                  }
+                  value={mineTotalPayableSum}
+                  prefix="💰"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                  formatter={(value) => formatAmount(value)}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Payable sum (from server)
+                </Text>
+              </Card>
+            </div>
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
+                  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
+                  color: "white",
+                }}
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Expected Advance
+                    </Text>
+                  }
+                  value={mineTotalExpectedAdvance}
+                  prefix="📈"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                  formatter={(value) => formatAmount(value)}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Total advance expected
+                </Text>
+              </Card>
+            </div>
 
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{
-                background: "linear-gradient(135deg,#10b981,#059669)",
-                color: "white",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                  >
-                    Total Payable
-                  </Text>
-                }
-                value={totalPayableRevenue}
-                prefix="💰"
-                valueStyle={{
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
+                  background: "linear-gradient(135deg,#22c55e,#16a34a)",
                   color: "white",
-                  fontSize: 28,
-                  fontWeight: "bold",
                 }}
-                formatter={(value) => formatAmount(value)}
-              />
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                Total amount after calculations
-              </Text>
-            </Card>
-          </Col>
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Received Amount
+                    </Text>
+                  }
+                  value={mineTotalReceivedAmount}
+                  prefix="✅"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                  formatter={(value) => formatAmount(value)}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Amount received so far
+                </Text>
+              </Card>
+            </div>
 
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{
-                background: "linear-gradient(135deg,#22c55e,#16a34a)",
-                color: "white",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                  >
-                    Amount Received
-                  </Text>
-                }
-                value={totalReceivedRevenue}
-                prefix="✅"
-                valueStyle={{
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
+                  background: "linear-gradient(135deg,#f59e0b,#d97706)",
                   color: "white",
-                  fontSize: 28,
-                  fontWeight: "bold",
                 }}
-                formatter={(value) => formatAmount(value)}
-              />
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                Payments collected so far
-              </Text>
-            </Card>
-          </Col>
-
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-              style={{
-                background: "linear-gradient(135deg,#f59e0b,#d97706)",
-                color: "white",
-              }}
-            >
-              <Statistic
-                title={
-                  <Text
-                    style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                  >
-                    Pending Amount
-                  </Text>
-                }
-                value={totalPendingRevenue}
-                prefix="⏳"
-                valueStyle={{
-                  color: "white",
-                  fontSize: 28,
-                  fontWeight: "bold",
-                }}
-                formatter={(value) => formatAmount(value)}
-              />
-              <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                Outstanding payments due
-              </Text>
-            </Card>
-          </Col>
-        </Row>
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Pending Advance
+                    </Text>
+                  }
+                  value={mineTotalPendingAdvance}
+                  prefix="⏳"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                  formatter={(value) => formatAmount(value)}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Advance still pending
+                </Text>
+              </Card>
+            </div>
+          </div>
+        )}
 
         {/* Table */}
         <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl overflow-hidden">
+          <Row gutter={[16, 12]} align="middle" style={{ padding: 16 }}>
+            <Col xs={24} sm={12} md={8}>
+              <Text strong className="text-slate-700 text-sm block mb-1">
+                Event Name
+              </Text>
+              <Select
+                allowClear
+                placeholder="All events"
+                value={filterEventName ?? undefined}
+                onChange={(value) => {
+                  setFilterEventName(value);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+                options={eventNameOptions}
+                style={{ width: "100%" }}
+                size="large"
+              />
+            </Col>
+            <Col xs={24} sm={12} md={4}>
+              <Button
+                size="large"
+                onClick={() => {
+                  setFilterEventName(undefined);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+                style={{ marginTop: 30 }}
+                disabled={!filterEventName}
+              >
+                Clear
+              </Button>
+            </Col>
+          </Row>
+          <Row
+            gutter={[16, 12]}
+            align="middle"
+            style={{ padding: "0 16px 16px" }}
+          >
+            <Col xs={24} sm={12} md={6}>
+              <Text strong className="text-slate-700 text-sm block mb-1">
+                Scope
+              </Text>
+              <Radio.Group
+                value={eventsScope}
+                onChange={(e) => {
+                  setEventsScope(e.target.value);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+              >
+                <Radio.Button value="mine">Mine</Radio.Button>
+                <Radio.Button value="all">All</Radio.Button>
+              </Radio.Group>
+            </Col>
+          </Row>
           <Tabs
-            activeKey={activeTab}
+            activeKey={listStatusTab}
             onChange={(key) => {
-              setActiveTab(key);
-              setPagination({ ...pagination, current: 1 });
+              setListStatusTab(key);
+              setPagination((p) => ({ ...p, current: 1 }));
             }}
             items={tabItems}
             size="large"
@@ -694,12 +909,12 @@ const ViewInflow = () => {
           />
           <Table
             columns={columns}
-            dataSource={filteredBookings}
+            dataSource={bookings}
             loading={loading}
             rowKey="_id"
             pagination={{
               ...pagination,
-              total: filteredBookings.length,
+              total: pagination.total,
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} bookings`,
               pageSizeOptions: ["10", "20", "50"],

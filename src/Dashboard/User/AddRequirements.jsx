@@ -46,7 +46,7 @@ const AddRequirements = () => {
     if (!deptId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, config);
+      const res = await axios.get(`${API_BASE_URL}vendor/all`, config);
       setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");
