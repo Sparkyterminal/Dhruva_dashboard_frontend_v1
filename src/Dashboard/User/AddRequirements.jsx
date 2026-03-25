@@ -95,9 +95,12 @@ const AddRequirements = () => {
   }, []);
 
   const onFinish = async (values) => {
+    const selectedVendor = Array.isArray(values.vendor)
+      ? values.vendor[0]
+      : values.vendor;
     const payload = {
       purpose: values.purpose,
-      vendor: values.vendor || null,
+      vendor: selectedVendor || null,
       event_reference: values.event_reference || null,
       amount:
         typeof values.amount === "number"
@@ -208,7 +211,10 @@ const AddRequirements = () => {
                 notFoundContent={loading ? "Loading..." : "No vendors found"}
               >
                 {vendors.map((vendor) => (
-                  <Option key={vendor.id} value={vendor.id}>
+                  <Option
+                    key={vendor.id || vendor._id}
+                    value={vendor.id || vendor._id}
+                  >
                     {`${
                       vendor.vendor_code || vendor.vendor_code === 0
                         ? vendor.vendor_code.toUpperCase()
