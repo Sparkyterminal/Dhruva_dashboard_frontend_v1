@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { Card, Empty } from "antd";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import BudgetReportViewGrid from "./BudgetReportViewGrid";
 
@@ -84,25 +85,33 @@ const BudgetReportDetailsView = ({ reportData }) => {
 
   if (!reportData?.budgetData) {
     return (
-      <div style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
-        No budget data available.
-      </div>
+      <Card className="border-0 shadow-sm m-4" style={{ borderRadius: 12 }}>
+        <Empty
+          description="No budget data available for this report."
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      </Card>
     );
   }
 
   if (!rowData.length) {
     return (
-      <div style={{ padding: 24, textAlign: "center", color: "#94a3b8" }}>
-        No budget items found.
-      </div>
+      <Card className="border-0 shadow-sm m-4" style={{ borderRadius: 12 }}>
+        <Empty
+          description="No budget line items found."
+          image={Empty.PRESENTED_IMAGE_SIMPLE}
+        />
+      </Card>
     );
   }
 
   return (
-    <BudgetReportViewGrid
-      rowData={rowData}
-      pinnedBottomRowData={pinnedBottomRowData}
-    />
+    <div className="p-2 sm:p-3">
+      <BudgetReportViewGrid
+        rowData={rowData}
+        pinnedBottomRowData={pinnedBottomRowData}
+      />
+    </div>
   );
 };
 

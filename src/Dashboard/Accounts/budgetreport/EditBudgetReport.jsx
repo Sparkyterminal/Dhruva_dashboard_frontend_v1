@@ -2,11 +2,13 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { Spin, Alert, Button } from "antd";
+import { Spin, Alert, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import { API_BASE_URL } from "../../../../config";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
+
+const { Title, Text } = Typography;
 
 const EditBudgetReport = () => {
   const { id } = useParams();
@@ -58,14 +60,7 @@ const EditBudgetReport = () => {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-        }}
-      >
+      <div className="budget-report-container flex items-center justify-center min-h-[50vh]">
         <Spin size="large" tip="Loading report…" />
       </div>
     );
@@ -73,71 +68,98 @@ const EditBudgetReport = () => {
 
   if (error) {
     return (
-      <div style={{ padding: 24 }}>
-        <Alert
-          type="error"
-          showIcon
-          message={error}
-          action={
-            <span
-              style={{ cursor: "pointer", textDecoration: "underline" }}
-              onClick={() => navigate("/user/budgetreport/eventwise")}
-            >
-              Back to list
-            </span>
-          }
-        />
+      <div className="budget-report-container">
+        <div className="budget-report-shell max-w-2xl pt-8">
+          <Alert
+            type="error"
+            showIcon
+            message={error}
+            className="rounded-xl"
+            action={
+              <span
+                className="cursor-pointer underline text-indigo-600"
+                onClick={() => navigate("/user/budgetreport/eventwise")}
+              >
+                Back to list
+              </span>
+            }
+          />
+        </div>
       </div>
     );
   }
 
   if (!initialRowData?.length || !eventId) {
     return (
-      <div style={{ padding: 24 }}>
-        <Alert
-          type="warning"
-          message="No report data or event found."
-          action={
-            <span
-              style={{ cursor: "pointer", textDecoration: "underline" }}
-              onClick={() => navigate("/user/budgetreport/eventwise")}
-            >
-              Back to list
-            </span>
-          }
-        />
+      <div className="budget-report-container">
+        <div className="budget-report-shell max-w-2xl pt-8">
+          <Alert
+            type="warning"
+            showIcon
+            message="No report data or event found."
+            className="rounded-xl"
+            action={
+              <span
+                className="cursor-pointer underline text-indigo-600"
+                onClick={() => navigate("/user/budgetreport/eventwise")}
+              >
+                Back to list
+              </span>
+            }
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="budget-report-container" style={{ padding: "24px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate("/user/budgetreport/eventwise")}
-          >
-            Back
-          </Button>
-          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 600 }}>
-            Edit Budget Report
-          </h1>
-        </div>
-      </div>
-      <div className="budget-report-grid">
-        <DataGridSpreadsheet
-          selectedEventId={eventId}
-          initialRowData={initialRowData}
-          reportId={id}
-        />
+    <div className="budget-report-container">
+      <div className="budget-report-shell space-y-6">
+        <Card
+          className="border-0 shadow-md"
+          style={{
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(226,232,240,0.9)",
+          }}
+          bodyStyle={{ padding: "20px 24px" }}
+        >
+          <div className="flex flex-wrap items-center gap-3">
+            <Button
+              icon={<ArrowLeftOutlined />}
+              size="large"
+              className="rounded-xl"
+              onClick={() => navigate("/user/budgetreport/eventwise")}
+            >
+              Back
+            </Button>
+            <div>
+              <Title level={3} className="!mb-0 !text-slate-800">
+                Edit budget report
+              </Title>
+              <Text type="secondary" className="text-sm">
+                Update line items and submit to save changes.
+              </Text>
+            </div>
+          </div>
+        </Card>
+        <Card
+          className="border-0 shadow-md overflow-hidden"
+          style={{
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.95)",
+            border: "1px solid rgba(226,232,240,0.9)",
+          }}
+          bodyStyle={{ padding: "16px 20px 20px" }}
+        >
+          <div className="budget-report-grid" style={{ height: "calc(100vh - 220px)", minHeight: 480 }}>
+            <DataGridSpreadsheet
+              selectedEventId={eventId}
+              initialRowData={initialRowData}
+              reportId={id}
+            />
+          </div>
+        </Card>
       </div>
     </div>
   );

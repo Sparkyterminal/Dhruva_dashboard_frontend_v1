@@ -15,9 +15,26 @@
 .budget-report-container {
   width: 100%;
   min-height: 100vh;
-  background: #f1f5f9;
-  padding: 24px 32px;
   box-sizing: border-box;
+  background: linear-gradient(
+    145deg,
+    #f8fafc 0%,
+    #eef2ff 42%,
+    #faf5ff 100%
+  );
+  padding: 24px 20px 40px;
+}
+
+@media (min-width: 768px) {
+  .budget-report-container {
+    padding: 28px 32px 48px;
+  }
+}
+
+.budget-report-shell {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
 }
 
 .budget-report-header {
@@ -40,6 +57,35 @@
   height: calc(100vh - 120px);
 }
 
+/* Ant Design tables inside budget report flows */
+.budget-report-ant-table .ant-table {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.budget-report-ant-table .ant-table-thead > tr > th {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%) !important;
+  font-weight: 600 !important;
+  color: #475569 !important;
+  border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.budget-report-ant-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.budget-report-ant-table .ant-table-tbody > tr:hover > td {
+  background: #f8fafc !important;
+}
+
+.budget-report-ant-table .ant-pagination-item-active {
+  border-color: #6366f1;
+}
+
+.budget-report-ant-table .ant-pagination-item-active a {
+  color: #4f46e5;
+}
+
 /* ── Spreadsheet wrapper ── */
 .spreadsheet-wrapper {
   width: 100%;
@@ -55,8 +101,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
   flex-wrap: wrap;
+  padding: 14px 18px;
+  margin-bottom: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 14px;
+  box-shadow: 0 4px 24px -10px rgba(15, 23, 42, 0.14);
 }
 
 .toolbar-left {
@@ -72,15 +125,15 @@
 }
 
 .group-name-input {
-  padding: 8px 14px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 6px;
+  padding: 10px 14px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
   font-size: 13px;
   color: #1a1a1a;
   background: #fff;
   outline: none;
-  width: 200px;
-  transition: border-color 0.15s;
+  width: min(220px, 100%);
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .group-name-input:focus {
@@ -93,23 +146,26 @@
 }
 
 .toolbar-btn {
-  padding: 8px 18px;
+  padding: 10px 20px;
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 13px;
   font-weight: 600;
-  transition: all 0.15s;
+  transition: transform 0.12s ease, box-shadow 0.15s ease, background 0.15s;
   white-space: nowrap;
 }
 
 .toolbar-btn-primary {
-  background: #3b82f6;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
   color: #fff;
+  box-shadow: 0 4px 14px -4px rgba(79, 70, 229, 0.55);
 }
 
 .toolbar-btn-primary:hover {
-  background: #2563eb;
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 55%, #6d28d9 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px -4px rgba(79, 70, 229, 0.5);
 }
 
 .toolbar-btn-primary:disabled {
@@ -129,11 +185,12 @@
 
 .row-count-badge {
   font-size: 12px;
-  color: #64748b;
-  background: #e2e8f0;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-weight: 500;
+  color: #4338ca;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  border: 1px solid #c7d2fe;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-weight: 600;
 }
 
 /* ── AG Grid overrides ── */
@@ -141,6 +198,21 @@
   flex: 1;
   width: 100%;
   min-height: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 8px 32px -12px rgba(15, 23, 42, 0.12);
+  background: #fff;
+}
+
+/* Read-only budget grid (drawer / details) */
+.budget-report-view-grid {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 20px -8px rgba(15, 23, 42, 0.1);
+  background: #fff;
 }
 
 /* Force black text everywhere */
@@ -156,8 +228,8 @@
 
 /* Header styling */
 .ag-theme-alpine .ag-header {
-  background: #1e293b !important;
-  border-bottom: 2px solid #334155 !important;
+  background: linear-gradient(135deg, #1e293b 0%, #312e81 100%) !important;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.35) !important;
 }
 
 .ag-theme-alpine .ag-header-cell {

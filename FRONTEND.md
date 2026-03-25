@@ -1,324 +1,171 @@
-# Daybook API — Frontend integration
+# Budget report & event detail — Frontend integration
 
-Single read-only endpoint that returns **cash movement for one calendar day (UTC)**: money **in** from event advance receipts and money **out** from paid requests, plus a simple profit/loss line.
+This document describes how the **budget report** is returned on **single-event fetch**, the **clone** API, and how it lines up with the **event form**.
 
 ---
 
 ## Base URL
 
-Mount path: **`/api/daybook`** (same origin as your other APIs).
-
-Full example:
-
-```text
-https://<your-api-host>/api/daybook?date=2026-02-07
-```
+Budget routes mount at **`/api/budget-report`**. Events mount at **`/api/events`** (see your `app.js` / `API_ROOT` if different).
 
 ---
 
 ## Authentication
 
-| Requirement | Value |
-|-------------|--------|
-| Header | `Authorization: <JWT>` |
-| Format | **Raw JWT string** (same as other protected routes — no `Bearer ` prefix required by backend; send whatever your app already uses for `isAuth` routes). |
-| Token payload | Must include a **`role`** field (used again inside the handler). |
-
-**Allowed roles** (others get `401`):
-
-`OWNER`, `ADMIN`, `CA`, `ACCOUNTS`, `APPROVER`, `DEPARTMENT`
+Protected routes expect the same **`Authorization`** header (JWT) as other `isAuth` routes in this project.
 
 ---
 
-## HTTP method & route
+## 1. Get event with budget report (event form / detail page)
+
+### Request
 
 | Method | Path |
 |--------|------|
-| `GET` | `/api/daybook` |
+| `GET` | `/api/events/:eventId` |
 
-There is **no** request body. Everything is query string.
+`:eventId` is the MongoDB `_id` of the **booking / event** document.
 
----
-
-## Query parameters
-
-| Parameter | Required | Description |
-|-----------|----------|----------------|
-| **`date`** | **Yes** | Day to report on. Use **`YYYY-MM-DD`** (e.g. `2026-02-07`). Parsed as a date; the server builds a **UTC** window: that day `00:00:00.000Z` → `23:59:59.999Z`. |
-| **`limit`** | No | Max rows returned in each of **`inflow.data`** and **`outflow.data`**. Default **200**, min **1**, max **1000**. **Totals** (`inflow.total`, `outflow.total`, counts) are still **full-day aggregates**, not limited by this cap. |
-
-### Example query strings
-
-```text
-/api/daybook?date=2026-02-07
-/api/daybook?date=2026-02-07&limit=500
-```
-
----
-
-## What the backend counts (business rules)
-
-### Inflow (money in)
-
-- Source: **Events** → `eventTypes[].advances[]`
-- Included when:
-  - `receivedAmount > 0`, and  
-  - `receivedDate` falls inside the **UTC** day window for `date`.
-
-### Outflow (money out)
-
-- Source: **Requests** (vendor / payment requests)
-- Included when:
-  - `is_archived` is not `true`,
-  - `amount_paid > 0`,
-  - `updatedAt` falls inside the **UTC** day window for `date`.
-
-### Profit / loss
-
-```text
-profitAndLoss.value = inflow.total - outflow.total
-```
-
-- If `value >= 0` → `profitAndLoss.type === "PROFIT"`
-- Else → `"LOSS"`
-
----
-
-## Success response — `200 OK`
-
-Content-Type: `application/json`
-
-### Top-level shape
-
-```typescript
-type DaybookResponse = {
-  date: string;              // echo of query date, e.g. "2026-02-07"
-  range: {
-    start: string;           // ISO date-time, UTC start of day
-    end: string;             // ISO date-time, UTC end of day
-  };
-  inflow: {
-    total: number;           // sum of all matching advance receivedAmount (full day)
-    count: number;           // number of matching advance rows (full day)
-    data: InflowRow[];       // up to `meta.dataLimit` rows, newest receivedDate first
-  };
-  outflow: {
-    total: number;           // sum of amount_paid for matching requests (full day)
-    count: number;           // number of matching requests (full day)
-    data: OutflowRow[];      // up to `meta.dataLimit` rows, newest updatedAt first
-  };
-  profitAndLoss: {
-    value: number;
-    type: "PROFIT" | "LOSS";
-  };
-  meta: {
-    dataLimit: number;       // effective limit used for data arrays
-  };
-};
-```
-
-### `inflow.data[]` — `InflowRow`
-
-| Field | Type | Notes |
-|-------|------|--------|
-| `eventId` | string | Event (booking) `_id` |
-| `eventName` | string \| object | Stored **EventName** ref on event; often serialized as **ObjectId string** unless backend adds `$lookup` later |
-| `eventType` | string \| null | **ObjectId** of sub-event type (e.g. Reception) or null |
-| `clientName` | string | Client name on the event |
-| `advanceNumber` | number | Advance slot number |
-| `receivedAmount` | number | Amount received |
-| `receivedDate` | string \| null | ISO datetime |
-| `remarks` | string | Advance remarks |
-| `modeOfPayment` | string \| null | e.g. `cash`, `account` |
-| `givenBy` | string \| null | |
-| `collectedBy` | string \| null | |
-
-### `outflow.data[]` — `OutflowRow`
-
-| Field | Type | Notes |
-|-------|------|--------|
-| `requestId` | string | Request `_id` |
-| `purpose` | string | |
-| `amountPaid` | number | Maps from `amount_paid` |
-| `amountPaidTo` | string | |
-| `entityAccount` | string | |
-| `status` | string | e.g. `PENDING`, `APPROVED`, `REJECTED`, `COMPLETED` |
-| `requiredDate` | string \| null | ISO |
-| `paidAt` | string \| null | `updatedAt` or fallback `createdAt` |
-| `vendor` | object \| null | `{ id, name, vendor_code }` if populated |
-| `eventReference` | object \| null | Linked event summary `{ id, clientName }` if populated |
-
----
-
-## Full example payload (`200`)
+### Response shape (200)
 
 ```json
 {
-  "date": "2026-02-07",
-  "range": {
-    "start": "2026-02-07T00:00:00.000Z",
-    "end": "2026-02-07T23:59:59.999Z"
-  },
-  "inflow": {
-    "total": 1500000,
-    "count": 4,
-    "data": [
-      {
-        "eventId": "698af8e659cde61c1a5a1d23",
-        "eventName": "695b664050abcca5388d10ba",
-        "eventType": "695cbe7638fd4b333765b77f",
-        "clientName": "Kushal",
-        "advanceNumber": 1,
-        "receivedAmount": 300000,
-        "receivedDate": "2026-02-07T18:30:00.000Z",
-        "remarks": "",
-        "modeOfPayment": "cash",
-        "givenBy": "Kushal",
-        "collectedBy": "Venkatesh"
-      }
-    ]
-  },
-  "outflow": {
-    "total": 850000,
-    "count": 2,
-    "data": [
-      {
-        "requestId": "67a1b2c3d4e5f6789012345",
-        "purpose": "Vendor payment — decor",
-        "amountPaid": 500000,
-        "amountPaidTo": "Vendor ABC",
-        "entityAccount": "",
-        "status": "COMPLETED",
-        "requiredDate": "2026-02-05T00:00:00.000Z",
-        "paidAt": "2026-02-07T10:15:00.000Z",
-        "vendor": {
-          "_id": "678901234567890123456789",
-          "name": "ABC Decor",
-          "vendor_code": "V-001"
-        },
-        "eventReference": {
-          "_id": "698af8e659cde61c1a5a1d23",
-          "clientName": "Kushal"
-        }
-      }
-    ]
-  },
-  "profitAndLoss": {
-    "value": 650000,
-    "type": "PROFIT"
-  },
-  "meta": {
-    "dataLimit": 200
-  }
+  "event": { },
+  "budgetReport": { },
+  "budgetReportsCount": 0
 }
 ```
 
+| Field | Type | Description |
+|--------|------|-------------|
+| **`event`** | object | Same populated event document as before (eventName, eventTypes, leads, createdBy, etc.). |
+| **`budgetReport`** | object \| `null` | **Latest** budget report for this `eventId` (by `createdAt` descending). Same populated shape as `GET /api/budget-report/:id` (see below). **`null`** if none exists. |
+| **`budgetReportsCount`** | number | Total reports stored for this event (e.g. after clones you may have `count > 1` while `budgetReport` is still only the newest). |
+
+### Using this on the event form
+
+1. Load **`GET /api/events/:eventId`** once.
+2. Bind the form from **`event`** as today.
+3. If **`budgetReport`** is non-null, initialise the budget UI from **`budgetReport.budgetData`**, **`budgetReport.exteriorDetails`**, **`budgetReport.metadata`**, and use **`budgetReport._id`** for updates (`PUT /api/budget-report/:id`).
+4. If **`budgetReport`** is `null`, the event has no budget yet → create with **`POST /api/budget-report`** (body includes `eventId` = this event’s `_id`).
+5. If **`budgetReportsCount > 1`**, you may show a note or a separate “versions” UI; the API still returns only the **latest** on this endpoint. For a full list for one event, you can use **`GET /api/budget-report`** (all reports) and filter client-side by `eventId._id`, or ask backend for a dedicated list-by-event if needed.
+
+### List / other event GET endpoints (same budget fields on each event)
+
+These responses include **`budgetReport`** and **`budgetReportsCount`** on **each** event object (latest populated report + total count for that booking), using the same populated shape as above:
+
+| Method | Path | Notes |
+|--------|------|--------|
+| `GET` | `/api/events` | Each item in **`events`** has `budgetReport`, `budgetReportsCount` (plus existing fields like `advanceTotals`). |
+| `GET` | `/api/events/my-events` | Same on each **`events`** item. |
+| `GET` | `/api/events/minimal` | Each slim row includes **`budgetReport`** / **`budgetReportsCount`** (payload can be large if many events have budgets). |
+
+**Leaderboard:** `GET /api/events/leaderboard` in **`mode=mostAmount`** (amount mode only): each object inside **`leaderboard[].events`** includes **`budgetReport`** and **`budgetReportsCount`**. The **mostBooked** mode does not return per-event rows, so there is no budget there.
+
+### Populated `budgetReport` (high level)
+
+After aggregation, the report matches other budget endpoints:
+
+- **`_id`**, **`budgetData`**, **`exteriorDetails`**, **`metadata`**, **`createdAt`**, **`updatedAt`**
+- **`eventId`**: expanded to the **event** subdocument (with nested **eventName** from `eventnames`), not a bare ObjectId.
+- **`vendorIds`**: replaced by an array of **vendor** subdocuments (`name`, `vendor_code`, `email`, `cont_person`, `mobile_no`) for rows referenced in `budgetData.groups`.
+
+Raw `budgetData` structure (from your domain) looks like:
+
+- **`budgetData.groups`**: object whose keys are group names (e.g. `"Infrastructure"`, `"Stationery"`); each value is an array of line items (`slNo`, `particulars`, `vendorId`, `vendorCode`, `vendorName`, amounts, flags, etc.).
+- **`budgetData.grandTotals`**, **`budgetData.summary`**: rolled-up numbers.
+
 ---
 
-## Error responses
+## 2. Clone budget report
 
-| Status | When | Example body |
-|--------|------|----------------|
-| **401** | Missing/invalid/expired token, or role not allowed | `{ "message": "..." }` (see `utils/messages`) |
-| **400** | Missing `date` | `{ "message": "date query is required", "example": "/api/daybook?date=2026-02-07" }` |
-| **400** | Bad date | `{ "message": "Invalid date format", "example": "YYYY-MM-DD" }` |
-| **500** | Server / DB error | `{ "message": "...", "error": "<detail>" }` |
+### Request
 
----
+| Method | Path |
+|--------|------|
+| `POST` | `/api/budget-report/:id/clone` |
 
-## Frontend integration examples
+`:id` is the **`_id` of the budget report** to copy (not the event id).
 
-### Vanilla `fetch`
+### Body (JSON, optional)
 
-```javascript
-const API_BASE = import.meta.env.VITE_API_URL; // or your config
-const token = getToken(); // your auth helper
+| Field | Required | Description |
+|--------|----------|-------------|
+| **`eventId`** | No | If set, the **new** report is linked to this event. Must exist. If omitted, the clone keeps the **same** `eventId` as the source (second report on the same event). |
+| **`metadata`** | No | Plain object merged **on top of** a deep copy of the source `metadata` (before the server adds clone fields). |
 
-async function fetchDaybook(yyyyMmDd, limit = 200) {
-  const params = new URLSearchParams({ date: yyyyMmDd });
-  if (limit) params.set('limit', String(limit));
+The server always sets on the new document:
 
-  const res = await fetch(`${API_BASE}/daybook?${params}`, {
-    method: 'GET',
-    headers: {
-      Authorization: token,
-      Accept: 'application/json',
-    },
-  });
+- **`metadata.clonedFromReportId`** — source report id (string)
+- **`metadata.clonedAt`** — ISO timestamp
 
-  const body = await res.json();
-  if (!res.ok) throw new Error(body.message || `HTTP ${res.status}`);
-  return body;
+### Response (201)
+
+Same pattern as create:
+
+```json
+{
+  "message": "Budget report cloned successfully",
+  "data": { }
 }
-
-// usage
-const daybook = await fetchDaybook('2026-02-07', 200);
-console.log(daybook.inflow.total, daybook.outflow.total, daybook.profitAndLoss);
 ```
 
-### Axios
+`data` is the **new** report with the same populated shape as **`GET /api/budget-report/:id`**.
 
-```javascript
-import axios from 'axios';
+### Typical frontend flows
 
-export async function getDaybook(date, limit) {
-  const { data } = await axios.get(`${API_BASE}/daybook`, {
-    params: { date, ...(limit != null && { limit }) },
-    headers: { Authorization: token },
-  });
-  return data;
-}
+**A. Duplicate budget on the same event**
+
+```http
+POST /api/budget-report/69998e0fa45e031c877b1b6a/clone
+Content-Type: application/json
+
+{}
 ```
 
-### React (example pattern)
+Then refresh event detail or refetch **`GET /api/events/:eventId`** — `budgetReport` will be the **newest** clone.
 
-```tsx
-const [date, setDate] = useState(() => format(new Date(), 'yyyy-MM-dd'));
-const [data, setData] = useState(null);
-const [err, setErr] = useState(null);
+**B. Copy budget to another event’s form**
 
-useEffect(() => {
-  let cancelled = false;
-  (async () => {
-    try {
-      setErr(null);
-      const json = await fetchDaybook(date);
-      if (!cancelled) setData(json);
-    } catch (e) {
-      if (!cancelled) setErr(e.message);
-    }
-  })();
-  return () => { cancelled = true; };
-}, [date]);
+```http
+POST /api/budget-report/69998e0fa45e031c877b1b6a/clone
+Content-Type: application/json
+
+{ "eventId": "6971d0e0b799243ee039032b" }
 ```
 
-### UI hints
+Navigate to the target event and load **`GET /api/events/:targetEventId`** to show the linked budget.
 
-1. **Date picker** → format as **`YYYY-MM-DD`** for the query (use a library or manual pad).
-2. **Totals vs tables**: Show **`inflow.total` / `outflow.total`** and **`profitAndLoss`** for summary cards; bind tables to **`inflow.data`** / **`outflow.data`**.
-3. **Timezone**: Backend uses **UTC** for the day boundary. If product owners work in **IST**, align expectations (same calendar date in IST can split across two UTC days). For IST-specific days, a future API change would be needed.
-4. **IDs in inflow**: `eventName` / `eventType` may be **ObjectId strings** — resolve names via your event-name / event-type caches or a separate API if the UI needs labels.
-5. **Large days**: Increase **`limit`** (max 1000) for longer lists; totals still reflect the full day.
-6. **Daybook page**: Render under `/user/daybook` using `inflow`, `outflow`, and `profitAndLoss` from the API response.
+### Errors (summary)
+
+| Situation | Typical status |
+|-----------|----------------|
+| Invalid `:id` | `400` |
+| Source report not found | `404` (project uses custom code; treat as not found) |
+| Invalid / missing target `eventId` | `400` |
+| Target event not found | `404` |
+| Source `budgetData` not cloneable | `422` |
 
 ---
 
-## Checklist for integration
+## 3. Related budget endpoints (reference)
 
-- [ ] `GET /api/daybook?date=YYYY-MM-DD`
-- [ ] `limit` is optional. Frontend UI defaults to `limit=200`.
-- [ ] Send **`Authorization`** JWT (verified by `isAuth`)
-- [ ] User **`role`** is one of the allowed roles
-- [ ] Handle **401 / 400 / 500**
-- [ ] Render **inflow** / **outflow** sections + **profitAndLoss**
-- [ ] Remember **data arrays are capped** by `limit`; **totals are not**
+| Method | Path | Purpose |
+|--------|------|---------|
+| `POST` | `/api/budget-report` | Create (`eventId`, `budgetData`, optional `metadata`, `exteriorDetails`) |
+| `GET` | `/api/budget-report/:id` | Single report (same populated shape as on event GET) |
+| `PUT` | `/api/budget-report/:id` | Update |
+| `GET` | `/api/budget-report/event/:eventId` | Latest report for event only (no full event payload) |
+| `GET` | `/api/vendor/minimal` | Dropdown: `_id`, `name`, `vendor_code` |
 
 ---
 
-## Related backend files
+## 4. Vendor minimal list (budget lines)
 
-| File | Role |
-|------|------|
-| `Routes/daybook/index.js` | Route + `isAuth` |
-| `Controlers/daybook/index.js` | Aggregation & response mapping |
-| `app.js` | `app.use('/api/daybook', daybookRoutes)` |
+`GET /api/vendor/minimal?search=&limit=`
+
+Returns `{ success, totalVendors, vendors: [{ _id, name, vendor_code }], meta }` for binding **`vendorId`** / display codes on budget rows.
+
+---
+
+*Last updated for: event GET includes `budgetReport` + `budgetReportsCount`, budget clone `POST /:id/clone`.*

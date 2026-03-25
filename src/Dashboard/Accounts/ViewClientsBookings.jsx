@@ -50,6 +50,7 @@ import {
   CLIENT_BOOKINGS_LIST_TAB_API_STATUS,
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
+import BudgetReportDrawerSection from "./budgetreport/BudgetReportDrawerSection";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 
 const { Title, Text } = Typography;
@@ -61,6 +62,9 @@ const ViewClientsBookings = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [budgetReportDrawerOpen, setBudgetReportDrawerOpen] = useState(false);
+  const [budgetReportDrawerRecord, setBudgetReportDrawerRecord] =
+    useState(null);
   const [editingAdvances, setEditingAdvances] = useState([]);
   const [savingAdvance, setSavingAdvance] = useState(null);
   const [editingAdvanceKey, setEditingAdvanceKey] = useState(null); // Track which advance is being edited
@@ -216,6 +220,16 @@ const ViewClientsBookings = () => {
     setDrawerVisible(true);
   };
 
+  const openBudgetReportDrawer = (record) => {
+    setBudgetReportDrawerRecord(record);
+    setBudgetReportDrawerOpen(true);
+  };
+
+  const closeBudgetReportDrawer = () => {
+    setBudgetReportDrawerOpen(false);
+    setBudgetReportDrawerRecord(null);
+  };
+
   const closeDrawer = () => {
     setDrawerVisible(false);
     setSelectedEvent(null);
@@ -348,6 +362,7 @@ const ViewClientsBookings = () => {
           pagination={pagination}
           handleTableChange={handleTableChange}
           showEventDetailsDrawer={showEventDetailsDrawer}
+          onViewBudgetReport={openBudgetReportDrawer}
         />
       ),
     },
@@ -1688,6 +1703,34 @@ const ViewClientsBookings = () => {
             )}
           </div>
         )}
+      </Drawer>
+
+      <Drawer
+        title={
+          <div>
+            <div className="text-lg font-semibold text-slate-800">
+              Budget report
+            </div>
+            {budgetReportDrawerRecord && (
+              <div className="text-xs text-slate-500 font-normal mt-0.5">
+                {getEventName(budgetReportDrawerRecord.eventName)} ·{" "}
+                {budgetReportDrawerRecord.clientName}
+              </div>
+            )}
+          </div>
+        }
+        open={budgetReportDrawerOpen}
+        onClose={closeBudgetReportDrawer}
+        width="90%"
+        className="budget-report-standalone-drawer"
+        bodyStyle={{ padding: 16, background: "#f8fafc" }}
+      >
+        {budgetReportDrawerRecord?.budgetReport ? (
+          <BudgetReportDrawerSection
+            budgetReport={budgetReportDrawerRecord.budgetReport}
+            count={budgetReportDrawerRecord.budgetReportsCount}
+          />
+        ) : null}
       </Drawer>
 
       <style>{`

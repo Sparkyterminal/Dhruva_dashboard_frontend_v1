@@ -82,14 +82,16 @@ const AgreedAmountBreakupCard = ({ event }) => {
   if (isCompletePaymentWedding(event) && event.eventTypes[0]) {
     return (
       <Card
+        className="border-0 shadow-md"
         style={{
-          borderRadius: "12px",
-          border: "1px solid #e2e8f0",
+          borderRadius: 16,
           marginBottom: 16,
+          background: "rgba(255,255,255,0.98)",
+          border: "1px solid rgba(226,232,240,0.95)",
         }}
         title={
-          <span style={{ fontWeight: 600, color: "#1e293b", fontSize: "14px" }}>
-            Agreed Amount & Breakup (Complete Package)
+          <span className="font-semibold text-slate-800 text-sm">
+            Agreed amount & breakup (complete package)
           </span>
         }
         bodyStyle={{ padding: "16px 20px" }}
@@ -105,17 +107,19 @@ const AgreedAmountBreakupCard = ({ event }) => {
       {event.eventTypes.map((eventType, index) => (
         <Card
           key={eventType._id || index}
+          className="border-0 shadow-md"
           style={{
-            borderRadius: "12px",
-            border: "1px solid #e2e8f0",
+            borderRadius: 16,
             marginBottom: 16,
+            background: "rgba(255,255,255,0.98)",
+            border: "1px solid rgba(226,232,240,0.95)",
           }}
           title={
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
-              <span style={{ fontWeight: 600, color: "#1e293b", fontSize: "14px" }}>
-                {eventType.eventType?.name || eventType.eventType || "Event Type"} — Agreed Amount & Breakup
+              <span className="font-semibold text-slate-800 text-sm">
+                {eventType.eventType?.name || eventType.eventType || "Event type"} — agreed amount & breakup
               </span>
-              <Tag color="blue" style={{ borderRadius: 6, margin: 0 }}>
+              <Tag color="geekblue" style={{ borderRadius: 8, margin: 0, fontWeight: 600 }}>
                 Event {index + 1}
               </Tag>
             </div>

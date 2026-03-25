@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { Select, message, Button, Card } from "antd";
+import { Select, message, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
+
+const { Title, Text } = Typography;
 import { API_BASE_URL } from "../../../../config";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
@@ -53,20 +55,16 @@ const BudgetReportHome = () => {
     : null;
 
   return (
-    <div
-      className="budget-report-container"
-      style={{
-        padding: "24px",
-        maxWidth: 1400,
-        margin: "0 auto",
-        minHeight: "100vh",
-      }}
-    >
+    <div className="budget-report-container">
+      <div className="budget-report-shell space-y-6">
       <Card
+        className="border-0 shadow-md"
         style={{
-          marginBottom: 24,
-          borderRadius: 12,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          marginBottom: 0,
+          borderRadius: 16,
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(10px)",
+          border: "1px solid rgba(226,232,240,0.9)",
         }}
         bodyStyle={{ padding: "20px 24px" }}
       >
@@ -84,21 +82,18 @@ const BudgetReportHome = () => {
               icon={<ArrowLeftOutlined />}
               onClick={() => navigate("/user/budgetreport/eventwise")}
               size="large"
-              style={{ borderRadius: 8 }}
+              className="rounded-xl"
             >
               Back
             </Button>
-            <h1
-              className="budget-report-title"
-              style={{
-                margin: 0,
-                fontSize: "1.5rem",
-                fontWeight: 700,
-                color: "#1e293b",
-              }}
-            >
-              Budget Report
-            </h1>
+            <div>
+              <Title level={3} className="!mb-0 !text-slate-800">
+                Budget report
+              </Title>
+              <Text type="secondary" className="text-sm block mt-1">
+                Pick a confirmed event, then fill or review the spreadsheet below.
+              </Text>
+            </div>
           </div>
           <div
             style={{
@@ -107,22 +102,15 @@ const BudgetReportHome = () => {
               gap: 12,
               flex: "1 1 320px",
               minWidth: 280,
-              maxWidth: 420,
+              maxWidth: 480,
               justifyContent: "flex-end",
             }}
           >
-            <label
-              style={{
-                fontWeight: 600,
-                color: "#475569",
-                fontSize: "14px",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Select Confirmed Event:
-            </label>
+            <Text strong className="text-slate-600 whitespace-nowrap text-sm">
+              Confirmed event
+            </Text>
             <Select
-              style={{ flex: 1, minWidth: 200, borderRadius: 8 }}
+              className="min-w-[200px] flex-1"
               placeholder="Select a confirmed event"
               loading={loading}
               value={selectedEventId}
@@ -148,19 +136,28 @@ const BudgetReportHome = () => {
       )}
 
       <Card
+        className="border-0 shadow-md overflow-hidden"
         style={{
-          borderRadius: 12,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+          borderRadius: 16,
+          background: "rgba(255,255,255,0.95)",
+          border: "1px solid rgba(226,232,240,0.9)",
         }}
-        Style={{ padding: "20px 24px" }}
+        bodyStyle={{ padding: "16px 20px 20px" }}
       >
+        {!selectedEventId && (
+          <div className="mb-4 rounded-xl border border-dashed border-indigo-200 bg-indigo-50/50 px-4 py-3 text-sm text-slate-600">
+            Select an event above to enable saving. You can still explore the grid
+            layout beforehand.
+          </div>
+        )}
         <div
           className="budget-report-grid"
-          style={{ minHeight: 480, height: "calc(100vh - 220px)" }}
+          style={{ minHeight: 480, height: "calc(100vh - 260px)" }}
         >
           <DataGridSpreadsheet selectedEventId={selectedEventId} />
         </div>
       </Card>
+      </div>
     </div>
   );
 };

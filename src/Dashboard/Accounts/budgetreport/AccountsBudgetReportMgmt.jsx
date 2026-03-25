@@ -5,12 +5,23 @@ import React, {
   useState,
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button, Table, message, Spin, Alert, InputNumber } from "antd";
+import {
+  Button,
+  Table,
+  message,
+  Spin,
+  Alert,
+  InputNumber,
+  Card,
+  Typography,
+} from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../../../config";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
+
+const { Title, Text } = Typography;
 
 const ACCOUNT_PERCENT = 0.8; // 80% of event account amount – max we can allocate as "account"
 
@@ -449,14 +460,7 @@ const AccountsBudgetReportMgmt = () => {
 
   if (loading) {
     return (
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          minHeight: 400,
-        }}
-      >
+      <div className="budget-report-container flex items-center justify-center min-h-[50vh]">
         <Spin size="large" tip="Loading…" />
       </div>
     );
@@ -464,91 +468,112 @@ const AccountsBudgetReportMgmt = () => {
 
   if (error) {
     return (
-      <div style={{ padding: 24 }}>
-        <Alert
-          type="error"
-          showIcon
-          message={error}
-          action={
-            <Button size="small" onClick={() => navigate("/user/budgetreport/eventwise")}>
-              Back to list
-            </Button>
-          }
-        />
+      <div className="budget-report-container">
+        <div className="budget-report-shell max-w-2xl pt-8">
+          <Alert
+            type="error"
+            showIcon
+            message={error}
+            className="rounded-xl"
+            action={
+              <Button size="small" onClick={() => navigate("/user/budgetreport/eventwise")}>
+                Back to list
+              </Button>
+            }
+          />
+        </div>
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "24px" }}>
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 20,
-          flexWrap: "wrap",
-          gap: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <Button
-            icon={<ArrowLeftOutlined />}
-            onClick={() => navigate("/user/budgetreport/eventwise")}
-          >
-            Back
-          </Button>
-          <h1 style={{ margin: 0, fontSize: "22px", fontWeight: 600 }}>
-            Accounts – Budget Report Management
-          </h1>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button
-            type={isEditing ? "default" : "primary"}
-            onClick={() => setIsEditing((e) => !e)}
-          >
-            {isEditing ? "Cancel edit" : "Edit"}
-          </Button>
-          <Button
-            type="primary"
-            onClick={handleSubmit}
-            loading={isSubmitting}
-            disabled={!isEditing}
-          >
-            Submit
-          </Button>
-        </div>
-      </div>
-
-      {event?.eventTypes?.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div
-            style={{
-              fontSize: "16px",
-              fontWeight: 600,
-              color: "#1e293b",
-              marginBottom: 12,
-            }}
-          >
-            Agreed Amount & Breakup
+    <div className="budget-report-container">
+      <div className="budget-report-shell space-y-6">
+        <Card
+          className="border-0 shadow-md"
+          style={{
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.92)",
+            border: "1px solid rgba(226,232,240,0.9)",
+          }}
+          bodyStyle={{ padding: "20px 24px" }}
+        >
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                icon={<ArrowLeftOutlined />}
+                size="large"
+                className="rounded-xl"
+                onClick={() => navigate("/user/budgetreport/eventwise")}
+              >
+                Back
+              </Button>
+              <div>
+                <Title level={3} className="!mb-0 !text-slate-800">
+                  Accounts — budget report
+                </Title>
+                <Text type="secondary" className="text-sm">
+                  Adjust TDS, net, account and cash splits; submit when done.
+                </Text>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="large"
+                type={isEditing ? "default" : "primary"}
+                className="rounded-xl"
+                onClick={() => setIsEditing((e) => !e)}
+              >
+                {isEditing ? "Cancel edit" : "Edit"}
+              </Button>
+              <Button
+                type="primary"
+                size="large"
+                className="rounded-xl"
+                onClick={handleSubmit}
+                loading={isSubmitting}
+                disabled={!isEditing}
+              >
+                Submit
+              </Button>
+            </div>
           </div>
-          <AgreedAmountBreakupCard event={event} />
-        </div>
-      )}
+        </Card>
 
-      {vendorRows.length === 0 ? (
-        <Alert
-          type="info"
-          message="No vendor rows in this budget report. Rows with a selected vendor and Actual Paid Amount are shown here."
-        />
-      ) : (
-        <Table
-          rowKey="rowKey"
-          columns={columns}
-          dataSource={vendorRows}
-          pagination={false}
-          scroll={{ x: 900 }}
-          summary={() => (
+        {event?.eventTypes?.length > 0 && (
+          <div>
+            <Title level={5} className="!mb-3 !text-slate-800">
+              Agreed amount & breakup
+            </Title>
+            <AgreedAmountBreakupCard event={event} />
+          </div>
+        )}
+
+        <Card
+          className="border-0 shadow-md budget-report-ant-table"
+          style={{
+            borderRadius: 16,
+            background: "rgba(255,255,255,0.95)",
+            border: "1px solid rgba(226,232,240,0.9)",
+          }}
+          bodyStyle={{ padding: "20px 24px" }}
+        >
+          {vendorRows.length === 0 ? (
+            <Alert
+              type="info"
+              showIcon
+              message="No vendor rows"
+              description="This view lists rows that have a vendor and an actual paid amount. Add or complete those rows in the main budget report editor."
+              className="rounded-xl border-indigo-100 bg-indigo-50/40"
+            />
+          ) : (
+            <Table
+              rowKey="rowKey"
+              columns={columns}
+              dataSource={vendorRows}
+              pagination={false}
+              scroll={{ x: 900 }}
+              summary={() => (
             <Table.Summary fixed>
               <Table.Summary.Row>
                 <Table.Summary.Cell index={0}>
@@ -578,8 +603,10 @@ const AccountsBudgetReportMgmt = () => {
               </Table.Summary.Row>
             </Table.Summary>
           )}
-        />
-      )}
+            />
+          )}
+        </Card>
+      </div>
     </div>
   );
 };

@@ -34,7 +34,17 @@ import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
 
 const { Text } = Typography;
 
-const buildColumns = (listStatusTab, formatDateFn, formatAmountFn, getEventNameFn, getTotalBookedFn, getTotalExpectedFn, getTotalReceivedFn, onViewDetails) => [
+const buildColumns = (
+  listStatusTab,
+  formatDateFn,
+  formatAmountFn,
+  getEventNameFn,
+  getTotalBookedFn,
+  getTotalExpectedFn,
+  getTotalReceivedFn,
+  onViewDetails,
+  onViewBudgetReport,
+) => [
   {
     title: "Event Confirmation",
     dataIndex: "eventConfirmation",
@@ -222,6 +232,26 @@ const buildColumns = (listStatusTab, formatDateFn, formatAmountFn, getEventNameF
     },
   },
   {
+    title: "Budget Report",
+    key: "budgetReport",
+    width: 120,
+    align: "center",
+    render: (_, record) => {
+      if (!record.budgetReport) return null;
+      return (
+        <Button
+          type="link"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={() => onViewBudgetReport(record)}
+          className="text-indigo-600 p-0 h-auto"
+        >
+          View
+        </Button>
+      );
+    },
+  },
+  {
     title: "Event Types",
     key: "eventTypes",
     width: 110,
@@ -250,6 +280,7 @@ const ClientBookingsListTab = ({
   pagination,
   handleTableChange,
   showEventDetailsDrawer,
+  onViewBudgetReport,
   bookingsSummary,
   setFilterEventName,
   setFilterDateRange,
@@ -278,6 +309,7 @@ const ClientBookingsListTab = ({
     getTotalExpectedAdvances,
     getTotalReceivedAdvances,
     showEventDetailsDrawer,
+    onViewBudgetReport,
   );
 
   return (
@@ -389,7 +421,7 @@ const ClientBookingsListTab = ({
               pageSizeOptions: ["10", "20", "50"],
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1320 }}
             className="custom-table"
           />
         </Card>

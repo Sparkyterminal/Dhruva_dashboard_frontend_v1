@@ -40,6 +40,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
+import BudgetReportDrawerSection from "../Accounts/budgetreport/BudgetReportDrawerSection";
 
 const { Title, Text } = Typography;
 
@@ -49,6 +50,9 @@ const ViewInflow = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [budgetReportDrawerOpen, setBudgetReportDrawerOpen] = useState(false);
+  const [budgetReportDrawerRecord, setBudgetReportDrawerRecord] =
+    useState(null);
   const [listStatusTab, setListStatusTab] = useState("inprogress");
   const [eventsScope, setEventsScope] = useState("mine"); // mine => /events/my-events, all => /events
   const [filterEventName, setFilterEventName] = useState(undefined);
@@ -331,6 +335,16 @@ const ViewInflow = () => {
     setDrawerVisible(true);
   };
 
+  const openBudgetReportDrawer = (record) => {
+    setBudgetReportDrawerRecord(record);
+    setBudgetReportDrawerOpen(true);
+  };
+
+  const closeBudgetReportDrawer = () => {
+    setBudgetReportDrawerOpen(false);
+    setBudgetReportDrawerRecord(null);
+  };
+
   const columns = [
     {
       title: "Status",
@@ -531,6 +545,26 @@ const ViewInflow = () => {
               {percentage}% Collected
             </Tag>
           </div>
+        );
+      },
+    },
+    {
+      title: "Budget Report",
+      key: "budgetReport",
+      width: 120,
+      align: "center",
+      render: (_, record) => {
+        if (!record.budgetReport) return null;
+        return (
+          <Button
+            type="link"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => openBudgetReportDrawer(record)}
+            className="text-indigo-600 p-0 h-auto"
+          >
+            View
+          </Button>
         );
       },
     },
@@ -920,7 +954,7 @@ const ViewInflow = () => {
               pageSizeOptions: ["10", "20", "50"],
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1200 }}
+            scroll={{ x: 1320 }}
             className="custom-table"
           />
         </Card>
@@ -1942,6 +1976,34 @@ const ViewInflow = () => {
               })}
           </div>
         )}
+      </Drawer>
+
+      <Drawer
+        title={
+          <div>
+            <div className="text-lg font-semibold text-slate-800">
+              Budget report
+            </div>
+            {budgetReportDrawerRecord && (
+              <div className="text-xs text-slate-500 font-normal mt-0.5">
+                {getEventName(budgetReportDrawerRecord.eventName)} ·{" "}
+                {budgetReportDrawerRecord.clientName}
+              </div>
+            )}
+          </div>
+        }
+        open={budgetReportDrawerOpen}
+        onClose={closeBudgetReportDrawer}
+        width="90%"
+        placement="right"
+        styles={{ body: { padding: 16, background: "#f8fafc" } }}
+      >
+        {budgetReportDrawerRecord?.budgetReport ? (
+          <BudgetReportDrawerSection
+            budgetReport={budgetReportDrawerRecord.budgetReport}
+            count={budgetReportDrawerRecord.budgetReportsCount}
+          />
+        ) : null}
       </Drawer>
 
       <style>{`

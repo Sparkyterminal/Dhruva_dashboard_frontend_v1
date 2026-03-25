@@ -126,7 +126,10 @@ const BudgetReportViewGrid = ({ rowData, pinnedBottomRowData = [] }) => {
     params.data?.isGroupRow ? 44 : 38;
 
   return (
-    <div className="ag-theme-alpine" style={{ height: "70vh", width: "100%" }}>
+    <div
+      className="ag-theme-alpine budget-report-view-grid"
+      style={{ height: "70vh", width: "100%" }}
+    >
       <AgGridReact
         rowData={rowData}
         columnDefs={columnDefs}
