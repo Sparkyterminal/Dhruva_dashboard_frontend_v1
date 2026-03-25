@@ -29,11 +29,11 @@ const DaybookDateSelector = ({ value, onChange }) => {
             size="large"
           />
         </Col>
-        <Col xs={24} md={8}>
+        {/* <Col xs={24} md={8}>
           <Text type="secondary">
             Backend day boundary is UTC. This date is sent as `YYYY-MM-DD`.
           </Text>
-        </Col>
+        </Col> */}
       </Row>
     </Card>
   );
