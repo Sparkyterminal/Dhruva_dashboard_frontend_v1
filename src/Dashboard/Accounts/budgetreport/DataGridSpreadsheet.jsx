@@ -15,49 +15,267 @@ import { API_BASE_URL } from "../../../../config";
 import { emptyChildRow, buildGroupRow } from "./budgetReportUtils";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
-/* ───────── initial seed data ───────── */
+/* ───────── Excel-based dummy seed data ───────── */
 const initialData = () => {
-  const g1 = { ...buildGroupRow("Infrastructure"), grandTotal: 30000 };
-  const c1 = {
-    ...emptyChildRow("Infrastructure"),
-    slNo: 1,
-    particulars: "Tables & Chairs",
-    size: "Medium",
-    qnty: 10,
-    unit: "Pcs",
-    rate: 1500,
-    totalCost: 15000,
-    grandTotal: 0,
-    negotiatedAmount: 14000,
-  };
-  const c2 = {
-    ...emptyChildRow("Infrastructure"),
-    slNo: 2,
-    particulars: "Cupboards",
-    size: "Large",
-    qnty: 5,
-    unit: "Pcs",
-    rate: 3000,
-    totalCost: 15000,
-    grandTotal: 0,
-    negotiatedAmount: 14500,
+  // Prefill values extracted from `budget report reference.xlsx`:
+  // - 'Particulers' -> particulars
+  // - 'Size' -> size
+  // - 'Qnty'/'Unit'/'Cost' -> qnty/unit/rate
+  // - 'Total cost' -> totalCost
+  // - 'Finalised Amount' -> negotiatedAmount (and actualPaidAmount)
+  // - 'Vendor name' -> vendorName
+  // No new grid columns/fields are introduced.
+  const seedGroups = [
+    {
+      groupName: "Flower vendors",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Cut Flower",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 10000,
+          vendorName: "Monica Mam",
+        },
+        {
+          slNo: 2,
+          particulars: "Traditional flowers",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 10000,
+          vendorName: "Shivu",
+        },
+        {
+          slNo: 3,
+          particulars: "Chappra",
+          size: "14ft by 8ft",
+          qnty: 1,
+          unit: "sets",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 10000,
+          vendorName: "Yogesh",
+        },
+        {
+          slNo: 4,
+          particulars: "Bangle purchase",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 10000,
+          vendorName: "Market purchaes",
+        },
+      ],
+    },
+    {
+      groupName: "Rental items",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Neershathra props",
+          size: "",
+          qnty: 1,
+          unit: "set",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 40000,
+          vendorName: "Syed furniture",
+        },
+        {
+          slNo: 2,
+          particulars: "Honake horallu",
+          size: "",
+          qnty: 1,
+          unit: "set",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 0,
+          vendorName: "",
+        },
+        {
+          slNo: 3,
+          particulars: "Console with mirror",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 0,
+          vendorName: "",
+        },
+        {
+          slNo: 4,
+          particulars: "Grama phone",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 0,
+          vendorName: "",
+        },
+      ],
+    },
+    {
+      groupName: "Labours",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Outsource Hard Labours",
+          size: "",
+          qnty: 1,
+          unit: "",
+          rate: 35600,
+          totalCost: 35600,
+          negotiatedAmount: 35600,
+          vendorName: "Sadam",
+        },
+        {
+          slNo: 2,
+          particulars: "Flower Labours",
+          size: "",
+          qnty: 0,
+          unit: "",
+          rate: 0,
+          totalCost: 0,
+          negotiatedAmount: 0,
+          vendorName: "Kartick",
+        },
+        {
+          slNo: 3,
+          particulars: "Sweeper",
+          size: "Night",
+          qnty: 2,
+          unit: "nos",
+          rate: 500,
+          totalCost: 1000,
+          negotiatedAmount: 1500,
+          vendorName: "",
+        },
+      ],
+    },
+    {
+      groupName: "Purchase And Repair",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Store Items/ Purchase",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 6000,
+          totalCost: 6000,
+          negotiatedAmount: 6000,
+          vendorName: "Tiwari",
+        },
+        {
+          slNo: 2,
+          particulars: "Manufacturing Cost and repair",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 10000,
+          totalCost: 10000,
+          negotiatedAmount: 10000,
+          vendorName: "Mallesh",
+        },
+      ],
+    },
+    {
+      groupName: "Transportation",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Transport for Setup",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 3000,
+          totalCost: 3000,
+          negotiatedAmount: 6000,
+          vendorName: "",
+        },
+        {
+          slNo: 2,
+          particulars: "Transport for Dismantling",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 3000,
+          totalCost: 3000,
+          negotiatedAmount: 0,
+          vendorName: "",
+        },
+      ],
+    },
+    {
+      groupName: "Indent",
+      items: [
+        {
+          slNo: 1,
+          particulars: "Manager,cab and others",
+          size: "",
+          qnty: 1,
+          unit: "nos",
+          rate: 7000,
+          totalCost: 7000,
+          negotiatedAmount: 7000,
+          vendorName: "",
+        },
+      ],
+    },
+  ];
+
+  const buildChild = (groupName, it) => {
+    const negotiatedAmount = Number(it.negotiatedAmount) || 0;
+    const qnty = Number(it.qnty) || 0;
+    const rate = Number(it.rate) || 0;
+    const totalCost =
+      Number(it.totalCost) ||
+      Math.max(0, qnty * rate) ||
+      negotiatedAmount ||
+      0;
+
+    return {
+      ...emptyChildRow(groupName),
+      slNo: it.slNo,
+      particulars: it.particulars || "",
+      size: it.size || "",
+      qnty,
+      unit: it.unit || "",
+      rate,
+      totalCost,
+      negotiatedAmount,
+      actualPaidAmount: negotiatedAmount, // Use 'Finalised Amount' as filled-in dummy actual
+      vendorCode: "",
+      // Force blank vendor name on "Add new" prefills.
+      // User can select Vendor Code to auto-populate vendorName from vendor list.
+      vendorName: "",
+      vendorContactNumber: "",
+      vendorId: "",
+      inhouseAmount: false,
+      assetsPurchase: false,
+      directPayment: false,
+    };
   };
 
-  const g2 = { ...buildGroupRow("Stationery"), grandTotal: 4000 };
-  const c3 = {
-    ...emptyChildRow("Stationery"),
-    slNo: 1,
-    particulars: "Notebooks",
-    size: "-",
-    qnty: 100,
-    unit: "Pcs",
-    rate: 40,
-    totalCost: 4000,
-    grandTotal: 0,
-    negotiatedAmount: 3800,
-  };
-
-  return [g1, c1, c2, g2, c3];
+  return seedGroups.flatMap((g) => {
+    const grandTotal = g.items.reduce(
+      (s, it) => s + (Number(it.totalCost) || 0),
+      0,
+    );
+    const groupRow = { ...buildGroupRow(g.groupName), grandTotal };
+    const childRows = g.items.map((it) => buildChild(g.groupName, it));
+    return [groupRow, ...childRows];
+  });
 };
 
 /* ═══════════════════════════════════════════

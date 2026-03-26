@@ -363,6 +363,8 @@ const ViewClientsBookings = () => {
           handleTableChange={handleTableChange}
           showEventDetailsDrawer={showEventDetailsDrawer}
           onViewBudgetReport={openBudgetReportDrawer}
+          accessToken={user?.access_token}
+          onBookingsMutated={fetchBookingsList}
         />
       ),
     },

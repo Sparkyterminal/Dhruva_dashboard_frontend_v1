@@ -31,6 +31,7 @@ import {
 } from "./clientBookingsUtils";
 import ClientBookingsFilters from "./ClientBookingsFilters";
 import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
+import BudgetReportListCell from "../budgetreport/BudgetReportListCell";
 
 const { Text } = Typography;
 
@@ -44,6 +45,8 @@ const buildColumns = (
   getTotalReceivedFn,
   onViewDetails,
   onViewBudgetReport,
+  accessToken,
+  onAfterBudgetMutation,
 ) => [
   {
     title: "Event Confirmation",
@@ -236,20 +239,15 @@ const buildColumns = (
     key: "budgetReport",
     width: 120,
     align: "center",
-    render: (_, record) => {
-      if (!record.budgetReport) return null;
-      return (
-        <Button
-          type="link"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => onViewBudgetReport(record)}
-          className="text-indigo-600 p-0 h-auto"
-        >
-          View
-        </Button>
-      );
-    },
+    render: (_, record) => (
+      <BudgetReportListCell
+        record={record}
+        getEventName={getEventNameFn}
+        onView={onViewBudgetReport}
+        accessToken={accessToken}
+        onAfterMutation={onAfterBudgetMutation}
+      />
+    ),
   },
   {
     title: "Event Types",
@@ -281,6 +279,8 @@ const ClientBookingsListTab = ({
   handleTableChange,
   showEventDetailsDrawer,
   onViewBudgetReport,
+  accessToken,
+  onBookingsMutated,
   bookingsSummary,
   setFilterEventName,
   setFilterDateRange,
@@ -310,6 +310,8 @@ const ClientBookingsListTab = ({
     getTotalReceivedAdvances,
     showEventDetailsDrawer,
     onViewBudgetReport,
+    accessToken,
+    onBookingsMutated,
   );
 
   return (

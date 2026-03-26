@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { Select, message, Button, Card, Typography } from "antd";
@@ -12,21 +12,47 @@ import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 
 const BudgetReportHome = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const user = useSelector((state) => state.user.value);
   const [clients, setClients] = useState([]);
   const [selectedEventId, setSelectedEventId] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const config = {
-    headers: { Authorization: user?.access_token },
-  };
+  const mergePreselectedEvent = useCallback(
+    async (preId, confirmedList) => {
+      const token = user?.access_token;
+      if (!preId || !token) return;
+      setSelectedEventId(preId);
+      const inList = confirmedList.some((c) => c._id === preId);
+      if (inList) return;
+      try {
+        const evRes = await axios.get(`${API_BASE_URL}events/${preId}`, {
+          headers: { Authorization: token },
+        });
+        const ev =
+          evRes.data?.event || evRes.data?.data || evRes.data;
+        if (ev?._id) {
+          setClients((prev) => {
+            const rest = prev.filter((c) => c._id !== ev._id);
+            return [ev, ...rest];
+          });
+        }
+      } catch (e) {
+        console.error(e);
+        message.warning(
+          "Could not load this event for the dropdown. It may be outside confirmed list.",
+        );
+      }
+    },
+    [user?.access_token],
+  );
 
   useEffect(() => {
     const fetchClients = async () => {
       setLoading(true);
       try {
         const res = await axios.get(`${API_BASE_URL}events`, {
-          ...config,
+          headers: { Authorization: user?.access_token },
           params: { page: 1, limit: 1000 },
         });
         const bookings = res.data.events || res.data.data || res.data || [];
@@ -34,6 +60,8 @@ const BudgetReportHome = () => {
           (booking) => booking.eventConfirmation === "Confirmed Event",
         );
         setClients(confirmedEvents);
+        const preId = location.state?.preselectedEventId;
+        if (preId) await mergePreselectedEvent(String(preId), confirmedEvents);
       } catch (err) {
         message.error("Failed to fetch client bookings");
         console.error(err);
@@ -42,8 +70,11 @@ const BudgetReportHome = () => {
       }
     };
     fetchClients();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [
+    user?.access_token,
+    location.state?.preselectedEventId,
+    mergePreselectedEvent,
+  ]);
 
   const getEventName = (eventName) => {
     if (typeof eventName === "string") return eventName;

@@ -1,6 +1,7 @@
 import React from "react";
-import { Card, Row, Col, Typography, Tag } from "antd";
-import { FileTextOutlined } from "@ant-design/icons";
+import { useNavigate } from "react-router-dom";
+import { Button, Card, Row, Col, Typography, Tag } from "antd";
+import { EditOutlined, FileTextOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import BudgetReportDetailsView from "./BudgetReportDetailsView";
 
@@ -20,10 +21,18 @@ const fmtRupee = (n) => {
  * Read-only budget block for event drawers. Pass API `budgetReport` object from event payload.
  */
 const BudgetReportDrawerSection = ({ budgetReport, count }) => {
+  const navigate = useNavigate();
+
   if (!budgetReport) return null;
 
   const summary = budgetReport.budgetData?.summary;
   const meta = budgetReport.metadata;
+  const reportId = budgetReport._id;
+
+  const goToEdit = () => {
+    if (!reportId) return;
+    navigate(`/user/budgetreport/edit/${reportId}`);
+  };
 
   return (
     <Card
@@ -47,11 +56,24 @@ const BudgetReportDrawerSection = ({ budgetReport, count }) => {
         </div>
       }
       extra={
-        meta?.createdAt ? (
-          <Text type="secondary" className="text-xs">
-            Updated {dayjs(meta.createdAt).format("DD MMM YYYY, hh:mm A")}
-          </Text>
-        ) : null
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {reportId ? (
+            <Button
+              type="primary"
+              size="small"
+              icon={<EditOutlined />}
+              onClick={goToEdit}
+              className="bg-indigo-600"
+            >
+              Edit
+            </Button>
+          ) : null}
+          {meta?.createdAt ? (
+            <Text type="secondary" className="text-xs whitespace-nowrap">
+              Updated {dayjs(meta.createdAt).format("DD MMM YYYY, hh:mm A")}
+            </Text>
+          ) : null}
+        </div>
       }
       bodyStyle={{ padding: "12px 16px 16px" }}
     >

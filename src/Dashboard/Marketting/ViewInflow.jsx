@@ -41,6 +41,7 @@ import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
 import BudgetReportDrawerSection from "../Accounts/budgetreport/BudgetReportDrawerSection";
+import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";
 
 const { Title, Text } = Typography;
 
@@ -553,20 +554,15 @@ const ViewInflow = () => {
       key: "budgetReport",
       width: 120,
       align: "center",
-      render: (_, record) => {
-        if (!record.budgetReport) return null;
-        return (
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => openBudgetReportDrawer(record)}
-            className="text-indigo-600 p-0 h-auto"
-          >
-            View
-          </Button>
-        );
-      },
+      render: (_, record) => (
+        <BudgetReportListCell
+          record={record}
+          getEventName={getEventName}
+          onView={openBudgetReportDrawer}
+          accessToken={user?.access_token}
+          onAfterMutation={fetchRequirementsData}
+        />
+      ),
     },
     {
       title: "Event Types",
