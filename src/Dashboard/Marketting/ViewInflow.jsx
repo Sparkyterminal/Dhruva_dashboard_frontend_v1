@@ -348,6 +348,31 @@ const ViewInflow = () => {
 
   const columns = [
     {
+      title: "Booked By",
+      key: "bookedBy",
+      width: 160,
+      render: (_, record) => {
+        const bookedByFirst =
+          record?.bookedBy?.first_name ??
+          record?.bookedBy?.firstName ??
+          null;
+        const createdByFirst =
+          record?.createdBy?.first_name ??
+          record?.createdBy?.firstName ??
+          null;
+
+        const raw = bookedByFirst ?? createdByFirst;
+        const firstName =
+          typeof raw === "string" ? raw.trim().split(/\s+/)[0] : null;
+
+        return (
+          <Text strong className="text-slate-800">
+            {firstName || "-"}
+          </Text>
+        );
+      },
+    },
+    {
       title: "Status",
       dataIndex: "eventConfirmation",
       key: "eventConfirmation",
@@ -580,30 +605,27 @@ const ViewInflow = () => {
         </Button>
       ),
     },
-    {
-      title: "Actions",
-      key: "actions",
-      fixed: "right",
-      width: 90,
-      align: "center",
-      // In your columns definition, update the Edit button:
-      render: (_, record) => {
-        console.log("📝 Edit button record:", record._id, record.clientName);
-        return (
-          <Button
-            type="default"
-            icon={<EditOutlined />}
-            onClick={() => {
-              console.log("🔘 Navigating to edit:", record._id);
-              navigate(`/user/editclient/${record._id}`);
-            }}
-            className="border-blue-400 text-blue-600 hover:bg-blue-50"
-          >
-            Edit
-          </Button>
-        );
-      },
-    },
+    ...(eventsScope === "mine"
+      ? [
+          {
+            title: "Edit",
+            key: "edit",
+            fixed: "right",
+            width: 90,
+            align: "center",
+            render: (_, record) => (
+              <Button
+                type="default"
+                icon={<EditOutlined />}
+                onClick={() => navigate(`/user/editclient/${record._id}`)}
+                className="border-blue-400 text-blue-600 hover:bg-blue-50"
+              >
+                Edit
+              </Button>
+            ),
+          },
+        ]
+      : []),
   ];
 
   // Calculate statistics

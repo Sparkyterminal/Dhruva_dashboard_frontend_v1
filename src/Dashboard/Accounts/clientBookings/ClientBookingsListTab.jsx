@@ -49,6 +49,27 @@ const buildColumns = (
   onAfterBudgetMutation,
 ) => [
   {
+    title: "Booked By",
+    key: "bookedBy",
+    width: 160,
+    render: (_, record) => {
+      const bookedByFirst =
+        record?.bookedBy?.first_name ??
+        record?.bookedBy?.firstName ??
+        null;
+      const createdByFirst =
+        record?.createdBy?.first_name ??
+        record?.createdBy?.firstName ??
+        null;
+
+      const raw = bookedByFirst ?? createdByFirst;
+      const firstName =
+        typeof raw === "string" ? raw.trim().split(/\s+/)[0] : null;
+
+      return <Text strong className="text-slate-800">{firstName || "-"}</Text>;
+    },
+  },
+  {
     title: "Event Confirmation",
     dataIndex: "eventConfirmation",
     key: "eventConfirmation",
