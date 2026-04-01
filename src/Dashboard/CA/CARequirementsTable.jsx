@@ -187,7 +187,11 @@ const CARequirementsTable = () => {
             (Array.isArray(arr) ? arr : []).forEach((item) =>
               normalized.push({
                 ...item,
-                department: item.department || { id: deptName, name: deptName, _id: item.department?._id || departmentId },
+                department: item.department || {
+                  id: deptName,
+                  name: deptName,
+                  _id: item.department?._id || departmentId,
+                },
               }),
             );
           });
@@ -241,10 +245,12 @@ const CARequirementsTable = () => {
                 return entry ? entry[0] : departmentId;
               })();
             const existing = prev[stateKey] || prev[departmentId];
-            const dept =
-              existing?.department ||
-              items[0]?.department ||
-              { id: departmentId, _id: departmentId, name: stateKey };
+            const dept = existing?.department ||
+              items[0]?.department || {
+                id: departmentId,
+                _id: departmentId,
+                name: stateKey,
+              };
             return {
               ...prev,
               [stateKey]: {
@@ -765,6 +771,8 @@ const CARequirementsTable = () => {
               <Option value="Sky Blue Event Management India Pvt Lmtd.">
                 Sky Blue Event Management India Pvt Lmtd.
               </Option>
+              <Option value="Sky blue ICICI">Sky blue ICICI</Option>
+              <Option value="Sky blue HDFC">Sky blue HDFC</Option>
               <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
               <Option value="MM account">MM account</Option>
               <Option value="Cash Payment">Cash Payment</Option>

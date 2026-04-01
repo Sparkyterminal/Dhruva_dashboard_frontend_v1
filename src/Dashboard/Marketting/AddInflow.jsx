@@ -67,6 +67,10 @@ const AddInflow = () => {
   const [eventTypeSubVenues, setEventTypeSubVenues] = useState({}); // { eventTypeId: subVenues[] }
   const [addEventModalOpen, setAddEventModalOpen] = useState(false);
   const [addVenueModalOpen, setAddVenueModalOpen] = useState(false);
+  const [addEventTypeVenueModalOpen, setAddEventTypeVenueModalOpen] =
+    useState(false);
+  const [selectedEventTypeForVenue, setSelectedEventTypeForVenue] =
+    useState(null);
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
   const axiosConfig = { headers: { Authorization: user?.access_token } };
@@ -1648,7 +1652,30 @@ const AddInflow = () => {
                                 </div>
                               )}
                               <Form.Item
-                                label={`${label} Venue`}
+                                label={
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: 12,
+                                    }}
+                                  >
+                                    <span>{`${label} Venue`}</span>
+                                    <Button
+                                      type="link"
+                                      size="small"
+                                      icon={<PlusOutlined />}
+                                      onClick={() => {
+                                        setSelectedEventTypeForVenue(key);
+                                        setAddEventTypeVenueModalOpen(true);
+                                      }}
+                                      style={{ padding: 0, fontWeight: 700 }}
+                                    >
+                                      Add venue
+                                    </Button>
+                                  </div>
+                                }
                                 name={["eventTypeMeta", key, "venueLocation"]}
                                 rules={[
                                   {
@@ -1683,6 +1710,32 @@ const AddInflow = () => {
                                   ))}
                                 </Select>
                               </Form.Item>
+
+                              <Modal
+                                open={
+                                  addEventTypeVenueModalOpen &&
+                                  selectedEventTypeForVenue === key
+                                }
+                                onCancel={() => {
+                                  setAddEventTypeVenueModalOpen(false);
+                                  setSelectedEventTypeForVenue(null);
+                                }}
+                                footer={null}
+                                destroyOnClose
+                                title={`Add Venue for ${label}`}
+                              >
+                                <AddVenue
+                                  onCancel={() => {
+                                    setAddEventTypeVenueModalOpen(false);
+                                    setSelectedEventTypeForVenue(null);
+                                  }}
+                                  onSuccess={() => {
+                                    fetchVenues();
+                                    setAddEventTypeVenueModalOpen(false);
+                                    setSelectedEventTypeForVenue(null);
+                                  }}
+                                />
+                              </Modal>
                               {eventTypeSubVenues[key] &&
                                 eventTypeSubVenues[key].length > 0 && (
                                   <Form.Item
@@ -2321,7 +2374,30 @@ const AddInflow = () => {
                                 </div>
                               )}
                               <Form.Item
-                                label={`${label} Venue`}
+                                label={
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "space-between",
+                                      gap: 12,
+                                    }}
+                                  >
+                                    <span>{`${label} Venue`}</span>
+                                    <Button
+                                      type="link"
+                                      size="small"
+                                      icon={<PlusOutlined />}
+                                      onClick={() => {
+                                        setSelectedEventTypeForVenue(key);
+                                        setAddEventTypeVenueModalOpen(true);
+                                      }}
+                                      style={{ padding: 0, fontWeight: 700 }}
+                                    >
+                                      Add venue
+                                    </Button>
+                                  </div>
+                                }
                                 name={["eventTypeMeta", key, "venueLocation"]}
                                 rules={[
                                   {
@@ -2356,6 +2432,32 @@ const AddInflow = () => {
                                   ))}
                                 </Select>
                               </Form.Item>
+
+                              <Modal
+                                open={
+                                  addEventTypeVenueModalOpen &&
+                                  selectedEventTypeForVenue === key
+                                }
+                                onCancel={() => {
+                                  setAddEventTypeVenueModalOpen(false);
+                                  setSelectedEventTypeForVenue(null);
+                                }}
+                                footer={null}
+                                destroyOnClose
+                                title={`Add Venue for ${label}`}
+                              >
+                                <AddVenue
+                                  onCancel={() => {
+                                    setAddEventTypeVenueModalOpen(false);
+                                    setSelectedEventTypeForVenue(null);
+                                  }}
+                                  onSuccess={() => {
+                                    fetchVenues();
+                                    setAddEventTypeVenueModalOpen(false);
+                                    setSelectedEventTypeForVenue(null);
+                                  }}
+                                />
+                              </Modal>
                               {eventTypeSubVenues[key] &&
                                 eventTypeSubVenues[key].length > 0 && (
                                   <Form.Item

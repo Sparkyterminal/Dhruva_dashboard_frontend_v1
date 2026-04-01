@@ -49,7 +49,12 @@ const RequirementTableApprover = () => {
   const [vendorsLoading, setVendorsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [totalItems, setTotalItems] = useState(0);
-  const [stats, setStats] = useState({ total: 0, pending: 0, completed: 0, rejected: 0 });
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    completed: 0,
+    rejected: 0,
+  });
   const eventSearchRef = useRef(null);
   const vendorSearchRef = useRef(null);
   const PAGE_SIZE = 30;
@@ -146,13 +151,18 @@ const RequirementTableApprover = () => {
       );
       const data = res.data;
       const pagination = data.pagination || {};
-      const hasNextPage = pagination.hasNextPage ?? (pagination.totalItems > (pagination.currentPage || pageNum) * (pagination.size || PAGE_SIZE));
+      const hasNextPage =
+        pagination.hasNextPage ??
+        pagination.totalItems >
+          (pagination.currentPage || pageNum) * (pagination.size || PAGE_SIZE);
 
       if (data.departments && typeof data.departments === "object") {
         if (departmentId && append) {
           const list = [];
           Object.entries(data.departments).forEach(([, arr]) => {
-            (Array.isArray(arr) ? arr : []).forEach((item) => list.push({ ...item, department: item.department || {} }));
+            (Array.isArray(arr) ? arr : []).forEach((item) =>
+              list.push({ ...item, department: item.department || {} }),
+            );
           });
           if (list.length > 0) {
             setDepartmentData((prev) => {
@@ -173,14 +183,20 @@ const RequirementTableApprover = () => {
           let normalized = [];
           Object.entries(data.departments).forEach(([deptName, arr]) => {
             (Array.isArray(arr) ? arr : []).forEach((item) =>
-              normalized.push({ ...item, department: item.department || { id: deptName, name: deptName } })
+              normalized.push({
+                ...item,
+                department: item.department || { id: deptName, name: deptName },
+              }),
             );
           });
           if (normalized.length > 0) {
             setDepartmentData((prev) => ({
               ...prev,
               [departmentId]: {
-                department: normalized[0]?.department || { id: departmentId, name: "Department" },
+                department: normalized[0]?.department || {
+                  id: departmentId,
+                  name: "Department",
+                },
                 items: normalized,
                 page: pageNum,
                 hasMore: hasNextPage,
@@ -196,7 +212,10 @@ const RequirementTableApprover = () => {
             const id = d.id || deptName;
             nextDepts[id] = {
               department: d,
-              items: list.map((item) => ({ ...item, department: item.department || d })),
+              items: list.map((item) => ({
+                ...item,
+                department: item.department || d,
+              })),
               page: 1,
               hasMore: hasNextPage,
             };
@@ -207,7 +226,8 @@ const RequirementTableApprover = () => {
         const byDept = (data.items || []).reduce((acc, item) => {
           const d = item.department || { id: "unknown", name: "Unknown" };
           const id = d.id || "unknown";
-          if (!acc[id]) acc[id] = { department: d, items: [], page: 1, hasMore: true };
+          if (!acc[id])
+            acc[id] = { department: d, items: [], page: 1, hasMore: true };
           acc[id].items.push(item);
           return acc;
         }, {});
@@ -229,7 +249,9 @@ const RequirementTableApprover = () => {
       if (departmentId && append) {
         setDepartmentData((prev) => {
           const existing = prev[departmentId];
-          return existing ? { ...prev, [departmentId]: { ...existing, hasMore: false } } : prev;
+          return existing
+            ? { ...prev, [departmentId]: { ...existing, hasMore: false } }
+            : prev;
         });
       }
     } finally {
@@ -301,24 +323,38 @@ const RequirementTableApprover = () => {
       );
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [search, createdDateRange, requiredDateRange, selectedEventId, selectedVendorId]);
+  }, [
+    search,
+    createdDateRange,
+    requiredDateRange,
+    selectedEventId,
+    selectedVendorId,
+  ]);
 
   const allItems = Object.values(departmentData).flatMap((d) => d.items || []);
   useEffect(() => {
     const total = totalItems || allItems.length;
     const pending = allItems.filter(
-      (r) => r.approver_check === "PENDING" || (r.status && r.status === "PENDING")
+      (r) =>
+        r.approver_check === "PENDING" || (r.status && r.status === "PENDING"),
     ).length;
     const completed = allItems.filter(
-      (r) => r.approver_check === "APPROVED" || (r.status && r.status === "COMPLETED")
+      (r) =>
+        r.approver_check === "APPROVED" ||
+        (r.status && r.status === "COMPLETED"),
     ).length;
     const rejected = allItems.filter(
-      (r) => r.approver_check === "REJECTED" || (r.status && r.status === "REJECTED")
+      (r) =>
+        r.approver_check === "REJECTED" ||
+        (r.status && r.status === "REJECTED"),
     ).length;
     setStats((prev) =>
-      prev.total === total && prev.pending === pending && prev.completed === completed && prev.rejected === rejected
+      prev.total === total &&
+      prev.pending === pending &&
+      prev.completed === completed &&
+      prev.rejected === rejected
         ? prev
-        : { total, pending, completed, rejected }
+        : { total, pending, completed, rejected },
     );
   }, [departmentData, totalItems]);
 
@@ -701,6 +737,8 @@ const RequirementTableApprover = () => {
               <Option value="Sky Blue Event Management India Pvt Lmtd.">
                 Sky Blue Event Management India Pvt Lmtd.
               </Option>
+              <Option value="Sky blue ICICI">Sky blue ICICI</Option>
+              <Option value="Sky blue HDFC">Sky blue HDFC</Option>
               <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
               <Option value="MM account">MM account</Option>
               <Option value="Cash Payment">Cash Payment</Option>
@@ -978,27 +1016,69 @@ const RequirementTableApprover = () => {
         {/* Statistics Cards: Total, Pending, Approved, Rejected */}
         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
           <Col xs={24} sm={12} md={6}>
-            <Card hoverable style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Total</div>
+            <Card
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                Total
+              </div>
               <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card hoverable style={{ background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Pending</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.pending}</div>
+            <Card
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                Pending
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.pending}
+              </div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card hoverable style={{ background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Approved</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.completed}</div>
+            <Card
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                Approved
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.completed}
+              </div>
             </Card>
           </Col>
           <Col xs={24} sm={12} md={6}>
-            <Card hoverable style={{ background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", borderColor: "transparent", color: "#fff" }}>
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>Rejected</div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.rejected}</div>
+            <Card
+              hoverable
+              style={{
+                background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+                borderColor: "transparent",
+                color: "#fff",
+              }}
+            >
+              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
+                Rejected
+              </div>
+              <div style={{ fontSize: 28, fontWeight: 700 }}>
+                {stats.rejected}
+              </div>
             </Card>
           </Col>
         </Row>
@@ -1034,7 +1114,9 @@ const RequirementTableApprover = () => {
             size="large"
             placeholder={["Start date", "End date"]}
           />
-          <span style={{ fontWeight: 600, marginRight: 4 }}>Required date:</span>
+          <span style={{ fontWeight: 600, marginRight: 4 }}>
+            Required date:
+          </span>
           <RangePicker
             value={requiredDateRange}
             onChange={handleRequiredDateRangeChange}
@@ -1057,7 +1139,11 @@ const RequirementTableApprover = () => {
             size="large"
             options={events.map((ev) => ({
               value: ev.id || ev._id,
-              label: ev.clientName || ev.name || ev.client_name || String(ev.id || ev._id),
+              label:
+                ev.clientName ||
+                ev.name ||
+                ev.client_name ||
+                String(ev.id || ev._id),
             }))}
           />
           <Select
@@ -1105,7 +1191,9 @@ const RequirementTableApprover = () => {
                 rowKey="id"
                 loading={loading && !Object.keys(departmentData).length}
                 columns={columns}
-                dataSource={sortedRequirements(deptObj.items ? [...deptObj.items] : [])}
+                dataSource={sortedRequirements(
+                  deptObj.items ? [...deptObj.items] : [],
+                )}
                 pagination={false}
                 scroll={{ x: 2100 }}
                 size="middle"

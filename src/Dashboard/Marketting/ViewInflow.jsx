@@ -19,11 +19,13 @@ import {
   Radio,
   Grid,
   Tabs,
+  Popconfirm,
 } from "antd";
 import {
   ArrowLeftOutlined,
   PlusOutlined,
   EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
   CalendarOutlined,
   EnvironmentOutlined,
@@ -346,6 +348,18 @@ const ViewInflow = () => {
     setBudgetReportDrawerRecord(null);
   };
 
+  const handleDelete = async (record) => {
+    try {
+      const config = { headers: { Authorization: user?.access_token } };
+      await axios.delete(`${API_BASE_URL}events/${record._id}`, config);
+      message.success("Booking deleted successfully");
+      fetchRequirementsData();
+    } catch (err) {
+      message.error(err.response?.data?.message || "Failed to delete booking");
+      console.error(err);
+    }
+  };
+
   const columns = [
     {
       title: "Booked By",
@@ -353,13 +367,9 @@ const ViewInflow = () => {
       width: 160,
       render: (_, record) => {
         const bookedByFirst =
-          record?.bookedBy?.first_name ??
-          record?.bookedBy?.firstName ??
-          null;
+          record?.bookedBy?.first_name ?? record?.bookedBy?.firstName ?? null;
         const createdByFirst =
-          record?.createdBy?.first_name ??
-          record?.createdBy?.firstName ??
-          null;
+          record?.createdBy?.first_name ?? record?.createdBy?.firstName ?? null;
 
         const raw = bookedByFirst ?? createdByFirst;
         const firstName =
@@ -608,20 +618,41 @@ const ViewInflow = () => {
     ...(eventsScope === "mine"
       ? [
           {
-            title: "Edit",
-            key: "edit",
+            title: "Actions",
+            key: "actions",
             fixed: "right",
-            width: 90,
+            width: 160,
             align: "center",
             render: (_, record) => (
-              <Button
-                type="default"
-                icon={<EditOutlined />}
-                onClick={() => navigate(`/user/editclient/${record._id}`)}
-                className="border-blue-400 text-blue-600 hover:bg-blue-50"
-              >
-                Edit
-              </Button>
+              <Space size="small">
+                <Button
+                  type="default"
+                  icon={<EditOutlined />}
+                  onClick={() => navigate(`/user/editclient/${record._id}`)}
+                  className="border-blue-400 text-blue-600 hover:bg-blue-50"
+                  size="small"
+                >
+                  Edit
+                </Button>
+                <Popconfirm
+                  title="Delete Booking"
+                  description="Are you sure you want to delete this booking? This action cannot be reversed."
+                  onConfirm={() => handleDelete(record)}
+                  onCancel={() => message.info("Delete cancelled")}
+                  okText="Yes, Delete"
+                  cancelText="No, Cancel"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    type="default"
+                    icon={<DeleteOutlined />}
+                    danger
+                    size="small"
+                  >
+                    Delete
+                  </Button>
+                </Popconfirm>
+              </Space>
             ),
           },
         ]

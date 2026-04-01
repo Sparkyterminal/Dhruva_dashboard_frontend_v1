@@ -846,7 +846,7 @@ const ViewVendor = () => {
             type="primary"
             size="small"
             icon={<EditOutlined />}
-            onClick={() => handleEdit(record.id)}
+            onClick={() => handleEdit(record._id || record.id)}
             className="vendor-btn-primary"
             style={{ height: "32px" }}
           >
@@ -861,7 +861,7 @@ const ViewVendor = () => {
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
       {filteredVendors.map((vendor, index) => (
         <motion.div
-          key={vendor.id}
+          key={vendor._id || vendor.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -975,7 +975,7 @@ const ViewVendor = () => {
               <Button
                 type="primary"
                 icon={<EditOutlined />}
-                onClick={() => handleEdit(vendor.id)}
+                onClick={() => handleEdit(vendor._id || vendor.id)}
                 className="vendor-btn-primary"
               >
                 Edit
@@ -1235,7 +1235,7 @@ const ViewVendor = () => {
                   columns={columns}
                   dataSource={filteredVendors}
                   loading={loading}
-                  rowKey="id"
+                  rowKey={(record) => record._id || record.id}
                   pagination={{
                     pageSize: 10,
                     showSizeChanger: true,

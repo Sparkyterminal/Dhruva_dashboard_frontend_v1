@@ -11,6 +11,7 @@ import {
   Space,
   Tag,
   Radio,
+  Modal,
 } from "antd";
 import {
   ArrowLeftOutlined,
@@ -24,6 +25,7 @@ import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
 import axios from "axios";
 import { useSelector } from "react-redux";
+import AddVenue from "./AddVenue/AddVenue";
 
 const { Option } = Select;
 
@@ -77,6 +79,10 @@ const EditInflow = () => {
   const [subVenuesLoading, setSubVenuesLoading] = useState(false);
   const [selectedVenueId, setSelectedVenueId] = useState(null);
   const [eventTypeSubVenues, setEventTypeSubVenues] = useState({}); // { eventTypeId: subVenues[] }
+  const [addEventTypeVenueModalOpen, setAddEventTypeVenueModalOpen] =
+    useState(false);
+  const [selectedEventTypeForVenue, setSelectedEventTypeForVenue] =
+    useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
   const user = useSelector((state) => state.user.value);
