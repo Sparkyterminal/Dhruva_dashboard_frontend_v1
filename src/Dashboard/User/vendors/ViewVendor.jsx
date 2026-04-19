@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { message, Table, Button, Card, Input, Select } from "antd";
+import { message, Table, Button, Card, Input, Select, Modal } from "antd";
 import {
   EyeOutlined,
   EditOutlined,
@@ -32,6 +32,7 @@ import {
 import { saveAs } from "file-saver";
 import { API_BASE_URL } from "../../../../config";
 import VendorViewDrawer from "./VendorViewDrawer";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const customStyles = `
   .vendor-glass-card {
@@ -141,6 +142,18 @@ const ViewVendor = () => {
 
   const config = {
     headers: { Authorization: user?.access_token },
+  };
+
+  const handleDeleteVendor = async (vendorId) => {
+    if (!vendorId) return;
+    try {
+      await axios.delete(`${API_BASE_URL}vendor/${vendorId}`, config);
+      message.success("Vendor deleted successfully");
+      fetchRequirementsData(categoryFilter);
+    } catch (err) {
+      message.error("Failed to delete vendor");
+      console.error(err);
+    }
   };
 
   const getAddVendorPath = () => {
@@ -852,6 +865,24 @@ const ViewVendor = () => {
           >
             Edit
           </Button>
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              Modal.confirm({
+                title: "Delete Vendor",
+                content:
+                  "Are you sure you want to delete this vendor? Once deleted, it cannot be retrieved.",
+                okText: "Delete",
+                okType: "danger",
+                cancelText: "Cancel",
+                onOk: () =>
+                  handleDeleteVendor(record._id || record.id),
+              });
+            }}
+            style={{ height: "32px" }}
+          />
         </div>
       ),
     },

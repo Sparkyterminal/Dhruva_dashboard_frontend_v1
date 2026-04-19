@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Form,
   Input,
@@ -32,6 +31,11 @@ const AddRequirements = () => {
   const [eventsLoading, setEventsLoading] = useState(false);
   const searchTimeout = useRef(null);
   const [vendorModalOpen, setVendorModalOpen] = useState(false);
+  const [groupByOptions, setGroupByOptions] = useState([]);
+  const [groupByLoading, setGroupByLoading] = useState(false);
+  const [groupByModalOpen, setGroupByModalOpen] = useState(false);
+  const [newGroupByName, setNewGroupByName] = useState("");
+  const [creatingGroupBy, setCreatingGroupBy] = useState(false);
 
   const deptId = user?.departments?.length ? user.departments[0].id : null;
 
@@ -40,6 +44,25 @@ const AddRequirements = () => {
       Authorization: user?.access_token,
     },
   };
+
+  const fetchGroupByOptions = useCallback(async () => {
+    const token = user?.access_token;
+    if (!token) return;
+    const auth = { headers: { Authorization: token } };
+    setGroupByLoading(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}request/group-by`, auth);
+      const raw = res?.data?.items ?? res?.data?.data ?? res?.data ?? [];
+      const items = Array.isArray(raw) ? raw : [];
+      setGroupByOptions(items);
+    } catch (err) {
+      console.error(err);
+      message.error("Failed to load group-by options");
+      setGroupByOptions([]);
+    } finally {
+      setGroupByLoading(false);
+    }
+  }, [user?.access_token]);
 
   // Fetch vendors scoped by department
   const fetchVendors = async () => {
@@ -80,6 +103,10 @@ const AddRequirements = () => {
     fetchEvents("");
   }, [deptId]);
 
+  useEffect(() => {
+    fetchGroupByOptions();
+  }, [fetchGroupByOptions]);
+
   // Debounced search handler for Select's onSearch
   const handleEventSearch = (value) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
@@ -114,6 +141,9 @@ const AddRequirements = () => {
       transation_in: values.expecting_transaction_in?.toUpperCase(),
       priority: values.priority,
     };
+    if (values.groupBy) {
+      payload.groupBy = values.groupBy;
+    }
 
     try {
       await axios.post(`${API_BASE_URL}request`, payload, config);
@@ -171,6 +201,120 @@ const AddRequirements = () => {
                 className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
               />
             </Form.Item>
+
+            <Form.Item
+              label={
+                <div className="flex items-center justify-between gap-2 w-full">
+                  <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                    Group by
+                  </span>
+                  <Button
+                    type="link"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => {
+                      setNewGroupByName("");
+                      setGroupByModalOpen(true);
+                    }}
+                    style={{ padding: 0, fontWeight: 700 }}
+                  >
+                    Add
+                  </Button>
+                </div>
+              }
+              name="groupBy"
+              tooltip="Optional. Tag this requirement under a category (e.g. Catering)."
+            >
+              <Select
+                showSearch
+                optionFilterProp="children"
+                filterOption={(input, option) =>
+                  String(option?.children || "")
+                    .toLowerCase()
+                    .includes(String(input || "").toLowerCase())
+                }
+                placeholder={
+                  groupByLoading ? "Loading groups..." : "Select a group (optional)"
+                }
+                size="large"
+                allowClear
+                loading={groupByLoading}
+                notFoundContent={
+                  groupByLoading ? "Loading..." : "No groups yet — use Add to create one"
+                }
+                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
+              >
+                {groupByOptions.map((g) => {
+                  const id = g._id || g.id;
+                  return (
+                    <Option key={id} value={id}>
+                      {g.name || "—"}
+                    </Option>
+                  );
+                })}
+              </Select>
+            </Form.Item>
+
+            <Modal
+              title="New group"
+              open={groupByModalOpen}
+              onCancel={() => {
+                setGroupByModalOpen(false);
+                setNewGroupByName("");
+              }}
+              onOk={async () => {
+                const name = String(newGroupByName || "").trim();
+                if (!name) {
+                  message.warning("Please enter a group name");
+                  return Promise.reject();
+                }
+                if (name.length > 200) {
+                  message.warning("Name must be at most 200 characters");
+                  return Promise.reject();
+                }
+                setCreatingGroupBy(true);
+                try {
+                  const res = await axios.post(
+                    `${API_BASE_URL}request/group-by`,
+                    { name },
+                    config,
+                  );
+                  const item = res?.data?.item;
+                  message.success(res?.data?.message || "Group created");
+                  await fetchGroupByOptions();
+                  const newId = item?._id || item?.id;
+                  if (newId) {
+                    form.setFieldsValue({ groupBy: newId });
+                  }
+                  setNewGroupByName("");
+                  setGroupByModalOpen(false);
+                } catch (err) {
+                  if (err?.response?.status === 409) {
+                    message.error("A group with this name already exists");
+                  } else {
+                    message.error("Could not create group");
+                  }
+                  console.error(err);
+                  return Promise.reject(err);
+                } finally {
+                  setCreatingGroupBy(false);
+                }
+              }}
+              confirmLoading={creatingGroupBy}
+              destroyOnClose
+            >
+              <p className="text-gray-600 text-sm mb-3">
+                Group names must be unique. This will appear in the Group by list
+                after saving.
+              </p>
+              <Input
+                placeholder="e.g. Catering, Venue, AV"
+                maxLength={200}
+                value={newGroupByName}
+                onChange={(e) => setNewGroupByName(e.target.value)}
+                size="large"
+              />
+            </Modal>
 
             <Form.Item
               label={

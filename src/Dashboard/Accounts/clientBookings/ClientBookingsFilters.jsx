@@ -7,9 +7,12 @@ const { RangePicker } = DatePicker;
 const ClientBookingsFilters = ({
   filterEventName,
   filterDateRange,
+  filterVenueId,
   eventNameOptions,
+  venueOptions,
   onEventNameChange,
   onDateRangeChange,
+  onVenueChange,
   onClear,
 }) => (
   <Card
@@ -32,6 +35,26 @@ const ClientBookingsFilters = ({
           value={filterEventName ?? undefined}
           onChange={onEventNameChange}
           options={eventNameOptions}
+          style={{ width: "100%" }}
+          size="large"
+        />
+      </Col>
+      <Col xs={24} sm={8} md={6}>
+        <Text strong className="text-slate-600 text-sm block mb-1">
+          Venue
+        </Text>
+        <Select
+          allowClear
+          showSearch
+          filterOption={(input, option) =>
+            String(option?.label ?? "")
+              .toLowerCase()
+              .includes(String(input ?? "").toLowerCase())
+          }
+          placeholder="All venues"
+          value={filterVenueId ?? undefined}
+          onChange={onVenueChange}
+          options={venueOptions}
           style={{ width: "100%" }}
           size="large"
         />

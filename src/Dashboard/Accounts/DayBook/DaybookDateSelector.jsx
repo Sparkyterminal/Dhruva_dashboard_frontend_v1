@@ -2,7 +2,11 @@ import React from "react";
 import { Card, DatePicker, Col, Row, Typography } from "antd";
 
 const { Text } = Typography;
+const { RangePicker } = DatePicker;
 
+/**
+ * value: [startDayjs, endDayjs] (Dayjs objects)
+ */
 const DaybookDateSelector = ({ value, onChange }) => {
   return (
     <Card
@@ -17,16 +21,17 @@ const DaybookDateSelector = ({ value, onChange }) => {
       <Row gutter={[16, 16]} align="middle">
         <Col xs={24} md={6}>
           <Text className="text-slate-700 font-semibold">
-            Select date
+            Select date range
           </Text>
         </Col>
         <Col xs={24} md={10}>
-          <DatePicker
+          <RangePicker
             value={value}
             onChange={(d) => onChange?.(d)}
             format="YYYY-MM-DD"
             style={{ width: "100%" }}
             size="large"
+            allowEmpty={[false, false]}
           />
         </Col>
         {/* <Col xs={24} md={8}>

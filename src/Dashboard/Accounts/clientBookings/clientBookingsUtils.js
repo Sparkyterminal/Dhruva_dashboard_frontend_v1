@@ -9,6 +9,26 @@ export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
 };
 
 /**
+ * `GET /events` returns `totalsByStatus` built from baseQuery (ignores list `status` filter).
+ * @see EVENTS_LIST_FRONTEND.md
+ */
+export const getEventsListTotalsBucket = (totalsByStatus, listTabKey) => {
+  if (!totalsByStatus || typeof totalsByStatus !== "object") return null;
+  if (listTabKey === "all") return totalsByStatus.all ?? null;
+  if (listTabKey === "inprogress") {
+    return totalsByStatus.inprogress ?? totalsByStatus.pending ?? null;
+  }
+  return totalsByStatus[listTabKey] ?? null;
+};
+
+/** Booking count for a list tab badge (matches filters, all statuses visible). */
+export const getTabLabelBookingCount = (totalsByStatus, listTabKey) => {
+  const b = getEventsListTotalsBucket(totalsByStatus, listTabKey);
+  const n = b?.totalBookingsNumber;
+  return typeof n === "number" && !Number.isNaN(n) ? n : null;
+};
+
+/**
  * Load every page from events for the given query (e.g. calendar).
  */
 export async function fetchAllMyEventsPages(

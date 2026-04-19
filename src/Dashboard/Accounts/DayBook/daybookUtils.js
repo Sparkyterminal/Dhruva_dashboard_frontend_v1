@@ -31,6 +31,12 @@ export const formatEventName = (eventName) => {
   return eventName?.name || eventName?._id || eventName?.id || "-";
 };
 
+/** GET /daybook merges event advances with synthetic ids — not valid for inflow CRUD. */
+export const isEventAdvanceDaybookRow = (record) => {
+  const id = record?._id ?? record?.id;
+  return typeof id === "string" && id.startsWith("eventadvance:");
+};
+
 export const statusTag = (status) => {
   const s = String(status || "").toUpperCase();
   if (!s) return { color: "default", text: "-" };

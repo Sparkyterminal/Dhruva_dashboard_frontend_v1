@@ -3,10 +3,10 @@
 // export const BASE_URL = "/";
 // export const SOCKET_URL = "http://localhost:4010";
 export const API_BASE_URL =
-  "https://y3b5nuc85h.execute-api.ap-south-1.amazonaws.com/api/";
+  "https://dk5h700gx5.execute-api.ap-south-1.amazonaws.com/api/";
 export const BASE_URL = "/";
 export const SOCKET_URL =
-  "https://y3b5nuc85h.execute-api.ap-south-1.amazonaws.com/api/";
+  "https://dk5h700gx5.execute-api.ap-south-1.amazonaws.com/api/";
 export const BASE_LINK = "/";
 export const SOCKET_PATH = "/";
 export const DEFAULT_IP_ADDRESS = "127.0.0.1";

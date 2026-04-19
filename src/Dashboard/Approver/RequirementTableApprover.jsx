@@ -565,6 +565,19 @@ const RequirementTableApprover = () => {
       ),
     },
     {
+      title: "Group by",
+      dataIndex: "groupBy",
+      key: "groupBy",
+      width: 140,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record?.groupBy && typeof record.groupBy === "object"
+            ? record.groupBy.name || "-"
+            : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
@@ -1195,7 +1208,7 @@ const RequirementTableApprover = () => {
                   deptObj.items ? [...deptObj.items] : [],
                 )}
                 pagination={false}
-                scroll={{ x: 2100 }}
+                scroll={{ x: 2240 }}
                 size="middle"
                 rowClassName={rowClassName}
               />

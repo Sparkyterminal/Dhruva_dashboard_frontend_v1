@@ -113,13 +113,18 @@ const AddBill = () => {
 
   const onFinish = async (values) => {
     // Format dates to YYYY-MM-DD and prepare payload
+    const startDateStr = values.startDate.format("YYYY-MM-DD");
     const payload = {
       name: values.name,
       belongs_to: values.belongsTo,
       emi_end_date: values.emiEndDate.format("YYYY-MM-DD"),
       emiType:
         values.emiType === "Others" ? values.emiTypeOther : values.emiType,
-      emiDate: values.emiDate.format("YYYY-MM-DD"),
+      // Prefer `startDate` + `frequency` (new backend fields)
+      startDate: startDateStr,
+      frequency: values.frequency || "MONTHLY",
+      // Backward compatibility: backend still supports `emiDate`
+      emiDate: startDateStr,
       defaultAmount: values.amount,
     };
 
@@ -224,6 +229,7 @@ const AddBill = () => {
                     Sky Blue Event Management India Pvt Lmtd.
                   </Option>
                   <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+                  <Option value="Monica">Monica</Option>
                 </Select>
               </Form.Item>
 
@@ -257,11 +263,24 @@ const AddBill = () => {
               )}
 
               <Form.Item
-                label="EMI Date(Every Month)"
-                name="emiDate"
-                rules={[{ required: true, message: "Please select EMI date" }]}
+                label="Start Date"
+                name="startDate"
+                rules={[{ required: true, message: "Please select start date" }]}
               >
                 <DatePicker size="large" style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item
+                label="Frequency"
+                name="frequency"
+                initialValue="MONTHLY"
+                rules={[{ required: true, message: "Please select frequency" }]}
+              >
+                <Select size="large" placeholder="Select frequency">
+                  <Option value="MONTHLY">Monthly</Option>
+                  <Option value="QUARTERLY">Quarterly</Option>
+                  <Option value="YEARLY">Yearly</Option>
+                </Select>
               </Form.Item>
 
               <Form.Item

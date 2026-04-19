@@ -238,7 +238,13 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
         </Row>
         <Row gutter={16}>
           <Col xs={24} sm={12}>
-            <Form.Item name="company_name" label="Company Name">
+            <Form.Item
+              name="company_name"
+              label="Company Name"
+              rules={[
+                { required: true, message: "Please enter company name" },
+              ]}
+            >
               <Input placeholder="Enter company name (if any)" />
             </Form.Item>
           </Col>

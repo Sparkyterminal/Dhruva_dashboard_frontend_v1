@@ -126,7 +126,8 @@ const EditBill = () => {
           emiType: data.emiType,
           emiTypeOther:
             data.emiType === "Others" ? data.emiTypeOther || "" : undefined,
-          emiDate: dayjs(data.emiDate), // convert string to dayjs object
+          startDate: dayjs(data.startDate || data.emiDate), // prefer startDate
+          frequency: data.frequency || "MONTHLY",
           emiEndDate: dayjs(data.emi_end_date), // convert string to dayjs object
           amount: data.defaultAmount,
         });
@@ -144,12 +145,16 @@ const EditBill = () => {
 
   // On form submit, update the bill by id
   const onFinish = async (values) => {
+    const startDateStr = values.startDate.format("YYYY-MM-DD");
     const payload = {
       name: values.name,
       belongs_to: values.belongsTo,
       emiType:
         values.emiType === "Others" ? values.emiTypeOther : values.emiType,
-      emiDate: values.emiDate.format("YYYY-MM-DD"),
+      startDate: startDateStr,
+      frequency: values.frequency || "MONTHLY",
+      // legacy compatibility
+      emiDate: startDateStr,
       emi_end_date: values.emiEndDate.format("YYYY-MM-DD"),
       defaultAmount: values.amount,
     };
@@ -172,7 +177,7 @@ const EditBill = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 relative font-[cormoreg]">
+    <div className="min-h-screen w-full bg-linear-to-br from-purple-50 via-blue-50 to-indigo-100 relative font-[cormoreg]">
       <style>{customStyles}</style>
       <div
         className="absolute inset-0 z-0 pointer-events-none"
@@ -200,7 +205,7 @@ const EditBill = () => {
               >
                 Back
               </button>
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <div className="w-20 h-20 bg-linear-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
                 <FileTextOutlined
                   style={{ fontSize: "2.5rem", color: "white" }}
                 />
@@ -246,6 +251,7 @@ const EditBill = () => {
                     Sky Blue Event Management India Pvt Lmtd.
                   </Option>
                   <Option value="Dhrua Kumar H P">Dhrua Kumar H P</Option>
+                  <Option value="Monica">Monica</Option>
                 </Select>
               </Form.Item>
 
@@ -279,11 +285,24 @@ const EditBill = () => {
               )}
 
               <Form.Item
-                label="EMI Date(Every Month)"
-                name="emiDate"
-                rules={[{ required: true, message: "Please select EMI date" }]}
+                label="Start Date"
+                name="startDate"
+                rules={[{ required: true, message: "Please select start date" }]}
               >
                 <DatePicker size="large" style={{ width: "100%" }} />
+              </Form.Item>
+
+              <Form.Item
+                label="Frequency"
+                name="frequency"
+                initialValue="MONTHLY"
+                rules={[{ required: true, message: "Please select frequency" }]}
+              >
+                <Select size="large" placeholder="Select frequency">
+                  <Option value="MONTHLY">Monthly</Option>
+                  <Option value="QUARTERLY">Quarterly</Option>
+                  <Option value="YEARLY">Yearly</Option>
+                </Select>
               </Form.Item>
 
               <Form.Item

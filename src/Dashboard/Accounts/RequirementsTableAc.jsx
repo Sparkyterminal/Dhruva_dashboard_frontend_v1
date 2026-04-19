@@ -626,6 +626,19 @@ const RequirementsTableAc = () => {
       ),
     },
     {
+      title: "Group by",
+      dataIndex: "groupBy",
+      key: "groupBy",
+      width: 140,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record?.groupBy && typeof record.groupBy === "object"
+            ? record.groupBy.name || "-"
+            : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Expected In",
       dataIndex: "transation_in",
       key: "transation_in",
@@ -1384,7 +1397,7 @@ const RequirementsTableAc = () => {
                     deptObj.items ? [...deptObj.items] : [],
                   )}
                   pagination={false}
-                  scroll={{ x: 2000 }}
+                  scroll={{ x: 2140 }}
                   size="middle"
                   rowClassName={rowClassName}
                 />

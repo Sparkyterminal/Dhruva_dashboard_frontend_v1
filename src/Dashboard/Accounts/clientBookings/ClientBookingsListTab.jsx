@@ -28,6 +28,7 @@ import {
   getTotalPayable,
   getTotalExpectedAdvances,
   getTotalReceivedAdvances,
+  getTabLabelBookingCount,
 } from "./clientBookingsUtils";
 import ClientBookingsFilters from "./ClientBookingsFilters";
 import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
@@ -293,7 +294,9 @@ const ClientBookingsListTab = ({
   loading,
   filterEventName,
   filterDateRange,
+  filterVenueId,
   eventNameOptions,
+  venueOptions,
   listStatusTab,
   onListStatusTabChange,
   pagination,
@@ -305,8 +308,11 @@ const ClientBookingsListTab = ({
   bookingsSummary,
   setFilterEventName,
   setFilterDateRange,
+  setFilterVenueId,
 }) => {
-  const totalBookings = bookings.length;
+  const totalsByStatus = bookingsSummary?.totalsByStatus;
+  const tabCount = (key) => getTabLabelBookingCount(totalsByStatus, key);
+
   const totalPayableRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
     0,
@@ -340,12 +346,16 @@ const ClientBookingsListTab = ({
       <ClientBookingsFilters
         filterEventName={filterEventName}
         filterDateRange={filterDateRange}
+        filterVenueId={filterVenueId}
         eventNameOptions={eventNameOptions}
+        venueOptions={venueOptions}
         onEventNameChange={setFilterEventName}
         onDateRangeChange={setFilterDateRange}
+        onVenueChange={setFilterVenueId}
         onClear={() => {
           setFilterEventName(undefined);
           setFilterDateRange(null);
+          setFilterVenueId?.(undefined);
         }}
       />
 
@@ -358,8 +368,8 @@ const ClientBookingsListTab = ({
             label: (
               <span>
                 <AppstoreOutlined /> All
-                {listStatusTab === "all" && bookingsSummary?.totalBookings != null && (
-                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                {tabCount("all") != null && (
+                  <span className="ml-1">({tabCount("all")})</span>
                 )}
               </span>
             ),
@@ -369,9 +379,8 @@ const ClientBookingsListTab = ({
             label: (
               <span>
                 <CheckCircleOutlined /> Confirmed
-                {listStatusTab === "confirmed" &&
-                  bookingsSummary?.totalBookings != null && (
-                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                {tabCount("confirmed") != null && (
+                  <span className="ml-1">({tabCount("confirmed")})</span>
                 )}
               </span>
             ),
@@ -381,9 +390,8 @@ const ClientBookingsListTab = ({
             label: (
               <span>
                 <ClockCircleOutlined /> In progress
-                {listStatusTab === "inprogress" &&
-                  bookingsSummary?.totalBookings != null && (
-                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                {tabCount("inprogress") != null && (
+                  <span className="ml-1">({tabCount("inprogress")})</span>
                 )}
               </span>
             ),
@@ -393,9 +401,8 @@ const ClientBookingsListTab = ({
             label: (
               <span>
                 <CloseCircleOutlined /> Cancelled
-                {listStatusTab === "cancelled" &&
-                  bookingsSummary?.totalBookings != null && (
-                  <span className="ml-1">({bookingsSummary.totalBookings})</span>
+                {tabCount("cancelled") != null && (
+                  <span className="ml-1">({tabCount("cancelled")})</span>
                 )}
               </span>
             ),
@@ -405,7 +412,7 @@ const ClientBookingsListTab = ({
 
       <ClientBookingsStatsCards
         summary={bookingsSummary}
-        totalBookings={totalBookings}
+        statusKey={listStatusTab}
         totalPayableRevenue={totalPayableRevenue}
         totalPendingRevenue={totalPendingRevenue}
         totalReceivedRevenue={totalReceivedRevenue}

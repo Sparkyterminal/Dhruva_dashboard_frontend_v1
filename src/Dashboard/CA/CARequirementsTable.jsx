@@ -588,6 +588,19 @@ const CARequirementsTable = () => {
       ),
     },
     {
+      title: "Group by",
+      dataIndex: "groupBy",
+      key: "groupBy",
+      width: 140,
+      render: (_, record) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {record?.groupBy && typeof record.groupBy === "object"
+            ? record.groupBy.name || "-"
+            : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Required Date",
       dataIndex: "required_date",
       key: "required_date",
@@ -1300,7 +1313,7 @@ const CARequirementsTable = () => {
                   rowKey="id"
                   loading={loading && !Object.keys(departmentData).length}
                   pagination={false}
-                  scroll={{ x: 2800 }}
+                  scroll={{ x: 2940 }}
                   size="middle"
                   bordered
                   rowClassName={rowClassName}

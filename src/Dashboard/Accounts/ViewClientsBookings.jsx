@@ -36,6 +36,7 @@ import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
 import CalendarClients from "../../Components/CalendarClients";
+import AdvanceCalendarClients from "../../Components/AdvanceCalenderClients";
 import UserWiseClients from "../../Components/UserWiseClients";
 import ProgressCalenderClients from "../../Components/ProgressCalenderClients";
 import {
@@ -50,6 +51,7 @@ import {
   CLIENT_BOOKINGS_LIST_TAB_API_STATUS,
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
+import BalanceSheets from "./clientBookings/BalanceSheets";
 import BudgetReportDrawerSection from "./budgetreport/BudgetReportDrawerSection";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 
@@ -80,12 +82,52 @@ const ViewClientsBookings = () => {
   const [filterEventName, setFilterEventName] = useState(undefined);
   const [filterDateRange, setFilterDateRange] = useState(null);
   const [eventNameOptions, setEventNameOptions] = useState([]); // populated from initial/data
+  const [filterVenueId, setFilterVenueId] = useState(undefined);
+  const [venueOptions, setVenueOptions] = useState([]);
 
   const user = useSelector((state) => state.user.value);
 
   const config = {
     headers: { Authorization: user?.access_token },
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    const fetchVenues = async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}venue`, config);
+        const raw = res.data;
+        const list = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw.venues)
+            ? raw.venues
+            : Array.isArray(raw.items)
+              ? raw.items
+              : Array.isArray(raw.data)
+                ? raw.data
+                : [];
+
+        if (cancelled) return;
+        setVenueOptions(
+          (Array.isArray(list) ? list : [])
+            .map((v) => ({
+              label: v?.name ?? v?.venueName ?? "Unnamed venue",
+              value: v?.id ?? v?._id,
+            }))
+            .filter((o) => o.value)
+            .sort((a, b) => String(a.label).localeCompare(String(b.label))),
+        );
+      } catch (err) {
+        if (!cancelled) setVenueOptions([]);
+      }
+    };
+
+    if (user?.access_token) fetchVenues();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.access_token]);
 
   const fetchBookingsList = useCallback(async () => {
     setLoading(true);
@@ -97,6 +139,11 @@ const ViewClientsBookings = () => {
       const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
       if (statusParam) params.status = statusParam;
       if (filterEventName) params.eventName = filterEventName;
+      if (filterVenueId) {
+        // Send venue id as query param (support both common keys used on backend)
+        params.venueId = filterVenueId;
+        params.venueLocation = filterVenueId;
+      }
       const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
       const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
       if (start) params.startDate = start;
@@ -109,9 +156,9 @@ const ViewClientsBookings = () => {
       const data = res.data || {};
       const events = Array.isArray(data.events) ? data.events : [];
       setBookings(events);
-      setBookingsSummary(
-        data.summary && typeof data.summary === "object" ? data.summary : null,
-      );
+      // Keep the whole response shape so downstream UI can read `totalsByStatus`
+      // (backend sends it at the top-level, not inside `summary`)
+      setBookingsSummary(data && typeof data === "object" ? data : null);
       setPagination((prev) => ({
         ...prev,
         current: data.page ?? prev.current,
@@ -141,6 +188,7 @@ const ViewClientsBookings = () => {
     pagination.pageSize,
     listStatusTab,
     filterEventName,
+    filterVenueId,
     filterDateRange,
     user?.access_token,
   ]);
@@ -161,6 +209,11 @@ const ViewClientsBookings = () => {
 
   const handleFilterDateRangeChange = (value) => {
     setFilterDateRange(value);
+    setPagination((p) => ({ ...p, current: 1 }));
+  };
+
+  const handleFilterVenueChange = (value) => {
+    setFilterVenueId(value);
     setPagination((p) => ({ ...p, current: 1 }));
   };
 
@@ -353,11 +406,14 @@ const ViewClientsBookings = () => {
           loading={loading}
           filterEventName={filterEventName}
           filterDateRange={filterDateRange}
+          filterVenueId={filterVenueId}
           eventNameOptions={eventNameOptions}
+          venueOptions={venueOptions}
           listStatusTab={listStatusTab}
           onListStatusTabChange={onListStatusTabChange}
           setFilterEventName={handleFilterEventNameChange}
           setFilterDateRange={handleFilterDateRangeChange}
+          setFilterVenueId={handleFilterVenueChange}
           bookingsSummary={bookingsSummary}
           pagination={pagination}
           handleTableChange={handleTableChange}
@@ -373,10 +429,21 @@ const ViewClientsBookings = () => {
       label: "Confirmed Events Calendar",
       children: <CalendarClients />,
     },
+   
     {
       key: "Progresscalendar",
       label: "Inprogress/Cancelled Events Calendar",
       children: <InprogressCalendarPage />,
+    },
+    {
+      key: "advanceCalendar",
+      label: "Advance Calendar",
+      children: <AdvanceCalendarClients />,
+    },
+    {
+      key: "balanceSheet",
+      label: "Balance Sheet",
+      children: <BalanceSheets />,
     },
     {
       key: "leaderboard",
