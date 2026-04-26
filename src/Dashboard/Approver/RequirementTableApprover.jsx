@@ -578,6 +578,17 @@ const RequirementTableApprover = () => {
       ),
     },
     {
+      title: "Remarks",
+      dataIndex: "remarks",
+      key: "remarks",
+      width: 180,
+      render: (remarks) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {remarks ? String(remarks) : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",

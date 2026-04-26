@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
+import { Tabs } from "antd";
 import { logout } from "../../reducers/users";
 // import ViewRequirements from "./ViewRequirements";
 import logouticon from "../../assets/userlogout.json";
@@ -12,6 +13,7 @@ import audience from "../../assets/Target Audience.json";
 import password from "../../assets/passworduser.json";
 import rainbow from "../../assets/Rainbow.json";
 import ViewRequirements from "../User/ViewRequirements";
+import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
 
 // Email arrays for conditional rendering
 const CONFIRMED_EVENTS_EMAILS = [
@@ -772,7 +774,22 @@ const MarketHome = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <ViewRequirements />
+            <Tabs
+              defaultActiveKey="calendar"
+              size="large"
+              items={[
+                {
+                  key: "calendar",
+                  label: "Calendar",
+                  children: <UserWiseCalendarPanel />,
+                },
+                {
+                  key: "dashboard",
+                  label: "Dashboard",
+                  children: <ViewRequirements />,
+                },
+              ]}
+            />
           </motion.div>
         </div>
       </div>

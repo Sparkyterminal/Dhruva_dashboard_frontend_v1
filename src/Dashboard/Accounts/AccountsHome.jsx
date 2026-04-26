@@ -13,6 +13,7 @@ import password from "../../assets/passworduser.json";
 import rainbow from "../../assets/Rainbow.json";
 import RequirementsTableAc from "./RequirementsTableAc";
 import AdvanceCalendarClients from "../../Components/AdvanceCalenderClients";
+import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
 // import AdvanceCalendarClients from "./AdvanceCalendarClients";
 
 // CSS for Glassmorphism and Animations
@@ -70,7 +71,7 @@ const AccountsHome = () => {
 
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
   const [showDropdown, setShowDropdown] = useState(false);
-  const [activeTab, setActiveTab] = useState("requests"); // 'requests' or 'calendar'
+  const [activeTab, setActiveTab] = useState("calendar"); // 'calendar' | 'advanceCalendar' | 'requests'
   const dropdownRef = useRef(null);
 
   // Update time every second
@@ -472,7 +473,7 @@ const AccountsHome = () => {
                     d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
                   />
                 </svg>
-                Requests
+                Dashboard
               </div>
             </motion.button>
 
@@ -482,6 +483,32 @@ const AccountsHome = () => {
               whileTap={{ scale: 0.98 }}
               className={`flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
                 activeTab === "calendar" ? "tab-active" : "tab-inactive"
+              }`}
+            >
+              <div className="flex items-center justify-center gap-2">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+                Calendar
+              </div>
+            </motion.button>
+
+            <motion.button
+              onClick={() => setActiveTab("advanceCalendar")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className={`flex-1 py-3 px-6 rounded-xl font-semibold text-lg transition-all duration-300 ${
+                activeTab === "advanceCalendar" ? "tab-active" : "tab-inactive"
               }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -512,10 +539,12 @@ const AccountsHome = () => {
             transition={{ duration: 0.3 }}
             className="glass-header p-6 md:p-8 rounded-2xl min-h-[500px]"
           >
-            {activeTab === "requests" ? (
-              <RequirementsTableAc />
-            ) : (
+            {activeTab === "calendar" ? (
+              <UserWiseCalendarPanel />
+            ) : activeTab === "advanceCalendar" ? (
               <AdvanceCalendarClients />
+            ) : (
+              <RequirementsTableAc />
             )}
           </motion.div>
         </div>

@@ -5,7 +5,7 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { logout } from "../../reducers/users";
-import Meetings from "./Meetings";
+import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
 import {
   UnorderedListOutlined,
   BookOutlined,
@@ -227,9 +227,12 @@ const HomeOwner = () => {
             </div>
           </div>
         </motion.div>
-        {/* Below Header: Meetings */}
+        {/* Below Header: Personal Calendar */}
         <div className="max-w-8xl w-full mx-auto mt-4">
-          <Meetings />
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
+            Personal Calendar
+          </h2>
+          <UserWiseCalendarPanel />
         </div>
       </div>
     </div>

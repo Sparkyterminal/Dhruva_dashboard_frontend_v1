@@ -601,6 +601,17 @@ const CARequirementsTable = () => {
       ),
     },
     {
+      title: "Remarks",
+      dataIndex: "remarks",
+      key: "remarks",
+      width: 180,
+      render: (remarks) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {remarks ? String(remarks) : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Required Date",
       dataIndex: "required_date",
       key: "required_date",

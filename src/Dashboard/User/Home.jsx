@@ -4,8 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
+import { Tabs } from "antd";
 import { logout } from "../../reducers/users";
 import ViewRequirements from "./ViewRequirements";
+import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
 import logouticon from "../../assets/userlogout.json";
 import welcome from "../../assets/userwelcome.json";
 import audience from "../../assets/Target Audience.json";
@@ -494,7 +496,22 @@ const Home = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
           >
-            <ViewRequirements />
+            <Tabs
+              defaultActiveKey="calendar"
+              size="large"
+              items={[
+                {
+                  key: "calendar",
+                  label: "Calendar",
+                  children: <UserWiseCalendarPanel />,
+                },
+                {
+                  key: "dashboard",
+                  label: "Dashboard",
+                  children: <ViewRequirements />,
+                },
+              ]}
+            />
           </motion.div>
         </div>
       </div>

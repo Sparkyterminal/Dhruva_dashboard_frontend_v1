@@ -639,6 +639,17 @@ const RequirementsTableAc = () => {
       ),
     },
     {
+      title: "Remarks",
+      dataIndex: "remarks",
+      key: "remarks",
+      width: 180,
+      render: (remarks) => (
+        <span style={{ fontWeight: 700, fontSize: 18, color: "#000" }}>
+          {remarks ? String(remarks) : "-"}
+        </span>
+      ),
+    },
+    {
       title: "Expected In",
       dataIndex: "transation_in",
       key: "transation_in",

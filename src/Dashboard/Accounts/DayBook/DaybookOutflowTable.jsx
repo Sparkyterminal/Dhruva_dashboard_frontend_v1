@@ -109,6 +109,12 @@ const DaybookOutflowTable = ({ rows }) => {
         ),
       },
       {
+        title: "Group By",
+        key: "group_by",
+        width: 180,
+        render: (_, record) => <Text>{record?.groupBy?.name || "-"}</Text>,
+      },
+      {
         title: "Remarks",
         key: "remarks",
         width: 280,

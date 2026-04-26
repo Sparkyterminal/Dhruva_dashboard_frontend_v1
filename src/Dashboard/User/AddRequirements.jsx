@@ -127,6 +127,7 @@ const AddRequirements = () => {
       : values.vendor;
     const payload = {
       purpose: values.purpose,
+      remarks: values.remarks ? String(values.remarks).trim() : "",
       vendor: selectedVendor || null,
       event_reference: values.event_reference || null,
       amount:
@@ -198,6 +199,21 @@ const AddRequirements = () => {
               <Input
                 placeholder="e.g., Office supplies, Equipment upgrade"
                 size="large"
+                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={
+                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                  Remarks
+                </span>
+              }
+              name="remarks"
+            >
+              <Input.TextArea
+                placeholder="Add remarks (optional)"
+                rows={3}
                 className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
               />
             </Form.Item>
