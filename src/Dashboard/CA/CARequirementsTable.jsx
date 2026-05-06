@@ -27,6 +27,8 @@ import {
 import axios from "axios";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
+import { Modal } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -66,6 +68,9 @@ const CARequirementsTable = () => {
   const [editEntityAccount, setEditEntityAccount] = useState(null);
   const [editAmountPaidTo, setEditAmountPaidTo] = useState(null);
   const [approvingId, setApprovingId] = useState(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteTargetRow, setDeleteTargetRow] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -506,6 +511,24 @@ const CARequirementsTable = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTargetRow) return;
+    setDeleteLoading(true);
+    try {
+      const id = deleteTargetRow._id || deleteTargetRow.id;
+      await axios.delete(`${API_BASE_URL}request/${id}`, config);
+      message.success("Request deleted successfully");
+      setDeleteModalVisible(false);
+      setDeleteTargetRow(null);
+      refetchDepartment(
+        deleteTargetRow.department?._id || deleteTargetRow.department?.id,
+      );
+    } catch {
+      message.error("Failed to delete request");
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
   const columns = [
     {
       title: "Sl. No",
@@ -968,33 +991,78 @@ const CARequirementsTable = () => {
     //     </Tag>
     //   ),
     // },
+    // {
+    //   title: "Actions",
+    //   key: "actions",
+    //   width: 100,
+    //   fixed: "right",
+    //   render: (_, row) => {
+    //     if (editRowId === (row._id || row.id)) {
+    //       return (
+    //         <Button
+    //           type="primary"
+    //           size="small"
+    //           onClick={() => handleSaveClick(row)}
+    //           icon={<CheckOutlined />}
+    //         >
+    //           Save
+    //         </Button>
+    //       );
+    //     }
+    //     return (
+    //       <Button
+    //         type="default"
+    //         size="small"
+    //         onClick={() => handleEditClick(row)}
+    //         icon={<EditOutlined />}
+    //       >
+    //         Edit
+    //       </Button>
+    //     );
+    //   },
+    // },
     {
       title: "Actions",
       key: "actions",
-      width: 100,
+      width: 160, // wider to fit both Edit/Save + Delete
       fixed: "right",
       render: (_, row) => {
-        if (editRowId === (row._id || row.id)) {
-          return (
-            <Button
-              type="primary"
-              size="small"
-              onClick={() => handleSaveClick(row)}
-              icon={<CheckOutlined />}
-            >
-              Save
-            </Button>
-          );
-        }
+        const rowId = row._id || row.id;
         return (
-          <Button
-            type="default"
-            size="small"
-            onClick={() => handleEditClick(row)}
-            icon={<EditOutlined />}
-          >
-            Edit
-          </Button>
+          <Space>
+            {editRowId === rowId ? (
+              <Button
+                type="primary"
+                size="small"
+                onClick={() => handleSaveClick(row)}
+                icon={<CheckOutlined />}
+              >
+                Save
+              </Button>
+            ) : (
+              <Button
+                type="default"
+                size="small"
+                onClick={() => handleEditClick(row)}
+                icon={<EditOutlined />}
+              >
+                Edit
+              </Button>
+            )}
+
+            <Button
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              style={{ fontWeight: 700 }}
+              onClick={() => {
+                setDeleteTargetRow(row);
+                setDeleteModalVisible(true);
+              }}
+            >
+              Delete
+            </Button>
+          </Space>
         );
       },
     },
@@ -1346,6 +1414,41 @@ const CARequirementsTable = () => {
           </Collapse>
         )}
       </div>
+      <Modal
+        title={
+          <span style={{ fontWeight: 700, fontSize: 20 }}>Confirm Delete</span>
+        }
+        open={deleteModalVisible}
+        onOk={handleDelete}
+        onCancel={() => {
+          setDeleteModalVisible(false);
+          setDeleteTargetRow(null);
+        }}
+        okText="Yes, Delete"
+        cancelText="Cancel"
+        okButtonProps={{
+          danger: true,
+          loading: deleteLoading,
+          style: { fontWeight: 700 },
+        }}
+        cancelButtonProps={{ style: { fontWeight: 700 } }}
+        centered
+      >
+        <p style={{ fontSize: 18, fontWeight: 600 }}>
+          Are you sure you want to delete this request?{" "}
+          <span style={{ color: "#dc2626" }}>
+            This action cannot be undone.
+          </span>
+        </p>
+        {deleteTargetRow && (
+          <p style={{ fontSize: 16, color: "#6b7280" }}>
+            Purpose: <strong>{deleteTargetRow.purpose || "-"}</strong>
+            <br />
+            Department:{" "}
+            <strong>{deleteTargetRow.department?.name || "-"}</strong>
+          </p>
+        )}
+      </Modal>
     </div>
   );
 };

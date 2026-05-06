@@ -28,6 +28,8 @@ import {
   LockOutlined,
 } from "@ant-design/icons";
 import dayjs from "dayjs";
+import { Modal } from "antd";
+import { DeleteOutlined } from "@ant-design/icons";
 
 import { API_BASE_URL } from "../../../config";
 
@@ -66,6 +68,13 @@ const RequirementsTableAc = () => {
   const vendorSearchRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const PAGE_SIZE = 30;
+
+  // Add this state near the other useState declarations:
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
+  const [deleteTargetRow, setDeleteTargetRow] = useState(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Add this handler function (alongside handleComplete, handleReject, etc.):
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -116,6 +125,25 @@ const RequirementsTableAc = () => {
     if (activeTab === "completed") return "approved";
     if (activeTab === "rejected") return "rejected";
     return undefined;
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTargetRow) return;
+    setDeleteLoading(true);
+    try {
+      await axios.delete(
+        `${API_BASE_URL}request/${getRequestId(deleteTargetRow)}`,
+        config,
+      );
+      message.success("Request deleted successfully");
+      setDeleteModalVisible(false);
+      setDeleteTargetRow(null);
+      refetchDepartment(getDepartmentKey(deleteTargetRow.department));
+    } catch {
+      message.error("Failed to delete request");
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   // Single API call: no department = initial load (build only departments with data); with department = that department's page
@@ -1096,10 +1124,65 @@ const RequirementsTableAc = () => {
         );
       },
     },
+    // {
+    //   title: "Actions",
+    //   key: "actions",
+    //   width: 250,
+    //   fixed: "right",
+    //   render: (_, row) => {
+    //     const isAmountPaidFilled = row.amount_paid && row.amount_paid > 0;
+
+    //     return (
+    //       <Space>
+    //         {row.accounts_check === "PENDING" ? (
+    //           <>
+    //             <Tooltip
+    //               title={
+    //                 !isAmountPaidFilled
+    //                   ? "Amount paid must be filled before completing"
+    //                   : ""
+    //               }
+    //             >
+    //               <Button
+    //                 type="primary"
+    //                 size="small"
+    //                 onClick={() => handleComplete(row)}
+    //                 icon={<CheckCircleOutlined />}
+    //                 disabled={!isAmountPaidFilled}
+    //                 style={{
+    //                   background: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+    //                   borderColor: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+    //                   fontWeight: 600,
+    //                   fontSize: 16,
+    //                   cursor: isAmountPaidFilled ? "pointer" : "not-allowed",
+    //                 }}
+    //               >
+    //                 Completed
+    //               </Button>
+    //             </Tooltip>
+    //             <Button
+    //               danger
+    //               size="small"
+    //               onClick={() => handleReject(row)}
+    //               icon={<CloseCircleOutlined />}
+    //               style={{ fontWeight: 700, fontSize: 18 }}
+    //             >
+    //               Rejected
+    //             </Button>
+    //           </>
+    //         ) : (
+    //           <span style={{ fontWeight: 700, fontSize: 18, color: "#555" }}>
+    //             {row.status}
+    //           </span>
+    //         )}
+    //       </Space>
+    //     );
+    //   },
+    // },
     {
       title: "Actions",
       key: "actions",
-      width: 250,
+      width: 300, // slightly wider to fit delete button
       fixed: "right",
       render: (_, row) => {
         const isAmountPaidFilled = row.amount_paid && row.amount_paid > 0;
@@ -1147,6 +1230,20 @@ const RequirementsTableAc = () => {
                 {row.status}
               </span>
             )}
+
+            {/* Delete button — always visible regardless of status */}
+            <Button
+              danger
+              size="small"
+              icon={<DeleteOutlined />}
+              style={{ fontWeight: 700, fontSize: 16 }}
+              onClick={() => {
+                setDeleteTargetRow(row);
+                setDeleteModalVisible(true);
+              }}
+            >
+              Delete
+            </Button>
           </Space>
         );
       },
@@ -1427,6 +1524,43 @@ const RequirementsTableAc = () => {
               </Panel>
             ))}
           </Collapse>
+          <Modal
+            title={
+              <span style={{ fontWeight: 700, fontSize: 20 }}>
+                Confirm Delete
+              </span>
+            }
+            open={deleteModalVisible}
+            onOk={handleDelete}
+            onCancel={() => {
+              setDeleteModalVisible(false);
+              setDeleteTargetRow(null);
+            }}
+            okText="Yes, Delete"
+            cancelText="Cancel"
+            okButtonProps={{
+              danger: true,
+              loading: deleteLoading,
+              style: { fontWeight: 700 },
+            }}
+            cancelButtonProps={{ style: { fontWeight: 700 } }}
+            centered
+          >
+            <p style={{ fontSize: 18, fontWeight: 600 }}>
+              Are you sure you want to delete this request?{" "}
+              <span style={{ color: "#dc2626" }}>
+                This action cannot be undone.
+              </span>
+            </p>
+            {deleteTargetRow && (
+              <p style={{ fontSize: 16, color: "#6b7280" }}>
+                Purpose: <strong>{deleteTargetRow.purpose || "-"}</strong>
+                <br />
+                Department:{" "}
+                <strong>{deleteTargetRow.department?.name || "-"}</strong>
+              </p>
+            )}
+          </Modal>
         </div>
       </div>
     </div>
