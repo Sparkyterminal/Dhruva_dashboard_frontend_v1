@@ -33,6 +33,7 @@ const CONFIRMED_EVENTS_EMAILS = [
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
   "companyweddings@gmail.com",
+  "akshaywbd@gmail.com",
 ];
 
 const INPROGRESS_EVENTS_EMAILS = [
