@@ -133,8 +133,12 @@ const DaybookAccountsBalanceTable = ({
 
   return (
     <Table
-      rowKey={(record, idx) =>
-        `${record?._id ?? record?.id ?? "balance"}-${record?.balanceDate ?? "date"}-${idx}`
+      rowKey={(record) =>
+        String(
+          record?._id ??
+            record?.id ??
+            `balance-${record?.balanceDate ?? "date"}`,
+        )
       }
       columns={columns}
       dataSource={dataSource}

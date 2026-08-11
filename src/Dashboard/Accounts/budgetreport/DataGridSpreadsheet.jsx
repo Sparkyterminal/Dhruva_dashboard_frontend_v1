@@ -1,3 +1,7 @@
+/**
+ * LEGACY — AG Grid spreadsheet for old budget report flow.
+ * Superseded by ./excel/ (Univer Sheets). Kept for reference; not used by App routes.
+ */
 import React, {
   useState,
   useEffect,

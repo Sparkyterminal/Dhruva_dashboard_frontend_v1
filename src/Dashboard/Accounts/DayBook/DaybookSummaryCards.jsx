@@ -16,7 +16,7 @@ const SummaryCard = ({ title, amount, count, gradient }) => {
         boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         overflow: "hidden",
       }}
-      bodyStyle={{ padding: "18px 18px" }}
+      styles={{ body: { padding: "18px 18px" } }}
     >
       <Text style={{ color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
         {title}
@@ -40,7 +40,7 @@ const BalanceValueCard = ({ title, amount, valueColor }) => {
         border: "1px solid #e2e8f0",
         background: "#ffffff",
       }}
-      bodyStyle={{ padding: "14px 16px" }}
+      styles={{ body: { padding: "14px 16px" } }}
     >
       <Text className="text-slate-500" style={{ fontWeight: 600 }}>
         {title}
@@ -83,7 +83,7 @@ const DaybookSummaryCards = ({
         background: "rgba(255, 255, 255, 0.85)",
         backdropFilter: "blur(10px)",
       }}
-      bodyStyle={{ padding: "20px 24px" }}
+      styles={{ body: { padding: "20px 24px" } }}
     >
       <div style={{ marginBottom: 14 }}>
         <Text className="text-slate-700 font-semibold">

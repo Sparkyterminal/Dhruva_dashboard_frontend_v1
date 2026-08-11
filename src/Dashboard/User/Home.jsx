@@ -16,6 +16,13 @@ import rainbow from "../../assets/Rainbow.json";
 
 // Email arrays for conditional rendering
 const CONFIRMED_EVENTS_EMAILS = [
+  "kuldeepwbd@gmail.com",
+  "maheshwbd@gmail.com",
+  "darshithawbd@gmail.com",
+  "raghuwbd@gmail.com",
+  "abhishekwbd@gmail.com",
+  "lingrajwbd@gmail.com",
+  "naveenwbd@gmail.com",
   "dtiwari@gmail.com",
   "hemu.jamu86@gmail.com",
   "mallesh@gmail.com",
@@ -38,6 +45,7 @@ const CONFIRMED_EVENTS_EMAILS = [
 
 const INPROGRESS_EVENTS_EMAILS = [
   "hemu.jamu86@gmail.com",
+  "darshithawbd@gmail.com",
   "varshabellave@gmail.com",
   "hr@gmail.com",
   "nagendra@gmail.com",
@@ -58,6 +66,9 @@ const customStyles = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.35);
+    overflow: visible;
+    position: relative;
+    z-index: 40;
   }
 
   @keyframes slide-in-top {
@@ -102,6 +113,17 @@ const Home = () => {
   const userEmail = user?.email_id?.toLowerCase() || "";
   const showConfirmedEvents = CONFIRMED_EVENTS_EMAILS.includes(userEmail);
   const showInProgressEvents = INPROGRESS_EVENTS_EMAILS.includes(userEmail);
+
+  // LeaderBoard menu — only for HR DEPARTMENT users
+  const isHrDepartment = (user?.departments || []).some(
+    (d) =>
+      String(d?.name || "")
+        .trim()
+        .toUpperCase() === "HR DEPARTMENT",
+  );
+
+  // Lead / Bookings calendars — same pages as Marketing
+  const showLeadAndBookingsCalendars = userEmail === "mishra@gmail.com";
 
   // Update time every second
   useEffect(() => {
@@ -165,10 +187,12 @@ const Home = () => {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="max-w-7xl w-full mx-auto"
         >
-          {/* Glassmorphism Header */}
-          <div className="glass-header flex flex-col lg:flex-row justify-between items-center gap-6 px-6 py-6 md:px-10 md:py-8 mb-8 slide-in-top">
+          {/* Glassmorphism Header — row 1: welcome + avatar; row 2: menus (all breakpoints) */}
+          <div className="glass-header overflow-visible flex flex-col gap-4 md:gap-6 px-6 py-6 md:px-10 md:py-8 mb-8 slide-in-top">
+            {/* Top Row */}
+            <div className="relative z-50 flex flex-row justify-between items-start gap-3 sm:gap-4 w-full">
             {/* Left Section - Welcome & Time */}
-            <div className="flex-1 w-full lg:w-auto">
+            <div className="min-w-0 flex-1">
               <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -211,8 +235,86 @@ const Home = () => {
               </div>
             </div>
 
-            {/* Center Section - Action Buttons (Market-style grid) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full px-2">
+            {/* Avatar — top-right on all views */}
+            <div className="relative z-[60] shrink-0" ref={dropdownRef}>
+              <motion.button
+                onClick={() => setShowDropdown(!showDropdown)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="hidden lg:flex w-20 h-20 rounded-full cursor-pointer items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-2"
+              >
+                <Lottie
+                  animationData={audience}
+                  loop={true}
+                  className="w-full h-full"
+                />
+              </motion.button>
+
+              <motion.button
+                onClick={() => setShowDropdown(!showDropdown)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-xl"
+              >
+                <Lottie
+                  animationData={audience}
+                  loop={true}
+                  className="w-10 h-10"
+                />
+              </motion.button>
+
+              {showDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-14 md:top-20 bg-white rounded-2xl shadow-2xl py-2 w-56 z-[100] border border-gray-100 overflow-hidden"
+                >
+                  <motion.button
+                    whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate("/user/changepassword");
+                    }}
+                    className="w-full text-left px-5 py-3 transition-all duration-200 text-gray-700 font-semibold flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center">
+                      <Lottie
+                        animationData={password}
+                        loop={true}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    Change Password
+                  </motion.button>
+
+                  <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-1" />
+
+                  <motion.button
+                    whileHover={{ backgroundColor: "#fef2f2", x: 5 }}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left px-5 py-3 transition-all duration-200 text-red-600 font-semibold flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center">
+                      <Lottie
+                        animationData={logouticon}
+                        loop={true}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    Logout
+                  </motion.button>
+                </motion.div>
+              )}
+            </div>
+            </div>
+
+            {/* Bottom Row - Action Buttons */}
+            <div className="relative z-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full">
               {/* Add Requirement Button */}
               <motion.div
                 whileHover="hover"
@@ -404,88 +506,125 @@ const Home = () => {
                   />
                 </motion.button>
               </motion.div>
-            </div>
 
-            {/* Right Section - Avatar/Menu Dropdown */}
-            <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-end">
-              <div className="relative" ref={dropdownRef}>
-                {/* Desktop - Audience Icon */}
-                <motion.button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  whileHover={{ scale: 1.1 }}
+              {/* LeaderBoard — HR DEPARTMENT only */}
+              {isHrDepartment && (
+                <motion.div
+                  whileHover="hover"
                   whileTap={{ scale: 0.95 }}
-                  className="hidden lg:flex w-20 h-20 rounded-full cursor-pointer items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-2"
+                  className="w-full"
                 >
-                  <Lottie
-                    animationData={audience}
-                    loop={true}
-                    className="w-full h-full"
-                  />
-                </motion.button>
+                  <motion.button
+                    onClick={() => navigate("/user/leaderboard")}
+                    className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 hover:from-violet-50 hover:to-violet-100"
+                    variants={{ hover: { color: "#7c3aed", scale: 1.05 } }}
+                    style={{ color: "#8b5cf6" }}
+                    aria-label="LeaderBoard"
+                  >
+                    <span className="flex items-center gap-2">
+                      <svg
+                        className="w-4 h-4 md:w-5 md:h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
+                      </svg>
+                      LeaderBoard
+                    </span>
+                    <motion.div
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-500"
+                      initial={{ scaleX: 0 }}
+                      variants={{ hover: { scaleX: 1 } }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </motion.button>
+                </motion.div>
+              )}
 
-                {/* Mobile - Menu Icon */}
-                <motion.button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-xl"
-                >
-                  <Lottie
-                    animationData={audience}
-                    loop={true}
-                    className="w-10 h-10"
-                  />
-                </motion.button>
-
-                {/* Dropdown Menu */}
-                {showDropdown && (
+              {/* Lead Calendar + Bookings Calendar — mishra@gmail.com only */}
+              {showLeadAndBookingsCalendars && (
+                <>
                   <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-16 md:top-20 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
+                    whileHover="hover"
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full"
                   >
                     <motion.button
-                      whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate("/user/changepassword");
-                      }}
-                      className="w-full text-left px-5 py-3 transition-all duration-200 text-gray-700 font-semibold flex items-center gap-3 cursor-pointer"
+                      onClick={() => navigate("/user/client-leads")}
+                      className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-violet-50 to-fuchsia-50 hover:from-violet-100 hover:to-fuchsia-100"
+                      variants={{ hover: { color: "#a21caf", scale: 1.05 } }}
+                      style={{ color: "#c026d3" }}
+                      aria-label="Lead Calendar"
                     >
-                      <div className="w-8 h-8 flex items-center justify-center">
-                        <Lottie
-                          animationData={password}
-                          loop={true}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      Change Password
-                    </motion.button>
-
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-1" />
-
-                    <motion.button
-                      whileHover={{ backgroundColor: "#fef2f2", x: 5 }}
-                      onClick={() => {
-                        setShowDropdown(false);
-                        handleLogout();
-                      }}
-                      className="w-full text-left px-5 py-3 transition-all duration-200 text-red-600 font-semibold flex items-center gap-3 cursor-pointer"
-                    >
-                      <div className="w-5 h-5 flex items-center justify-center">
-                        <Lottie
-                          animationData={logouticon}
-                          loop={true}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      Logout
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 md:w-5 md:h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
+                        </svg>
+                        Lead Calendar
+                      </span>
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-fuchsia-500"
+                        initial={{ scaleX: 0 }}
+                        variants={{ hover: { scaleX: 1 } }}
+                        transition={{ duration: 0.3 }}
+                      />
                     </motion.button>
                   </motion.div>
-                )}
-              </div>
+
+                  <motion.div
+                    whileHover="hover"
+                    whileTap={{ scale: 0.95 }}
+                    className="w-full"
+                  >
+                    <motion.button
+                      onClick={() => navigate("/user/confirmed-events")}
+                      className="w-full justify-center font-bold text-sm md:text-base tracking-wide relative cursor-pointer transition-all duration-300 px-3 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-green-50 hover:to-green-100"
+                      variants={{ hover: { color: "#059669", scale: 1.05 } }}
+                      style={{ color: "#0d9488" }}
+                      aria-label="Bookings Calendar"
+                    >
+                      <span className="flex items-center gap-2">
+                        <svg
+                          className="w-4 h-4 md:w-5 md:h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Bookings Calendar
+                      </span>
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-green-500"
+                        initial={{ scaleX: 0 }}
+                        variants={{ hover: { scaleX: 1 } }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </motion.button>
+                  </motion.div>
+                </>
+              )}
             </div>
           </div>
         </motion.div>

@@ -26,6 +26,7 @@ import Home from "./Dashboard/User/Home";
 import ViewRequirements from "./Dashboard/User/ViewRequirements";
 import AddRequirements from "./Dashboard/User/AddRequirements";
 import AddVendor from "./Dashboard/User/vendors/AddVendor";
+import UserWiseClients from "./Components/UserWiseClients";
 
 // Owner
 import HomeOwner from "./Dashboard/Owner/Home";
@@ -74,6 +75,7 @@ import ViewSubVenue from "./Dashboard/Marketting/AddSubVenue/ViewSubVenue";
 import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
 import ViewLeads from "./Dashboard/Marketting/ClientLeadsTrack/ViewLeads";
 import EditLeads from "./Dashboard/Marketting/ClientLeadsTrack/EditLeads";
+import LeadsTrackerExcel from "./Dashboard/Marketting/ClientLeadsTrack/LeadsTrackerExcel";
 import CalendarClients from "./Components/CalendarClients";
 import InprogressCalendarPage from "./Pages/InprogressCalendarPage";
 import CAHomePage from "./Dashboard/CA/CAHomePage";
@@ -83,8 +85,13 @@ import CARequirementsTable from "./Dashboard/CA/CARequirementsTable";
 import BudgetReportHome from "./Dashboard/Accounts/budgetreport/BudgetReportHome";
 import BudgetReportEventWise from "./Dashboard/Accounts/budgetreport/BudgetReportEventWise";
 import EditBudgetReport from "./Dashboard/Accounts/budgetreport/EditBudgetReport";
-import AccountsBudgetReportMgmt from "./Dashboard/Accounts/budgetreport/AccountsBudgetReportMgmt";
+import BudgetReportExcelView from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelView";
 import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
+import ExpensesHome from "./Dashboard/Accounts/Expenses/ExpensesHome";
+import DailyExpense from "./Dashboard/Owner/DailyExpense";
+import DailyExpenseExcelAdd from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelAdd";
+import DailyExpenseExcelEdit from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelEdit";
+import DailyExpenseExcelView from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelView";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -211,6 +218,20 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
+              <Route path="/user/expenses" element={<ExpensesHome />} />
+              <Route path="/user/daily-expenses" element={<DailyExpense />} />
+              <Route
+                path="/user/daily-expenses/add"
+                element={<DailyExpenseExcelAdd />}
+              />
+              <Route
+                path="/user/daily-expenses/view/:date"
+                element={<DailyExpenseExcelView />}
+              />
+              <Route
+                path="/user/daily-expenses/edit/:date"
+                element={<DailyExpenseExcelEdit />}
+              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -242,14 +263,18 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
+              />
+              <Route
                 path="/user/budgetreport/edit/:id"
                 element={<EditBudgetReport />}
               />
-              <Route
-                path="/user/budgetreport/accounts/:id"
-                element={<AccountsBudgetReportMgmt />}
-              />
               <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route
+                path="/user/client-leads/excel"
+                element={<LeadsTrackerExcel />}
+              />
               <Route
                 path="/user/client-leads/edit/:id"
                 element={<EditLeads />}
@@ -283,6 +308,10 @@ const App = () => {
               <Route path="/user/editsubvenue/:id" element={<EditSubVenue />} />
               <Route path="/user/client-leads" element={<ViewLeads />} />
               <Route
+                path="/user/client-leads/excel"
+                element={<LeadsTrackerExcel />}
+              />
+              <Route
                 path="/user/client-leads/edit/:id"
                 element={<EditLeads />}
               />
@@ -305,12 +334,12 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
-                path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
               />
               <Route
-                path="/user/budgetreport/accounts/:id"
-                element={<AccountsBudgetReportMgmt />}
+                path="/user/budgetreport/edit/:id"
+                element={<EditBudgetReport />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -333,6 +362,19 @@ const App = () => {
                 path="/user/inprogress-events"
                 element={<InprogressCalendarPage />}
               />
+              <Route
+                path="/user/leaderboard"
+                element={<UserWiseClients />}
+              />
+              <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route
+                path="/user/client-leads/excel"
+                element={<LeadsTrackerExcel />}
+              />
+              <Route
+                path="/user/client-leads/edit/:id"
+                element={<EditLeads />}
+              />
 
               <Route
                 path="/user/editchecklists/:id"
@@ -344,12 +386,12 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
-                path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
               />
               <Route
-                path="/user/budgetreport/accounts/:id"
-                element={<AccountsBudgetReportMgmt />}
+                path="/user/budgetreport/edit/:id"
+                element={<EditBudgetReport />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -365,6 +407,20 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
+              <Route path="/user/expenses" element={<ExpensesHome />} />
+              <Route path="/user/daily-expenses" element={<DailyExpense />} />
+              <Route
+                path="/user/daily-expenses/add"
+                element={<DailyExpenseExcelAdd />}
+              />
+              <Route
+                path="/user/daily-expenses/view/:date"
+                element={<DailyExpenseExcelView />}
+              />
+              <Route
+                path="/user/daily-expenses/edit/:date"
+                element={<DailyExpenseExcelEdit />}
+              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -392,14 +448,18 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
+              />
+              <Route
                 path="/user/budgetreport/edit/:id"
                 element={<EditBudgetReport />}
               />
-              <Route
-                path="/user/budgetreport/accounts/:id"
-                element={<AccountsBudgetReportMgmt />}
-              />
               <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route
+                path="/user/client-leads/excel"
+                element={<LeadsTrackerExcel />}
+              />
               <Route
                 path="/user/client-leads/edit/:id"
                 element={<EditLeads />}
@@ -418,6 +478,20 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
+              <Route path="/user/expenses" element={<ExpensesHome />} />
+              <Route path="/user/daily-expenses" element={<DailyExpense />} />
+              <Route
+                path="/user/daily-expenses/add"
+                element={<DailyExpenseExcelAdd />}
+              />
+              <Route
+                path="/user/daily-expenses/view/:date"
+                element={<DailyExpenseExcelView />}
+              />
+              <Route
+                path="/user/daily-expenses/edit/:date"
+                element={<DailyExpenseExcelEdit />}
+              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
@@ -444,10 +518,18 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
+              />
+              <Route
                 path="/user/budgetreport/edit/:id"
                 element={<EditBudgetReport />}
               />
               <Route path="/user/client-leads" element={<ViewLeads />} />
+              <Route
+                path="/user/client-leads/excel"
+                element={<LeadsTrackerExcel />}
+              />
               <Route
                 path="/user/client-leads/edit/:id"
                 element={<EditLeads />}
@@ -465,6 +547,20 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
+              <Route path="/user/expenses" element={<ExpensesHome />} />
+              <Route path="/user/daily-expenses" element={<DailyExpense />} />
+              <Route
+                path="/user/daily-expenses/add"
+                element={<DailyExpenseExcelAdd />}
+              />
+              <Route
+                path="/user/daily-expenses/view/:date"
+                element={<DailyExpenseExcelView />}
+              />
+              <Route
+                path="/user/daily-expenses/edit/:date"
+                element={<DailyExpenseExcelEdit />}
+              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
@@ -491,12 +587,12 @@ const App = () => {
                 element={<BudgetReportEventWise />}
               />
               <Route
-                path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                path="/user/budgetreport/view/:id"
+                element={<BudgetReportExcelView />}
               />
               <Route
-                path="/user/budgetreport/accounts/:id"
-                element={<AccountsBudgetReportMgmt />}
+                path="/user/budgetreport/edit/:id"
+                element={<EditBudgetReport />}
               />
 
               <Route path="*" element={<Navigate to="/user" replace />} />

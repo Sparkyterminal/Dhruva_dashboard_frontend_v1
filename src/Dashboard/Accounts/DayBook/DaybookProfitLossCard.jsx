@@ -27,7 +27,7 @@ const DaybookProfitLossCard = ({ profitAndLoss }) => {
         boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
         overflow: "hidden",
       }}
-      bodyStyle={{ padding: "18px 18px" }}
+      styles={{ body: { padding: "18px 18px" } }}
       className="daybook-card"
     >
       <Text style={{ color: "rgba(255,255,255,0.9)", fontWeight: 700 }}>

@@ -199,7 +199,7 @@ const Daybookhome = () => {
             background: "rgba(255, 255, 255, 0.85)",
             backdropFilter: "blur(10px)",
           }}
-          bodyStyle={{ padding: "20px 24px" }}
+          styles={{ body: { padding: "20px 24px" } }}
         >
           <Row justify="space-between" align="middle" gutter={[16, 16]}>
             <Col xs={24} sm={8}>
@@ -252,7 +252,7 @@ const Daybookhome = () => {
             background: "rgba(255, 255, 255, 0.85)",
             backdropFilter: "blur(10px)",
           }}
-          bodyStyle={{ padding: "14px 20px" }}
+          styles={{ body: { padding: "14px 20px" } }}
         >
           <Space align="center" wrap>
             <Switch
@@ -280,7 +280,7 @@ const Daybookhome = () => {
             background: "rgba(255, 255, 255, 0.85)",
             backdropFilter: "blur(10px)",
           }}
-          bodyStyle={{ padding: "20px 24px" }}
+          styles={{ body: { padding: "20px 24px" } }}
         >
           <Tabs
             activeKey={activeTab}

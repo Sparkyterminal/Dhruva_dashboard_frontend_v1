@@ -1,20 +1,39 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { Form, Select, Input, Button, DatePicker } from "antd";
+import {
+  Form,
+  Select,
+  Input,
+  InputNumber,
+  Button,
+  DatePicker,
+  Switch,
+} from "antd";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../../config";
 
 const { TextArea } = Input;
+
 const STATUS_OPTIONS = [
   { value: "Inprogress", label: "Inprogress" },
   { value: "Confirmed", label: "Confirmed" },
   { value: "Cancelled", label: "Cancelled" },
 ];
 
+function getCoordinatorLabel(c) {
+  if (!c) return "";
+  const full = [c.first_name ?? c.firstName, c.last_name ?? c.lastName]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  return c.name || full || c.email || String(c._id ?? c.id ?? "");
+}
+
 /**
  * Reusable form for Add/Edit Client Lead.
- * initialValues: { status, clientDetails, eventTypeDetails, notes, assignedTo, startDate, endDate }
+ * initialValues: { status, clientDetails, eventTypeDetails, notes, assignedTo,
+ *   startDate, endDate, estimatedBudget, convertedByMarketing, convertedAt }
  */
 const LeadForm = ({
   initialValues,
@@ -81,11 +100,19 @@ const LeadForm = ({
         endDate: initialValues.endDate
           ? dayjs(initialValues.endDate)
           : undefined,
+        estimatedBudget:
+          initialValues.estimatedBudget != null
+            ? Number(initialValues.estimatedBudget)
+            : undefined,
+        convertedByMarketing: Boolean(initialValues.convertedByMarketing),
       });
     }
   }, [initialValues, form]);
 
   const handleFinish = (values) => {
+    const wasConverted = Boolean(initialValues?.convertedByMarketing);
+    const isConverted = Boolean(values.convertedByMarketing);
+
     const payload = {
       ...values,
       notes: notes || "",
@@ -96,7 +123,22 @@ const LeadForm = ({
       endDate: values.endDate
         ? dayjs(values.endDate).format("YYYY-MM-DD")
         : undefined,
+      estimatedBudget:
+        values.estimatedBudget != null && values.estimatedBudget !== ""
+          ? Number(values.estimatedBudget)
+          : 0,
+      convertedByMarketing: isConverted,
     };
+
+    if (isConverted) {
+      payload.convertedAt =
+        !wasConverted || !initialValues?.convertedAt
+          ? new Date().toISOString()
+          : initialValues.convertedAt;
+    } else {
+      payload.convertedAt = null;
+    }
+
     if (!payload.assignedTo) delete payload.assignedTo;
     if (!payload.startDate) delete payload.startDate;
     if (!payload.endDate) delete payload.endDate;
@@ -123,6 +165,11 @@ const LeadForm = ({
         endDate: initialValues?.endDate
           ? dayjs(initialValues.endDate)
           : undefined,
+        estimatedBudget:
+          initialValues?.estimatedBudget != null
+            ? Number(initialValues.estimatedBudget)
+            : undefined,
+        convertedByMarketing: Boolean(initialValues?.convertedByMarketing),
       }}
     >
       <Form.Item
@@ -146,7 +193,7 @@ const LeadForm = ({
           optionFilterProp="label"
           options={coordinators.map((c) => ({
             value: c._id ?? c.id,
-            label: c.name || c.email || String(c._id ?? c.id),
+            label: getCoordinatorLabel(c),
           }))}
           style={{ width: "100%" }}
         />
@@ -158,6 +205,43 @@ const LeadForm = ({
 
       <Form.Item name="endDate" label="End date">
         <DatePicker style={{ width: "100%" }} format="DD MMM YYYY" />
+      </Form.Item>
+
+      <Form.Item
+        name="estimatedBudget"
+        label="Estimated budget"
+        rules={[
+          { required: true, message: "Enter estimated budget" },
+          {
+            type: "number",
+            min: 0,
+            message: "Budget must be 0 or more",
+          },
+        ]}
+      >
+        <InputNumber
+          style={{ width: "100%" }}
+          min={0}
+          step={1000}
+          precision={0}
+          formatter={(value) =>
+            value != null && value !== ""
+              ? `₹ ${String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`
+              : ""
+          }
+          parser={(value) => String(value || "").replace(/₹\s?|(,*)/g, "")}
+          placeholder="e.g. 500000"
+          size="large"
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="convertedByMarketing"
+        label="Lead Successfully Converted By Marketing Team"
+        valuePropName="checked"
+        extra="When checked, this budget moves to the Successfully Converted card (not Estimated), so it is not double-counted with Client Bookings."
+      >
+        <Switch checkedChildren="Yes" unCheckedChildren="No" />
       </Form.Item>
 
       <Form.Item

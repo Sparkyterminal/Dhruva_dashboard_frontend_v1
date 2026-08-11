@@ -4,6 +4,7 @@ import {
   formatAmountINR,
   formatDateTime,
   formatEventName,
+  formatEventReference,
   statusTag,
   toSafeText,
 } from "./daybookUtils";
@@ -95,18 +96,27 @@ const DaybookOutflowTable = ({ rows }) => {
         title: "Event (Client Ref)",
         key: "event_reference",
         width: 240,
-        render: (_, record) => (
-          <div>
-            <Text>
-              {record?.eventReference?.clientName
-                ? record.eventReference.clientName
-                : "-"}
-            </Text>
-            <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
-              {formatEventName(record?.eventReference)}
-            </Text>
-          </div>
-        ),
+        render: (_, record) => {
+          const ref = record?.eventReference;
+          const clientName =
+            typeof ref === "object" && ref?.clientName
+              ? ref.clientName
+              : null;
+          const eventLabel =
+            typeof ref === "object"
+              ? formatEventName(ref?.eventName ?? ref?.name)
+              : formatEventReference(ref);
+          return (
+            <div>
+              <Text>{clientName || formatEventReference(ref)}</Text>
+              {clientName ? (
+                <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
+                  {eventLabel}
+                </Text>
+              ) : null}
+            </div>
+          );
+        },
       },
       {
         title: "Group By",
@@ -134,8 +144,13 @@ const DaybookOutflowTable = ({ rows }) => {
 
   return (
     <Table
-      rowKey={(record, idx) =>
-        `${record?.requestId || "req"}-${record?.amountPaid ?? "amt"}-${idx}`
+      rowKey={(record) =>
+        String(
+          record?._id ??
+            record?.id ??
+            record?.requestId ??
+            `${record?.purpose || "outflow"}-${record?.amountPaid ?? "amt"}-${record?.paidAt || ""}`,
+        )
       }
       columns={columns}
       dataSource={dataSource}

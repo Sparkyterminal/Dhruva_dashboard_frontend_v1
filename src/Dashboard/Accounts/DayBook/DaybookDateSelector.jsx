@@ -16,7 +16,7 @@ const DaybookDateSelector = ({ value, onChange }) => {
         background: "rgba(255, 255, 255, 0.85)",
         backdropFilter: "blur(10px)",
       }}
-      bodyStyle={{ padding: "18px 20px" }}
+      styles={{ body: { padding: "18px 20px" } }}
     >
       <Row gutter={[16, 16]} align="middle">
         <Col xs={24} md={6}>

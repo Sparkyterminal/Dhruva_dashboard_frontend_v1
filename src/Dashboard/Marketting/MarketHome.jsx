@@ -34,6 +34,8 @@ const CONFIRMED_EVENTS_EMAILS = [
   "kumarv@gmail.com",
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
+  "nidhiwbd@gmail.com",
+  "darshithawbd@gmail.com"
 ];
 
 const INPROGRESS_EVENTS_EMAILS = [
@@ -48,6 +50,8 @@ const INPROGRESS_EVENTS_EMAILS = [
   "sushmawbd@gmail.com",
   "varshashyleshcustomerteam@gmail.com",
   "sirishavcustomerteam@gmail.com",
+  "nidhiwbd@gmail.com",
+  "darshithawbd@gmail.com"
 ];
 
 // CSS for Glassmorphism and Animations
@@ -59,6 +63,9 @@ const customStyles = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.35);
+    overflow: visible;
+    position: relative;
+    z-index: 40;
   }
 
   @keyframes slide-in-top {
@@ -166,10 +173,12 @@ const MarketHome = () => {
           transition={{ duration: 0.7, ease: "easeOut" }}
           className="max-w-7xl w-full mx-auto"
         >
-          {/* Glassmorphism Header */}
-          <div className="glass-header overflow-visible flex flex-col lg:flex-row justify-between items-center gap-6 px-4 py-4 md:px-10 md:py-8 mb-8 slide-in-top">
+          {/* Glassmorphism Header — row 1: welcome + avatar; row 2: menus (all breakpoints) */}
+          <div className="glass-header overflow-visible flex flex-col gap-4 md:gap-6 px-4 py-4 md:px-10 md:py-8 mb-8 slide-in-top">
+            {/* Top Row */}
+            <div className="relative z-50 flex flex-row justify-between items-start gap-3 sm:gap-4 w-full">
             {/* Left Section - Welcome & Time */}
-            <div className="flex-1 w-full lg:w-auto mb-4 lg:mb-0">
+            <div className="min-w-0 flex-1">
               <motion.h1
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -212,8 +221,88 @@ const MarketHome = () => {
               </div>
             </div>
 
-            {/* Center Section - Action Buttons */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full px-2">
+            {/* Avatar — top-right on all views */}
+            <div className="relative z-[60] shrink-0" ref={dropdownRef}>
+              <motion.button
+                onClick={() => setShowDropdown(!showDropdown)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="hidden lg:flex w-20 h-20 rounded-full cursor-pointer items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-2"
+              >
+                <Lottie
+                  animationData={audience}
+                  loop={true}
+                  className="w-full h-full"
+                />
+              </motion.button>
+
+              <motion.button
+                onClick={() => setShowDropdown(!showDropdown)}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.95 }}
+                className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-xl"
+              >
+                <Lottie
+                  animationData={audience}
+                  loop={true}
+                  className="w-10 h-10"
+                />
+              </motion.button>
+
+              {showDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-14 lg:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-[100] border border-gray-100 overflow-hidden"
+                >
+                  <motion.button
+                    whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      navigate("/user/changepassword");
+                    }}
+                    className="w-full text-left px-5 py-3 transition-all duration-200 text-gray-700 font-semibold flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-8 h-8 flex items-center justify-center shrink-0">
+                      <Lottie
+                        animationData={password}
+                        loop={true}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <span className="text-sm md:text-base">
+                      Change Password
+                    </span>
+                  </motion.button>
+
+                  <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-1" />
+
+                  <motion.button
+                    whileHover={{ backgroundColor: "#fef2f2", x: 5 }}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      handleLogout();
+                    }}
+                    className="w-full text-left px-5 py-3 transition-all duration-200 text-red-600 font-semibold flex items-center gap-3 cursor-pointer"
+                  >
+                    <div className="w-5 h-5 flex items-center justify-center shrink-0">
+                      <Lottie
+                        animationData={logouticon}
+                        loop={true}
+                        className="w-full h-full"
+                      />
+                    </div>
+                    <span className="text-sm md:text-base">Logout</span>
+                  </motion.button>
+                </motion.div>
+              )}
+            </div>
+            </div>
+
+            {/* Bottom Row - Action Buttons */}
+            <div className="relative z-0 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 w-full">
               {/* Add Requirement Button */}
               <motion.div
                 whileHover="hover"
@@ -679,90 +768,6 @@ const MarketHome = () => {
                   />
                 </motion.button>
               </motion.div>
-            </div>
-
-            {/* Right Section - Avatar/Menu Dropdown */}
-            <div className="flex-1 w-full lg:w-auto flex justify-center lg:justify-end mt-3 lg:mt-0">
-              <div className="relative" ref={dropdownRef}>
-                {/* Desktop - Audience Icon */}
-                <motion.button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="hidden lg:flex w-20 h-20 rounded-full cursor-pointer items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-2"
-                >
-                  <Lottie
-                    animationData={audience}
-                    loop={true}
-                    className="w-full h-full"
-                  />
-                </motion.button>
-
-                {/* Mobile - Menu Icon */}
-                <motion.button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="lg:hidden w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 hover:shadow-xl"
-                >
-                  <Lottie
-                    animationData={audience}
-                    loop={true}
-                    className="w-10 h-10"
-                  />
-                </motion.button>
-
-                {/* Dropdown Menu */}
-                {showDropdown && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="z-10 absolute right-0 lg:right-0 top-14 lg:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
-                  >
-                    <motion.button
-                      whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
-                      onClick={() => {
-                        setShowDropdown(false);
-                        navigate("/user/changepassword");
-                      }}
-                      className="w-full text-left px-5 py-3 transition-all duration-200 text-gray-700 font-semibold flex items-center gap-3 cursor-pointer"
-                    >
-                      <div className="w-8 h-8 flex items-center justify-center shrink-0">
-                        <Lottie
-                          animationData={password}
-                          loop={true}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <span className="text-sm md:text-base">
-                        Change Password
-                      </span>
-                    </motion.button>
-
-                    <div className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent my-1" />
-
-                    <motion.button
-                      whileHover={{ backgroundColor: "#fef2f2", x: 5 }}
-                      onClick={() => {
-                        setShowDropdown(false);
-                        handleLogout();
-                      }}
-                      className="w-full text-left px-5 py-3 transition-all duration-200 text-red-600 font-semibold flex items-center gap-3 cursor-pointer"
-                    >
-                      <div className="w-5 h-5 flex items-center justify-center shrink-0">
-                        <Lottie
-                          animationData={logouticon}
-                          loop={true}
-                          className="w-full h-full"
-                        />
-                      </div>
-                      <span className="text-sm md:text-base">Logout</span>
-                    </motion.button>
-                  </motion.div>
-                )}
-              </div>
             </div>
           </div>
         </motion.div>

@@ -193,7 +193,7 @@ const AddInflow = () => {
           venueLocation: undefined,
           subVenueLocation: undefined,
           totalAgreedAmount: undefined,
-          accountAmount: undefined,
+          accountAmount: 0,
           cashAmount: undefined,
         };
       }
@@ -1295,6 +1295,7 @@ const AddInflow = () => {
                         label="Account Amount (If you've agreed to cash only then put as ₹0)"
                         name="agreedAmountAccount"
                         required={true}
+                        initialValue={0}
                       >
                         <InputNumber
                           size="large"
@@ -1827,6 +1828,7 @@ const AddInflow = () => {
                                       key,
                                       "accountAmount",
                                     ]}
+                                    initialValue={0}
                                   >
                                     <InputNumber
                                       size="large"
@@ -2555,6 +2557,7 @@ const AddInflow = () => {
                           <Form.Item
                             label="Account Amount (If you've agreed to cash only then put as ₹0)"
                             name="agreedAmountAccount"
+                            initialValue={0}
                             rules={[
                               {
                                 required: true,

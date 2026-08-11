@@ -81,7 +81,9 @@ Per **booking** (event document):
    - Values are rounded to **whole rupees** before sums.
 
 2. **Received amount (`_received`)**  
-   - Sum of **`eventTypes[].advances[].receivedAmount`** across the booking (non-numeric treated as `0`).
+   - If Wedding + `advancePaymentType === 'complete'`: **dedupe** by `advanceNumber` across `eventTypes` (max `receivedAmount` per key, then sum). Do not flat-sum all ceremonies.  
+   - Else: sum **`eventTypes[].advances[].receivedAmount`** across the booking (non-numeric treated as `0`).  
+   - Full contract: `COMPLETE_WEDDING_ADVANCE_TOTALS_BACKEND.md`.
 
 Backend rounds monetary aggregates to whole rupees in JSON.
 

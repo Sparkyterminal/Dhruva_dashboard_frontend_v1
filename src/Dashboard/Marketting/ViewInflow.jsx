@@ -42,7 +42,6 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
-import BudgetReportDrawerSection from "../Accounts/budgetreport/BudgetReportDrawerSection";
 import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";
 
 const { Title, Text } = Typography;
@@ -53,9 +52,6 @@ const ViewInflow = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [budgetReportDrawerOpen, setBudgetReportDrawerOpen] = useState(false);
-  const [budgetReportDrawerRecord, setBudgetReportDrawerRecord] =
-    useState(null);
   const [listStatusTab, setListStatusTab] = useState("inprogress");
   const [eventsScope, setEventsScope] = useState("mine"); // mine => /events/my-events, all => /events
   const [filterEventName, setFilterEventName] = useState(undefined);
@@ -297,55 +293,89 @@ const ViewInflow = () => {
 
   // Calculate total expected advances
   const getTotalExpectedAdvances = (record) => {
-    let total = 0;
     if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type advances
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.expectedAmount || 0;
-      });
-    } else {
-      // Other events: sum advances from all event types
-      record.eventTypes?.forEach((et) => {
-        et.advances?.forEach((adv) => {
-          total += adv.expectedAmount || 0;
+      // Same advance schedule is copied onto each ceremony — count once.
+      const byKey = new Map();
+      (record.eventTypes || []).forEach((et) => {
+        (et.advances || []).forEach((adv, idx) => {
+          const key =
+            adv?.advanceNumber != null && adv.advanceNumber !== ""
+              ? `n:${adv.advanceNumber}`
+              : `i:${idx}`;
+          const amt = Number(adv?.expectedAmount);
+          const value = Number.isFinite(amt) ? amt : 0;
+          const prev = byKey.get(key) ?? 0;
+          if (value > prev) byKey.set(key, value);
         });
       });
+      let total = 0;
+      for (const value of byKey.values()) total += value;
+      return total;
     }
+    let total = 0;
+    record.eventTypes?.forEach((et) => {
+      et.advances?.forEach((adv) => {
+        total += adv.expectedAmount || 0;
+      });
+    });
     return total;
   };
 
-  // Calculate total received advances
+  // Calculate total received advances (sum of receivedAmount on advance entries)
   const getTotalReceivedAdvances = (record) => {
-    let total = 0;
     if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type advances
-      record.eventTypes?.[0]?.advances?.forEach((adv) => {
-        total += adv.receivedAmount || 0;
-      });
-    } else {
-      // Other events: sum received advances from all event types
-      record.eventTypes?.forEach((et) => {
-        et.advances?.forEach((adv) => {
-          total += adv.receivedAmount || 0;
+      // Deduplicate by advanceNumber so copied ceremonies do not double-count,
+      // while still counting a receipt saved only on a non-first event type.
+      const byKey = new Map();
+      (record.eventTypes || []).forEach((et) => {
+        (et.advances || []).forEach((adv, idx) => {
+          const key =
+            adv?.advanceNumber != null && adv.advanceNumber !== ""
+              ? `n:${adv.advanceNumber}`
+              : `i:${idx}`;
+          const amt = Number(adv?.receivedAmount);
+          const value = Number.isFinite(amt) ? amt : 0;
+          const prev = byKey.get(key) ?? 0;
+          if (value > prev) byKey.set(key, value);
         });
       });
+      let total = 0;
+      for (const value of byKey.values()) total += value;
+      return total;
     }
+    let total = 0;
+    record.eventTypes?.forEach((et) => {
+      et.advances?.forEach((adv) => {
+        total += adv.receivedAmount || 0;
+      });
+    });
     return total;
+  };
+
+  /**
+   * Complete weddings must not use advanceTotals.totalReceivedAmount — backend
+   * currently sums all eventTypes and double-counts shared advances.
+   */
+  const getTotalReceivedAmount = (record) => {
+    if (isCompletePaymentWedding(record)) {
+      return getTotalReceivedAdvances(record);
+    }
+    return (
+      record?.advanceTotals?.totalReceivedAmount ??
+      getTotalReceivedAdvances(record)
+    );
+  };
+
+  /** Balance still owed = agreed amount − received amount (never negative). */
+  const getBalanceAmount = (record) => {
+    const agreed = getTotalAgreedAmount(record);
+    const received = getTotalReceivedAmount(record);
+    return Math.max(0, agreed - received);
   };
 
   const showEventDetailsDrawer = (record) => {
     setSelectedEvent(record);
     setDrawerVisible(true);
-  };
-
-  const openBudgetReportDrawer = (record) => {
-    setBudgetReportDrawerRecord(record);
-    setBudgetReportDrawerOpen(true);
-  };
-
-  const closeBudgetReportDrawer = () => {
-    setBudgetReportDrawerOpen(false);
-    setBudgetReportDrawerRecord(null);
   };
 
   const handleDelete = async (record) => {
@@ -548,14 +578,26 @@ const ViewInflow = () => {
     //   ),
     // },
     {
+      title: "Agreed Amount",
+      key: "agreedAmount",
+      width: 130,
+      align: "right",
+      render: (_, record) => (
+        <Text strong className="text-slate-800">
+          {formatAmount(getTotalAgreedAmount(record))}
+        </Text>
+      ),
+    },
+    {
       title: "Payment Status",
       key: "paymentStatus",
       width: 150,
       render: (_, record) => {
-        const expected = getTotalExpectedAdvances(record);
-        const received = getTotalReceivedAdvances(record);
+        const agreed = getTotalAgreedAmount(record);
+        const received = getTotalReceivedAmount(record);
+        const balance = getBalanceAmount(record);
         const percentage =
-          expected > 0 ? Math.round((received / expected) * 100) : 0;
+          agreed > 0 ? Math.min(Math.round((received / agreed) * 100), 100) : 0;
 
         return (
           <div className="space-y-1">
@@ -567,7 +609,9 @@ const ViewInflow = () => {
             </div>
             <div className="flex justify-between items-center">
               <Text className="text-xs text-gray-500">Balance:</Text>
-              <Text className="text-sm">{formatAmount(expected)}</Text>
+              <Text strong className="text-sm text-red-500">
+                {formatAmount(balance)}
+              </Text>
             </div>
             <Tag
               color={
@@ -593,7 +637,6 @@ const ViewInflow = () => {
         <BudgetReportListCell
           record={record}
           getEventName={getEventName}
-          onView={openBudgetReportDrawer}
           accessToken={user?.access_token}
           onAfterMutation={fetchRequirementsData}
         />
@@ -683,14 +726,47 @@ const ViewInflow = () => {
     0,
   );
 
-  // Summary from `/events/my-events` (Mine scope)
-  const mineTotalBookings = Number(mineSummary?.totalBookings || 0);
-  const mineTotalExpectedAdvance = Number(
-    mineSummary?.totalExpectedAdvance || 0,
+  // Summary from `/events/my-events` (Mine scope) — agreed / received / pending
+  const pageAgreedSum = bookings.reduce(
+    (acc, curr) => acc + getTotalAgreedAmount(curr),
+    0,
   );
-  const mineTotalReceivedAmount = Number(mineSummary?.totalReceivedAmount || 0);
-  const mineTotalPendingAdvance = Number(mineSummary?.totalPendingAdvance || 0);
-  const mineTotalPayableSum = Number(mineSummary?.totalPayableSum || 0);
+  const pageReceivedSum = bookings.reduce(
+    (acc, curr) => acc + getTotalReceivedAmount(curr),
+    0,
+  );
+  const pageExpectedAdvancePendingSum = bookings.reduce((acc, curr) => {
+    const expected = getTotalExpectedAdvances(curr);
+    const received = getTotalReceivedAmount(curr);
+    return acc + Math.max(0, expected - received);
+  }, 0);
+
+  const mineTotalBookings = Number(mineSummary?.totalBookings || 0);
+  const mineTotalAgreedAmount =
+    mineSummary?.totalAgreedAmount != null
+      ? Number(mineSummary.totalAgreedAmount)
+      : mineSummary?.totalAgreedSum != null
+        ? Number(mineSummary.totalAgreedSum)
+        : pageAgreedSum;
+  const mineTotalReceivedAmount =
+    mineSummary?.totalReceivedAmount != null
+      ? Number(mineSummary.totalReceivedAmount)
+      : pageReceivedSum;
+  const mineTotalPendingAmount = Math.max(
+    0,
+    mineTotalAgreedAmount - mineTotalReceivedAmount,
+  );
+  // Expected advance not yet received (advance schedule pending)
+  const mineExpectedAdvanceNotReceived =
+    mineSummary?.totalPendingAdvance != null
+      ? Number(mineSummary.totalPendingAdvance)
+      : mineSummary?.totalExpectedAdvance != null
+        ? Math.max(
+            0,
+            Number(mineSummary.totalExpectedAdvance) -
+              Number(mineSummary.totalReceivedAmount || 0),
+          )
+        : pageExpectedAdvancePendingSum;
 
   // Tab items
   const tabItems = [
@@ -809,10 +885,10 @@ const ViewInflow = () => {
                     <Text
                       style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
                     >
-                      Total Payable
+                      Total Agreed Amount
                     </Text>
                   }
-                  value={mineTotalPayableSum}
+                  value={mineTotalAgreedAmount}
                   prefix="💰"
                   valueStyle={{
                     color: "white",
@@ -823,38 +899,7 @@ const ViewInflow = () => {
                   formatter={(value) => formatAmount(value)}
                 />
                 <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Payable sum (from server)
-                </Text>
-              </Card>
-            </div>
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Expected Advance
-                    </Text>
-                  }
-                  value={mineTotalExpectedAdvance}
-                  prefix="📈"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                  formatter={(value) => formatAmount(value)}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Total advance expected
+                  Sum of agreed amounts for filtered bookings
                 </Text>
               </Card>
             </div>
@@ -895,6 +940,38 @@ const ViewInflow = () => {
               <Card
                 className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
                 style={{
+                  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
+                  color: "white",
+                }}
+              >
+                <Statistic
+                  title={
+                    <Text
+                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
+                    >
+                      Expected Advance
+                    </Text>
+                  }
+                  value={mineExpectedAdvanceNotReceived}
+                  prefix="📈"
+                  valueStyle={{
+                    color: "white",
+                    fontSize: statsValueFontSize,
+                    fontWeight: "bold",
+                    ...statsValueCommonStyle,
+                  }}
+                  formatter={(value) => formatAmount(value)}
+                />
+                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
+                  Expected advance not yet received
+                </Text>
+              </Card>
+            </div>
+
+            <div>
+              <Card
+                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
+                style={{
                   background: "linear-gradient(135deg,#f59e0b,#d97706)",
                   color: "white",
                 }}
@@ -904,10 +981,10 @@ const ViewInflow = () => {
                     <Text
                       style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
                     >
-                      Pending Advance
+                      Pending Amount
                     </Text>
                   }
-                  value={mineTotalPendingAdvance}
+                  value={mineTotalPendingAmount}
                   prefix="⏳"
                   valueStyle={{
                     color: "white",
@@ -918,7 +995,7 @@ const ViewInflow = () => {
                   formatter={(value) => formatAmount(value)}
                 />
                 <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Advance still pending
+                  Agreed amount − received amount
                 </Text>
               </Card>
             </div>
@@ -2025,34 +2102,6 @@ const ViewInflow = () => {
               })}
           </div>
         )}
-      </Drawer>
-
-      <Drawer
-        title={
-          <div>
-            <div className="text-lg font-semibold text-slate-800">
-              Budget report
-            </div>
-            {budgetReportDrawerRecord && (
-              <div className="text-xs text-slate-500 font-normal mt-0.5">
-                {getEventName(budgetReportDrawerRecord.eventName)} ·{" "}
-                {budgetReportDrawerRecord.clientName}
-              </div>
-            )}
-          </div>
-        }
-        open={budgetReportDrawerOpen}
-        onClose={closeBudgetReportDrawer}
-        width="90%"
-        placement="right"
-        styles={{ body: { padding: 16, background: "#f8fafc" } }}
-      >
-        {budgetReportDrawerRecord?.budgetReport ? (
-          <BudgetReportDrawerSection
-            budgetReport={budgetReportDrawerRecord.budgetReport}
-            count={budgetReportDrawerRecord.budgetReportsCount}
-          />
-        ) : null}
       </Drawer>
 
       <style>{`

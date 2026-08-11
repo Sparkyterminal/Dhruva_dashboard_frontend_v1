@@ -6,6 +6,7 @@ import {
   formatDate,
   formatDateTime,
   formatEventName,
+  formatEventReference,
   isEventAdvanceDaybookRow,
 } from "./daybookUtils";
 
@@ -103,9 +104,9 @@ const DaybookInflowTable = ({
             {
               title: "Event Reference",
               key: "eventReference",
-              width: 190,
+              width: 220,
               render: (_, record) => (
-                <Text>{record?.eventReference || "-"}</Text>
+                <Text>{formatEventReference(record?.eventReference)}</Text>
               ),
             },
             {
@@ -273,9 +274,16 @@ const DaybookInflowTable = ({
 
   return (
     <Table
-      rowKey={(record, idx) =>
-        String(record?._id ?? record?.id ?? `inflow-${idx}`)
-      }
+      rowKey={(record) => {
+        const id = record?._id ?? record?.id;
+        if (id != null && id !== "") return String(id);
+        return [
+          record?.name,
+          record?.receivedDate,
+          record?.amountReceived,
+          record?.receivedBy,
+        ].join("|");
+      }}
       columns={columns}
       dataSource={dataSource}
       pagination={{

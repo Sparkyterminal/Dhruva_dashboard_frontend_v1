@@ -30,6 +30,18 @@ const BudgetReportDrawerSection = ({ budgetReport, count }) => {
   const reportId = budgetReport._id;
 
   const goToEdit = () => {
+    // Excel flow: edit is keyed by confirmed event id
+    const eventId =
+      budgetReport?.key ||
+      budgetReport?.meta?.eventId ||
+      budgetReport?.eventId ||
+      (typeof budgetReport?.eventId === "object"
+        ? budgetReport.eventId?._id
+        : null);
+    if (eventId) {
+      navigate(`/user/budgetreport/edit/${eventId}`);
+      return;
+    }
     if (!reportId) return;
     navigate(`/user/budgetreport/edit/${reportId}`);
   };

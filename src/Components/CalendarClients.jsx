@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
@@ -9,12 +9,18 @@ import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
+import {
+  captureElementAsImage,
+  downloadCanvasAsPng,
+} from "../utils/captureElementAsImage";
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(new Date());
+  const [exportingImage, setExportingImage] = useState(false);
   const calendarRef = useRef(null);
+  const calendarExportRef = useRef(null);
   const user = useSelector((state) => state.user.value);
 
   const fetchRequirementsData = useCallback(async () => {
@@ -262,20 +268,14 @@ const CalendarClients = () => {
     }
   };
 
-  const getMonthEvents = () => {
+  const getMonthEvents = useCallback(() => {
     if (!selectedMonth || !events || events.length === 0) {
       return [];
     }
 
     try {
-      const calendarApi = calendarRef.current?.getApi();
-      if (!calendarApi) {
-        return [];
-      }
-
-      const currentDate = calendarApi.getDate();
-      const month = currentDate.getMonth();
-      const year = currentDate.getFullYear();
+      const month = selectedMonth.getMonth();
+      const year = selectedMonth.getFullYear();
 
       const filteredEvents = [];
 
@@ -346,7 +346,52 @@ const CalendarClients = () => {
       console.error("Error filtering month events:", error);
       return [];
     }
-  };
+  }, [events, selectedMonth]);
+
+  const monthEvents = useMemo(() => getMonthEvents(), [getMonthEvents]);
+
+  const monthLabel = useMemo(() => {
+    if (!selectedMonth) return "";
+    return selectedMonth.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+  }, [selectedMonth]);
+
+  const handleDownloadMonthImage = useCallback(async () => {
+    if (!calendarExportRef.current) {
+      message.error("Calendar is not ready for export");
+      return;
+    }
+
+    const hide = message.loading(`Capturing ${monthLabel} calendar...`, 0);
+    setExportingImage(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+
+      const canvas = await captureElementAsImage(calendarExportRef.current, {
+        hideSelectors: [".fc-downloadMonthImage-button"],
+      });
+
+      if (!canvas) {
+        throw new Error("Failed to capture calendar");
+      }
+
+      const fileMonth = selectedMonth
+        ? `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`
+        : "month";
+
+      downloadCanvasAsPng(canvas, `Confirmed-Events-${fileMonth}.png`);
+      message.success(`Downloaded calendar image for ${monthLabel}`);
+    } catch (error) {
+      console.error("Image export failed:", error);
+      message.error("Failed to download calendar image. Please try again.");
+    } finally {
+      hide();
+      setExportingImage(false);
+    }
+  }, [monthLabel, selectedMonth]);
 
   const formatDate = (dateString) => {
     try {
@@ -520,9 +565,26 @@ const CalendarClients = () => {
         .fc-daygrid-event-harness {
           margin-bottom: 4px !important;
         }
+
+        .fc .fc-downloadMonthImage-button {
+          background-color: #059669 !important;
+          border-color: #059669 !important;
+        }
+
+        .fc .fc-downloadMonthImage-button:hover {
+          background-color: #047857 !important;
+          border-color: #047857 !important;
+        }
+
+        .calendar-exporting .fc-downloadMonthImage-button {
+          opacity: 0.6;
+          pointer-events: none;
+        }
       `}</style>
 
-      <div className="max-w-7xl mx-auto print-full">
+      <div
+        className={`max-w-7xl mx-auto print-full${exportingImage ? " calendar-exporting" : ""}`}
+      >
         {/* Header */}
         <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 no-print">
           <div className="flex items-center justify-between flex-wrap gap-4">
@@ -550,15 +612,24 @@ const CalendarClients = () => {
         </div>
 
         {/* Calendar */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 pdf-export-section">
+        <div
+          ref={calendarExportRef}
+          className="bg-white rounded-2xl shadow-xl p-6 mb-6"
+        >
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
+            customButtons={{
+              downloadMonthImage: {
+                text: "Download Image",
+                click: handleDownloadMonthImage,
+              },
+            }}
             headerToolbar={{
               left: "prev,next today",
               center: "title",
-              right: "dayGridMonth",
+              right: "downloadMonthImage",
             }}
             events={getCalendarEvents()}
             eventContent={renderEventContent}
@@ -615,18 +686,21 @@ const CalendarClients = () => {
         </div>
 
         {/* Event Details Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 pdf-export-section">
+        <div className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg" style={{ background: "#667eea" }}>
               <Users className="w-6 h-6 text-white" />
             </div>
-            <h3 className="text-2xl font-semibold text-gray-800">
-              Events This Month
-            </h3>
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-800">
+                Events This Month
+              </h3>
+              <p className="text-sm text-gray-500">{monthLabel}</p>
+            </div>
           </div>
 
           <div className="grid gap-4">
-            {getMonthEvents().length === 0 ? (
+            {monthEvents.length === 0 ? (
               <div className="text-center py-12">
                 <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-10 h-10 text-gray-400" />
@@ -636,7 +710,7 @@ const CalendarClients = () => {
                 </p>
               </div>
             ) : (
-              getMonthEvents().map((event) => (
+              monthEvents.map((event) => (
                 <div
                   key={event._id}
                   className="border-l-4 rounded-lg p-6 bg-white hover:shadow-lg transition-shadow"

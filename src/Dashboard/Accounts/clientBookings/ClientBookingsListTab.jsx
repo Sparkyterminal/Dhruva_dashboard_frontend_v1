@@ -25,9 +25,10 @@ import {
   getEventName,
   formatDate,
   formatAmount,
+  capitalizeFirstLetter,
   getTotalPayable,
   getTotalExpectedAdvances,
-  getTotalReceivedAdvances,
+  getBookingReceivedAmount,
   getTabLabelBookingCount,
 } from "./clientBookingsUtils";
 import ClientBookingsFilters from "./ClientBookingsFilters";
@@ -67,7 +68,11 @@ const buildColumns = (
       const firstName =
         typeof raw === "string" ? raw.trim().split(/\s+/)[0] : null;
 
-      return <Text strong className="text-slate-800">{firstName || "-"}</Text>;
+      return (
+        <Text strong className="text-slate-800">
+          {firstName ? capitalizeFirstLetter(firstName) : "-"}
+        </Text>
+      );
     },
   },
   {
@@ -229,10 +234,13 @@ const buildColumns = (
     key: "paymentStatus",
     width: 150,
     render: (_, record) => {
-      const expected = getTotalExpectedFn(record);
+      const booked = getTotalBookedFn(record);
+      // Always use local received helper (complete weddings must not trust
+      // advanceTotals.totalReceivedAmount — it double-counts across eventTypes).
       const received = getTotalReceivedFn(record);
+      const balance = Math.max(booked - received, 0);
       const percentage =
-        expected > 0 ? Math.round((received / expected) * 100) : 0;
+        booked > 0 ? Math.min(Math.round((received / booked) * 100), 100) : 0;
       return (
         <div className="space-y-1">
           <div className="flex justify-between items-center">
@@ -243,7 +251,9 @@ const buildColumns = (
           </div>
           <div className="flex justify-between items-center">
             <Text className="text-xs text-gray-500">Balance:</Text>
-            <Text className="text-sm">{formatAmountFn(expected)}</Text>
+            <Text strong className="text-sm text-red-500">
+              {formatAmountFn(balance)}
+            </Text>
           </div>
           <Tag
             color={
@@ -259,7 +269,7 @@ const buildColumns = (
   {
     title: "Budget Report",
     key: "budgetReport",
-    width: 120,
+    width: 140,
     align: "center",
     render: (_, record) => (
       <BudgetReportListCell
@@ -318,12 +328,12 @@ const ClientBookingsListTab = ({
     0,
   );
   const totalReceivedRevenue = bookings.reduce(
-    (acc, curr) => acc + getTotalReceivedAdvances(curr),
+    (acc, curr) => acc + getBookingReceivedAmount(curr),
     0,
   );
   const totalPendingRevenue = bookings.reduce((acc, curr) => {
     const expected = getTotalExpectedAdvances(curr);
-    const received = getTotalReceivedAdvances(curr);
+    const received = getBookingReceivedAmount(curr);
     return acc + (expected - received);
   }, 0);
 
@@ -334,7 +344,7 @@ const ClientBookingsListTab = ({
     getEventName,
     getTotalPayable,
     getTotalExpectedAdvances,
-    getTotalReceivedAdvances,
+    getBookingReceivedAmount,
     showEventDetailsDrawer,
     onViewBudgetReport,
     accessToken,

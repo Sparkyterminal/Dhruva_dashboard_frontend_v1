@@ -13,14 +13,23 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "../../config";
-import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker } from "antd";
+import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker, Button } from "antd";
 import { useSelector } from "react-redux";
+import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
 
 const { Text, Title } = Typography;
 
-const UserWiseClients = () => {
+/**
+ * Events leaderboard.
+ * @param {boolean} mostBookedOnly — when true, only show "Most Booked" (HR DEPARTMENT).
+ *   Default false keeps both tabs for Accounts / others.
+ */
+const UserWiseClients = ({ mostBookedOnly = false }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const showBackToHome = location.pathname === "/user/leaderboard";
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -42,6 +51,12 @@ const UserWiseClients = () => {
     totalUsers: 0,
   });
   const user = useSelector((state) => state.user.value);
+
+  useEffect(() => {
+    if (mostBookedOnly && activeTab !== "mostBooked") {
+      setActiveTab("mostBooked");
+    }
+  }, [mostBookedOnly, activeTab]);
 
   const fetchLeaderboard = useCallback(
     async ({ mode, page, limit, month }) => {
@@ -113,7 +128,7 @@ const UserWiseClients = () => {
 
   const fetchActiveLeaderboard = useCallback(() => {
     const month = selectedMonthYear ? selectedMonthYear.format("YYYY-MM") : null;
-    if (activeTab === "mostBooked") {
+    if (mostBookedOnly || activeTab === "mostBooked") {
       fetchLeaderboard({
         mode: "mostBooked",
         page: mostBookedMeta.page,
@@ -131,6 +146,7 @@ const UserWiseClients = () => {
   }, [
     activeTab,
     fetchLeaderboard,
+    mostBookedOnly,
     mostAmountMeta.limit,
     mostAmountMeta.page,
     mostBookedMeta.limit,
@@ -166,6 +182,14 @@ const UserWiseClients = () => {
   const formatAmount = (amount) => {
     if (!amount && amount !== 0) return "₹0";
     return `₹${amount.toLocaleString("en-IN")}`;
+  };
+
+  /** Capitalize first letter (e.g. "archana" → "Archana"). */
+  const capitalizeFirstLetter = (value) => {
+    if (value == null) return "";
+    const s = String(value).trim();
+    if (!s) return "";
+    return s.charAt(0).toUpperCase() + s.slice(1);
   };
 
   const getEventName = (eventName) => {
@@ -307,7 +331,7 @@ const UserWiseClients = () => {
       const last = row?.user?.last_name || row?.user?.lastName || "";
       setSelectedUser({
         ...(row?.user || {}),
-        fullName: `${first} ${last}`.trim(),
+        fullName: `${capitalizeFirstLetter(first)} ${capitalizeFirstLetter(last)}`.trim(),
         inProgress: row?.inProgress ?? 0,
         confirmed: row?.confirmed ?? 0,
         cancelled: row?.cancelled ?? 0,
@@ -319,7 +343,7 @@ const UserWiseClients = () => {
       const last = row?.user?.last_name || row?.user?.lastName || "";
       setSelectedUser({
         ...(row?.user || {}),
-        fullName: `${first} ${last}`.trim(),
+        fullName: `${capitalizeFirstLetter(first)} ${capitalizeFirstLetter(last)}`.trim(),
         totalAmount: row?.totalAmountBooked ?? row?.totalAmount ?? 0,
       });
       setSelectedUserEvents(Array.isArray(row?.events) ? row.events : []);
@@ -399,10 +423,14 @@ const UserWiseClients = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-gray-900">
-              {record?.user?.first_name || record?.user?.firstName || "-"}
+              {capitalizeFirstLetter(
+                record?.user?.first_name || record?.user?.firstName || "",
+              ) || "-"}
             </div>
             <div className="text-sm text-gray-500">
-              {record?.user?.last_name || record?.user?.lastName || ""}
+              {capitalizeFirstLetter(
+                record?.user?.last_name || record?.user?.lastName || "",
+              )}
             </div>
           </div>
         </div>
@@ -504,10 +532,14 @@ const UserWiseClients = () => {
           </div>
           <div>
             <div className="text-sm font-bold text-gray-900">
-              {record?.user?.first_name || record?.user?.firstName || "-"}
+              {capitalizeFirstLetter(
+                record?.user?.first_name || record?.user?.firstName || "",
+              ) || "-"}
             </div>
             <div className="text-sm text-gray-500">
-              {record?.user?.last_name || record?.user?.lastName || ""}
+              {capitalizeFirstLetter(
+                record?.user?.last_name || record?.user?.lastName || "",
+              )}
             </div>
           </div>
         </div>
@@ -572,6 +604,15 @@ const UserWiseClients = () => {
           >
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
+                {showBackToHome && (
+                  <Button
+                    onClick={() => navigate("/user")}
+                    size="large"
+                    className="rounded-xl"
+                  >
+                    Back to Home
+                  </Button>
+                )}
                 <div
                   className="p-4 rounded-xl shadow-lg"
                   style={{
@@ -606,7 +647,9 @@ const UserWiseClients = () => {
         >
           <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
             <Text className="text-gray-600 text-base">
-              Filter by month (applies to both Most Booked and Most Amount Booked)
+              {mostBookedOnly
+                ? "Filter by month"
+                : "Filter by month (applies to both Most Booked and Most Amount Booked)"}
             </Text>
             <DatePicker
               picker="month"
@@ -621,6 +664,7 @@ const UserWiseClients = () => {
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}
+            renderTabBar={mostBookedOnly ? () => null : undefined}
             items={[
               {
                 key: "mostBooked",
@@ -682,66 +726,70 @@ const UserWiseClients = () => {
                   </div>
                 ),
               },
-              {
-                key: "mostAmount",
-                label: (
-                  <span className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    Most Amount Booked
-                  </span>
-                ),
-                children: (
-                  <div>
-                    {userStatsMostAmount.length === 0 ? (
-                      <div className="text-center py-16">
-                        <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <Text className="text-gray-500 text-lg">
-                          No confirmed events found
-                        </Text>
-                      </div>
-                    ) : (
-                      <Table
-                        columns={mostAmountColumns}
-                        dataSource={userStatsMostAmount}
-                        rowKey={(row) =>
-                          row?.user?._id || row?.user?.id || row?.rank
-                        }
-                        pagination={{
-                          current: mostAmountMeta.page,
-                          pageSize: mostAmountMeta.limit,
-                          total: mostAmountMeta.totalUsers,
-                          showSizeChanger: true,
-                          pageSizeOptions: ["10", "20", "50"],
-                          showTotal: (total) => (
-                            <span className="text-slate-600 text-sm">
-                              Total {total} users
-                            </span>
-                          ),
-                        }}
-                        onChange={(paginationConfig) => {
-                          const month = selectedMonthYear
-                            ? selectedMonthYear.format("YYYY-MM")
-                            : null;
-                          const page = paginationConfig.current ?? 1;
-                          const limit = paginationConfig.pageSize ?? 20;
-                          setMostAmountMeta((prev) => ({
-                            ...prev,
-                            page,
-                            limit,
-                          }));
-                          fetchLeaderboard({
-                            mode: "mostAmount",
-                            page,
-                            limit,
-                            month,
-                          });
-                        }}
-                        className="modern-table"
-                      />
-                    )}
-                  </div>
-                ),
-              },
+              ...(!mostBookedOnly
+                ? [
+                    {
+                      key: "mostAmount",
+                      label: (
+                        <span className="flex items-center gap-2">
+                          <DollarSign className="w-4 h-4" />
+                          Most Amount Booked
+                        </span>
+                      ),
+                      children: (
+                        <div>
+                          {userStatsMostAmount.length === 0 ? (
+                            <div className="text-center py-16">
+                              <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                              <Text className="text-gray-500 text-lg">
+                                No confirmed events found
+                              </Text>
+                            </div>
+                          ) : (
+                            <Table
+                              columns={mostAmountColumns}
+                              dataSource={userStatsMostAmount}
+                              rowKey={(row) =>
+                                row?.user?._id || row?.user?.id || row?.rank
+                              }
+                              pagination={{
+                                current: mostAmountMeta.page,
+                                pageSize: mostAmountMeta.limit,
+                                total: mostAmountMeta.totalUsers,
+                                showSizeChanger: true,
+                                pageSizeOptions: ["10", "20", "50"],
+                                showTotal: (total) => (
+                                  <span className="text-slate-600 text-sm">
+                                    Total {total} users
+                                  </span>
+                                ),
+                              }}
+                              onChange={(paginationConfig) => {
+                                const month = selectedMonthYear
+                                  ? selectedMonthYear.format("YYYY-MM")
+                                  : null;
+                                const page = paginationConfig.current ?? 1;
+                                const limit = paginationConfig.pageSize ?? 20;
+                                setMostAmountMeta((prev) => ({
+                                  ...prev,
+                                  page,
+                                  limit,
+                                }));
+                                fetchLeaderboard({
+                                  mode: "mostAmount",
+                                  page,
+                                  limit,
+                                  month,
+                                });
+                              }}
+                              className="modern-table"
+                            />
+                          )}
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
             ]}
             size="large"
           />

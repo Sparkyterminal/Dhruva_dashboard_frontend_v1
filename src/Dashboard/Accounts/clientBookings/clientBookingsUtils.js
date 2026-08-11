@@ -71,6 +71,14 @@ export const formatAmount = (amount) => {
   return `₹${Number(amount).toLocaleString("en-IN")}`;
 };
 
+/** Capitalize first letter of a name (e.g. "archana" → "Archana"). */
+export const capitalizeFirstLetter = (value) => {
+  if (value == null) return "";
+  const s = String(value).trim();
+  if (!s) return "";
+  return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
 export const getEventName = (eventName) => {
   if (typeof eventName === "string") return eventName;
   return eventName?.name || "N/A";
@@ -119,34 +127,74 @@ export const getTotalAgreedAmount = (record) => {
   );
 };
 
-export const getTotalExpectedAdvances = (record) => {
+/**
+ * For complete-payment weddings, the same advance schedule is often copied onto
+ * every ceremony. Summing all eventTypes double-counts money.
+ *
+ * Deduplicate by advanceNumber (fallback: index), taking the max numeric value
+ * so a receipt saved only on a non-first event type is still counted once.
+ */
+const getCompleteWeddingAdvanceFieldTotal = (record, field) => {
+  const byKey = new Map();
+  (record?.eventTypes || []).forEach((et) => {
+    (et?.advances || []).forEach((adv, idx) => {
+      const key =
+        adv?.advanceNumber != null && adv.advanceNumber !== ""
+          ? `n:${adv.advanceNumber}`
+          : `i:${idx}`;
+      const amt = Number(adv?.[field]);
+      const value = Number.isFinite(amt) ? amt : 0;
+      const prev = byKey.get(key) ?? 0;
+      if (value > prev) byKey.set(key, value);
+    });
+  });
   let total = 0;
+  for (const value of byKey.values()) total += value;
+  return total;
+};
+
+export const getTotalExpectedAdvances = (record) => {
   if (isCompletePaymentWedding(record)) {
-    record.eventTypes?.[0]?.advances?.forEach((adv) => {
+    return getCompleteWeddingAdvanceFieldTotal(record, "expectedAmount");
+  }
+  let total = 0;
+  record.eventTypes?.forEach((et) => {
+    et.advances?.forEach((adv) => {
       total += adv.expectedAmount || 0;
     });
-  } else {
-    record.eventTypes?.forEach((et) => {
-      et.advances?.forEach((adv) => {
-        total += adv.expectedAmount || 0;
-      });
-    });
-  }
+  });
   return total;
 };
 
 export const getTotalReceivedAdvances = (record) => {
-  let total = 0;
   if (isCompletePaymentWedding(record)) {
-    record.eventTypes?.[0]?.advances?.forEach((adv) => {
+    return getCompleteWeddingAdvanceFieldTotal(record, "receivedAmount");
+  }
+  let total = 0;
+  record.eventTypes?.forEach((et) => {
+    et.advances?.forEach((adv) => {
       total += adv.receivedAmount || 0;
     });
-  } else {
-    record.eventTypes?.forEach((et) => {
-      et.advances?.forEach((adv) => {
-        total += adv.receivedAmount || 0;
-      });
-    });
-  }
+  });
   return total;
+};
+
+/**
+ * Prefer local complete-wedding rules over backend `advanceTotals` until the
+ * API stops summing received across all eventTypes for complete packages.
+ */
+export const getBookingReceivedAmount = (record) => {
+  if (isCompletePaymentWedding(record)) {
+    return getTotalReceivedAdvances(record);
+  }
+  if (record?.advanceTotals?.totalReceivedAmount != null) {
+    return Number(record.advanceTotals.totalReceivedAmount) || 0;
+  }
+  return getTotalReceivedAdvances(record);
+};
+
+export const getBookingBalanceAmount = (record) => {
+  const booked = getTotalPayable(record) || getTotalAgreedAmount(record);
+  const received = getBookingReceivedAmount(record);
+  return Math.max(0, booked - received);
 };

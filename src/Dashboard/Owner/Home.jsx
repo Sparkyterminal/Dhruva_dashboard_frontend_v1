@@ -19,6 +19,7 @@ import {
   UserOutlined,
   KeyOutlined,
   LogoutOutlined,
+  WalletOutlined,
 } from "@ant-design/icons";
 
 // CSS for Glassmorphism and Focus Animation
@@ -30,6 +31,9 @@ const customStyles = `
     backdrop-filter: blur(18px);
     -webkit-backdrop-filter: blur(18px);
     border: 1px solid rgba(255,255,255,0.30);
+    overflow: visible;
+    position: relative;
+    z-index: 40;
   }
   @keyframes focus-in-expand {
     0% {
@@ -85,6 +89,7 @@ const HomeOwner = () => {
     });
 
   const navigationMenus = [
+    { label: "Daily Expense", route: "/user/daily-expenses", icon: WalletOutlined },
     { label: "Requirements", route: "/user/allrequirements", icon: UnorderedListOutlined },
     { label: "Daybook", route: "/user/daybook", icon: BookOutlined },
     { label: "Vendors", route: "/user/viewvendors", icon: ShopOutlined },
@@ -146,11 +151,11 @@ const HomeOwner = () => {
         >
           {/* Glassmorphism Header */}
           <div className="glass-header flex flex-col gap-6 px-5 py-6 md:p-10 mb-8 focus-in-expand-normal shadow-lg">
-            {/* Top Row: Welcome & User Profile */}
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-6">
+            {/* Top Row: Welcome & User Profile (side-by-side on mobile too) */}
+            <div className="relative z-50 flex flex-row justify-between items-center gap-3 sm:gap-6">
               {/* Left Welcome */}
-              <div className="flex items-center gap-4">
-                <div>
+              <div className="flex items-center gap-4 min-w-0 flex-1">
+                <div className="min-w-0">
                   <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
                     Welcome
                   </h1>
@@ -171,42 +176,28 @@ const HomeOwner = () => {
                     </div>
                   </div>
                 </div>
-                {/* Elephant Image */}
-                {/* <motion.div
-                  className="hidden sm:block"
-                  animate={{ y: [0, -10, 0] }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 3,
-                    ease: "easeInOut",
-                  }}
-                >
-                  <img
-                    src="assets/dhruvalogo-removed.png"
-                    alt="Elephant"
-                    className="w-16 h-16 md:w-20 md:h-20"
-                  />
-                </motion.div> */}
               </div>
               {/* User actions */}
-              <motion.div className="flex items-center gap-4 shrink-0">
+              <motion.div className="relative z-[60] flex items-center gap-4 shrink-0">
                 <Dropdown
                   menu={{ items: menuItems }}
                   trigger={["click"]}
                   placement="bottomRight"
+                  getPopupContainer={() => document.body}
+                  overlayStyle={{ zIndex: 2200 }}
                 >
                   <div
-                    className="cursor-pointer flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md hover:shadow-lg transition-shadow"
-                    style={{ minWidth: 56, minHeight: 56 }}
+                    className="cursor-pointer flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md hover:shadow-lg transition-shadow"
+                    style={{ minWidth: 48, minHeight: 48 }}
                   >
-                    <UserOutlined style={{ fontSize: 28 }} />
+                    <UserOutlined style={{ fontSize: 24 }} />
                   </div>
                 </Dropdown>
               </motion.div>
             </div>
 
             {/* Bottom Row: Navigation Menu */}
-            <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 pt-4 border-t border-gray-200">
+            <div className="relative z-0 flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 pt-4 border-t border-gray-200">
               {navigationMenus.map((menu, index) => {
                 const Icon = menu.icon;
                 return (

@@ -123,7 +123,7 @@ const DaybookAccountsBalanceModal = ({
       title={isEdit ? "Edit Open/Close Balance" : "Add Open/Close Balance"}
       onCancel={onCancel}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}

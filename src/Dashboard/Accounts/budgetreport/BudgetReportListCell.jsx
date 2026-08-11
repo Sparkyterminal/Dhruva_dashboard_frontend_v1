@@ -1,5 +1,4 @@
 import React, { useCallback, useMemo, useState } from "react";
-import axios from "axios";
 import { Button, Dropdown, Modal, Select, Spin, message } from "antd";
 import {
   AppstoreOutlined,
@@ -8,91 +7,84 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../../../config";
-
-/** Same event list shape as BudgetReportHome (GET /events + embedded budgetReport). */
-const parseEventsPayload = (res) => {
-  const raw = res.data?.events ?? res.data?.data ?? res.data;
-  return Array.isArray(raw) ? raw : [];
-};
-
-const getReportIdFromEvent = (ev) => {
-  const br = ev?.budgetReport;
-  if (!br) return null;
-  if (typeof br === "string") return br;
-  return br._id != null ? String(br._id) : null;
-};
-
-const getCloneSourceLabelFromEvent = (ev, getEventName) => {
-  const name = getEventName(ev?.eventName);
-  const client = ev?.clientName || "—";
-  return `${name} - ${client}`;
-};
+import {
+  cloneBudgetReportWorkbook,
+  eventHasBudgetReport,
+  fetchBudgetReportCloneSources,
+  getBudgetReportSourceEventId,
+} from "./excel/budgetReportExcelApi";
+import { getEventName as defaultGetEventName } from "./excel/budgetReportExcelUtils";
+import BudgetReportExcelViewDrawer from "./BudgetReportExcelViewDrawer";
 
 /**
- * Table cell: View when event has a budget; otherwise App menu (clone / add new).
- * Clone uses POST /api/budget-report/:id/clone with { eventId } per FRONTEND.md.
+ * Client Bookings / Inflow table cell for Budget Report (Excel).
+ *
+ * - If event has budgetReport / budgetReportsCount → show View
+ *   → opens full-width read-only Excel drawer
+ * - Else → Budget button with: Clone from existing | Add new
  */
 const BudgetReportListCell = ({
   record,
-  getEventName,
+  getEventName = defaultGetEventName,
   onView,
   onAfterMutation,
   accessToken,
-  /** If false, skip "Add new" (e.g. route not mounted for role) */
   showAddNew = true,
 }) => {
   const navigate = useNavigate();
   const [cloneOpen, setCloneOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
   const [sourcesLoading, setSourcesLoading] = useState(false);
   const [sources, setSources] = useState([]);
-  const [sourceReportId, setSourceReportId] = useState(undefined);
+  const [sourceEventId, setSourceEventId] = useState(undefined);
   const [cloning, setCloning] = useState(false);
 
-  const config = useMemo(
+  const authHeaders = useMemo(
     () => ({ headers: { Authorization: accessToken } }),
     [accessToken],
   );
 
-  const targetEventId = record?._id;
+  const targetEventId = record?._id != null ? String(record._id) : null;
+  const hasReport = eventHasBudgetReport(record);
+
+  const eventLabel = useMemo(() => {
+    const name =
+      typeof getEventName === "function"
+        ? getEventName(record?.eventName)
+        : defaultGetEventName(record?.eventName);
+    const client = record?.clientName || "—";
+    return `${name} - ${client}`;
+  }, [getEventName, record]);
 
   const loadCloneSources = useCallback(async () => {
     if (!accessToken) return;
     setSourcesLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
-        ...config,
-        params: { page: 1, limit: 1000 },
+      const list = await fetchBudgetReportCloneSources({
+        authHeaders,
+        excludeEventId: targetEventId,
       });
-      const bookings = parseEventsPayload(res);
-      const tid = targetEventId != null ? String(targetEventId) : "";
-      // Same /events payload as BudgetReportHome; any row with embedded budgetReport can be a clone source
-      const withBudget = bookings.filter((ev) => {
-        const rid = getReportIdFromEvent(ev);
-        if (!rid) return false;
-        if (String(ev._id) === tid) return false;
-        return true;
-      });
-      setSources(withBudget);
+      setSources(list);
     } catch (err) {
       console.error(err);
       message.error(
-        err.response?.data?.message || "Could not load events with budget reports",
+        err?.response?.data?.message ||
+          "Could not load events with budget reports",
       );
       setSources([]);
     } finally {
       setSourcesLoading(false);
     }
-  }, [accessToken, config, targetEventId]);
+  }, [accessToken, authHeaders, targetEventId]);
 
   const openCloneModal = () => {
-    setSourceReportId(undefined);
+    setSourceEventId(undefined);
     setCloneOpen(true);
     loadCloneSources();
   };
 
   const runClone = async () => {
-    if (!sourceReportId) {
+    if (!sourceEventId) {
       message.warning("Select a budget report to clone from");
       return;
     }
@@ -100,20 +92,28 @@ const BudgetReportListCell = ({
       message.error("Missing event");
       return;
     }
+
+    const source = sources.find(
+      (s) => String(s.sourceEventId) === String(sourceEventId),
+    );
+
     setCloning(true);
     try {
-      await axios.post(
-        `${API_BASE_URL}budget-report/${sourceReportId}/clone`,
-        { eventId: String(targetEventId) },
-        config,
-      );
+      await cloneBudgetReportWorkbook({
+        sourceEventId,
+        targetEventId,
+        targetEvent: record,
+        sourceReportId: source?.sourceReportId || null,
+        authHeaders,
+      });
       message.success("Budget report cloned for this event");
       setCloneOpen(false);
       onAfterMutation?.();
     } catch (err) {
       console.error(err);
       message.error(
-        err.response?.data?.message ||
+        err?.response?.data?.message ||
+          err?.message ||
           "Clone failed. Check that the source report can be copied.",
       );
     } finally {
@@ -121,32 +121,48 @@ const BudgetReportListCell = ({
     }
   };
 
+  const goView = () => {
+    if (!targetEventId) return;
+    // Full-width read-only Excel drawer (handled here — do not open legacy drawer)
+    setViewOpen(true);
+  };
+
   const goAddNew = () => {
+    if (!targetEventId) return;
     navigate("/user/budgetreport", {
-      state: { preselectedEventId: String(targetEventId) },
+      state: { preselectedEventId: targetEventId },
     });
   };
 
   const selectOptions = useMemo(
     () =>
-      sources.map((ev) => ({
-        value: getReportIdFromEvent(ev),
-        label: getCloneSourceLabelFromEvent(ev, getEventName),
+      sources.map((s) => ({
+        value: s.sourceEventId,
+        label: s.sheetCount
+          ? `${s.label} (${s.sheetCount} sheet${s.sheetCount === 1 ? "" : "s"})`
+          : s.label,
       })),
-    [sources, getEventName],
+    [sources],
   );
 
-  if (record?.budgetReport) {
+  if (hasReport) {
     return (
-      <Button
-        type="link"
-        size="small"
-        icon={<EyeOutlined />}
-        onClick={() => onView?.(record)}
-        className="text-indigo-600 p-0 h-auto"
-      >
-        View
-      </Button>
+      <>
+        <Button
+          type="link"
+          size="small"
+          icon={<EyeOutlined />}
+          onClick={goView}
+          className="text-indigo-600 p-0 h-auto"
+        >
+          View
+        </Button>
+        <BudgetReportExcelViewDrawer
+          open={viewOpen}
+          onClose={() => setViewOpen(false)}
+          record={record}
+        />
+      </>
     );
   }
 
@@ -154,7 +170,7 @@ const BudgetReportListCell = ({
     {
       key: "clone",
       icon: <CopyOutlined />,
-      label: "Clone from another event",
+      label: "Clone from existing",
     },
     ...(showAddNew
       ? [
@@ -198,10 +214,12 @@ const BudgetReportListCell = ({
         okText="Clone"
         confirmLoading={cloning}
         destroyOnClose
-        width={480}
+        width={520}
+        okButtonProps={{ disabled: !sourceEventId || sourcesLoading }}
       >
         <p className="text-slate-600 text-sm mb-3">
-          Copy line items and structure from an existing report into this event.
+          Copy the full Excel workbook (all sheets) from an existing event into{" "}
+          <strong>{eventLabel}</strong>.
         </p>
         {sourcesLoading ? (
           <div className="flex justify-center py-8">
@@ -209,20 +227,19 @@ const BudgetReportListCell = ({
           </div>
         ) : selectOptions.length === 0 ? (
           <p className="text-amber-700 text-sm">
-            No other events in this list have a budget report yet. Use
-            &quot;Add new&quot; on another booking first, or create from
-            scratch.
+            No other events have a budget report yet. Use &quot;Add new&quot; to
+            create one from scratch for this event.
           </p>
         ) : (
           <Select
             showSearch
             allowClear
-            placeholder="Choose source report"
+            placeholder="Choose source event budget report"
             className="w-full"
             optionFilterProp="label"
             options={selectOptions}
-            value={sourceReportId}
-            onChange={setSourceReportId}
+            value={sourceEventId}
+            onChange={setSourceEventId}
           />
         )}
       </Modal>
@@ -231,3 +248,5 @@ const BudgetReportListCell = ({
 };
 
 export default BudgetReportListCell;
+
+export { eventHasBudgetReport, getBudgetReportSourceEventId };

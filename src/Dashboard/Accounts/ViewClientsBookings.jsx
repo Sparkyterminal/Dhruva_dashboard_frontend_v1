@@ -52,7 +52,7 @@ import {
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import BalanceSheets from "./clientBookings/BalanceSheets";
-import BudgetReportDrawerSection from "./budgetreport/BudgetReportDrawerSection";
+import ClientBookingsLeadsTab from "./clientBookings/ClientBookingsLeadsTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 
 const { Title, Text } = Typography;
@@ -64,9 +64,6 @@ const ViewClientsBookings = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [budgetReportDrawerOpen, setBudgetReportDrawerOpen] = useState(false);
-  const [budgetReportDrawerRecord, setBudgetReportDrawerRecord] =
-    useState(null);
   const [editingAdvances, setEditingAdvances] = useState([]);
   const [savingAdvance, setSavingAdvance] = useState(null);
   const [editingAdvanceKey, setEditingAdvanceKey] = useState(null); // Track which advance is being edited
@@ -273,16 +270,6 @@ const ViewClientsBookings = () => {
     setDrawerVisible(true);
   };
 
-  const openBudgetReportDrawer = (record) => {
-    setBudgetReportDrawerRecord(record);
-    setBudgetReportDrawerOpen(true);
-  };
-
-  const closeBudgetReportDrawer = () => {
-    setBudgetReportDrawerOpen(false);
-    setBudgetReportDrawerRecord(null);
-  };
-
   const closeDrawer = () => {
     setDrawerVisible(false);
     setSelectedEvent(null);
@@ -418,7 +405,6 @@ const ViewClientsBookings = () => {
           pagination={pagination}
           handleTableChange={handleTableChange}
           showEventDetailsDrawer={showEventDetailsDrawer}
-          onViewBudgetReport={openBudgetReportDrawer}
           accessToken={user?.access_token}
           onBookingsMutated={fetchBookingsList}
         />
@@ -449,6 +435,11 @@ const ViewClientsBookings = () => {
       key: "leaderboard",
       label: "LeaderBoard",
       children: <UserWiseClients />,
+    },
+    {
+      key: "leads",
+      label: "Leads",
+      children: <ClientBookingsLeadsTab />,
     },
   ];
 
@@ -520,6 +511,7 @@ const ViewClientsBookings = () => {
               items={tabItems}
               size="large"
               className="modern-tabs"
+              tabBarStyle={{ marginBottom: 16 }}
             />
           </Card>
         </motion.div>
@@ -1774,34 +1766,6 @@ const ViewClientsBookings = () => {
         )}
       </Drawer>
 
-      <Drawer
-        title={
-          <div>
-            <div className="text-lg font-semibold text-slate-800">
-              Budget report
-            </div>
-            {budgetReportDrawerRecord && (
-              <div className="text-xs text-slate-500 font-normal mt-0.5">
-                {getEventName(budgetReportDrawerRecord.eventName)} ·{" "}
-                {budgetReportDrawerRecord.clientName}
-              </div>
-            )}
-          </div>
-        }
-        open={budgetReportDrawerOpen}
-        onClose={closeBudgetReportDrawer}
-        width="90%"
-        className="budget-report-standalone-drawer"
-        bodyStyle={{ padding: 16, background: "#f8fafc" }}
-      >
-        {budgetReportDrawerRecord?.budgetReport ? (
-          <BudgetReportDrawerSection
-            budgetReport={budgetReportDrawerRecord.budgetReport}
-            count={budgetReportDrawerRecord.budgetReportsCount}
-          />
-        ) : null}
-      </Drawer>
-
       <style>{`
         .custom-table .ant-table-thead > tr > th {
           background: #f8fafc;
@@ -1851,6 +1815,7 @@ const ViewClientsBookings = () => {
           border-radius: 8px 8px 0 0;
           padding: 12px 20px;
           font-weight: 500;
+          flex-shrink: 0;
         }
 
         .modern-tabs .ant-tabs-tab-active {
@@ -1860,6 +1825,19 @@ const ViewClientsBookings = () => {
         .modern-tabs .ant-tabs-ink-bar {
           height: 3px;
           border-radius: 3px 3px 0 0;
+        }
+
+        .modern-tabs .ant-tabs-nav-wrap {
+          overflow-x: auto !important;
+          overflow-y: hidden;
+        }
+
+        .modern-tabs .ant-tabs-nav-list {
+          flex-wrap: nowrap;
+        }
+
+        .modern-tabs .ant-tabs-nav-operations {
+          display: none;
         }
 
         .event-details-drawer .ant-drawer-header {

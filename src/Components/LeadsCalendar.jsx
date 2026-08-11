@@ -15,15 +15,20 @@ const STATUS_COLORS = {
   Inprogress: { bg: "#fef9c3", border: "#eab308", text: "#854d0e" },
 };
 
-const LeadsCalendar = () => {
-  const [leads, setLeads] = useState([]);
-  const [loading, setLoading] = useState(false);
+const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
+  const [leadsInternal, setLeadsInternal] = useState([]);
+  const [loadingInternal, setLoadingInternal] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const calendarRef = useRef(null);
   const user = useSelector((state) => state.user.value);
 
+  const controlled = leadsProp !== undefined;
+  const leads = controlled ? (Array.isArray(leadsProp) ? leadsProp : []) : leadsInternal;
+  const loading = controlled ? Boolean(loadingProp) : loadingInternal;
+
   const fetchLeads = useCallback(async () => {
+    if (controlled) return;
     if (!user?.access_token) {
       message.error("Authentication required. Please login again.");
       return;
@@ -33,11 +38,11 @@ const LeadsCalendar = () => {
       headers: { Authorization: user?.access_token },
     };
 
-    setLoading(true);
+    setLoadingInternal(true);
     try {
       const res = await axios.get(`${API_BASE_URL}client-leads`, config);
       const list = res.data?.data ?? res.data?.leads ?? res.data;
-      setLeads(Array.isArray(list) ? list : []);
+      setLeadsInternal(Array.isArray(list) ? list : []);
     } catch (err) {
       console.error("Error fetching leads:", err);
       if (err.response?.status === 401) {
@@ -45,15 +50,15 @@ const LeadsCalendar = () => {
       } else {
         message.error(err.response?.data?.message || "Failed to load leads.");
       }
-      setLeads([]);
+      setLeadsInternal([]);
     } finally {
-      setLoading(false);
+      setLoadingInternal(false);
     }
-  }, [user?.access_token]);
+  }, [user?.access_token, controlled]);
 
   useEffect(() => {
-    fetchLeads();
-  }, [fetchLeads]);
+    if (!controlled) fetchLeads();
+  }, [fetchLeads, controlled]);
 
   const getCalendarEvents = () => {
     const calendarEvents = [];
@@ -325,6 +330,9 @@ const LeadsCalendar = () => {
                 <div className="text-base text-gray-800">
                   {typeof selectedLead.assignedTo === "object"
                     ? selectedLead.assignedTo?.name ||
+                      [selectedLead.assignedTo?.first_name, selectedLead.assignedTo?.last_name]
+                        .filter(Boolean)
+                        .join(" ") ||
                       selectedLead.assignedTo?.email ||
                       "—"
                     : selectedLead.assignedTo}

@@ -25,6 +25,9 @@ const customStyles = `
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.35);
+    overflow: visible;
+    position: relative;
+    z-index: 40;
   }
 
   @keyframes slide-in-top {
@@ -114,6 +117,25 @@ const AccountsHome = () => {
     });
 
   const navButtons = [
+    {
+      label: "Daily Expenses",
+      route: "/user/daily-expenses",
+      icon: (
+        <svg
+          className="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+          />
+        </svg>
+      ),
+    },
     {
       label: "Add Requirement",
       route: "/user/sendrequest",
@@ -312,10 +334,10 @@ const AccountsHome = () => {
         >
           {/* Glassmorphism Header */}
           <div className="glass-header flex flex-col gap-6 px-4 py-6 md:px-10 md:py-8 mb-8 slide-in-top">
-            {/* Top Row - Welcome & Avatar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            {/* Top Row - Welcome & Avatar (side-by-side on mobile too) */}
+            <div className="relative z-50 flex flex-row justify-between items-start sm:items-center gap-3 sm:gap-4">
               {/* Left Section - Welcome & Time */}
-              <div className="flex-1 w-full">
+              <div className="flex-1 min-w-0 w-full">
                 <motion.h1
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -359,12 +381,12 @@ const AccountsHome = () => {
               </div>
 
               {/* Right Section - Avatar/Menu Dropdown */}
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative z-[60] shrink-0" ref={dropdownRef}>
                 <motion.button
                   onClick={() => setShowDropdown(!showDropdown)}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="w-16 h-16 md:w-20 md:h-20 rounded-full cursor-pointer flex items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-2"
+                  className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-full cursor-pointer flex items-center justify-center shadow-lg avatar-glow transition-all duration-300 hover:shadow-xl p-1.5 sm:p-2"
                 >
                   <Lottie
                     animationData={audience}
@@ -373,14 +395,14 @@ const AccountsHome = () => {
                   />
                 </motion.button>
 
-                {/* Dropdown Menu */}
+                {/* Dropdown Menu — above nav menus */}
                 {showDropdown && (
                   <motion.div
                     initial={{ opacity: 0, y: -10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -10, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-20 md:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-50 border border-gray-100 overflow-hidden"
+                    className="absolute right-0 top-14 sm:top-20 md:top-24 bg-white rounded-2xl shadow-2xl py-2 w-56 z-[100] border border-gray-100 overflow-hidden"
                   >
                     <motion.button
                       whileHover={{ backgroundColor: "#f3f4f6", x: 5 }}
@@ -425,7 +447,7 @@ const AccountsHome = () => {
             </div>
 
             {/* Bottom Row - Navigation Buttons */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
+            <div className="relative z-0 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full">
               {navButtons.map((button, index) => (
                 <motion.button
                   key={button.label}

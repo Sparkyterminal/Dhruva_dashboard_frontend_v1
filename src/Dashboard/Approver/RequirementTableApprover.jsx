@@ -485,17 +485,17 @@ const RequirementTableApprover = () => {
         </span>
       ),
     },
-    {
-      title: "Requested At",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      width: 150,
-      render: (date) => (
-        <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
-          {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
-        </span>
-      ),
-    },
+    // {
+    //   title: "Requested At",
+    //   dataIndex: "createdAt",
+    //   key: "createdAt",
+    //   width: 150,
+    //   render: (date) => (
+    //     <span style={{ fontSize: 18, color: "#000", fontWeight: 700 }}>
+    //       {date ? dayjs(date).format("DD-MM-YYYY HH:mm") : "-"}
+    //     </span>
+    //   ),
+    // },
     {
       title: "Requester",
       dataIndex: ["requested_by", "first_name"],

@@ -11,6 +11,7 @@ import {
 } from "antd";
 import dayjs from "dayjs";
 import { createInflow, fetchEventsMinimal, updateInflow } from "./daybookApi";
+import { getEventReferenceId, formatEventReference } from "./daybookUtils";
 
 const { Option } = Select;
 
@@ -49,7 +50,9 @@ const DaybookInflowModal = ({
   const [eventsLoading, setEventsLoading] = useState(false);
   const eventsSearchTimeout = useRef(null);
 
-  const selectedEventReference = initialValues?.eventReference;
+  const selectedEventReference = getEventReferenceId(
+    initialValues?.eventReference,
+  );
   const hasSelectedEvent =
     selectedEventReference &&
     (events || []).some((ev) => (ev?._id ?? ev?.id) === selectedEventReference);
@@ -80,7 +83,7 @@ const DaybookInflowModal = ({
       accountName: initialValues?.accountName ?? undefined,
       amountReceived: initialValues?.amountReceived ?? undefined,
       receivedBy: initialValues?.receivedBy ?? "",
-      eventReference: initialValues?.eventReference ?? undefined,
+      eventReference: getEventReferenceId(initialValues?.eventReference),
       note: initialValues?.note ?? undefined,
     });
 
@@ -114,7 +117,7 @@ const DaybookInflowModal = ({
           values?.receivedIn === "ACCOUNT" ? values?.accountName : undefined,
         amountReceived: values?.amountReceived,
         receivedBy: values?.receivedBy,
-        eventReference: values?.eventReference || undefined,
+        eventReference: getEventReferenceId(values?.eventReference),
         note: values?.note || "",
       };
 
@@ -142,7 +145,7 @@ const DaybookInflowModal = ({
       title={isEdit ? "Edit Inflow" : "Add Inflow"}
       onCancel={onCancel}
       footer={null}
-      destroyOnClose
+      destroyOnHidden
     >
       <Form
         form={form}
@@ -288,7 +291,7 @@ const DaybookInflowModal = ({
             })}
             {selectedEventReference && !hasSelectedEvent ? (
               <Select.Option value={selectedEventReference}>
-                {selectedEventReference}
+                {formatEventReference(initialValues?.eventReference)}
               </Select.Option>
             ) : null}
           </Select>
