@@ -91,6 +91,14 @@ const ClientBookingsStatsCards = ({
   const bucket = getEventsListTotalsBucket(totalsByStatus, statusKey);
   const allRollup = totalsByStatus?.all;
 
+  // Backend adds `grandTotalExpectedAmount` (bookings + leads pipeline) to
+  // `totalsByStatus.all` — see CLIENT_BOOKINGS_ALL_TAB_ESTIMATED_BUDGET_BACKEND.md.
+  // Until then, fall back to summing the two raw fields, then to just bookings.
+  const allTotalExpected = allRollup
+    ? allRollup.grandTotalExpectedAmount ??
+      (allRollup.totalExpectedAmount ?? 0) + (allRollup.totalEstimatedBudget ?? 0)
+    : 0;
+
   if (!hasApiTotals) {
     return (
       <div className="mb-6">
@@ -130,7 +138,7 @@ const ClientBookingsStatsCards = ({
         <Row gutter={[16, 16]} align="stretch">
           <MoneyCard
             title="Total expected"
-            value={allRollup.totalExpectedAmount ?? 0}
+            value={allTotalExpected}
             color="#10b981"
             formatAmount={fmt}
           />
