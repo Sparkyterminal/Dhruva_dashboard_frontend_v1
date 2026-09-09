@@ -319,6 +319,7 @@ const ClientBookingsListTab = ({
   setFilterEventName,
   setFilterDateRange,
   setFilterVenueId,
+  cutoffDate,
 }) => {
   const totalsByStatus = bookingsSummary?.totalsByStatus;
   const tabCount = (key) => getTabLabelBookingCount(totalsByStatus, key);
@@ -362,6 +363,7 @@ const ClientBookingsListTab = ({
         onEventNameChange={setFilterEventName}
         onDateRangeChange={setFilterDateRange}
         onVenueChange={setFilterVenueId}
+        cutoffDate={cutoffDate}
         onClear={() => {
           setFilterEventName(undefined);
           setFilterDateRange(null);

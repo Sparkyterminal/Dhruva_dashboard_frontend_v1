@@ -276,6 +276,11 @@ const DailyExpensesHome = () => {
                           onChange={(vals) =>
                             setRange(vals || [null, null])
                           }
+                          disabledDate={(current) =>
+                            user?.dataCutoffDate
+                              ? current && current.isBefore(dayjs(user.dataCutoffDate), "day")
+                              : false
+                          }
                           format="DD-MM-YYYY"
                           allowClear
                           size="large"

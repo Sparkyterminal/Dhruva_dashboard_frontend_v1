@@ -10,6 +10,7 @@ const initialValue = {
   is_change_password: false,
   is_logged_in: false,
   departments: [],
+  dataCutoffDate: null,
 };
 
 export const userSlice = createSlice({

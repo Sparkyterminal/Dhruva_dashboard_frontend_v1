@@ -27,6 +27,7 @@ import {
 import axios from "axios";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "../../../config";
+import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 
@@ -141,7 +142,11 @@ const CARequirementsTable = () => {
       if (searchQuery) params.append("search", searchQuery);
       if (createdStart) params.append("startDate", createdStart);
       if (createdEnd) params.append("endDate", createdEnd);
-      if (requiredStart) params.append("required_date_start", requiredStart);
+      // Default to the data-visibility cutoff when the caller hasn't picked
+      // its own required-date filter — a real, server-filtered query.
+      const effectiveRequiredStart = requiredStart ?? getEffectiveCutoffDate(user);
+      if (effectiveRequiredStart)
+        params.append("required_date_start", effectiveRequiredStart);
       if (requiredEnd) params.append("required_date_end", requiredEnd);
       if (eventId) params.append("event", eventId);
       if (vendorId) params.append("vendor", vendorId);

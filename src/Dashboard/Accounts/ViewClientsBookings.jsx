@@ -54,6 +54,7 @@ import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import BalanceSheets from "./clientBookings/BalanceSheets";
 import ClientBookingsLeadsTab from "./clientBookings/ClientBookingsLeadsTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
+import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -141,7 +142,11 @@ const ViewClientsBookings = () => {
         params.venueId = filterVenueId;
         params.venueLocation = filterVenueId;
       }
-      const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? null;
+      // Default the "from" date to the data-visibility cutoff when the user
+      // hasn't picked their own start date — a real, server-filtered query,
+      // not a client-side trim. See src/utils/dataCutoff.js.
+      const start =
+        filterDateRange?.[0]?.format("YYYY-MM-DD") ?? getEffectiveCutoffDate(user);
       const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
       if (start) params.startDate = start;
       if (end) params.endDate = end;
@@ -407,6 +412,7 @@ const ViewClientsBookings = () => {
           showEventDetailsDrawer={showEventDetailsDrawer}
           accessToken={user?.access_token}
           onBookingsMutated={fetchBookingsList}
+          cutoffDate={user?.dataCutoffDate}
         />
       ),
     },

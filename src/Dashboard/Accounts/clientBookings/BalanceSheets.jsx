@@ -16,6 +16,7 @@ import {
 } from "antd";
 import { useSelector } from "react-redux";
 import { API_BASE_URL } from "../../../../config";
+import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { RangePicker } = DatePicker;
 
@@ -57,8 +58,10 @@ const BalanceSheets = () => {
 
   const startDateParam = useMemo(() => {
     const d = dateRange?.[0];
-    return d?.isValid?.() ? d.format("YYYY-MM-DD") : null;
-  }, [dateRange]);
+    // Default to the data-visibility cutoff when no range is picked — a
+    // real, server-filtered query. See src/utils/dataCutoff.js.
+    return d?.isValid?.() ? d.format("YYYY-MM-DD") : getEffectiveCutoffDate(user);
+  }, [dateRange, user]);
 
   const endDateParam = useMemo(() => {
     const d = dateRange?.[1];

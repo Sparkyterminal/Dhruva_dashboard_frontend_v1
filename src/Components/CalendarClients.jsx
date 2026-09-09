@@ -13,6 +13,7 @@ import {
   captureElementAsImage,
   downloadCanvasAsPng,
 } from "../utils/captureElementAsImage";
+import { getEffectiveCutoffDate } from "../utils/dataCutoff";
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
@@ -40,7 +41,7 @@ const CalendarClients = () => {
         axios,
         API_BASE_URL,
         authHeaders,
-        { status: "confirmed", limit: 100 },
+        { status: "confirmed", limit: 100, startDate: getEffectiveCutoffDate(user) },
       );
 
       const eventsData = allConfirmed.filter(

@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, Row, Col, Button, Select, DatePicker, Typography } from "antd";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -14,6 +15,7 @@ const ClientBookingsFilters = ({
   onDateRangeChange,
   onVenueChange,
   onClear,
+  cutoffDate,
 }) => (
   <Card
     className="border-0"
@@ -66,6 +68,9 @@ const ClientBookingsFilters = ({
         <RangePicker
           value={filterDateRange}
           onChange={onDateRangeChange}
+          disabledDate={(current) =>
+            cutoffDate ? current && current.isBefore(dayjs(cutoffDate), "day") : false
+          }
           format="DD-MM-YYYY"
           style={{ width: "100%" }}
           size="large"

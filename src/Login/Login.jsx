@@ -41,6 +41,7 @@ export default function Login() {
             access_token,
             is_logged_in: true,
             departments: response.data.data.departments || [],
+            dataCutoffDate: response.data.data.dataCutoffDate ?? null,
           })
         );
         if (role === ROLES.ADMIN) {

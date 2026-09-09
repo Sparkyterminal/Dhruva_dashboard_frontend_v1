@@ -243,7 +243,11 @@ const Daybookhome = () => {
           </Row>
         </Card>
 
-        <DaybookDateSelector value={selectedRange} onChange={setSelectedRange} />
+        <DaybookDateSelector
+          value={selectedRange}
+          onChange={setSelectedRange}
+          cutoffDate={user?.dataCutoffDate}
+        />
 
         <Card
           className="border-0 shadow-sm"

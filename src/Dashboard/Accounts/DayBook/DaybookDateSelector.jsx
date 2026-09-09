@@ -1,5 +1,6 @@
 import React from "react";
 import { Card, DatePicker, Col, Row, Typography } from "antd";
+import dayjs from "dayjs";
 
 const { Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -7,7 +8,7 @@ const { RangePicker } = DatePicker;
 /**
  * value: [startDayjs, endDayjs] (Dayjs objects)
  */
-const DaybookDateSelector = ({ value, onChange }) => {
+const DaybookDateSelector = ({ value, onChange, cutoffDate }) => {
   return (
     <Card
       className="border-0 shadow-sm"
@@ -28,6 +29,9 @@ const DaybookDateSelector = ({ value, onChange }) => {
           <RangePicker
             value={value}
             onChange={(d) => onChange?.(d)}
+            disabledDate={(current) =>
+              cutoffDate ? current && current.isBefore(dayjs(cutoffDate), "day") : false
+            }
             format="YYYY-MM-DD"
             style={{ width: "100%" }}
             size="large"

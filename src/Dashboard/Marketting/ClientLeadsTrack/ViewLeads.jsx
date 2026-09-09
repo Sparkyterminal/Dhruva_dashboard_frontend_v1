@@ -32,6 +32,7 @@ import AddLeads from "./AddLeads";
 import LeadForm, { STATUS_OPTIONS } from "./LeadForm";
 import LeadsCalendar from "../../../Components/LeadsCalendar";
 import { API_BASE_URL } from "../../../../config";
+import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -111,6 +112,9 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
   const config = { headers: { Authorization: user?.access_token } };
+  const dataCutoffDate = user?.dataCutoffDate;
+  const disabledBeforeCutoff = (current) =>
+    dataCutoffDate ? current && current.isBefore(dayjs(dataCutoffDate), "day") : false;
   const [leads, setLeads] = useState([]);
   const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -149,8 +153,11 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
         month: filterMonth.format("YYYY-MM"),
       };
     }
-    return { startDate: null, endDate: null, month: null };
-  }, [filterDateRange, filterMonth]);
+    // No explicit filter — default to the data-visibility cutoff (real,
+    // server-filtered query; see src/utils/dataCutoff.js) rather than
+    // fetching everything.
+    return { startDate: getEffectiveCutoffDate(user), endDate: null, month: null };
+  }, [filterDateRange, filterMonth, user]);
 
   const fetchLeads = useCallback(async () => {
     setLoading(true);
@@ -158,12 +165,10 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       const params = {};
       if (filterStatus) params.status = filterStatus;
       if (filterAssignedTo) params.assignedTo = filterAssignedTo;
-      if (activeDateBounds.startDate && activeDateBounds.endDate) {
-        params.startDate = activeDateBounds.startDate;
-        params.endDate = activeDateBounds.endDate;
-        if (activeDateBounds.month && !filterDateRange) {
-          params.month = activeDateBounds.month;
-        }
+      if (activeDateBounds.startDate) params.startDate = activeDateBounds.startDate;
+      if (activeDateBounds.endDate) params.endDate = activeDateBounds.endDate;
+      if (activeDateBounds.month && !filterDateRange) {
+        params.month = activeDateBounds.month;
       }
       const res = await axios.get(`${API_BASE_URL}client-leads`, {
         ...config,
@@ -673,6 +678,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
                 setFilterMonth(m);
                 if (m) setFilterDateRange(null);
               }}
+              disabledDate={disabledBeforeCutoff}
               style={{ width: "100%" }}
               size="large"
               allowClear
@@ -697,6 +703,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
                 setFilterDateRange(r);
                 if (r?.[0] && r?.[1]) setFilterMonth(null);
               }}
+              disabledDate={disabledBeforeCutoff}
               format="DD MMM YYYY"
               style={{ width: "100%" }}
               size="large"

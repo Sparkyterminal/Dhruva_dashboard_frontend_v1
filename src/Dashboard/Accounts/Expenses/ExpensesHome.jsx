@@ -203,6 +203,11 @@ const ExpensesHome = () => {
               <DatePicker
                 value={selectedDate}
                 onChange={(d) => setSelectedDate(d || dayjs())}
+                disabledDate={(current) =>
+                  user?.dataCutoffDate
+                    ? current && current.isBefore(dayjs(user.dataCutoffDate), "day")
+                    : false
+                }
                 format="DD-MM-YYYY"
                 size="large"
                 style={{ width: "100%", maxWidth: 280 }}

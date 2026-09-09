@@ -14,6 +14,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
+import { getEffectiveCutoffDate } from "../utils/dataCutoff";
 
 const AdvanceCalendarClients = () => {
   const [events, setEvents] = useState([]);
@@ -30,7 +31,9 @@ const AdvanceCalendarClients = () => {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`);
+      const res = await axios.get(`${API_BASE_URL}events`, {
+        params: { startDate: getEffectiveCutoffDate(user) },
+      });
 
       let eventsData = [];
       if (res.data) {

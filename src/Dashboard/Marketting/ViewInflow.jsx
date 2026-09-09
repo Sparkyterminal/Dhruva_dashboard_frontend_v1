@@ -43,6 +43,7 @@ import { API_BASE_URL } from "../../../config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
 import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";
+import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Title, Text } = Typography;
 
@@ -87,6 +88,9 @@ const ViewInflow = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
+        // Default to the data-visibility cutoff — a real, server-filtered
+        // query. See src/utils/dataCutoff.js.
+        startDate: getEffectiveCutoffDate(user),
         ...(statusParam ? { status: statusParam } : {}),
         ...(filterEventName ? { eventName: filterEventName } : {}),
       };
