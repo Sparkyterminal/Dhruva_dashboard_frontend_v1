@@ -7,7 +7,7 @@ import { AlertCircle } from "lucide-react";
 import axios from "axios";
 import { Modal, message, Tooltip } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const STATUS_COLORS = {
   Cancelled: { bg: "#fecaca", border: "#ef4444", text: "#991b1b" },

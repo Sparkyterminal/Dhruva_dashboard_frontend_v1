@@ -4,7 +4,7 @@ import { Button, Drawer, Table, message, Input, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import BudgetReportDetailsView from "./BudgetReportDetailsView";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 

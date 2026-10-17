@@ -12,7 +12,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import axios from "axios";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker, Button } from "antd";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";

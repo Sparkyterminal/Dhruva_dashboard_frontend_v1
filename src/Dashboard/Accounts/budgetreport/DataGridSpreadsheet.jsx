@@ -15,7 +15,7 @@ import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { message, Modal } from "antd";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { emptyChildRow, buildGroupRow } from "./budgetReportUtils";
 ModuleRegistry.registerModules([AllCommunityModule]);
 

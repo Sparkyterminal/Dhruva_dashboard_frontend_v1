@@ -16,7 +16,7 @@ import {
 import Lottie from "lottie-react";
 import axios from "axios";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import totalrequest from "../../assets/totaluser.json";
 import pendingrequest from "../../assets/pendinguser.json";
 import completedrequest from "../../assets/successuser.json";

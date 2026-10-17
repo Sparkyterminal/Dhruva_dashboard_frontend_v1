@@ -6,7 +6,7 @@ import { Select, message, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 

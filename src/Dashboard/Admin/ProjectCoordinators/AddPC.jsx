@@ -2,7 +2,7 @@
 import React from "react";
 import axios from "axios";
 import { Form, Input, Button, Space, message } from "antd";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 
 const AddPC = ({ onSuccess, onCancel }) => {

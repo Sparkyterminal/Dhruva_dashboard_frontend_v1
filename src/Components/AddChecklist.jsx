@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 import axios from "axios";
 

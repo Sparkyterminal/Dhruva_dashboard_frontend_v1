@@ -4,7 +4,7 @@ import { Form, Input, Button, Card, Typography, message, Spin } from "antd";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 

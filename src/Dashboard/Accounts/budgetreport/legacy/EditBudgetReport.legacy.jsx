@@ -4,7 +4,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { Spin, Alert, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
 

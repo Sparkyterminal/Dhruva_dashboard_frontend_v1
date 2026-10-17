@@ -30,7 +30,7 @@ import {
   Packer,
 } from "docx";
 import { saveAs } from "file-saver";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import VendorViewDrawer from "./VendorViewDrawer";
 import { DeleteOutlined } from "@ant-design/icons";
 

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Popconfirm, message, Card, Typography } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 

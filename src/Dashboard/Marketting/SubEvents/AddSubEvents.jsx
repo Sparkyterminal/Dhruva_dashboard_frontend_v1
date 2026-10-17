@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Typography, Select, Input, Button, message } from "antd";
 import { useSelector } from "react-redux";
 import axios from "axios";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;

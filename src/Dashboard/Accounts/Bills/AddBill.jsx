@@ -11,7 +11,7 @@ import {
 } from "antd";
 import { motion } from "framer-motion";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { FileTextOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
 

@@ -1,7 +1,7 @@
 // /* eslint-disable no-unused-vars */
 // import React, { useEffect, useState } from "react";
 // import axios from "axios";
-// import { API_BASE_URL } from "../../../config";
+// import { API_BASE_URL } from "@/config/config";
 // import { message, Collapse, Table, Button, Card, Input } from "antd";
 // import {
 //   EyeOutlined,

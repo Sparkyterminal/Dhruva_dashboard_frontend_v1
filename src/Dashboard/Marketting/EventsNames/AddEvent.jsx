@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Typography, Input, Button, Card, message } from "antd";
 import { useSelector } from "react-redux";
 import axios from "axios";
-// import { API_BASE_URL } from "../../../config";
+// import { API_BASE_URL } from "@/config/config";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { Title, Text } = Typography;
 

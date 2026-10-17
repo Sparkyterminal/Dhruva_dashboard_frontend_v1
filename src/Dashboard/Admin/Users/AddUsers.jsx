@@ -11,7 +11,7 @@
 //   message,
 //   Spin,
 // } from "antd";
-// import { API_BASE_URL } from "../../../../config";
+// import { API_BASE_URL } from "@/config/config";
 // import axios from "axios";
 
 // const { Title } = Typography;
@@ -202,7 +202,7 @@ import {
   message,
   Spin,
 } from "antd";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import axios from "axios";
 
 const { Title } = Typography;

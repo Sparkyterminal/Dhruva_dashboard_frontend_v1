@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { ROLES } from "../config";
+import { ROLES } from "@/config/config";
 import verifyToken from "./verifyToken";
 import { decodeToken } from "react-jwt";
 import { logout } from "./reducers/users";

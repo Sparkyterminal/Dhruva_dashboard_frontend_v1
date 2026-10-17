@@ -11,7 +11,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import axios from "axios";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { getEffectiveCutoffDate } from "../utils/dataCutoff";

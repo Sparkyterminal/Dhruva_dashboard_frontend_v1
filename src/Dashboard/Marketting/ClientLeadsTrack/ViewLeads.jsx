@@ -31,7 +31,7 @@ import dayjs from "dayjs";
 import AddLeads from "./AddLeads";
 import LeadForm, { STATUS_OPTIONS } from "./LeadForm";
 import LeadsCalendar from "../../../Components/LeadsCalendar";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { Title, Text } = Typography;

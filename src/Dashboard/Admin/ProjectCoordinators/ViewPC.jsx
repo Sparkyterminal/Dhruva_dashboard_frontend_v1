@@ -20,7 +20,7 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddPC from "./AddPC";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 

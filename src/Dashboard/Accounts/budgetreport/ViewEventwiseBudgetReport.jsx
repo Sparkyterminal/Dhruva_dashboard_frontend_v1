@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { Spin, Alert } from "antd";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import BudgetReportViewGrid from "./BudgetReportViewGrid";
 

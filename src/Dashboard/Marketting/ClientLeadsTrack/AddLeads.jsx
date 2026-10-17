@@ -3,7 +3,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { Card, message } from "antd";
 import LeadForm from "./LeadForm";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const AddLeads = ({ onSuccess, inDrawer = false }) => {
   const [loading, setLoading] = useState(false);

@@ -4,7 +4,7 @@ import { Form, Input, Button, message } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 import { LockOutlined } from "@ant-design/icons";
 

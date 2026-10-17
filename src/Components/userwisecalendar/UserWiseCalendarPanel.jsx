@@ -23,7 +23,7 @@ import {
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import axios from "axios";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;

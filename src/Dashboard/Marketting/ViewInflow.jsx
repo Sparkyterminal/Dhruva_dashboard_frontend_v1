@@ -39,7 +39,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
 import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";

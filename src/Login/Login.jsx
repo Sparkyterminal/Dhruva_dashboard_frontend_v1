@@ -3,7 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import axios from "axios";
-import { API_BASE_URL, ROLES } from "../../config";
+import { API_BASE_URL, ROLES } from "@/config/config";
 import { login } from "../reducers/users";
 
 export default function Login() {

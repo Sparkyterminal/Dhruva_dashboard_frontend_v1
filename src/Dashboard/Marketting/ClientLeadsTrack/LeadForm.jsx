@@ -11,7 +11,7 @@ import {
 } from "antd";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { TextArea } = Input;
 

@@ -13,7 +13,7 @@ import {
 const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
 import axios from "axios";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 

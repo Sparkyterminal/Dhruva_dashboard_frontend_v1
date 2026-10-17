@@ -18,7 +18,7 @@ import {
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 
 const { Title, Text } = Typography;

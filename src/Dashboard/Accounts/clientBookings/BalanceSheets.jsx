@@ -15,7 +15,7 @@ import {
   message,
 } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { RangePicker } = DatePicker;

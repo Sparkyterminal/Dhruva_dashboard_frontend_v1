@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Form, Input, Button, Card, Typography, message } from "antd";
 import axios from "axios";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 

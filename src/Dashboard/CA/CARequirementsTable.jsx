@@ -26,7 +26,7 @@ import {
 } from "@ant-design/icons";
 import axios from "axios";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";

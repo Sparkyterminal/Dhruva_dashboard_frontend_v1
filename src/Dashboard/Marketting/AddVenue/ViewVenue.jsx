@@ -22,7 +22,7 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import ViewSubVenue from "../AddSubVenue/ViewSubVenue";
 import AddVenue from "./AddVenue";
 

@@ -5,7 +5,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Calendar, MapPin, Clock, Users, AlertCircle } from "lucide-react";
 import axios from "axios";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";

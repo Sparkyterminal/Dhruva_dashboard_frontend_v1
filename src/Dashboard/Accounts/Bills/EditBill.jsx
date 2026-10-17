@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import {

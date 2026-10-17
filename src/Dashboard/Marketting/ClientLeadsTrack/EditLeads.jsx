@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { Card, Spin, Alert, Button, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import LeadForm from "./LeadForm";
-import { API_BASE_URL } from "../../../../config";
+import { API_BASE_URL } from "@/config/config";
 
 const EditLeads = () => {
   const { id } = useParams();

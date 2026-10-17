@@ -26,3 +26,8 @@ node_modules
 # Local data exports (contain client PII)
 docs/backup/
 docs/*.docx
+docs/*.pdf
+
+# Environment
+.env
+.env.local

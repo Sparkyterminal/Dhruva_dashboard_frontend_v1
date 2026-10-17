@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../config";
+import { API_BASE_URL } from "@/config/config";
 import { message, Table, Button, Input, Card, Space, Modal, Drawer, Typography, Divider } from "antd";
 import {
   EditOutlined,

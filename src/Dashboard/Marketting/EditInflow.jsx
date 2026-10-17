@@ -22,7 +22,7 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import AddVenue from "./AddVenue/AddVenue";

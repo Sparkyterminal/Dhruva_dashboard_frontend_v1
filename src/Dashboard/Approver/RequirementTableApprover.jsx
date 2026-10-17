@@ -27,7 +27,7 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Panel } = Collapse;

@@ -31,7 +31,7 @@ import dayjs from "dayjs";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 
-import { API_BASE_URL } from "../../../config";
+import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Panel } = Collapse;
