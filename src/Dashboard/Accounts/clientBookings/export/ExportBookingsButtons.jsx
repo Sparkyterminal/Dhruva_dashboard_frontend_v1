@@ -1,6 +1,10 @@
 import React, { useState } from "react";
 import { Button, Space, message } from "antd";
-import { FilePdfOutlined, FileWordOutlined } from "@ant-design/icons";
+import {
+  FileExcelOutlined,
+  FilePdfOutlined,
+  FileWordOutlined,
+} from "@ant-design/icons";
 import {
   buildBookingsQueryParams,
   fetchAllMyEventsPages,
@@ -8,6 +12,7 @@ import {
 import { buildBookingsReport } from "./bookingsReport";
 import { exportBookingsPdf } from "./exportBookingsPdf";
 import { exportBookingsWord } from "./exportBookingsWord";
+import { downloadBookingsExcel } from "./bookingsExcel";
 
 const describeFilters = ({ filterEventName, filterVenueId, filterDateRange, venueOptions }) => {
   const parts = [];
@@ -25,10 +30,16 @@ const describeFilters = ({ filterEventName, filterVenueId, filterDateRange, venu
   return parts.length ? [parts.join("   |   ")] : [];
 };
 
+const FORMATS = {
+  excel: { label: "Excel", run: downloadBookingsExcel, build: false },
+  word: { label: "Word", run: exportBookingsWord, build: true },
+  pdf: { label: "PDF", run: exportBookingsPdf, build: true },
+};
+
 /**
- * Downloads the Bookings list as PDF or Word. Exports the whole result set for
- * the active status tab and filters (not just the visible page), using the
- * existing GET /events endpoint — no backend changes.
+ * Downloads the Bookings list as Excel, Word or PDF. Exports the whole result
+ * set for the active status tab and filters (not just the visible page), using
+ * the existing GET /events endpoint — no backend changes.
  */
 const ExportBookingsButtons = ({
   listStatusTab,
@@ -62,7 +73,7 @@ const ExportBookingsButtons = ({
         message.info("No bookings to download for the current view");
         return;
       }
-      const report = buildBookingsReport(events, {
+      const ctx = {
         statusTab: listStatusTab,
         filterLines: describeFilters({
           filterEventName,
@@ -70,38 +81,35 @@ const ExportBookingsButtons = ({
           filterDateRange,
           venueOptions,
         }),
-      });
-      await (kind === "pdf" ? exportBookingsPdf(report) : exportBookingsWord(report));
+      };
+      const { run: generate, build } = FORMATS[kind];
+      await generate(build ? buildBookingsReport(events, ctx) : events, ctx);
     } catch (err) {
       console.error(err);
-      message.error(`Failed to generate ${kind === "pdf" ? "PDF" : "Word"} file`);
+      message.error(`Failed to generate ${FORMATS[kind].label} file`);
     } finally {
       setBusy(null);
     }
   };
 
+  const button = (kind, icon) => (
+    <Button
+      icon={icon}
+      loading={busy === kind}
+      disabled={busy !== null && busy !== kind}
+      onClick={() => run(kind)}
+      size="large"
+      style={{ borderRadius: 10 }}
+    >
+      Download {FORMATS[kind].label}
+    </Button>
+  );
+
   return (
     <Space wrap>
-      <Button
-        icon={<FileWordOutlined />}
-        loading={busy === "word"}
-        disabled={busy !== null && busy !== "word"}
-        onClick={() => run("word")}
-        size="large"
-        style={{ borderRadius: 10 }}
-      >
-        Download Word
-      </Button>
-      <Button
-        icon={<FilePdfOutlined />}
-        loading={busy === "pdf"}
-        disabled={busy !== null && busy !== "pdf"}
-        onClick={() => run("pdf")}
-        size="large"
-        style={{ borderRadius: 10 }}
-      >
-        Download PDF
-      </Button>
+      {button("excel", <FileExcelOutlined />)}
+      {button("word", <FileWordOutlined />)}
+      {button("pdf", <FilePdfOutlined />)}
     </Space>
   );
 };

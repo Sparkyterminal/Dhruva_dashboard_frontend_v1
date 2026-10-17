@@ -9,6 +9,11 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import { fetchBudgetReportExcelList } from "./budgetReportExcelApi";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
+import {
+  downloadAllBudgetReportsExcel,
+  downloadBudgetReportExcel,
+} from "./budgetReportExcelExport";
 
 const { Search } = Input;
 const { Title, Text } = Typography;
@@ -62,6 +67,28 @@ const BudgetReportExcelList = () => {
     fetchList(searchTerm);
   }, [fetchList, searchParams]);
 
+  const handleDownloadAll = async () => {
+    if (rows.length === 0) {
+      message.info("No budget reports to download");
+      return;
+    }
+    const key = "budget-excel-progress";
+    try {
+      await downloadAllBudgetReportsExcel({
+        rows,
+        authHeaders,
+        onProgress: (done, total) =>
+          message.loading({
+            content: `Collecting budget reports (${done}/${total})...`,
+            key,
+            duration: 0,
+          }),
+      });
+    } finally {
+      message.destroy(key);
+    }
+  };
+
   const handleSearch = (value) => {
     setSearchQuery(value);
     setSearchParams(value ? { search: value } : {});
@@ -107,10 +134,19 @@ const BudgetReportExcelList = () => {
     {
       title: "Actions",
       key: "actions",
-      width: 220,
+      width: 290,
       fixed: "right",
       render: (_, record) => (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <ExcelDownloadButton
+            size="small"
+            label="Excel"
+            disabled={!record.hasWorkbook}
+            onDownload={() =>
+              downloadBudgetReportExcel({ row: record, authHeaders })
+            }
+            style={{ borderRadius: 6 }}
+          />
           <Button
             type="link"
             size="small"
@@ -184,6 +220,11 @@ const BudgetReportExcelList = () => {
                 </Text>
               </div>
             </div>
+            <div className="flex flex-wrap gap-3">
+            <ExcelDownloadButton
+              label="Download all (Excel)"
+              onDownload={handleDownloadAll}
+            />
             <Button
               type="primary"
               size="large"
@@ -198,6 +239,7 @@ const BudgetReportExcelList = () => {
             >
               Add budget report
             </Button>
+            </div>
           </div>
         </Card>
 

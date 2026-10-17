@@ -1,5 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
+import { downloadBillsExcel } from "./billsExcel";
 import {
   Button,
   Card,
@@ -257,6 +259,17 @@ const ViewBill = () => {
 
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
+
+  const handleDownloadExcel = async () => {
+    if (filteredBills.length === 0) {
+      message.info("No bills to download");
+      return;
+    }
+    const filterLines = [];
+    if (activeTab !== "ALL") filterLines.push(`Belongs to: ${activeTab}`);
+    if (searchText.trim()) filterLines.push(`Search: ${searchText.trim()}`);
+    await downloadBillsExcel(filteredBills, { filterLines });
+  };
 
   const fetchBills = async () => {
     try {
@@ -961,6 +974,10 @@ const ViewBill = () => {
           transition={{ delay: 0.5, duration: 0.5 }}
           className="flex justify-end gap-4 mb-6"
         >
+          <ExcelDownloadButton
+            onDownload={handleDownloadExcel}
+            style={{ height: 48, paddingInline: 24, fontWeight: 600 }}
+          />
           <motion.button
             whileHover={{ scale: 1.05, y: -2 }}
             whileTap={{ scale: 0.95 }}

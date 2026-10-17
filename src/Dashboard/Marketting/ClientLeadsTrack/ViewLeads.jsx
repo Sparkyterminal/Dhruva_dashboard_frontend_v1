@@ -32,6 +32,8 @@ import AddLeads from "./AddLeads";
 import LeadForm, { STATUS_OPTIONS } from "./LeadForm";
 import LeadsCalendar from "../../../Components/LeadsCalendar";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
+import { downloadLeadsExcel } from "./leadsExcel";
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -326,6 +328,27 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
     } catch (err) {
       message.error(err.response?.data?.message || "Failed to delete lead.");
     }
+  };
+
+  const handleDownloadExcel = async () => {
+    if (leads.length === 0) {
+      message.info("No leads to download");
+      return;
+    }
+    const parts = [];
+    if (filterStatus) parts.push(`Status: ${filterStatus}`);
+    if (filterAssignedTo) {
+      const person = coordinators.find(
+        (c) => String(c._id ?? c.id) === String(filterAssignedTo),
+      );
+      parts.push(`Assigned to: ${getPersonDisplayName(person) || "Selected"}`);
+    }
+    if (filterDateRange?.[0] && filterDateRange?.[1]) {
+      parts.push(`Dates: ${filterDateRange[0].format("DD MMM YYYY")} - ${filterDateRange[1].format("DD MMM YYYY")}`);
+    } else if (filterMonth?.isValid?.()) {
+      parts.push(`Month: ${filterMonth.format("MMMM YYYY")}`);
+    }
+    await downloadLeadsExcel(leads, { filterLines: parts.length ? [parts.join("   |   ")] : [] });
   };
 
   const clearFilters = () => {
@@ -713,6 +736,12 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
             <Button size="large" disabled={!hasAnyFilter} onClick={clearFilters}>
               Clear filters
             </Button>
+          </Col>
+          <Col xs={24} sm={12} md={5} lg={5}>
+            <ExcelDownloadButton
+              onDownload={handleDownloadExcel}
+              style={{ width: "100%" }}
+            />
           </Col>
         </Row>
 

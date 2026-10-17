@@ -34,18 +34,18 @@ const NONE = "-";
 const formatInr = (n) =>
   Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
-const day = (d) => (d && dayjs(d).isValid() ? dayjs(d).format("DD MMM YYYY") : NONE);
-const dateTime = (d) =>
+export const day = (d) => (d && dayjs(d).isValid() ? dayjs(d).format("DD MMM YYYY") : NONE);
+export const dateTime = (d) =>
   d && dayjs(d).isValid() ? dayjs(d).format("DD MMM YYYY, hh:mm A") : NONE;
 
 // Populated refs arrive as { name }, unpopulated ones as plain strings.
-const nameOf = (v) => {
+export const nameOf = (v) => {
   if (v == null || v === "") return NONE;
   if (typeof v === "string") return v;
   return v.name || v.label || NONE;
 };
 
-const statusLabel = (value) => {
+export const statusLabel = (value) => {
   const s = String(value || "").toLowerCase();
   if (s.includes("confirm")) return "Confirmed";
   if (s.includes("progress") || s.includes("pending")) return "In progress";
@@ -53,9 +53,9 @@ const statusLabel = (value) => {
   return value || NONE;
 };
 
-const leadName = (lead) => (typeof lead === "string" ? lead : lead?.name || "");
+export const leadName = (lead) => (typeof lead === "string" ? lead : lead?.name || "");
 
-const bookedByName = (record) => {
+export const bookedByName = (record) => {
   const raw =
     record?.bookedBy?.first_name ??
     record?.bookedBy?.firstName ??
@@ -78,23 +78,23 @@ const eventDateLabel = (record) => {
   return distinctDays > 1 ? `${first} (+${distinctDays - 1} more)` : first;
 };
 
-const earliestStart = (record) => {
+export const earliestStart = (record) => {
   const times = (record.eventTypes || [])
     .map((t) => (t?.startDate ? new Date(t.startDate).getTime() : NaN))
     .filter((n) => !Number.isNaN(n));
   return times.length ? Math.min(...times) : Number.MAX_SAFE_INTEGER;
 };
 
-const contactsOf = (e) =>
+export const contactsOf = (e) =>
   [e.contactNumber, e.altContactNumber]
     .filter(Boolean)
     .filter((v, idx, arr) => arr.indexOf(v) === idx)
     .join(", ") || NONE;
 
-const percent = (received, booked) =>
+export const percent = (received, booked) =>
   booked > 0 ? Math.min(Math.round((received / booked) * 100), 100) : 0;
 
-const sumReceived = (advances) =>
+export const sumReceived = (advances) =>
   (advances || []).reduce((s, a) => s + (Number(a?.receivedAmount) || 0), 0);
 
 /**
@@ -103,7 +103,7 @@ const sumReceived = (advances) =>
  * clientBookingsUtils: one entry per advance number, keeping the one that has
  * the received amount.
  */
-const completePackageAdvances = (record) => {
+export const completePackageAdvances = (record) => {
   const byKey = new Map();
   (record.eventTypes || []).forEach((et) =>
     (et?.advances || []).forEach((a, idx) => {
@@ -306,11 +306,13 @@ export const buildBookingsReport = (events, ctx) => {
 
   let booked = 0;
   let received = 0;
+  let balance = 0;
   const rows = sorted.map((e, i) => {
     const b = getTotalPayable(e);
     const r = getBookingReceivedAmount(e);
     booked += b;
     received += r;
+    balance += Math.max(b - r, 0);
     const couple =
       e.brideName && e.groomName ? ` (${e.brideName} & ${e.groomName})` : "";
     return [
@@ -340,7 +342,7 @@ export const buildBookingsReport = (events, ctx) => {
       ["Total bookings", String(rows.length)],
       ["Total booked", formatInr(booked)],
       ["Total received", formatInr(received)],
-      ["Total balance", formatInr(Math.max(booked - received, 0))],
+      ["Total balance", formatInr(balance)],
     ],
     // Indexes of money columns in `rows`, for right-alignment / currency prefix.
     amountColumns: [8, 9, 10],

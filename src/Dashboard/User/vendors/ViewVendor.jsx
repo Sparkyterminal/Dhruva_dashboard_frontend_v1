@@ -5,6 +5,8 @@ import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { message, Table, Button, Card, Input, Select, Modal } from "antd";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
+import { downloadVendorsExcel } from "./vendorsExcel";
 import {
   EyeOutlined,
   EditOutlined,
@@ -747,6 +749,24 @@ const ViewVendor = () => {
       v.refered_by?.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const handleDownloadExcel = async () => {
+    if (filteredVendors.length === 0) {
+      message.info("No vendors to download");
+      return;
+    }
+    const categoryLabels = {
+      cash: "Cash",
+      account: "Account",
+      cash_and_account: "Cash & Account",
+    };
+    const filterLines = [];
+    if (categoryFilter) {
+      filterLines.push(`Category: ${categoryLabels[categoryFilter] ?? categoryFilter}`);
+    }
+    if (search.trim()) filterLines.push(`Search: ${search.trim()}`);
+    await downloadVendorsExcel(filteredVendors, { filterLines });
+  };
+
   const columns = [
     {
       title: "Vendor Code",
@@ -1202,6 +1222,10 @@ const ViewVendor = () => {
                     height: "42px",
                     fontSize: "15px",
                   }}
+                />
+                <ExcelDownloadButton
+                  onDownload={handleDownloadExcel}
+                  style={{ height: "42px", fontSize: "15px", paddingInline: "20px" }}
                 />
                 <Button
                   type="primary"
