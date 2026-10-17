@@ -10,6 +10,36 @@ export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
 };
 
 /**
+ * Query params for `GET /events` shared by the list view and the exports, so a
+ * download always matches what the list shows (status tab, filters, data floor).
+ * Excludes paging (`page` / `limit`).
+ */
+export const buildBookingsQueryParams = ({
+  listStatusTab,
+  filterEventName,
+  filterVenueId,
+  filterDateRange,
+  cutoffDate,
+}) => {
+  const params = {};
+  const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
+  if (statusParam) params.status = statusParam;
+  if (filterEventName) params.eventName = filterEventName;
+  if (filterVenueId) {
+    // Send venue id as query param (support both common keys used on backend)
+    params.venueId = filterVenueId;
+    params.venueLocation = filterVenueId;
+  }
+  // Default the "from" date to the data-visibility cutoff when the user hasn't
+  // picked their own start date (server-filtered, see src/utils/dataCutoff.js).
+  const start = filterDateRange?.[0]?.format("YYYY-MM-DD") ?? cutoffDate;
+  const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
+  if (start) params.startDate = start;
+  if (end) params.endDate = end;
+  return params;
+};
+
+/**
  * `GET /events` returns `totalsByStatus` built from baseQuery (ignores list `status` filter).
  * @see EVENTS_LIST_FRONTEND.md
  */

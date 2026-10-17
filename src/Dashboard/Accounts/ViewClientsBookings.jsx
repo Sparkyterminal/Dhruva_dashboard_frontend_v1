@@ -47,10 +47,11 @@ import {
   getTotalAgreedAmount,
   getTotalExpectedAdvances,
   getTotalReceivedAdvances,
-  CLIENT_BOOKINGS_LIST_TAB_API_STATUS,
+  buildBookingsQueryParams,
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import BalanceSheets from "./clientBookings/BalanceSheets";
+import ExportBookingsButtons from "./clientBookings/export/ExportBookingsButtons";
 import ClientBookingsLeadsTab from "./clientBookings/ClientBookingsLeadsTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
@@ -132,23 +133,14 @@ const ViewClientsBookings = () => {
       const params = {
         page: pagination.current,
         limit: pagination.pageSize,
+        ...buildBookingsQueryParams({
+          listStatusTab,
+          filterEventName,
+          filterVenueId,
+          filterDateRange,
+          cutoffDate: getEffectiveCutoffDate(user),
+        }),
       };
-      const statusParam = CLIENT_BOOKINGS_LIST_TAB_API_STATUS[listStatusTab];
-      if (statusParam) params.status = statusParam;
-      if (filterEventName) params.eventName = filterEventName;
-      if (filterVenueId) {
-        // Send venue id as query param (support both common keys used on backend)
-        params.venueId = filterVenueId;
-        params.venueLocation = filterVenueId;
-      }
-      // Default the "from" date to the data-visibility cutoff when the user
-      // hasn't picked their own start date — a real, server-filtered query,
-      // not a client-side trim. See src/utils/dataCutoff.js.
-      const start =
-        filterDateRange?.[0]?.format("YYYY-MM-DD") ?? getEffectiveCutoffDate(user);
-      const end = filterDateRange?.[1]?.format("YYYY-MM-DD") ?? null;
-      if (start) params.startDate = start;
-      if (end) params.endDate = end;
 
       const res = await axiosClient.get(`events`, {
         ...config,
@@ -489,7 +481,17 @@ const ViewClientsBookings = () => {
               </Col>
 
               <Col xs={24} sm={8} className="text-right">
-                {/* Add Booking removed as requested */}
+                {activeTab === "list" && (
+                  <ExportBookingsButtons
+                    listStatusTab={listStatusTab}
+                    filterEventName={filterEventName}
+                    filterVenueId={filterVenueId}
+                    filterDateRange={filterDateRange}
+                    venueOptions={venueOptions}
+                    accessToken={user?.access_token}
+                    cutoffDate={getEffectiveCutoffDate(user)}
+                  />
+                )}
               </Col>
             </Row>
           </Card>
