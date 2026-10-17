@@ -28,10 +28,14 @@ import {
   fetchDaybookRange,
 } from "./daybookApi";
 import { isEventAdvanceDaybookRow } from "./daybookUtils";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
+import { downloadDaybookExcel } from "./daybookExcel";
 
 const { Title, Text } = Typography;
 
 const DEFAULT_DATA_LIMIT = 200;
+// Server maximum, so a download covers as many entries as the API allows.
+const EXPORT_DATA_LIMIT = 1000;
 
 const Daybookhome = () => {
   const navigate = useNavigate();
@@ -85,6 +89,29 @@ const Daybookhome = () => {
   useEffect(() => {
     fetchDaybook();
   }, [fetchDaybook]);
+
+  const handleDownloadExcel = async () => {
+    if (!startDateStr || !endDateStr) return;
+    const data = await fetchDaybookRange({
+      startDate: startDateStr,
+      endDate: endDateStr,
+      limit: EXPORT_DATA_LIMIT,
+      includeEventAdvances,
+      authHeaders,
+    });
+    const entries =
+      (data?.inflow?.data?.length ?? 0) +
+      (data?.outflow?.data?.length ?? 0) +
+      (data?.accounts?.openCloseBalances?.length ?? 0);
+    if (entries === 0) {
+      message.info("No daybook entries to download for this period");
+      return;
+    }
+    await downloadDaybookExcel(data, {
+      startDate: startDateStr,
+      endDate: endDateStr,
+    });
+  };
 
   const accountsCount = daybook?.accounts?.openCloseBalances?.length ?? 0;
 
@@ -230,7 +257,11 @@ const Daybookhome = () => {
             </Col>
 
             <Col xs={24} sm={8} className="text-right">
-              <Space size="middle" className="justify-end">
+              <Space size="middle" className="justify-end" wrap>
+                <ExcelDownloadButton
+                  onDownload={handleDownloadExcel}
+                  disabled={!startDateStr || !endDateStr}
+                />
                 <Button
                   size="large"
                   onClick={() => setSelectedRange([dayjs(), dayjs()])}
