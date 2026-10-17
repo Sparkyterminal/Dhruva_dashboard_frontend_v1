@@ -1,11 +1,18 @@
-# Global Data Visibility Cutoff — March 2026 onward
+# Global Data Visibility Cutoff — April 2026 onward
 
 Share this with the backend team. It covers a **cross-cutting change**: the client
-wants the dashboard to only show data from **March 2026 onward**, across every
+wants the dashboard to only show data from **April 2026 onward**, across every
 list/report screen — bookings/events, leads, bills, daybook, expenses, budget
 reports, requirements, calendars, leaderboard. Everything recorded before the
 cutoff must be excluded from API responses. This is not a UI toggle — it must be
 enforced **server-side**, since the frontend cannot be trusted as the boundary.
+
+> **Update (2026-09-10):** the cutoff date is changing from `2026-03-01` to
+> `2026-04-01`. Nothing else in this contract changes — same settings document,
+> same login field, same endpoint list. Only the stored `value` needs updating
+> (see section 1). No frontend code change is required either way: the frontend
+> has no hardcoded cutoff date and simply reads whatever `dataCutoffDate` the
+> backend returns on login (`src/utils/dataCutoff.js`).
 
 This is a frontend-only repo; there is no shared backend contract file location,
 so this doc follows the same format already used for feature-specific contracts
@@ -72,7 +79,7 @@ filter itself, and this test doesn't verify it.
 A single settings document, changeable **without a redeploy**:
 
 ```json
-{ "key": "dataVisibilityCutoffDate", "value": "2026-03-01" }
+{ "key": "dataVisibilityCutoffDate", "value": "2026-04-01" }
 ```
 
 Store it in whatever settings/config collection or table already exists for
@@ -82,8 +89,8 @@ exists).
 
 - Read through a short in-memory cache (e.g. 60s TTL) so it isn't re-queried on
   every single list/report request.
-- **Inclusive** semantics: a record dated exactly `2026-03-01` **is shown**.
-  Filter rule everywhere is `recordDate >= cutoff`, matching "from March 2026
+- **Inclusive** semantics: a record dated exactly `2026-04-01` **is shown**.
+  Filter rule everywhere is `recordDate >= cutoff`, matching "from April 2026
   onward."
 
 ---
@@ -105,7 +112,7 @@ Add `dataCutoffDate` to the `data` object already returned on login, for
     "email_id": "archana@example.com",
     "role": "ACCOUNTS",
     "departments": [{ "id": "...", "name": "ACCOUNTS" }],
-    "dataCutoffDate": "2026-03-01"
+    "dataCutoffDate": "2026-04-01"
   }
 }
 ```
@@ -116,7 +123,7 @@ current cutoff automatically each time they sign in.
 
 ### Secondary (optional, not required for v1)
 
-`GET /settings/data-cutoff` → `{ "cutoffDate": "2026-03-01" }`, authenticated,
+`GET /settings/data-cutoff` → `{ "cutoffDate": "2026-04-01" }`, authenticated,
 any role. Lets a changed cutoff propagate to already-logged-in sessions without
 forcing a re-login. A future admin-only `PUT` to change the value is the
 intended long-term mechanism, but is out of scope here — just design the
@@ -165,8 +172,8 @@ this explicitly rather than guessing.
 
 A requirement's meaningful business date is **when it's required**, not when
 the request record was administratively entered into the system. Filtering on
-`createdAt` would hide requirements that were logged late for a March-2026+
-need, and show requirements entered in March for a need dated earlier. Use
+`createdAt` would hide requirements that were logged late for an April-2026+
+need, and show requirements entered in April for a need dated earlier. Use
 `required_date` consistently across all four requirements screens.
 
 ---
@@ -209,20 +216,22 @@ doc refers only to `/events`' own filters, never to this global cutoff.
 }
 ```
 
-### After (cutoff = 2026-03-01 applied)
+### After (cutoff = 2026-04-01 applied)
 
 ```json
 {
-  "totalEvents": 178,
+  "totalEvents": 177,
   "events": [
     { "_id": "a2", "eventTypes": [{ "startDate": "2026-04-02" }] }
   ],
-  "totalsByStatus": { "all": { "totalExpectedAmount": 251200000, "totalBookingsNumber": 178 } }
+  "totalsByStatus": { "all": { "totalExpectedAmount": 250800000, "totalBookingsNumber": 177 } }
 }
 ```
 
 `a1` (dated before the cutoff) disappears from both the list and every
-aggregate/count.
+aggregate/count. (Figures above are illustrative only — the point is that
+`a2`, dated 2026-04-02, still clears an April-2026 cutoff; a record dated
+e.g. 2026-03-15 would now also be excluded, unlike under the old March cutoff.)
 
 ---
 
@@ -281,7 +290,7 @@ return res.status(200).json({
 
 ## Acceptance checklist for backend
 
-- [ ] Settings document created and seeded with `2026-03-01`
+- [ ] Settings document created and seeded with `2026-04-01`
 - [ ] `POST /user/login` returns `data.dataCutoffDate` for every role
 - [ ] **A plain `GET /events` with zero query params returns the same `totalEvents` / `events[]` count / `totalsByStatus.all.totalBookingsNumber` as `GET /events?startDate=2026-03-01` does today** — this is the specific bug found on 2026-09-09 (filter currently only applies when the client happens to pass `startDate`)
 - [ ] Same param-less test repeated for every other endpoint in the table below — none should require any query parameter for the cutoff to apply
