@@ -32,7 +32,7 @@
 //   const fetchDepartmentData = async () => {
 //     setFetchingDepartments(true);
 //     try {
-//       const res = await axios.get(`${API_BASE_URL}department/all`, config);
+//       const res = await axiosClient.get(`department/all`, config);
 //       setDepartments(res.data.items || []);
 //     } catch (err) {
 //       message.error("Failed to fetch departments");
@@ -64,7 +64,7 @@
 //         department: values.department_id, // only passed if exists
 //       };
 
-//       const res = await axios.post(`${API_BASE_URL}user`, payload, config);
+//       const res = await axiosClient.post(`user`, payload, config);
 //       if (res.status === 200 || res.status === 201) {
 //         message.success("User added successfully ✅");
 //         form.resetFields();
@@ -203,7 +203,7 @@ import {
   Spin,
 } from "antd";
 import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 
 const { Title } = Typography;
 
@@ -223,7 +223,7 @@ const AddUsers = () => {
   const fetchDepartmentData = async () => {
     setFetchingDepartments(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}department/all`, config);
+      const res = await axiosClient.get(`department/all`, config);
       setDepartments(res.data.departments || []);
     } catch (err) {
       console.error(err);
@@ -252,7 +252,7 @@ const AddUsers = () => {
         department: values.department_id, // send department id(s)
       };
 
-      const res = await axios.post(`${API_BASE_URL}user`, payload, config);
+      const res = await axiosClient.post(`user`, payload, config);
       if (res.status === 200 || res.status === 201) {
         message.success("User added successfully ✅");
         form.resetFields();

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { Spin, Alert, Card, Table, Typography } from "antd";
 
 const { Text } = Typography;
@@ -54,8 +53,8 @@ const VendorEventsTab = ({ vendorId, config }) => {
       setError(null);
       setReports([]);
       try {
-        const res = await axios.get(
-          `${API_BASE_URL}budget-report/vendor/${vendorId}`,
+        const res = await axiosClient.get(
+          `budget-report/vendor/${vendorId}`,
           config
         );
         if (cancelled) return;

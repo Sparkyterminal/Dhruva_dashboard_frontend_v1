@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -27,7 +27,6 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Panel } = Collapse;
@@ -75,7 +74,7 @@ const RequirementTableApprover = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -90,7 +89,7 @@ const RequirementTableApprover = () => {
   const fetchVendors = async (query = "") => {
     setVendorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+      const res = await axiosClient.get(`vendor/list`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -150,8 +149,8 @@ const RequirementTableApprover = () => {
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(
-        `${API_BASE_URL}request/all${queryString}`,
+      const res = await axiosClient.get(
+        `request/all${queryString}`,
         config,
       );
       const data = res.data;
@@ -431,8 +430,8 @@ const RequirementTableApprover = () => {
     }
 
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         {
           planned_amount: planned,
           amount_paid: paid,
@@ -452,8 +451,8 @@ const RequirementTableApprover = () => {
 
   const handleComplete = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { status: "COMPLETED" },
         config,
       );
@@ -466,8 +465,8 @@ const RequirementTableApprover = () => {
 
   const handleReject = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { status: "REJECTED" },
         config,
       );

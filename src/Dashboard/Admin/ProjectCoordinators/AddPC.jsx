@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { Form, Input, Button, Space, message } from "antd";
-import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 
 const AddPC = ({ onSuccess, onCancel }) => {
@@ -20,7 +19,7 @@ const AddPC = ({ onSuccess, onCancel }) => {
         },
       };
 
-      await axios.post(`${API_BASE_URL}coordinators`, values, );
+      await axiosClient.post(`coordinators`, values, );
 
       message.success("Coordinator added successfully");
       form.resetFields();

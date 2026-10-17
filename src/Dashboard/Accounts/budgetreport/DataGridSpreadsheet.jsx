@@ -12,10 +12,10 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { message, Modal } from "antd";
-import { API_BASE_URL } from "@/config/config";
 import { emptyChildRow, buildGroupRow } from "./budgetReportUtils";
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -330,7 +330,7 @@ const DataGridSpreadsheet = ({
   useEffect(() => {
     const fetchVendors = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}vendor/all`, config);
+        const res = await axiosClient.get(`vendor/all`, config);
         if (res.data.success && res.data.vendors) {
           // Map vendors to the format expected by the component
           const formattedVendors = res.data.vendors
@@ -1177,10 +1177,10 @@ const DataGridSpreadsheet = ({
     try {
       const payload = prepareDataForBackend();
       const url = reportId
-        ? `${API_BASE_URL}budget-report/${reportId}`
-        : `${API_BASE_URL}budget-report`;
+        ? `budget-report/${reportId}`
+        : `budget-report`;
       const method = reportId ? "put" : "post";
-      await axios[method](url, payload, config);
+      await axiosClient[method](url, payload, config);
       message.success(
         reportId ? "Budget report updated successfully!" : "Budget report submitted successfully!",
       );

@@ -1,9 +1,8 @@
 import React, { useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { Card, message } from "antd";
 import LeadForm from "./LeadForm";
-import { API_BASE_URL } from "@/config/config";
 
 const AddLeads = ({ onSuccess, inDrawer = false }) => {
   const [loading, setLoading] = useState(false);
@@ -13,7 +12,7 @@ const AddLeads = ({ onSuccess, inDrawer = false }) => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE_URL}client-leads`, values, config);
+      const res = await axiosClient.post(`client-leads`, values, config);
       const created = res.data?.data ?? res.data;
       if (onSuccess) {
         onSuccess(created);

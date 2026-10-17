@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL } from "@/config/config";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -70,7 +69,7 @@ const Departments = () => {
   const fetchRequirementsData = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}department/all`, config);
+      const res = await axiosClient.get(`department/all`, config);
       console.log("view departments", res.data);
       setDepartments(res.data.departments || []);
     } catch (err) {

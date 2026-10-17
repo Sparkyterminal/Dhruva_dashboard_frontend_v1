@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
 import { message, Table, Button, Input, Card, Space, Modal, Drawer, Typography, Divider } from "antd";
 import {
   EditOutlined,
@@ -12,7 +11,7 @@ import {
   EyeOutlined,
   FileWordOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -45,8 +44,8 @@ const ViewChecklist = () => {
   const fetchChecklistData = async (page = 1, search = debouncedSearchText) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}checklist?page=${page}&search=${search}`,
+      const res = await axiosClient.get(
+        `checklist?page=${page}&search=${search}`,
         config
       );
       setChecklists(res.data.items || []);
@@ -79,7 +78,7 @@ const ViewChecklist = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}checklist/${id}`, config);
+      await axiosClient.delete(`checklist/${id}`, config);
       message.success("Checklist deleted successfully");
       fetchChecklistData(pagination.current, searchText);
     } catch (err) {

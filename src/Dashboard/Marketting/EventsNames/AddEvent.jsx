@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Typography, Input, Button, Card, message } from "antd";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 // import { API_BASE_URL } from "@/config/config";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/config/config";
@@ -21,8 +21,8 @@ const AddEvent = ({ inModal = false, onSuccess, onCancel } = {}) => {
       return message.error("Please enter an event name");
     setLoading(true);
     try {
-      const res = await axios.post(
-        `${API_BASE_URL}event-names`,
+      const res = await axiosClient.post(
+        `event-names`,
         { name: name.trim() },
         config
       );

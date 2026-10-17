@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL } from "@/config/config";
 import { message, Tabs, Table, Tag } from "antd";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -121,7 +120,7 @@ const Departmentwise = () => {
   const fetchdeptwisevendors = async () => {
     setLoadingVendors(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/department/${id}`, config);
+      const res = await axiosClient.get(`vendor/department/${id}`, config);
       setVendors(Array.isArray(res.data.vendors) ? res.data.vendors : []);
       
       
@@ -136,7 +135,7 @@ const Departmentwise = () => {
   const fetchdeptwiserequest = async () => {
     setLoadingRequests(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}request/department/${id}`, config);
+      const res = await axiosClient.get(`request/department/${id}`, config);
       setRequests(res.data.requests && Array.isArray(res.data.requests) ? res.data.requests : []);
       
       // Extract department name from first request

@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { Card, Spin, Alert, Button, message } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 import LeadForm from "./LeadForm";
-import { API_BASE_URL } from "@/config/config";
 
 const EditLeads = () => {
   const { id } = useParams();
@@ -22,7 +21,7 @@ const EditLeads = () => {
     setFetching(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_BASE_URL}client-leads/${id}`, config);
+      const res = await axiosClient.get(`client-leads/${id}`, config);
       const raw = res.data?.data ?? res.data;
       setInitialValues(raw);
     } catch (err) {
@@ -40,7 +39,7 @@ const EditLeads = () => {
   const handleSubmit = async (values) => {
     setLoading(true);
     try {
-      await axios.put(`${API_BASE_URL}client-leads/${id}`, values, config);
+      await axiosClient.put(`client-leads/${id}`, values, config);
       message.success("Lead updated successfully.");
       navigate("/user/client-leads");
     } catch (err) {

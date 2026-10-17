@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 
 // Custom styles for glassmorphism and animations
 const customStyles = `
@@ -162,8 +161,8 @@ const AddChecklist = () => {
     };
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}checklist`,
+      const response = await axiosClient.post(
+        `checklist`,
         payload,
         config
       );

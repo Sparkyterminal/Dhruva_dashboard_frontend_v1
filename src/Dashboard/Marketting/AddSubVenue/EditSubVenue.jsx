@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Table,
   Button,
@@ -22,7 +22,6 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -50,7 +49,7 @@ const EditSubVenue = () => {
   const fetchVenues = async () => {
     setVenuesLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}venue`, config);
+      const res = await axiosClient.get(`venue`, config);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -74,8 +73,8 @@ const EditSubVenue = () => {
     if (!id) return;
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}sub-venue-location/${id}`,
+      const res = await axiosClient.get(
+        `sub-venue-location/${id}`,
         config
       );
       const data = res.data.data || res.data;
@@ -103,8 +102,8 @@ const EditSubVenue = () => {
     try {
       setLoading(true);
       const values = await form.validateFields();
-      await axios.patch(
-        `${API_BASE_URL}sub-venue-location/${id}`,
+      await axiosClient.patch(
+        `sub-venue-location/${id}`,
         values,
         config
       );

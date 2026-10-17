@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 
 const DEFAULT_LIMIT = 200;
 
@@ -31,7 +30,7 @@ export const fetchDaybookRange = async ({
     params.includeEventAdvances = "false";
   }
 
-  const res = await axios.get(`${API_BASE_URL}daybook`, {
+  const res = await axiosClient.get(`daybook`, {
     ...authHeaders,
     params,
   });
@@ -40,8 +39,8 @@ export const fetchDaybookRange = async ({
 };
 
 export const createInflow = async ({ payload, authHeaders }) => {
-  const res = await axios.post(
-    `${API_BASE_URL}daybook/inflows`,
+  const res = await axiosClient.post(
+    `daybook/inflows`,
     payload,
     authHeaders,
   );
@@ -49,8 +48,8 @@ export const createInflow = async ({ payload, authHeaders }) => {
 };
 
 export const updateInflow = async ({ id, payload, authHeaders }) => {
-  const res = await axios.put(
-    `${API_BASE_URL}daybook/inflows/${id}`,
+  const res = await axiosClient.put(
+    `daybook/inflows/${id}`,
     payload,
     authHeaders,
   );
@@ -58,16 +57,16 @@ export const updateInflow = async ({ id, payload, authHeaders }) => {
 };
 
 export const deleteInflow = async ({ id, authHeaders }) => {
-  const res = await axios.delete(
-    `${API_BASE_URL}daybook/inflows/${id}`,
+  const res = await axiosClient.delete(
+    `daybook/inflows/${id}`,
     authHeaders,
   );
   return res?.data;
 };
 
 export const createOpenCloseBalance = async ({ payload, authHeaders }) => {
-  const res = await axios.post(
-    `${API_BASE_URL}daybook/accounts/open-close-balances`,
+  const res = await axiosClient.post(
+    `daybook/accounts/open-close-balances`,
     payload,
     authHeaders,
   );
@@ -75,8 +74,8 @@ export const createOpenCloseBalance = async ({ payload, authHeaders }) => {
 };
 
 export const updateOpenCloseBalance = async ({ id, payload, authHeaders }) => {
-  const res = await axios.put(
-    `${API_BASE_URL}daybook/accounts/open-close-balances/${id}`,
+  const res = await axiosClient.put(
+    `daybook/accounts/open-close-balances/${id}`,
     payload,
     authHeaders,
   );
@@ -84,15 +83,15 @@ export const updateOpenCloseBalance = async ({ id, payload, authHeaders }) => {
 };
 
 export const deleteOpenCloseBalance = async ({ id, authHeaders }) => {
-  const res = await axios.delete(
-    `${API_BASE_URL}daybook/accounts/open-close-balances/${id}`,
+  const res = await axiosClient.delete(
+    `daybook/accounts/open-close-balances/${id}`,
     authHeaders,
   );
   return res?.data;
 };
 
 export const fetchEventsMinimal = async ({ query = "", authHeaders }) => {
-  const res = await axios.get(`${API_BASE_URL}events/minimal`, {
+  const res = await axiosClient.get(`events/minimal`, {
     ...authHeaders,
     params: query ? { search: query } : {},
   });

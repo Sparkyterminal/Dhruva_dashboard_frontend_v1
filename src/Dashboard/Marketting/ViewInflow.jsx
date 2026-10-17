@@ -37,9 +37,8 @@ import {
   ClockCircleOutlined,
   TeamOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
 import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";
@@ -97,11 +96,11 @@ const ViewInflow = () => {
 
       const endpoint =
         eventsScope === "all"
-          ? `${API_BASE_URL}events`
-          : `${API_BASE_URL}events/my-events`;
+          ? `events`
+          : `events/my-events`;
 
-      // IMPORTANT: axios.get(url, config) where `config.params` carries query params
-      const res = await axios.get(endpoint, { ...config, params });
+      // IMPORTANT: axiosClient.get(url, config) where `config.params` carries query params
+      const res = await axiosClient.get(endpoint, { ...config, params });
 
       const events = Array.isArray(res.data?.events)
         ? res.data.events
@@ -205,7 +204,7 @@ const ViewInflow = () => {
       const config = { headers: { Authorization: user?.access_token } };
 
       // Like list view: pull event names from `events` endpoint (not `my-events`)
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params: {
           page: 1,
@@ -385,7 +384,7 @@ const ViewInflow = () => {
   const handleDelete = async (record) => {
     try {
       const config = { headers: { Authorization: user?.access_token } };
-      await axios.delete(`${API_BASE_URL}events/${record._id}`, config);
+      await axiosClient.delete(`events/${record._id}`, config);
       message.success("Booking deleted successfully");
       fetchRequirementsData();
     } catch (err) {

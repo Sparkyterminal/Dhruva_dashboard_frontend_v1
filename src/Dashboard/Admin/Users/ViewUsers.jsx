@@ -11,8 +11,7 @@ import {
 } from "antd";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 
 const { Title } = Typography;
 
@@ -32,8 +31,8 @@ const ViewUsers = () => {
   const fetchUserData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}user?page=${page}&limit=${pageSize}`,
+      const res = await axiosClient.get(
+        `user?page=${page}&limit=${pageSize}`,
         config
       );
       const usersData = res.data.items || [];
@@ -68,7 +67,7 @@ const ViewUsers = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}user/${id}`, config);
+      await axiosClient.delete(`user/${id}`, config);
       message.success("User deleted successfully");
       fetchUserData(pagination.current, pagination.pageSize);
     } catch (error) {

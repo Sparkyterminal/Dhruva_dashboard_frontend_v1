@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Table,
   Button,
@@ -20,7 +20,6 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import AddPC from "./AddPC";
-import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 
@@ -45,7 +44,7 @@ const ViewPC = () => {
   const fetchPCs = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}coordinators`, );
+      const res = await axiosClient.get(`coordinators`, );
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -72,7 +71,7 @@ const ViewPC = () => {
   // 🔹 Delete Coordinator
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}coordinators/${id}`, config);
+      await axiosClient.delete(`coordinators/${id}`, config);
       message.success("Coordinator deleted");
       fetchPCs();
     } catch (err) {
@@ -93,8 +92,8 @@ const ViewPC = () => {
     try {
       const values = await form.validateFields();
 
-      await axios.patch(
-        `${API_BASE_URL}coordinators/${editingRecord.id}`,
+      await axiosClient.patch(
+        `coordinators/${editingRecord.id}`,
         values,
         { headers: { "Content-Type": "application/json", ...config.headers } }
       );

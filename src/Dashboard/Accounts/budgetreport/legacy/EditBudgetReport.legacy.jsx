@@ -1,10 +1,9 @@
 ﻿import React, { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { Spin, Alert, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import { API_BASE_URL } from "@/config/config";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
 
@@ -32,7 +31,7 @@ const EditBudgetReport = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(`${API_BASE_URL}budget-report/${id}`, config);
+      const res = await axiosClient.get(`budget-report/${id}`, config);
       const raw = res.data?.data ?? res.data;
       const budgetData = raw?.budgetData ?? raw;
       const eventIdFromApi = raw?.eventId ?? raw?.event?._id ?? raw?.event;

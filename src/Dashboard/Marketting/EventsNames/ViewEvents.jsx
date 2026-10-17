@@ -1,6 +1,5 @@
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import React, { useEffect, useState } from "react";
-import { API_BASE_URL } from "@/config/config";
 import {
   message,
   Table,
@@ -38,7 +37,7 @@ const ViewEvents = () => {
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}event-names`, config);
+      const res = await axiosClient.get(`event-names`, config);
       setEvents(res.data.events || res.data || []);
     } catch (err) {
       console.error(err);
@@ -63,8 +62,8 @@ const ViewEvents = () => {
       return message.error("Name cannot be empty");
     setEditLoading(true);
     try {
-      await axios.patch(
-        `${API_BASE_URL}event-names/${editingId}`,
+      await axiosClient.patch(
+        `event-names/${editingId}`,
         { name: editingName.trim() },
         config
       );
@@ -81,7 +80,7 @@ const ViewEvents = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}event-names/${id}`, config);
+      await axiosClient.delete(`event-names/${id}`, config);
       message.success("Event deleted");
       fetchEvents();
     } catch (err) {

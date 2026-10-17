@@ -11,8 +11,7 @@ import {
   Modal,
 } from "antd";
 import { ArrowLeft } from "lucide-react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { PlusOutlined } from "@ant-design/icons";
@@ -51,7 +50,7 @@ const AddRequirements = () => {
     const auth = { headers: { Authorization: token } };
     setGroupByLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}request/group-by`, auth);
+      const res = await axiosClient.get(`request/group-by`, auth);
       const raw = res?.data?.items ?? res?.data?.data ?? res?.data ?? [];
       const items = Array.isArray(raw) ? raw : [];
       setGroupByOptions(items);
@@ -69,7 +68,7 @@ const AddRequirements = () => {
     if (!deptId) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/all`, config);
+      const res = await axiosClient.get(`vendor/all`, config);
       setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");
@@ -82,7 +81,7 @@ const AddRequirements = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events/minimal`, {
+      const res = await axiosClient.get(`events/minimal`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -147,7 +146,7 @@ const AddRequirements = () => {
     }
 
     try {
-      await axios.post(`${API_BASE_URL}request`, payload, config);
+      await axiosClient.post(`request`, payload, config);
       message.success("Requirement submitted successfully!");
       navigate(-1);
       form.resetFields();
@@ -290,8 +289,8 @@ const AddRequirements = () => {
                 }
                 setCreatingGroupBy(true);
                 try {
-                  const res = await axios.post(
-                    `${API_BASE_URL}request/group-by`,
+                  const res = await axiosClient.post(
+                    `request/group-by`,
                     { name },
                     config,
                   );

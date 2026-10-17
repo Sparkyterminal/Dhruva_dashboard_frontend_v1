@@ -4,8 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Calendar, MapPin, Clock, Users } from "lucide-react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
@@ -38,8 +37,6 @@ const CalendarClients = () => {
     try {
       const authHeaders = { Authorization: user.access_token };
       const allConfirmed = await fetchAllMyEventsPages(
-        axios,
-        API_BASE_URL,
         authHeaders,
         { status: "confirmed", limit: 100, startDate: getEffectiveCutoffDate(user) },
       );

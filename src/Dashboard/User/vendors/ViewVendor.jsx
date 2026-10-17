@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -30,7 +30,6 @@ import {
   Packer,
 } from "docx";
 import { saveAs } from "file-saver";
-import { API_BASE_URL } from "@/config/config";
 import VendorViewDrawer from "./VendorViewDrawer";
 import { DeleteOutlined } from "@ant-design/icons";
 
@@ -147,7 +146,7 @@ const ViewVendor = () => {
   const handleDeleteVendor = async (vendorId) => {
     if (!vendorId) return;
     try {
-      await axios.delete(`${API_BASE_URL}vendor/${vendorId}`, config);
+      await axiosClient.delete(`vendor/${vendorId}`, config);
       message.success("Vendor deleted successfully");
       fetchRequirementsData(categoryFilter);
     } catch (err) {
@@ -208,9 +207,9 @@ const ViewVendor = () => {
     setLoading(true);
     try {
       const url = category
-        ? `${API_BASE_URL}vendor/all?specify_cat=${category}`
-        : `${API_BASE_URL}vendor/all`;
-      const res = await axios.get(url, config);
+        ? `vendor/all?specify_cat=${category}`
+        : `vendor/all`;
+      const res = await axiosClient.get(url, config);
       setVendors(res.data.vendors.reverse() || []);
     } catch (err) {
       message.error("Failed to fetch vendors");

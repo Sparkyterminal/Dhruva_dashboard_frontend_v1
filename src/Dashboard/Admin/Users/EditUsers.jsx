@@ -11,8 +11,7 @@ import {
   message,
   Spin,
 } from "antd";
-import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useNavigate, useParams } from "react-router-dom";
 
 const { Title } = Typography;
@@ -38,7 +37,7 @@ const EditUsers = () => {
   const fetchDepartmentData = async () => {
     setFetchingDepartments(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}department`, config);
+      const res = await axiosClient.get(`department`, config);
       setDepartments(res.data.items || []);
     } catch (err) {
       message.error("Failed to fetch departments");
@@ -51,7 +50,7 @@ const EditUsers = () => {
   const fetchUserData = async () => {
     setFetchingUser(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}user/${id}`, config);
+      const res = await axiosClient.get(`user/${id}`, config);
       const data = res.data.data;
       const userRole = data.role;
       setSelectedRole(userRole); // Set role from API
@@ -97,8 +96,8 @@ const EditUsers = () => {
       if (values.password) {
         payload.password = values.password;
       }
-      const res = await axios.patch(
-        `${API_BASE_URL}user/${id}`,
+      const res = await axiosClient.patch(
+        `user/${id}`,
         payload,
         config,
       );

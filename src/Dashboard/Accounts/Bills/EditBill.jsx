@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   message,
@@ -116,7 +115,7 @@ const EditBill = () => {
   useEffect(() => {
     const fetchBill = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}bills/${id}`, config);
+        const res = await axiosClient.get(`bills/${id}`, config);
         const data = res.data;
 
         // Prefill form fields with fetched data
@@ -160,8 +159,8 @@ const EditBill = () => {
     };
 
     try {
-      const res = await axios.put(
-        `${API_BASE_URL}bills/${id}`,
+      const res = await axiosClient.put(
+        `bills/${id}`,
         payload,
         config,
       );

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Table,
   Button,
@@ -22,7 +22,6 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
 import ViewSubVenue from "../AddSubVenue/ViewSubVenue";
 import AddVenue from "./AddVenue";
 
@@ -52,7 +51,7 @@ const ViewVenue = () => {
   const fetchVenues = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}venue`, config);
+      const res = await axiosClient.get(`venue`, config);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -78,7 +77,7 @@ const ViewVenue = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}venue/${id}`, config);
+      await axiosClient.delete(`venue/${id}`, config);
       message.success("Venue deleted");
       fetchVenues();
     } catch (err) {
@@ -96,8 +95,8 @@ const ViewVenue = () => {
   const handleUpdate = async () => {
     try {
       const values = await form.validateFields();
-      await axios.patch(
-        `${API_BASE_URL}venue/${editingRecord.id}`,
+      await axiosClient.patch(
+        `venue/${editingRecord.id}`,
         values,
         config
       );

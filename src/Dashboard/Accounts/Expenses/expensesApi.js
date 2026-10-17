@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import {
   createDefaultRows,
   getEventDisplayLabel,
@@ -38,7 +37,7 @@ const writeLocal = (userId, date, rows) => {
  * Load events for Event Reference dropdown (`GET /events`).
  */
 export const fetchEventsForExpenses = async ({ authHeaders, limit = 500 }) => {
-  const res = await axios.get(`${API_BASE_URL}events`, {
+  const res = await axiosClient.get(`events`, {
     ...authHeaders,
     params: { page: 1, limit },
   });
@@ -66,7 +65,7 @@ export const fetchEventsForExpenses = async ({ authHeaders, limit = 500 }) => {
  */
 export const fetchExpensesByDate = async ({ date, authHeaders, userId }) => {
   try {
-    const res = await axios.get(`${API_BASE_URL}expenses`, {
+    const res = await axiosClient.get(`expenses`, {
       ...authHeaders,
       params: { date },
     });
@@ -105,7 +104,7 @@ export const saveExpensesByDate = async ({
   };
 
   try {
-    const res = await axios.put(`${API_BASE_URL}expenses`, payload, authHeaders);
+    const res = await axiosClient.put(`expenses`, payload, authHeaders);
     writeLocal(userId, date, payload.rows);
     return { ok: true, source: "api", data: res?.data };
   } catch (err) {

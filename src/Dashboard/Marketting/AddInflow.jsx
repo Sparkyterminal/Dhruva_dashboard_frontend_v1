@@ -23,8 +23,7 @@ import {
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import AddEvent from "./EventsNames/AddEvent";
 import AddVenue from "./AddVenue/AddVenue";
@@ -143,8 +142,8 @@ const AddInflow = () => {
 
     setEventTypesLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}event-types/event/${eventId}`,
+      const res = await axiosClient.get(
+        `event-types/event/${eventId}`,
         axiosConfig,
       );
       const data = res.data?.eventTypes || res.data || [];
@@ -407,8 +406,8 @@ const AddInflow = () => {
 
       // Validation removed: Amounts can be 0 or any value, advances are not mandatory
 
-      const response = await axios.post(
-        `${API_BASE_URL}events`,
+      const response = await axiosClient.post(
+        `events`,
         payload,
         axiosConfig,
       );
@@ -434,7 +433,7 @@ const AddInflow = () => {
   const fetchCoordinators = async () => {
     setCoordinatorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}coordinators`, axiosConfig);
+      const res = await axiosClient.get(`coordinators`, axiosConfig);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -458,7 +457,7 @@ const AddInflow = () => {
   const fetchVenues = async () => {
     setVenuesLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}venue`, axiosConfig);
+      const res = await axiosClient.get(`venue`, axiosConfig);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -486,8 +485,8 @@ const AddInflow = () => {
     }
     setSubVenuesLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}sub-venue-location`,
+      const res = await axiosClient.get(
+        `sub-venue-location`,
         axiosConfig,
       );
       const raw = res.data;
@@ -524,8 +523,8 @@ const AddInflow = () => {
       return;
     }
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}sub-venue-location`,
+      const res = await axiosClient.get(
+        `sub-venue-location`,
         axiosConfig,
       );
       const raw = res.data;
@@ -554,7 +553,7 @@ const AddInflow = () => {
   const fetchEventNames = async () => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}event-names`, axiosConfig);
+      const res = await axiosClient.get(`event-names`, axiosConfig);
       const data = res.data?.events || res.data || [];
       setEvents(data);
     } catch (err) {

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Typography, Select, Input, Button, message } from "antd";
 import { useSelector } from "react-redux";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
 
 const { Title, Text } = Typography;
@@ -21,7 +20,7 @@ const AddSubEvents = () => {
   const fetchEvents = async () => {
     setLoadingEvents(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}event-names`, config);
+      const res = await axiosClient.get(`event-names`, config);
       setEvents(res.data.events.reverse() || res.data || []);
     } catch (err) {
       console.error(err);
@@ -43,8 +42,8 @@ const AddSubEvents = () => {
 
     setSubmitting(true);
     try {
-      await axios.post(
-        `${API_BASE_URL}event-types`,
+      await axiosClient.post(
+        `event-types`,
         { event, name: subEventName.trim() },
         config
       );

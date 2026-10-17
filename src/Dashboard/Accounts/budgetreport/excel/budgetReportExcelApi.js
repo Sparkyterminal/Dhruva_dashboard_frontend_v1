@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import {
   SPREADSHEET_MODULE_BUDGET_REPORT,
   fetchSpreadsheetWorkbook,
@@ -38,11 +37,11 @@ export const fetchBudgetReportEligibleEvents = async ({
 
   try {
     const [confirmedRes, inProgressRes] = await Promise.all([
-      axios.get(`${API_BASE_URL}events`, {
+      axiosClient.get(`events`, {
         ...authHeaders,
         params: { page: 1, limit, status: "confirmed" },
       }),
-      axios.get(`${API_BASE_URL}events`, {
+      axiosClient.get(`events`, {
         ...authHeaders,
         params: { page: 1, limit, status: "inprogress" },
       }),
@@ -56,7 +55,7 @@ export const fetchBudgetReportEligibleEvents = async ({
     // Fall through to unfiltered list + client allowlist
   }
 
-  const res = await axios.get(`${API_BASE_URL}events`, {
+  const res = await axiosClient.get(`events`, {
     ...authHeaders,
     params: { page: 1, limit },
   });
@@ -78,7 +77,7 @@ export const fetchEventById = async ({ eventId, authHeaders }) => {
   const id = String(eventId);
 
   try {
-    const res = await axios.get(`${API_BASE_URL}events/${id}`, authHeaders);
+    const res = await axiosClient.get(`events/${id}`, authHeaders);
     const ev = res.data?.event || res.data?.data || res.data;
     if (ev && typeof ev === "object" && (ev._id || ev.id || ev.eventName)) {
       return ev;
@@ -97,7 +96,7 @@ export const fetchEventById = async ({ eventId, authHeaders }) => {
 
   // Last resort: unfiltered events list (in case eligibility filter excludes it)
   try {
-    const res = await axios.get(`${API_BASE_URL}events`, {
+    const res = await axiosClient.get(`events`, {
       ...authHeaders,
       params: { page: 1, limit: 1000 },
     });
@@ -223,8 +222,8 @@ export const cloneBudgetReportWorkbook = async ({
 
   // 1) Dedicated clone endpoint
   try {
-    const res = await axios.post(
-      `${API_BASE_URL}spreadsheet-workbooks/clone`,
+    const res = await axiosClient.post(
+      `spreadsheet-workbooks/clone`,
       {
         module: SPREADSHEET_MODULE_BUDGET_REPORT,
         sourceKey,
@@ -261,8 +260,8 @@ export const cloneBudgetReportWorkbook = async ({
   if (!sourceDoc?.workbookData) {
     // 3) Legacy AG Grid clone if we have a report document id
     if (sourceReportId) {
-      const res = await axios.post(
-        `${API_BASE_URL}budget-report/${sourceReportId}/clone`,
+      const res = await axiosClient.post(
+        `budget-report/${sourceReportId}/clone`,
         { eventId: targetKey },
         authHeaders,
       );
@@ -334,7 +333,7 @@ export const fetchBudgetReportCloneSources = async ({
     // fall through to events list
   }
 
-  const res = await axios.get(`${API_BASE_URL}events`, {
+  const res = await axiosClient.get(`events`, {
     ...authHeaders,
     params: { page: 1, limit: 1000 },
   });

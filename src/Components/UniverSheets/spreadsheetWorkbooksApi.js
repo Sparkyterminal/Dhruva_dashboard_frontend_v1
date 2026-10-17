@@ -1,5 +1,4 @@
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import {
   cloneWorkbookData,
   getWorkbookStats,
@@ -80,7 +79,7 @@ export const fetchSpreadsheetWorkbook = async ({
   authHeaders,
 }) => {
   try {
-    const res = await axios.get(`${API_BASE_URL}spreadsheet-workbooks`, {
+    const res = await axiosClient.get(`spreadsheet-workbooks`, {
       ...authHeaders,
       params: { module, key },
       timeout: WORKBOOK_REQUEST_TIMEOUT_MS,
@@ -127,8 +126,8 @@ export const saveSpreadsheetWorkbook = async ({
     throw err;
   }
 
-  const res = await axios.put(
-    `${API_BASE_URL}spreadsheet-workbooks`,
+  const res = await axiosClient.put(
+    `spreadsheet-workbooks`,
     {
       module,
       key,
@@ -168,7 +167,7 @@ export const listSpreadsheetWorkbooks = async ({
     if (to) params.to = to;
     if (date) params.date = date;
 
-    const res = await axios.get(`${API_BASE_URL}spreadsheet-workbooks`, {
+    const res = await axiosClient.get(`spreadsheet-workbooks`, {
       ...authHeaders,
       params,
       timeout: WORKBOOK_REQUEST_TIMEOUT_MS,

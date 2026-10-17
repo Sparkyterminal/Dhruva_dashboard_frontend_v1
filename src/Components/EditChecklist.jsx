@@ -1,9 +1,8 @@
 /* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from "react";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useParams, useNavigate } from "react-router-dom";
 import { message } from "antd";
 
@@ -73,8 +72,8 @@ const EditChecklist = () => {
 
   const fetchChecklistData = async () => {
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}checklist/${id}`,
+      const res = await axiosClient.get(
+        `checklist/${id}`,
         config
       );
       const { data } = res.data;
@@ -212,8 +211,8 @@ const EditChecklist = () => {
     };
 
     try {
-      const response = await axios.patch(
-        `${API_BASE_URL}checklist/${id}`,
+      const response = await axiosClient.patch(
+        `checklist/${id}`,
         payload,
         config
       );

@@ -34,7 +34,7 @@
 
 //   const fetchDepartmentData = async () => {
 //     try {
-//       const res = await axios.get(`${API_BASE_URL}department`, config);
+//       const res = await axiosClient.get(`department`, config);
 //       const items = res.data.items || res.data;
 //       setDepartments(items || []);
 //     } catch (err) {
@@ -55,7 +55,7 @@
 //   // Fetch vendor details by id and prefill the form
 //   const fetchVendorData = async () => {
 //     try {
-//       const res = await axios.get(`${API_BASE_URL}vendor/${id}`, config);
+//       const res = await axiosClient.get(`vendor/${id}`, config);
 //       if (res.data && res.data.vendor) {
 //         // Prefill form fields, matching the AddVendor naming conventions
 //         // Map the received vendor data keys to form fields accordingly
@@ -159,7 +159,7 @@
 //     };
 
 //     try {
-//       await axios.put(`${API_BASE_URL}vendor/${id}`, payload, config);
+//       await axiosClient.put(`vendor/${id}`, payload, config);
 //       message.success("Vendor updated successfully");
 //       navigate(-1);
 //     } catch (error) {
@@ -538,7 +538,7 @@ import {
 const { Option } = Select;
 const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { API_BASE_URL } from "@/config/config";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -560,7 +560,7 @@ const EditVendor = () => {
 
   const fetchDepartmentData = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}department`, config);
+      const res = await axiosClient.get(`department`, config);
       const items = res.data.items || res.data;
       setDepartments(items || []);
     } catch (err) {
@@ -581,7 +581,7 @@ const EditVendor = () => {
   // Fetch vendor details by id and prefill the form
   const fetchVendorData = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/${id}`, config);
+      const res = await axiosClient.get(`vendor/${id}`, config);
       if (res.data && res.data.vendor) {
         // Prefill form fields, matching the AddVendor naming conventions
         // Map the received vendor data keys to form fields accordingly
@@ -686,7 +686,7 @@ const EditVendor = () => {
     console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
-      await axios.put(`${API_BASE_URL}vendor/${id}`, payload, config);
+      await axiosClient.put(`vendor/${id}`, payload, config);
       message.success("Vendor updated successfully");
       navigate(-1);
     } catch (error) {

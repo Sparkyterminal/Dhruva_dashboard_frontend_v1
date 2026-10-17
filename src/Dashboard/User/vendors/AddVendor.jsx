@@ -12,8 +12,7 @@ import {
 } from "antd";
 const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -34,7 +33,7 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
   const fetchDepartmentData = async () => {
     // setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}department`, config);
+      const res = await axiosClient.get(`department`, config);
       // API may return array directly or under `items`
       const items = res.data.items || res.data;
       setDepartments(items || []);
@@ -99,8 +98,8 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
     console.log("Selected Department ID:", values.depId);
     console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
-    axios
-      .post(`${API_BASE_URL}vendor`, payload, config)
+    axiosClient
+      .post(`vendor`, payload, config)
       .then((response) => {
         message.success("Vendor added successfully");
         form.resetFields();

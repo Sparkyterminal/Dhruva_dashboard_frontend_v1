@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Button,
   Card,
@@ -15,7 +15,6 @@ import {
   message,
 } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { RangePicker } = DatePicker;
@@ -84,7 +83,7 @@ const BalanceSheets = () => {
       if (startDateParam) params.startDate = startDateParam;
       if (endDateParam) params.endDate = endDateParam;
 
-      const res = await axios.get(`${API_BASE_URL}events/balance-sheet`, {
+      const res = await axiosClient.get(`events/balance-sheet`, {
         ...authHeaders,
         params,
       });

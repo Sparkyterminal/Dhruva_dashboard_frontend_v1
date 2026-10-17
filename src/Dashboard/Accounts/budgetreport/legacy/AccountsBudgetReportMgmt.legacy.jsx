@@ -16,9 +16,8 @@ import {
   Typography,
 } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 
 const { Title, Text } = Typography;
@@ -62,8 +61,8 @@ const AccountsBudgetReportMgmt = () => {
 
   const fetchReport = useCallback(async () => {
     if (!reportId) return null;
-    const res = await axios.get(
-      `${API_BASE_URL}budget-report/${reportId}`,
+    const res = await axiosClient.get(
+      `budget-report/${reportId}`,
       config,
     );
     const raw = res.data?.data ?? res.data;
@@ -74,8 +73,8 @@ const AccountsBudgetReportMgmt = () => {
     async (eventId) => {
       if (!eventId) return null;
       try {
-        const res = await axios.get(
-          `${API_BASE_URL}events/${eventId}`,
+        const res = await axiosClient.get(
+          `events/${eventId}`,
           config,
         );
         return res.data?.data ?? res.data?.event ?? res.data ?? null;
@@ -242,8 +241,8 @@ const AccountsBudgetReportMgmt = () => {
           updatedAt: new Date().toISOString(),
         },
       };
-      await axios.put(
-        `${API_BASE_URL}budget-report/${reportId}`,
+      await axiosClient.put(
+        `budget-report/${reportId}`,
         payload,
         config,
       );

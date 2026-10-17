@@ -13,8 +13,7 @@ import {
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -261,7 +260,7 @@ const ViewBill = () => {
 
   const fetchBills = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}bills`);
+      const res = await axiosClient.get(`bills`);
       setBills(res.data || []);
       setFilteredBills(res.data || []);
       // Extract unique belongs_to for tabs
@@ -407,8 +406,8 @@ const ViewBill = () => {
     setPayLoading(true);
     try {
       const config = { headers: { Authorization: user?.access_token } };
-      await axios.put(
-        `${API_BASE_URL}bills/${billId}`,
+      await axiosClient.put(
+        `bills/${billId}`,
         {
           name: billName,
           emiDate: payTarget.emiDate || undefined,
@@ -1577,8 +1576,8 @@ const ViewBill = () => {
                                   cancelText: "Cancel",
                                   onOk: async () => {
                                     try {
-                                      await axios.delete(
-                                        `${API_BASE_URL}bills/${record._id}`,
+                                      await axiosClient.delete(
+                                        `bills/${record._id}`,
                                       );
                                       message.success(
                                         "Bill deleted successfully",

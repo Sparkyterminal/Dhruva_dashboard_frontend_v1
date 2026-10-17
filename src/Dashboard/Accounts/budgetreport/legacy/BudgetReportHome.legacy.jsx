@@ -1,12 +1,11 @@
 ﻿import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { Select, message, Button, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
-import { API_BASE_URL } from "@/config/config";
 import DataGridSpreadsheet from "./DataGridspreadsheet";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 
@@ -26,7 +25,7 @@ const BudgetReportHome = () => {
       const inList = confirmedList.some((c) => c._id === preId);
       if (inList) return;
       try {
-        const evRes = await axios.get(`${API_BASE_URL}events/${preId}`, {
+        const evRes = await axiosClient.get(`events/${preId}`, {
           headers: { Authorization: token },
         });
         const ev =
@@ -51,7 +50,7 @@ const BudgetReportHome = () => {
     const fetchClients = async () => {
       setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}events`, {
+        const res = await axiosClient.get(`events`, {
           headers: { Authorization: user?.access_token },
           params: { page: 1, limit: 1000 },
         });

@@ -1,7 +1,6 @@
 /* eslint-disable no-unused-vars */
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import React, { useCallback, useEffect, useState } from "react";
-import { API_BASE_URL } from "@/config/config";
 import {
   message,
   Drawer,
@@ -93,7 +92,7 @@ const ViewClientsBookings = () => {
     let cancelled = false;
     const fetchVenues = async () => {
       try {
-        const res = await axios.get(`${API_BASE_URL}venue`, config);
+        const res = await axiosClient.get(`venue`, config);
         const raw = res.data;
         const list = Array.isArray(raw)
           ? raw
@@ -151,7 +150,7 @@ const ViewClientsBookings = () => {
       if (start) params.startDate = start;
       if (end) params.endDate = end;
 
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params,
       });
@@ -354,11 +353,11 @@ const ViewClientsBookings = () => {
         message.error("Event type not found");
         return;
       }
-      endpoint = `${API_BASE_URL}events/${selectedEvent._id}/event-types/${
+      endpoint = `events/${selectedEvent._id}/event-types/${
         eventType._id || advance.eventTypeId || advance.eventTypeIndex
       }/advances/${advance.advanceNumber}`;
 
-      await axios.patch(endpoint, payload, config);
+      await axiosClient.patch(endpoint, payload, config);
 
       message.success(`Advance ${advance.advanceNumber} updated successfully`);
 
@@ -369,8 +368,8 @@ const ViewClientsBookings = () => {
       await fetchBookingsList();
 
       // Fetch updated event data to refresh drawer
-      const updatedEventResponse = await axios.get(
-        `${API_BASE_URL}events/${selectedEvent._id}`,
+      const updatedEventResponse = await axiosClient.get(
+        `events/${selectedEvent._id}`,
         config,
       );
       const updatedEvent =

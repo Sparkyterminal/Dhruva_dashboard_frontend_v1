@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -27,7 +27,6 @@ import {
 } from "@ant-design/icons";
 import dayjs from "dayjs";
 
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Option } = Select;
@@ -73,7 +72,7 @@ const AllRequirementsTable = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -88,7 +87,7 @@ const AllRequirementsTable = () => {
   const fetchVendors = async (query = "") => {
     setVendorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+      const res = await axiosClient.get(`vendor/list`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -148,8 +147,8 @@ const AllRequirementsTable = () => {
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(
-        `${API_BASE_URL}request/all${queryString}`,
+      const res = await axiosClient.get(
+        `request/all${queryString}`,
         config,
       );
       const data = res.data;
@@ -404,8 +403,8 @@ const AllRequirementsTable = () => {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { planned_amount: Number(editPlannedAmount) },
         config,
       );
@@ -423,8 +422,8 @@ const AllRequirementsTable = () => {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { amount_paid: Number(editAmountPaid) },
         config,
       );
@@ -442,8 +441,8 @@ const AllRequirementsTable = () => {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { approver_amount: Number(editApprovedAmount) },
         config,
       );
@@ -457,8 +456,8 @@ const AllRequirementsTable = () => {
 
   const handleOwnerApprove = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { status: "COMPLETED" },
         config,
       );
@@ -471,8 +470,8 @@ const AllRequirementsTable = () => {
 
   const handleOwnerReject = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { status: "REJECTED" },
         config,
       );
@@ -505,8 +504,8 @@ const AllRequirementsTable = () => {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { entity_account: editEntityAccount },
         config,
       );
@@ -524,8 +523,8 @@ const AllRequirementsTable = () => {
       return;
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${row.id}`,
+      await axiosClient.patch(
+        `request/${row.id}`,
         { amount_paid_to: editAmountPaidTo },
         config,
       );

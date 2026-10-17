@@ -10,8 +10,7 @@ import {
   TrendingDown,
   AlertCircle,
 } from "lucide-react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { getEffectiveCutoffDate } from "../utils/dataCutoff";
@@ -31,7 +30,7 @@ const AdvanceCalendarClients = () => {
 
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         params: { startDate: getEffectiveCutoffDate(user) },
       });
 

@@ -22,8 +22,7 @@ import {
 } from "antd";
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 
 const { Text, Title } = Typography;
 const { TextArea } = Input;
@@ -67,7 +66,7 @@ const UserWiseCalendarPanel = () => {
     if (!user?.access_token) return;
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}personal-calendar`, config);
+      const res = await axiosClient.get(`personal-calendar`, config);
       const list = res?.data?.items ?? res?.data?.data ?? res?.data ?? [];
       setEntries(Array.isArray(list) ? list : []);
     } catch (error) {
@@ -143,7 +142,7 @@ const UserWiseCalendarPanel = () => {
 
     setSaving(true);
     try {
-      await axios.post(`${API_BASE_URL}personal-calendar`, payload, config);
+      await axiosClient.post(`personal-calendar`, payload, config);
       message.success("Entry added");
       resetFormState();
       await fetchEntries();
@@ -158,7 +157,7 @@ const UserWiseCalendarPanel = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}personal-calendar/${id}`, config);
+      await axiosClient.delete(`personal-calendar/${id}`, config);
       message.success("Entry deleted");
       await fetchEntries();
     } catch (error) {

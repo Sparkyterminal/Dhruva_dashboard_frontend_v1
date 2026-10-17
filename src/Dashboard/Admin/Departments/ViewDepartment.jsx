@@ -2,8 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Popconfirm, message, Card, Typography } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
 
 const { Title } = Typography;
@@ -26,8 +25,8 @@ const ViewDepartment = () => {
   const fetchDepartmentData = async (page = 1, pageSize = 10) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}department?page=${page}&limit=${pageSize}`,
+      const res = await axiosClient.get(
+        `department?page=${page}&limit=${pageSize}`,
         config
       );
       setDepartments(res.data.items); // items array from API
@@ -58,7 +57,7 @@ const ViewDepartment = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}department/${id}`, config);
+      await axiosClient.delete(`department/${id}`, config);
       message.success("Department deleted successfully");
       fetchDepartmentData(pagination.current, pagination.pageSize);
     } catch (error) {

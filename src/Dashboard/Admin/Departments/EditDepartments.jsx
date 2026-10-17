@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 import { Form, Input, Button, Card, Typography, message, Spin } from "antd";
 import { useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 
 const { Title } = Typography;
 
@@ -23,7 +22,7 @@ const EditDepartments = () => {
     const fetchDepartmentData = async () => {
       setFetching(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}department/${id}`, config);
+        const res = await axiosClient.get(`department/${id}`, config);
         const data = res.data.data;
         form.setFieldsValue({ name: data.name.toUpperCase() });
       } catch (err) {
@@ -40,8 +39,8 @@ const EditDepartments = () => {
     setLoading(true);
     try {
       const payload = { name: values.name };
-      const res = await axios.patch(
-        `${API_BASE_URL}department/${id}`,
+      const res = await axiosClient.patch(
+        `department/${id}`,
         payload,
         config
       );

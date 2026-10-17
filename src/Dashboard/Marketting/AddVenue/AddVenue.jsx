@@ -1,8 +1,7 @@
 /* eslint-disable no-unused-vars */
 import React, { useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { Form, Input, Button, Space, message } from "antd";
-import { API_BASE_URL } from "@/config/config";
 import { useSelector } from "react-redux";
 
 const AddVenue = ({ onSuccess, onCancel }) => {
@@ -22,7 +21,7 @@ const AddVenue = ({ onSuccess, onCancel }) => {
         },
       };
 
-      await axios.post(`${API_BASE_URL}venue`, values, config);
+      await axiosClient.post(`venue`, values, config);
 
       message.success("Venue added");
       form.resetFields();

@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -31,7 +31,6 @@ import dayjs from "dayjs";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
 
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 
 const { Panel } = Collapse;
@@ -87,7 +86,7 @@ const RequirementsTableAc = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -102,7 +101,7 @@ const RequirementsTableAc = () => {
   const fetchVendors = async (query = "") => {
     setVendorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+      const res = await axiosClient.get(`vendor/list`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -132,8 +131,8 @@ const RequirementsTableAc = () => {
     if (!deleteTargetRow) return;
     setDeleteLoading(true);
     try {
-      await axios.delete(
-        `${API_BASE_URL}request/${getRequestId(deleteTargetRow)}`,
+      await axiosClient.delete(
+        `request/${getRequestId(deleteTargetRow)}`,
         config,
       );
       message.success("Request deleted successfully");
@@ -182,8 +181,8 @@ const RequirementsTableAc = () => {
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(
-        `${API_BASE_URL}request/all${queryString}`,
+      const res = await axiosClient.get(
+        `request/all${queryString}`,
         config,
       );
       const data = res.data;
@@ -425,8 +424,8 @@ const RequirementsTableAc = () => {
         return;
       }
       try {
-        await axios.patch(
-          `${API_BASE_URL}request/${getRequestId(row)}`,
+        await axiosClient.patch(
+          `request/${getRequestId(row)}`,
           { [editField]: editValue },
           config,
         );
@@ -463,8 +462,8 @@ const RequirementsTableAc = () => {
       }
     }
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${getRequestId(row)}`,
+      await axiosClient.patch(
+        `request/${getRequestId(row)}`,
         { [editField]: Number(editValue) },
         config,
       );
@@ -488,8 +487,8 @@ const RequirementsTableAc = () => {
 
   const handleComplete = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${getRequestId(row)}`,
+      await axiosClient.patch(
+        `request/${getRequestId(row)}`,
         { status: "COMPLETED" },
         config,
       );
@@ -502,8 +501,8 @@ const RequirementsTableAc = () => {
 
   const handleReject = async (row) => {
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${getRequestId(row)}`,
+      await axiosClient.patch(
+        `request/${getRequestId(row)}`,
         { status: "REJECTED" },
         config,
       );

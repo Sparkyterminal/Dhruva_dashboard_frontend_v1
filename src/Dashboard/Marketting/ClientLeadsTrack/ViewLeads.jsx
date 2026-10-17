@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -31,7 +31,6 @@ import dayjs from "dayjs";
 import AddLeads from "./AddLeads";
 import LeadForm, { STATUS_OPTIONS } from "./LeadForm";
 import LeadsCalendar from "../../../Components/LeadsCalendar";
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 
 const { Title, Text } = Typography;
@@ -170,7 +169,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       if (activeDateBounds.month && !filterDateRange) {
         params.month = activeDateBounds.month;
       }
-      const res = await axios.get(`${API_BASE_URL}client-leads`, {
+      const res = await axiosClient.get(`client-leads`, {
         ...config,
         params,
       });
@@ -208,7 +207,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       if (!user?.access_token) return;
       setCoordinatorsLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}coordinators`, config);
+        const res = await axiosClient.get(`coordinators`, config);
         const raw = res.data;
         const list = Array.isArray(raw)
           ? raw
@@ -268,8 +267,8 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
   useEffect(() => {
     if (!editDrawerOpen || !editingLeadId) return;
     setEditFetching(true);
-    axios
-      .get(`${API_BASE_URL}client-leads/${editingLeadId}`, config)
+    axiosClient
+      .get(`client-leads/${editingLeadId}`, config)
       .then((res) => {
         const raw = res.data?.data ?? res.data;
         setEditInitialValues(raw);
@@ -285,8 +284,8 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
   const handleEditSubmit = async (values) => {
     setEditSaving(true);
     try {
-      await axios.put(
-        `${API_BASE_URL}client-leads/${editingLeadId}`,
+      await axiosClient.put(
+        `client-leads/${editingLeadId}`,
         values,
         config,
       );
@@ -306,8 +305,8 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
     setViewDrawerOpen(true);
     setViewingLead(null);
     setViewFetching(true);
-    axios
-      .get(`${API_BASE_URL}client-leads/${id}`, config)
+    axiosClient
+      .get(`client-leads/${id}`, config)
       .then((res) => {
         const raw = res.data?.data ?? res.data;
         setViewingLead(raw);
@@ -321,7 +320,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
     const id = record._id ?? record.id;
     if (!id) return;
     try {
-      await axios.delete(`${API_BASE_URL}client-leads/${id}`, config);
+      await axiosClient.delete(`client-leads/${id}`, config);
       message.success("Lead deleted.");
       fetchLeads();
     } catch (err) {

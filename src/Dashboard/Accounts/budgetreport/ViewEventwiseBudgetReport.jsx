@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { Spin, Alert } from "antd";
-import { API_BASE_URL } from "@/config/config";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import BudgetReportViewGrid from "./BudgetReportViewGrid";
 
@@ -22,8 +21,8 @@ const ViewEventwiseBudgetReport = ({ eventId, onClose }) => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}budget-report/event/${eventId}`,
+      const res = await axiosClient.get(
+        `budget-report/event/${eventId}`,
         config,
       );
       const raw = res.data?.data ?? res.data;

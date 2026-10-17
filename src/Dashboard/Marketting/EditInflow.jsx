@@ -23,7 +23,7 @@ import { motion } from "framer-motion";
 import { useNavigate, useParams } from "react-router-dom";
 import dayjs from "dayjs";
 import { API_BASE_URL } from "@/config/config";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import AddVenue from "./AddVenue/AddVenue";
 
@@ -135,7 +135,7 @@ const EditInflow = () => {
   const fetchCoordinators = async () => {
     setCoordinatorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}coordinators`, axiosConfig);
+      const res = await axiosClient.get(`coordinators`, axiosConfig);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -159,7 +159,7 @@ const EditInflow = () => {
   const fetchVenues = async () => {
     setVenuesLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}venue`, axiosConfig);
+      const res = await axiosClient.get(`venue`, axiosConfig);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -187,8 +187,8 @@ const EditInflow = () => {
     }
     setSubVenuesLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}sub-venue-location`,
+      const res = await axiosClient.get(
+        `sub-venue-location`,
         axiosConfig,
       );
       const raw = res.data;
@@ -225,8 +225,8 @@ const EditInflow = () => {
       return;
     }
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}sub-venue-location`,
+      const res = await axiosClient.get(
+        `sub-venue-location`,
         axiosConfig,
       );
       const raw = res.data;
@@ -257,7 +257,7 @@ const EditInflow = () => {
     const fetchEvents = async () => {
       setEventsLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}event-names`, axiosConfig);
+        const res = await axiosClient.get(`event-names`, axiosConfig);
         const data = res.data?.events || res.data || [];
         setEvents(data);
       } catch (err) {
@@ -276,7 +276,7 @@ const EditInflow = () => {
   // const fetchEventData = async () => {
   //   setInitialLoading(true);
   //   try {
-  //     const res = await axios.get(`${API_BASE_URL}events/${id}`);
+  //     const res = await axiosClient.get(`events/${id}`);
   //     const event = res.data.event;
   //     console.log("Fetched event:", event);
 
@@ -294,7 +294,7 @@ const EditInflow = () => {
   //     if (eventObj) {
   //       setEventTypesLoading(true);
   //       try {
-  //         const eventTypesRes = await axios.get(
+  //         const eventTypesRes = await axiosClient.get(
   //           `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
   //           axiosConfig
   //         );
@@ -500,7 +500,7 @@ const EditInflow = () => {
       setInitialLoading(true);
       try {
         // Step 1: Fetch the event data
-        const res = await axios.get(`${API_BASE_URL}events/${id}`, axiosConfig);
+        const res = await axiosClient.get(`events/${id}`, axiosConfig);
         const event = res.data.event;
         console.log("✅ Fetched event data:", event);
         console.log("✅ Event ID from response:", event._id || event.id);
@@ -554,8 +554,8 @@ const EditInflow = () => {
         if (eventObj.id || eventObj._id) {
           setEventTypesLoading(true);
           try {
-            const eventTypesRes = await axios.get(
-              `${API_BASE_URL}event-types/event/${eventObj.id || eventObj._id}`,
+            const eventTypesRes = await axiosClient.get(
+              `event-types/event/${eventObj.id || eventObj._id}`,
               axiosConfig,
             );
             fetchedEventTypes =
@@ -942,8 +942,8 @@ const EditInflow = () => {
 
     setEventTypesLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}event-types/event/${eventId}`,
+      const res = await axiosClient.get(
+        `event-types/event/${eventId}`,
         axiosConfig,
       );
       const data = res.data?.eventTypes || res.data || [];
@@ -1209,8 +1209,8 @@ const EditInflow = () => {
       );
       console.log("🔥 Updating payload:", JSON.stringify(payload, null, 2));
 
-      const response = await axios.put(
-        `${API_BASE_URL}events/${id}/edit`,
+      const response = await axiosClient.put(
+        `events/${id}/edit`,
         payload,
         axiosConfig,
       );

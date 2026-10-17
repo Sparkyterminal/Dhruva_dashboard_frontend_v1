@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import axiosClient from "@/api/axiosClient";
 
 /** Maps list-view tab keys to API `status` query (omit for all). */
 export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
@@ -31,18 +32,13 @@ export const getTabLabelBookingCount = (totalsByStatus, listTabKey) => {
 /**
  * Load every page from events for the given query (e.g. calendar).
  */
-export async function fetchAllMyEventsPages(
-  axiosInstance,
-  apiBaseUrl,
-  authHeaders,
-  extraParams = {},
-) {
+export async function fetchAllMyEventsPages(authHeaders, extraParams = {}) {
   const limit = extraParams.limit != null ? extraParams.limit : 100;
   const all = [];
   let page = 1;
   const maxPages = 500;
   while (page <= maxPages) {
-    const res = await axiosInstance.get(`${apiBaseUrl}events`, {
+    const res = await axiosClient.get(`events`, {
       headers: authHeaders,
       params: { ...extraParams, page, limit },
     });

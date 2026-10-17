@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Form,
   Select,
@@ -11,7 +11,6 @@ import {
 } from "antd";
 import { useSelector } from "react-redux";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "@/config/config";
 
 const { TextArea } = Input;
 
@@ -52,7 +51,7 @@ const LeadForm = ({
       if (!user?.access_token) return;
       setCoordinatorsLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}coordinators`, {
+        const res = await axiosClient.get(`coordinators`, {
           headers: { Authorization: user.access_token },
         });
         const raw = res.data;

@@ -11,8 +11,7 @@ import {
   DollarSign,
   TrendingUp,
 } from "lucide-react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker, Button } from "antd";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -74,8 +73,8 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
         };
         if (month) params.month = month;
 
-        const res = await axios.get(
-          `${API_BASE_URL}events/leaderboard`,
+        const res = await axiosClient.get(
+          `events/leaderboard`,
           {
             headers: { Authorization: user.access_token },
             params,

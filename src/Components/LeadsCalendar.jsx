@@ -4,10 +4,9 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { AlertCircle } from "lucide-react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { Modal, message, Tooltip } from "antd";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
 
 const STATUS_COLORS = {
   Cancelled: { bg: "#fecaca", border: "#ef4444", text: "#991b1b" },
@@ -40,7 +39,7 @@ const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
 
     setLoadingInternal(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}client-leads`, config);
+      const res = await axiosClient.get(`client-leads`, config);
       const list = res.data?.data ?? res.data?.leads ?? res.data;
       setLeadsInternal(Array.isArray(list) ? list : []);
     } catch (err) {

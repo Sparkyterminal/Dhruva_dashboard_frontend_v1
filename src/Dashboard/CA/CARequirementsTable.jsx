@@ -24,9 +24,8 @@ import {
   CheckOutlined,
   SearchOutlined,
 } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "@/config/config";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
@@ -80,7 +79,7 @@ const CARequirementsTable = () => {
   const fetchEvents = async (query = "") => {
     setEventsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}events`, {
+      const res = await axiosClient.get(`events`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -95,7 +94,7 @@ const CARequirementsTable = () => {
   const fetchVendors = async (query = "") => {
     setVendorsLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}vendor/list`, {
+      const res = await axiosClient.get(`vendor/list`, {
         ...config,
         params: query ? { search: query } : {},
       });
@@ -155,8 +154,8 @@ const CARequirementsTable = () => {
       params.append("limit", String(PAGE_SIZE));
 
       const queryString = params.toString() ? `?${params.toString()}` : "";
-      const res = await axios.get(
-        `${API_BASE_URL}request/all${queryString}`,
+      const res = await axiosClient.get(
+        `request/all${queryString}`,
         config,
       );
       const data = res.data;
@@ -467,7 +466,7 @@ const CARequirementsTable = () => {
       };
 
       const id = row._id || row.id;
-      await axios.patch(`${API_BASE_URL}request/${id}`, payload, config);
+      await axiosClient.patch(`request/${id}`, payload, config);
 
       message.success("Updated successfully ✅");
       setEditRowId(null);
@@ -482,8 +481,8 @@ const CARequirementsTable = () => {
     const id = row._id || row.id;
     setApprovingId(id);
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${id}`,
+      await axiosClient.patch(
+        `request/${id}`,
         { ca_check: "APPROVED", ca_approved: true },
         config,
       );
@@ -501,8 +500,8 @@ const CARequirementsTable = () => {
     const id = row._id || row.id;
     setApprovingId(id);
     try {
-      await axios.patch(
-        `${API_BASE_URL}request/${id}`,
+      await axiosClient.patch(
+        `request/${id}`,
         { ca_check: "REJECTED", ca_approved: false },
         config,
       );
@@ -521,7 +520,7 @@ const CARequirementsTable = () => {
     setDeleteLoading(true);
     try {
       const id = deleteTargetRow._id || deleteTargetRow.id;
-      await axios.delete(`${API_BASE_URL}request/${id}`, config);
+      await axiosClient.delete(`request/${id}`, config);
       message.success("Request deleted successfully");
       setDeleteModalVisible(false);
       setDeleteTargetRow(null);

@@ -14,9 +14,8 @@ import {
 } from "antd";
 // Removed Ant Design icons imports, replaced by Lottie anims
 import Lottie from "lottie-react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import dayjs from "dayjs";
-import { API_BASE_URL } from "@/config/config";
 import totalrequest from "../../assets/totaluser.json";
 import pendingrequest from "../../assets/pendinguser.json";
 import completedrequest from "../../assets/successuser.json";
@@ -49,8 +48,8 @@ const ViewRequirements = () => {
   const fetchRequirementsData = async (page = 1) => {
     setLoading(true);
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}request/my-requests?page=${page}`,
+      const res = await axiosClient.get(
+        `request/my-requests?page=${page}`,
         config
       );
       setRequirements(res.data.items || []);

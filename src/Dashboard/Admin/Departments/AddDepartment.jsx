@@ -1,8 +1,7 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { Form, Input, Button, Card, Typography, message } from "antd";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 
 const { Title } = Typography;
 
@@ -19,8 +18,8 @@ const AddDepartment = () => {
   const onFinish = async (values) => {
     try {
       const payload = {  name: values.name.toUpperCase() };
-      const res = await axios.post(
-        `${API_BASE_URL}department`,
+      const res = await axiosClient.post(
+        `department`,
         payload,
         config
       );

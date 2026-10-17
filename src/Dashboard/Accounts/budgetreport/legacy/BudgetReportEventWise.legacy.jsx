@@ -2,9 +2,8 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Drawer, Table, message, Input, Card, Typography } from "antd";
 import { ArrowLeftOutlined } from "@ant-design/icons";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
-import { API_BASE_URL } from "@/config/config";
 import BudgetReportDetailsView from "./BudgetReportDetailsView";
 import AgreedAmountBreakupCard from "./AgreedAmountBreakupCard";
 
@@ -26,7 +25,7 @@ const BudgetReportEventWise = () => {
     setLoading(true);
     try {
       const params = searchTerm ? { search: searchTerm } : {};
-      const res = await axios.get(`${API_BASE_URL}budget-report`, {
+      const res = await axiosClient.get(`budget-report`, {
         headers: { Authorization: user?.access_token },
         params,
       });

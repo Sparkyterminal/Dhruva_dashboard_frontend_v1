@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axiosClient from "@/api/axiosClient";
 import {
   Table,
   Button,
@@ -21,7 +21,6 @@ import {
 } from "@ant-design/icons";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -49,7 +48,7 @@ const ViewSubVenue = () => {
   const fetchVenues = async () => {
     setVenuesLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}venue`, config);
+      const res = await axiosClient.get(`venue`, config);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -72,7 +71,7 @@ const ViewSubVenue = () => {
   const fetchSubVenues = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(`${API_BASE_URL}sub-venue-location`, config);
+      const res = await axiosClient.get(`sub-venue-location`, config);
       const raw = res.data;
       const list = Array.isArray(raw)
         ? raw
@@ -100,7 +99,7 @@ const ViewSubVenue = () => {
   const handleAddSubVenue = async () => {
     try {
       const values = await form.validateFields();
-      await axios.post(`${API_BASE_URL}sub-venue-location`, values, config);
+      await axiosClient.post(`sub-venue-location`, values, config);
       message.success("Sub venue created successfully");
       setAddDrawerOpen(false);
       form.resetFields();
@@ -115,7 +114,7 @@ const ViewSubVenue = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`${API_BASE_URL}sub-venue-location/${id}`, config);
+      await axiosClient.delete(`sub-venue-location/${id}`, config);
       message.success("Sub venue deleted successfully");
       fetchSubVenues();
     } catch (err) {

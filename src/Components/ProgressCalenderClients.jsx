@@ -4,8 +4,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { Calendar, MapPin, Clock, Users, AlertCircle } from "lucide-react";
-import axios from "axios";
-import { API_BASE_URL } from "@/config/config";
+import axiosClient from "@/api/axiosClient";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
@@ -31,11 +30,11 @@ const ProgressCalenderClients = () => {
     try {
       const authHeaders = { Authorization: user.access_token };
       const [inProgressList, cancelledList] = await Promise.all([
-        fetchAllMyEventsPages(axios, API_BASE_URL, authHeaders, {
+        fetchAllMyEventsPages(authHeaders, {
           status: "inprogress",
           limit: 100,
         }),
-        fetchAllMyEventsPages(axios, API_BASE_URL, authHeaders, {
+        fetchAllMyEventsPages(authHeaders, {
           status: "cancelled",
           limit: 100,
         }),
