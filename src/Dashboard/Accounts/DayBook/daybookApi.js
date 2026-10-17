@@ -1,4 +1,6 @@
+import dayjs from "dayjs";
 import axiosClient from "@/api/axiosClient";
+import { mapLimit } from "@/lib/async";
 
 const DEFAULT_LIMIT = 200;
 
@@ -103,3 +105,85 @@ export const fetchEventsMinimal = async ({ query = "", authHeaders }) => {
   return res?.data?.events || res?.data?.data || res?.data || [];
 };
 
+
+// GET /daybook returns at most 1000 rows per list, so long periods are fetched
+// one calendar month at a time and joined.
+const MAX_ROWS_PER_REQUEST = 1000;
+const CHUNK_CONCURRENCY = 3;
+
+const monthWindows = (startDate, endDate) => {
+  const windows = [];
+  const last = dayjs(endDate);
+  let cursor = dayjs(startDate);
+  while (!cursor.isAfter(last, "day")) {
+    const monthEnd = cursor.endOf("month");
+    const end = monthEnd.isAfter(last, "day") ? last : monthEnd;
+    windows.push({ start: cursor.format("YYYY-MM-DD"), end: end.format("YYYY-MM-DD") });
+    cursor = end.add(1, "day");
+  }
+  return windows;
+};
+
+const sumOf = (parts, pick) => parts.reduce((total, p) => total + (Number(pick(p)) || 0), 0);
+
+/**
+ * Whole-period daybook: same shape as fetchDaybookRange plus `truncated`, which
+ * is true if any single month still had more rows than the API returns.
+ */
+export const fetchDaybookAll = async ({
+  startDate,
+  endDate,
+  includeEventAdvances = true,
+  authHeaders,
+  onProgress,
+}) => {
+  const windows = monthWindows(toYMD(startDate), toYMD(endDate));
+  let done = 0;
+  const parts = await mapLimit(windows, CHUNK_CONCURRENCY, async (w) => {
+    const data = await fetchDaybookRange({
+      startDate: w.start,
+      endDate: w.end,
+      limit: MAX_ROWS_PER_REQUEST,
+      includeEventAdvances,
+      authHeaders,
+    });
+    done += 1;
+    onProgress?.(done, windows.length);
+    return data || {};
+  });
+
+  const inflowData = parts.flatMap((p) => p.inflow?.data || []);
+  const outflowData = parts.flatMap((p) => p.outflow?.data || []);
+  const seen = new Set();
+  const balances = parts
+    .flatMap((p) => p.accounts?.openCloseBalances || [])
+    .filter((b) => {
+      const key = b?._id ?? b?.balanceDate;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
+  const inflowTotal = sumOf(parts, (p) => p.inflow?.total);
+  const outflowTotal = sumOf(parts, (p) => p.outflow?.total);
+  const net = inflowTotal - outflowTotal;
+  return {
+    inflow: {
+      count: sumOf(parts, (p) => p.inflow?.count ?? p.inflow?.data?.length),
+      total: inflowTotal,
+      data: inflowData,
+    },
+    outflow: {
+      count: sumOf(parts, (p) => p.outflow?.count ?? p.outflow?.data?.length),
+      total: outflowTotal,
+      data: outflowData,
+    },
+    profitAndLoss: { value: net, type: net >= 0 ? "PROFIT" : "LOSS" },
+    accounts: { openCloseBalances: balances },
+    truncated: parts.some(
+      (p) =>
+        (p.inflow?.count ?? 0) > (p.inflow?.data?.length ?? 0) ||
+        (p.outflow?.count ?? 0) > (p.outflow?.data?.length ?? 0),
+    ),
+  };
+};

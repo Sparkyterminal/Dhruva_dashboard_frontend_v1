@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { downloadExcel } from "@/lib/excel/downloadExcel";
 import { sanitizeSheetName } from "@/lib/excel/formats";
+import { mapLimit } from "@/lib/async";
 import { addUniverWorkbookSheets } from "@/lib/excel/univerToExcel";
 import {
   getEventName,
@@ -40,21 +41,6 @@ const fileSafe = (text) =>
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 60);
-
-// Run an async worker over items with a small concurrency cap, keeping order.
-const mapLimit = async (items, limit, worker) => {
-  const results = new Array(items.length);
-  let next = 0;
-  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (next < items.length) {
-      const i = next;
-      next += 1;
-      results[i] = await worker(items[i], i);
-    }
-  });
-  await Promise.all(runners);
-  return results;
-};
 
 const sheetsOf = (workbookData) => {
   const sheets = workbookData?.sheets || {};

@@ -25,6 +25,7 @@ import DaybookAccountsBalanceModal from "./DaybookAccountsBalanceModal";
 import {
   deleteInflow,
   deleteOpenCloseBalance,
+  fetchDaybookAll,
   fetchDaybookRange,
 } from "./daybookApi";
 import { isEventAdvanceDaybookRow } from "./daybookUtils";
@@ -34,8 +35,8 @@ import { downloadDaybookExcel } from "./daybookExcel";
 const { Title, Text } = Typography;
 
 const DEFAULT_DATA_LIMIT = 200;
-// Server maximum, so a download covers as many entries as the API allows.
-const EXPORT_DATA_LIMIT = 1000;
+// Start of the overall (till date) download when no data cutoff is configured.
+const OVERALL_FALLBACK_START = "2025-01-01";
 
 const Daybookhome = () => {
   const navigate = useNavigate();
@@ -90,27 +91,43 @@ const Daybookhome = () => {
     fetchDaybook();
   }, [fetchDaybook]);
 
-  const handleDownloadExcel = async () => {
-    if (!startDateStr || !endDateStr) return;
-    const data = await fetchDaybookRange({
-      startDate: startDateStr,
-      endDate: endDateStr,
-      limit: EXPORT_DATA_LIMIT,
-      includeEventAdvances,
-      authHeaders,
-    });
-    const entries =
-      (data?.inflow?.data?.length ?? 0) +
-      (data?.outflow?.data?.length ?? 0) +
-      (data?.accounts?.openCloseBalances?.length ?? 0);
-    if (entries === 0) {
-      message.info("No daybook entries to download for this period");
-      return;
+  // mode: "overall" (everything till today) | "daywise" (the selected dates, per day)
+  const downloadDaybook = async (mode) => {
+    const range =
+      mode === "overall"
+        ? {
+            startDate: user?.dataCutoffDate || OVERALL_FALLBACK_START,
+            endDate: dayjs().format("YYYY-MM-DD"),
+          }
+        : { startDate: startDateStr, endDate: endDateStr };
+    if (!range.startDate || !range.endDate) return;
+
+    const key = "daybook-excel-progress";
+    try {
+      const data = await fetchDaybookAll({
+        ...range,
+        includeEventAdvances,
+        authHeaders,
+        onProgress: (done, total) =>
+          total > 1 &&
+          message.loading({
+            content: `Collecting daybook (${done}/${total} months)...`,
+            key,
+            duration: 0,
+          }),
+      });
+      const entries =
+        (data.inflow?.data?.length ?? 0) +
+        (data.outflow?.data?.length ?? 0) +
+        (data.accounts?.openCloseBalances?.length ?? 0);
+      if (entries === 0) {
+        message.info("No daybook entries to download for this period");
+        return;
+      }
+      await downloadDaybookExcel(data, { mode, ...range });
+    } finally {
+      message.destroy(key);
     }
-    await downloadDaybookExcel(data, {
-      startDate: startDateStr,
-      endDate: endDateStr,
-    });
   };
 
   const accountsCount = daybook?.accounts?.openCloseBalances?.length ?? 0;
@@ -259,7 +276,12 @@ const Daybookhome = () => {
             <Col xs={24} sm={8} className="text-right">
               <Space size="middle" className="justify-end" wrap>
                 <ExcelDownloadButton
-                  onDownload={handleDownloadExcel}
+                  label="Overall Excel (till date)"
+                  onDownload={() => downloadDaybook("overall")}
+                />
+                <ExcelDownloadButton
+                  label="Day-wise Excel"
+                  onDownload={() => downloadDaybook("daywise")}
                   disabled={!startDateStr || !endDateStr}
                 />
                 <Button

@@ -89,19 +89,22 @@ export const addStyledSheet = (workbook, spec, usedNames) => {
   const writeRow = (values, bold = false) => {
     values.forEach((raw, i) => {
       const col = columns[i];
-      const value = coerceCell(raw, col.type);
+      // A text label (e.g. "Total") in a totals row must survive a number/date column.
+      const isLabel = bold && typeof raw === "string";
+      const value = isLabel ? raw : coerceCell(raw, col.type);
       const cell = ws.getCell(r, i + 1);
       if (value != null) cell.value = value;
-      const fmt = formatFor(col.type);
+      const fmt = isLabel ? null : formatFor(col.type);
       if (fmt) cell.numFmt = fmt;
       cell.font = { name: "Calibri", size: 10, bold };
       cell.border = ALL_BORDERS;
       cell.alignment = {
         vertical: col.wrap ? "top" : "middle",
         wrapText: Boolean(col.wrap),
-        horizontal:
-          col.align ||
-          (["money", "number", "percent"].includes(col.type) ? "right" : "left"),
+        horizontal: isLabel
+          ? "left"
+          : col.align ||
+            (["money", "number", "percent"].includes(col.type) ? "right" : "left"),
       };
       if (bold) cell.fill = SOLID("FFF1F5F1");
       widths[i] = Math.max(widths[i], displayLength(value, col.type) + 2);
