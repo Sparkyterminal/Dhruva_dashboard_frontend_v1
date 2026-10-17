@@ -51,7 +51,6 @@ import {
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import BalanceSheets from "./clientBookings/BalanceSheets";
-import ExportBookingsButtons from "./clientBookings/export/ExportBookingsButtons";
 import ClientBookingsLeadsTab from "./clientBookings/ClientBookingsLeadsTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
@@ -481,17 +480,7 @@ const ViewClientsBookings = () => {
               </Col>
 
               <Col xs={24} sm={8} className="text-right">
-                {activeTab === "list" && (
-                  <ExportBookingsButtons
-                    listStatusTab={listStatusTab}
-                    filterEventName={filterEventName}
-                    filterVenueId={filterVenueId}
-                    filterDateRange={filterDateRange}
-                    venueOptions={venueOptions}
-                    accessToken={user?.access_token}
-                    cutoffDate={getEffectiveCutoffDate(user)}
-                  />
-                )}
+                {/* Add Booking removed as requested */}
               </Col>
             </Row>
           </Card>

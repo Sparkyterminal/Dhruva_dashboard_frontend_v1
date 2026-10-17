@@ -34,6 +34,7 @@ import {
 import ClientBookingsFilters from "./ClientBookingsFilters";
 import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
 import BudgetReportListCell from "../budgetreport/BudgetReportListCell";
+import ExportBookingsButtons from "./export/ExportBookingsButtons";
 
 const { Text } = Typography;
 
@@ -421,6 +422,18 @@ const ClientBookingsListTab = ({
           },
         ]}
       />
+
+      <div className="flex justify-end">
+        <ExportBookingsButtons
+          listStatusTab={listStatusTab}
+          filterEventName={filterEventName}
+          filterVenueId={filterVenueId}
+          filterDateRange={filterDateRange}
+          venueOptions={venueOptions}
+          accessToken={accessToken}
+          cutoffDate={cutoffDate}
+        />
+      </div>
 
       <ClientBookingsStatsCards
         summary={bookingsSummary}
