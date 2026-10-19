@@ -37,21 +37,21 @@ const AgreedAmountBreakupCard = ({ event }) => {
       <Col xs={24} sm={12} md={8}>
         <div className="p-2 rounded" style={{ background: "#f2f8f2" }}>
           <Text className="text-xs text-gray-500 block">Account Amount</Text>
-          <Text strong style={{ color: "#1e40af" }}>
+          <Text strong style={{ color: "#3a934c" }}>
             {formatAmount(eventType.accountAmount)}
           </Text>
         </div>
       </Col>
       <Col xs={24} sm={12} md={8}>
-        <div className="p-2 rounded" style={{ background: "#faf5ff" }}>
+        <div className="p-2 rounded" style={{ background: "#f7fdf8" }}>
           <Text className="text-xs text-gray-500 block">GST (18%)</Text>
-          <Text strong style={{ color: "#6b21a8" }}>
+          <Text strong style={{ color: "#3b8e4b" }}>
             {formatAmount(eventType.accountGst)}
           </Text>
         </div>
       </Col>
       <Col xs={24} sm={12} md={8}>
-        <div className="p-2 rounded" style={{ background: "#fdf2f8" }}>
+        <div className="p-2 rounded" style={{ background: "#f4fbf5" }}>
           <Text className="text-xs text-gray-500 block">Account + GST</Text>
           <Text strong style={{ color: "#9d174d" }}>
             {formatAmount(eventType.accountAmountWithGst)}

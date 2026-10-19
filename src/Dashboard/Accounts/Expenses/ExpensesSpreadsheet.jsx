@@ -72,7 +72,7 @@ const ExpensesSpreadsheet = ({
         width: 72,
         editable: false,
         pinned: "left",
-        cellStyle: { fontWeight: 600, backgroundColor: "#f8fafc" },
+        cellStyle: { fontWeight: 600, backgroundColor: "#f9fbf9" },
       },
       {
         headerName: "Event Reference",
@@ -273,9 +273,9 @@ const ExpensesSpreadsheet = ({
           flex-wrap: wrap;
         }
         .expenses-spreadsheet-toolbar .toolbar-btn {
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e5ede6;
           background: #fff;
-          color: #334155;
+          color: #394f3e;
           border-radius: 8px;
           padding: 8px 14px;
           font-weight: 600;
@@ -288,7 +288,7 @@ const ExpensesSpreadsheet = ({
         }
         .expenses-spreadsheet-toolbar .row-count-badge {
           font-size: 13px;
-          color: #64748b;
+          color: #6b8470;
           font-weight: 600;
         }
         .expenses-spreadsheet-grid {

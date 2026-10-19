@@ -460,21 +460,21 @@ const ProgressCalenderClients = () => {
         .fc .fc-toolbar-title {
           font-size: 1.5rem;
           font-weight: 600;
-          color: #1f2937;
+          color: #243227;
         }
         
         .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc-theme-standard .fc-scrollgrid {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc .fc-daygrid-day-number {
           padding: 8px;
           font-weight: 500;
-          color: #374151;
+          color: #3c4c3f;
         }
         
         .fc .fc-daygrid-day.fc-day-today {
@@ -482,9 +482,9 @@ const ProgressCalenderClients = () => {
         }
         
         .fc .fc-col-header-cell {
-          background-color: #f9fafb;
+          background-color: #f9fbfa;
           font-weight: 500;
-          color: #4b5563;
+          color: #505e53;
           padding: 12px 0;
         }
         

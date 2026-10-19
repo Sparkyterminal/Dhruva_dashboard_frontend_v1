@@ -168,14 +168,14 @@ const CalendarClients = () => {
     const s = String(seed || "");
     const colors = [
       "#338147",
-      "#10b981",
+      "#2f8a4b",
       "#f59e0b",
       "#2b7a41",
-      "#ec4899",
+      "#67cd7b",
       "#fb923c",
       "#34d399",
       "#5da06a",
-      "#a78bfa",
+      "#a1e4af",
       "#fb7185",
     ];
 
@@ -472,21 +472,21 @@ const CalendarClients = () => {
         .fc .fc-toolbar-title {
           font-size: 1.5rem;
           font-weight: 600;
-          color: #1f2937;
+          color: #243227;
         }
         
         .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc-theme-standard .fc-scrollgrid {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc .fc-daygrid-day-number {
           padding: 8px;
           font-weight: 500;
-          color: #374151;
+          color: #3c4c3f;
         }
         
         .fc .fc-daygrid-day.fc-day-today {
@@ -494,9 +494,9 @@ const CalendarClients = () => {
         }
         
         .fc .fc-col-header-cell {
-          background-color: #f9fafb;
+          background-color: #f9fbfa;
           font-weight: 500;
-          color: #4b5563;
+          color: #505e53;
           padding: 12px 0;
         }
         
@@ -565,8 +565,8 @@ const CalendarClients = () => {
         }
 
         .fc .fc-downloadMonthImage-button {
-          background-color: #059669 !important;
-          border-color: #059669 !important;
+          background-color: #1f6f3a !important;
+          border-color: #1f6f3a !important;
         }
 
         .fc .fc-downloadMonthImage-button:hover {

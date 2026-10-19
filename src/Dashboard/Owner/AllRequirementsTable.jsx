@@ -1100,8 +1100,8 @@ const AllRequirementsTable = () => {
               onClick={() => handleOwnerApprove(row)}
               icon={<CheckCircleOutlined />}
               style={{
-                background: "#10b981",
-                borderColor: "#10b981",
+                background: "#2f8a4b",
+                borderColor: "#2f8a4b",
                 fontWeight: 600,
                 fontSize: 16,
               }}
@@ -1179,11 +1179,11 @@ const AllRequirementsTable = () => {
           opacity: 0.75;
         }
         .ant-table-thead > tr > th {
-          background: #1d174c !important;
+          background: #214228 !important;
           color: #fff !important;
           font-size: 18px !important;
           font-weight: 700 !important;
-          border-bottom: 2px solid #e5e7eb !important;
+          border-bottom: 2px solid #e6eae7 !important;
         }
         .ant-table-tbody > tr > td {
           color: #000 !important;
@@ -1216,7 +1216,7 @@ const AllRequirementsTable = () => {
           background: #fff;
           border-radius: 16px;
           padding: 24px;
-          border: 1px solid #e5e7eb;
+          border: 1px solid #e6eae7;
           box-shadow: 0 1px 3px rgba(0,0,0,0.05);
           margin-bottom: 24px;
         }
@@ -1256,7 +1256,7 @@ const AllRequirementsTable = () => {
             textAlign: "center",
             fontSize: 48,
             fontWeight: 600,
-            color: "#1f2937",
+            color: "#243227",
             marginBottom: 24,
             letterSpacing: "-0.02em",
           }}

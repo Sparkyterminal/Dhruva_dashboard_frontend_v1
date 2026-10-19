@@ -1005,10 +1005,10 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
 
       <style>{`
         .modern-table .ant-table-thead > tr > th {
-          background: #f8fafc;
+          background: #f9fbf9;
           font-weight: 600;
-          color: #475569;
-          border-bottom: 1px solid #e2e8f0;
+          color: #4d6352;
+          border-bottom: 1px solid #e5ede6;
           font-size: 13px;
           padding: 16px;
         }
@@ -1018,11 +1018,11 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
         }
 
         .modern-table .ant-table-tbody > tr:hover > td {
-          background: #f8fafc !important;
+          background: #f9fbf9 !important;
         }
 
         .modern-table .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid #f3f7f4;
           padding: 16px;
         }
 
@@ -1033,7 +1033,7 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
         }
 
         .ant-tabs-tab-active {
-          background: #f8fafc;
+          background: #f9fbf9;
         }
 
         .ant-tabs-ink-bar {

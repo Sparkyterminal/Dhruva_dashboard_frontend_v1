@@ -152,7 +152,7 @@ const AddBill = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-br from-purple-50 via-blue-50 to-indigo-100 relative font-[cormoreg]">
+    <div className="min-h-screen w-full bg-linear-to-br from-purple-50 via-blue-50 to-indigo-100 relative">
       <style>{customStyles}</style>
 
       {/* Gradient Background */}

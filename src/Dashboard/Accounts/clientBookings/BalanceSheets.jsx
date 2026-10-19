@@ -272,7 +272,7 @@ const BalanceSheets = () => {
           <StatCard
             title="Total Received Amount"
             value={summary.totalReceivedAmount}
-            color="#16a34a"
+            color="#226a36"
           />
         </Col>
         <Col xs={24} md={8}>

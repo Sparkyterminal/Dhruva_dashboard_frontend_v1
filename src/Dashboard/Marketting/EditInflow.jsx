@@ -32,11 +32,11 @@ const { Option } = Select;
 // Minimal styles for a clean, compact UI
 const customStyles = `
   .glass-card { background: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 6px 18px rgba(3, 16, 33, 0.06); }
-  .glass-advance-card { background: #ffffff; border: 1px solid #e6f6ff; border-radius: 8px; padding: 12px; }
-  .glass-event-type-card { background: #ffffff; border: 1px solid #cfeefb; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-  .event-type-tag { background: #e6f7ff; color: #0369a1; border-radius: 6px; padding: 4px 8px; font-weight: 600; }
-  .gradient-text { color: #0369a1; font-weight: 700; }
-  .ant-form-item-label > label { font-weight: 600 !important; color: #0369a1 !important; }
+  .glass-advance-card { background: #ffffff; border: 1px solid #ecf9ee; border-radius: 8px; padding: 12px; }
+  .glass-event-type-card { background: #ffffff; border: 1px solid #d7f3dd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+  .event-type-tag { background: #ecf9ee; color: #257f37; border-radius: 6px; padding: 4px 8px; font-weight: 600; }
+  .gradient-text { color: #257f37; font-weight: 700; }
+  .ant-form-item-label > label { font-weight: 600 !important; color: #257f37 !important; }
   .loading-container { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; gap: 20px; }
   @keyframes slide-in-top {
     0% {
@@ -1197,7 +1197,7 @@ const EditInflow = () => {
   if (initialLoading) {
     return (
       <div
-        className="font-[cormoreg]"
+        className=""
         style={{
           minHeight: "100vh",
           background:
@@ -1262,7 +1262,7 @@ const EditInflow = () => {
 
   return (
     <div
-      className="font-[cormoreg]"
+      className=""
       style={{
         minHeight: "100vh",
         background:
@@ -1367,7 +1367,7 @@ const EditInflow = () => {
               >
                 Edit Event Booking
               </h1>
-              <p style={{ color: "#64748b", fontSize: "16px", margin: 0 }}>
+              <p style={{ color: "#6b8470", fontSize: "16px", margin: 0 }}>
                 Modify the details and save your changes
               </p>
             </div>
@@ -1807,7 +1807,7 @@ const EditInflow = () => {
                     style={{
                       padding: 16,
                       borderRadius: 8,
-                      border: "1px solid #e5e7eb",
+                      border: "1px solid #e6eae7",
                     }}
                   >
                     <div
@@ -1818,7 +1818,7 @@ const EditInflow = () => {
                         marginBottom: 12,
                       }}
                     >
-                      <div style={{ fontWeight: 600, color: "#0369a1" }}>
+                      <div style={{ fontWeight: 600, color: "#257f37" }}>
                         Agreed Amount (Package)
                       </div>
                     </div>
@@ -1912,9 +1912,9 @@ const EditInflow = () => {
                               style={{
                                 marginTop: 12,
                                 padding: 12,
-                                background: "#f9fafb",
+                                background: "#f9fbfa",
                                 borderRadius: 8,
-                                border: "1px solid #e5e7eb",
+                                border: "1px solid #e6eae7",
                               }}
                             >
                               <div
@@ -1934,7 +1934,7 @@ const EditInflow = () => {
                                   <div
                                     style={{
                                       fontWeight: 600,
-                                      color: "#111827",
+                                      color: "#152318",
                                     }}
                                   >
                                     ₹{formatINR(accountAmount || 0)}
@@ -1949,7 +1949,7 @@ const EditInflow = () => {
                                   <div
                                     style={{
                                       fontWeight: 700,
-                                      color: "#0369a1",
+                                      color: "#257f37",
                                     }}
                                   >
                                     ₹{formatINR(accountWithGst || 0)}
@@ -1960,7 +1960,7 @@ const EditInflow = () => {
                                 style={{
                                   marginTop: 8,
                                   paddingTop: 8,
-                                  borderTop: "1px dashed #e5e7eb",
+                                  borderTop: "1px dashed #e6eae7",
                                 }}
                               >
                                 <div style={{ marginBottom: 8 }}>
@@ -1972,7 +1972,7 @@ const EditInflow = () => {
                                   <div
                                     style={{
                                       fontWeight: 600,
-                                      color: "#111827",
+                                      color: "#152318",
                                     }}
                                   >
                                     ₹{formatINR(cashAmount || 0)}
@@ -1981,15 +1981,15 @@ const EditInflow = () => {
                                 <div
                                   style={{
                                     padding: 12,
-                                    background: "#e6f7ff",
+                                    background: "#ecf9ee",
                                     borderRadius: 6,
-                                    border: "1px solid #91d5ff",
+                                    border: "1px solid #aae6b6",
                                   }}
                                 >
                                   <span
                                     style={{
                                       fontSize: 14,
-                                      color: "#0369a1",
+                                      color: "#257f37",
                                       fontWeight: 600,
                                     }}
                                   >
@@ -1999,7 +1999,7 @@ const EditInflow = () => {
                                     style={{
                                       fontSize: 18,
                                       fontWeight: 700,
-                                      color: "#0369a1",
+                                      color: "#257f37",
                                       marginTop: 4,
                                     }}
                                   >
@@ -2047,7 +2047,7 @@ const EditInflow = () => {
                         marginBottom: "12px",
                       }}
                     >
-                      <div style={{ fontWeight: 600, color: "#0369a1" }}>
+                      <div style={{ fontWeight: 600, color: "#257f37" }}>
                         Advance Payments
                       </div>
                       <Form.Item
@@ -2299,7 +2299,7 @@ const EditInflow = () => {
                                   <div
                                     style={{
                                       fontWeight: 600,
-                                      color: "#0369a1",
+                                      color: "#257f37",
                                       marginBottom: 8,
                                       fontSize: 14,
                                     }}
@@ -2430,9 +2430,9 @@ const EditInflow = () => {
                                           style={{
                                             marginTop: 12,
                                             padding: 12,
-                                            background: "#f9fafb",
+                                            background: "#f9fbfa",
                                             borderRadius: 8,
-                                            border: "1px solid #e5e7eb",
+                                            border: "1px solid #e6eae7",
                                           }}
                                         >
                                           <div
@@ -2455,7 +2455,7 @@ const EditInflow = () => {
                                               <div
                                                 style={{
                                                   fontWeight: 600,
-                                                  color: "#111827",
+                                                  color: "#152318",
                                                 }}
                                               >
                                                 ₹{formatINR(accountAmount || 0)}
@@ -2473,7 +2473,7 @@ const EditInflow = () => {
                                               <div
                                                 style={{
                                                   fontWeight: 700,
-                                                  color: "#0369a1",
+                                                  color: "#257f37",
                                                 }}
                                               >
                                                 ₹
@@ -2485,7 +2485,7 @@ const EditInflow = () => {
                                             style={{
                                               marginTop: 8,
                                               paddingTop: 8,
-                                              borderTop: "1px dashed #e5e7eb",
+                                              borderTop: "1px dashed #e6eae7",
                                             }}
                                           >
                                             <div style={{ marginBottom: 8 }}>
@@ -2500,7 +2500,7 @@ const EditInflow = () => {
                                               <div
                                                 style={{
                                                   fontWeight: 600,
-                                                  color: "#111827",
+                                                  color: "#152318",
                                                 }}
                                               >
                                                 ₹{formatINR(cashAmount || 0)}
@@ -2509,15 +2509,15 @@ const EditInflow = () => {
                                             <div
                                               style={{
                                                 padding: 12,
-                                                background: "#e6f7ff",
+                                                background: "#ecf9ee",
                                                 borderRadius: 6,
-                                                border: "1px solid #91d5ff",
+                                                border: "1px solid #aae6b6",
                                               }}
                                             >
                                               <span
                                                 style={{
                                                   fontSize: 14,
-                                                  color: "#0369a1",
+                                                  color: "#257f37",
                                                   fontWeight: 600,
                                                 }}
                                               >
@@ -2527,7 +2527,7 @@ const EditInflow = () => {
                                                 style={{
                                                   fontSize: 18,
                                                   fontWeight: 700,
-                                                  color: "#0369a1",
+                                                  color: "#257f37",
                                                   marginTop: 4,
                                                 }}
                                               >
@@ -2567,7 +2567,7 @@ const EditInflow = () => {
                                           "80px 1fr 1fr 60px",
                                         gap: 8,
                                         padding: "8px 12px",
-                                        background: "#f9fafb",
+                                        background: "#f9fbfa",
                                         borderRadius: 8,
                                         marginBottom: 8,
                                         fontSize: 12,
@@ -2721,7 +2721,7 @@ const EditInflow = () => {
                                             style={{
                                               marginTop: 8,
                                               paddingTop: 8,
-                                              borderTop: "1px dashed #e5e7eb",
+                                              borderTop: "1px dashed #e6eae7",
                                               display: "flex",
                                               flexDirection: "column",
                                               gap: 4,
@@ -2735,7 +2735,7 @@ const EditInflow = () => {
                                               }}
                                             >
                                               <span
-                                                style={{ color: "#374151" }}
+                                                style={{ color: "#3c4c3f" }}
                                               >
                                                 Balance after advances:
                                               </span>
@@ -2744,7 +2744,7 @@ const EditInflow = () => {
                                                   fontWeight: 600,
                                                   color:
                                                     balance >= 0
-                                                      ? "#374151"
+                                                      ? "#3c4c3f"
                                                       : "#ef4444",
                                                 }}
                                               >
@@ -3005,7 +3005,7 @@ const EditInflow = () => {
                             <div
                               style={{
                                 fontWeight: 600,
-                                color: "#0369a1",
+                                color: "#257f37",
                                 fontSize: 16,
                               }}
                             >
@@ -3106,9 +3106,9 @@ const EditInflow = () => {
                                   style={{
                                     marginTop: 12,
                                     padding: 12,
-                                    background: "#f9fafb",
+                                    background: "#f9fbfa",
                                     borderRadius: 8,
-                                    border: "1px solid #e5e7eb",
+                                    border: "1px solid #e6eae7",
                                   }}
                                 >
                                   <div
@@ -3131,7 +3131,7 @@ const EditInflow = () => {
                                       <div
                                         style={{
                                           fontWeight: 600,
-                                          color: "#111827",
+                                          color: "#152318",
                                         }}
                                       >
                                         ₹{formatINR(accountAmount || 0)}
@@ -3149,7 +3149,7 @@ const EditInflow = () => {
                                       <div
                                         style={{
                                           fontWeight: 700,
-                                          color: "#0369a1",
+                                          color: "#257f37",
                                         }}
                                       >
                                         ₹{formatINR(accountWithGst || 0)}
@@ -3160,7 +3160,7 @@ const EditInflow = () => {
                                     style={{
                                       marginTop: 8,
                                       paddingTop: 8,
-                                      borderTop: "1px dashed #e5e7eb",
+                                      borderTop: "1px dashed #e6eae7",
                                     }}
                                   >
                                     <div style={{ marginBottom: 8 }}>
@@ -3175,7 +3175,7 @@ const EditInflow = () => {
                                       <div
                                         style={{
                                           fontWeight: 600,
-                                          color: "#111827",
+                                          color: "#152318",
                                         }}
                                       >
                                         ₹{formatINR(cashAmount || 0)}
@@ -3184,15 +3184,15 @@ const EditInflow = () => {
                                     <div
                                       style={{
                                         padding: 12,
-                                        background: "#e6f7ff",
+                                        background: "#ecf9ee",
                                         borderRadius: 6,
-                                        border: "1px solid #91d5ff",
+                                        border: "1px solid #aae6b6",
                                       }}
                                     >
                                       <span
                                         style={{
                                           fontSize: 14,
-                                          color: "#0369a1",
+                                          color: "#257f37",
                                           fontWeight: 600,
                                         }}
                                       >
@@ -3202,7 +3202,7 @@ const EditInflow = () => {
                                         style={{
                                           fontSize: 18,
                                           fontWeight: 700,
-                                          color: "#0369a1",
+                                          color: "#257f37",
                                           marginTop: 4,
                                         }}
                                       >
@@ -3232,7 +3232,7 @@ const EditInflow = () => {
                           <div
                             style={{
                               fontWeight: 600,
-                              color: "#0369a1",
+                              color: "#257f37",
                               marginBottom: 12,
                               fontSize: 16,
                             }}
@@ -3248,7 +3248,7 @@ const EditInflow = () => {
                                     gridTemplateColumns: "80px 1fr 1fr 60px",
                                     gap: 8,
                                     padding: "8px 12px",
-                                    background: "#f9fafb",
+                                    background: "#f9fbfa",
                                     borderRadius: 8,
                                     marginBottom: 8,
                                     fontSize: 12,
@@ -3386,7 +3386,7 @@ const EditInflow = () => {
                                         style={{
                                           marginTop: 8,
                                           paddingTop: 8,
-                                          borderTop: "1px dashed #e5e7eb",
+                                          borderTop: "1px dashed #e6eae7",
                                           display: "flex",
                                           flexDirection: "column",
                                           gap: 4,
@@ -3399,7 +3399,7 @@ const EditInflow = () => {
                                             justifyContent: "space-between",
                                           }}
                                         >
-                                          <span style={{ color: "#374151" }}>
+                                          <span style={{ color: "#3c4c3f" }}>
                                             Balance after advances:
                                           </span>
                                           <span
@@ -3407,7 +3407,7 @@ const EditInflow = () => {
                                               fontWeight: 600,
                                               color:
                                                 balance >= 0
-                                                  ? "#374151"
+                                                  ? "#3c4c3f"
                                                   : "#ef4444",
                                             }}
                                           >
@@ -3634,11 +3634,11 @@ const EditInflow = () => {
                                 style={{
                                   marginTop: 8,
                                   paddingTop: 8,
-                                  borderTop: "1px dashed #e5e7eb",
+                                  borderTop: "1px dashed #e6eae7",
                                   display: "flex",
                                   justifyContent: "space-between",
                                   fontSize: 13,
-                                  color: "#374151",
+                                  color: "#3c4c3f",
                                 }}
                               >
                                 <span>Balance after advances:</span>

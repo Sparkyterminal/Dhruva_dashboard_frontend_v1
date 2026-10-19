@@ -92,14 +92,14 @@ const customStyles = `
   
   .vendor-table .ant-table-thead > tr > th {
     background: linear-gradient(135deg, #f4f8f4 0%, #eaf2eb 100%);
-    color: #32255e;
+    color: #305337;
     font-weight: 700;
     border: none;
     font-size: 15px;
   }
   
   .vendor-table .ant-table-tbody > tr:hover > td {
-    background: #faf8fe !important;
+    background: #f9fdfa !important;
   }
   
   .vendor-mobile-card {
@@ -774,7 +774,7 @@ const ViewVendor = () => {
       key: "vendor_code",
       responsive: ["sm"],
       render: (text) => (
-        <span style={{ fontWeight: 700, color: "#32255e" }}>
+        <span style={{ fontWeight: 700, color: "#305337" }}>
           {text.toUpperCase() || "N/A"}
         </span>
       ),
@@ -785,7 +785,7 @@ const ViewVendor = () => {
       key: "name",
       responsive: ["md"],
       render: (text) => (
-        <span style={{ fontWeight: 600, color: "#32255e" }}>{text}</span>
+        <span style={{ fontWeight: 600, color: "#305337" }}>{text}</span>
       ),
     },
     {
@@ -868,7 +868,7 @@ const ViewVendor = () => {
             icon={<FileWordOutlined />}
             onClick={() => exportToWord(record)}
             style={{
-              color: "#2b579a",
+              color: "#40854e",
               borderRadius: "6px",
               transition: "all 0.3s",
             }}
@@ -922,14 +922,14 @@ const ViewVendor = () => {
                 style={{
                   fontSize: "20px",
                   fontWeight: 700,
-                  color: "#32255e",
+                  color: "#305337",
                   marginBottom: "8px",
                 }}
               >
                 {vendor.name}
               </div>
-              <div style={{ color: "#5b5270", fontSize: "13px", marginTop: 4 }}>
-                <span style={{ fontWeight: 700, color: "#32255e" }}>
+              <div style={{ color: "#586a5b", fontSize: "13px", marginTop: 4 }}>
+                <span style={{ fontWeight: 700, color: "#305337" }}>
                   Code:{" "}
                 </span>
                 {vendor.vendor_code.toUpperCase() || "N/A"}
@@ -942,14 +942,14 @@ const ViewVendor = () => {
                   fontSize: "14px",
                 }}
               >
-                <div style={{ color: "#5b5270" }}>
-                  <span style={{ fontWeight: 600, color: "#32255e" }}>
+                <div style={{ color: "#586a5b" }}>
+                  <span style={{ fontWeight: 600, color: "#305337" }}>
                     Company:{" "}
                   </span>
                   {vendor.company_name || "N/A"}
                 </div>
-                <div style={{ color: "#5b5270" }}>
-                  <span style={{ fontWeight: 600, color: "#32255e" }}>
+                <div style={{ color: "#586a5b" }}>
+                  <span style={{ fontWeight: 600, color: "#305337" }}>
                     GST:{" "}
                   </span>
                   {vendor.gst_no || "N/A"}
@@ -970,10 +970,10 @@ const ViewVendor = () => {
                   </span>
                   {vendor.refered_by && (
                     <>
-                      <span style={{ margin: "0 8px", color: "#d1c9e0" }}>
+                      <span style={{ margin: "0 8px", color: "#cddcd0" }}>
                         •
                       </span>
-                      <span style={{ color: "#5b5270" }}>
+                      <span style={{ color: "#586a5b" }}>
                         Ref: {vendor.refered_by}
                       </span>
                     </>
@@ -1017,7 +1017,7 @@ const ViewVendor = () => {
                 style={{
                   borderRadius: "8px",
                   border: "1.5px solid #2b579a30",
-                  color: "#2b579a",
+                  color: "#40854e",
                 }}
               >
                 Word
@@ -1039,7 +1039,7 @@ const ViewVendor = () => {
 
   return (
     <div
-      className="font-[cormoreg]"
+      className=""
       style={{
         minHeight: "100vh",
         background: "linear-gradient(135deg, #f4f8f4 0%, #e6efe7 100%)",
@@ -1097,14 +1097,14 @@ const ViewVendor = () => {
             style={{
               fontSize: isMobile ? "32px" : "42px",
               fontWeight: "bold",
-              color: "#32255e",
+              color: "#305337",
               margin: 0,
               letterSpacing: "-1px",
             }}
           >
             Vendor Management
           </h1>
-          <p style={{ color: "#9079a5", fontSize: "16px", marginTop: "4px" }}>
+          <p style={{ color: "#819d87", fontSize: "16px", marginTop: "4px" }}>
             Manage and track all your vendors
           </p>
         </motion.div>
@@ -1180,7 +1180,7 @@ const ViewVendor = () => {
             >
               <h2
                 style={{
-                  color: "#32255e",
+                  color: "#305337",
                   fontWeight: 700,
                   fontSize: "24px",
                   margin: 0,
@@ -1211,7 +1211,7 @@ const ViewVendor = () => {
                   <Option value="cash_and_account">Cash&Account</Option>
                 </Select>
                 <Input
-                  prefix={<SearchOutlined style={{ color: "#9079a5" }} />}
+                  prefix={<SearchOutlined style={{ color: "#819d87" }} />}
                   allowClear
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -1250,7 +1250,7 @@ const ViewVendor = () => {
                 style={{
                   textAlign: "center",
                   padding: "80px 20px",
-                  color: "#9079a5",
+                  color: "#819d87",
                 }}
               >
                 <div style={{ fontSize: "18px", fontWeight: 500 }}>
@@ -1262,7 +1262,7 @@ const ViewVendor = () => {
                 style={{
                   textAlign: "center",
                   padding: "80px 20px",
-                  color: "#9079a5",
+                  color: "#819d87",
                 }}
               >
                 <UserOutlined

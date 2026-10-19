@@ -1154,8 +1154,8 @@ const RequirementsTableAc = () => {
     //                 icon={<CheckCircleOutlined />}
     //                 disabled={!isAmountPaidFilled}
     //                 style={{
-    //                   background: isAmountPaidFilled ? "#10b981" : "#d1d5db",
-    //                   borderColor: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+    //                   background: isAmountPaidFilled ? "#2f8a4b" : "#d3d9d4",
+    //                   borderColor: isAmountPaidFilled ? "#2f8a4b" : "#d3d9d4",
     //                   fontWeight: 600,
     //                   fontSize: 16,
     //                   cursor: isAmountPaidFilled ? "pointer" : "not-allowed",
@@ -1209,8 +1209,8 @@ const RequirementsTableAc = () => {
                     icon={<CheckCircleOutlined />}
                     disabled={!isAmountPaidFilled}
                     style={{
-                      background: isAmountPaidFilled ? "#10b981" : "#d1d5db",
-                      borderColor: isAmountPaidFilled ? "#10b981" : "#d1d5db",
+                      background: isAmountPaidFilled ? "#2f8a4b" : "#d3d9d4",
+                      borderColor: isAmountPaidFilled ? "#2f8a4b" : "#d3d9d4",
                       fontWeight: 600,
                       fontSize: 16,
                       cursor: isAmountPaidFilled ? "pointer" : "not-allowed",
@@ -1274,7 +1274,7 @@ const RequirementsTableAc = () => {
           justifyContent: "space-between",
           fontWeight: 600,
           fontSize: 20,
-          color: "#1d174c",
+          color: "#214228",
         }}
       >
         <span className="text-white">
@@ -1300,7 +1300,7 @@ const RequirementsTableAc = () => {
         .ant-collapse-header { background: linear-gradient(135deg, #226a36, #c4a747); color: white !important; font-weight: 700; font-size: 20px; border-radius: 12px; }
         .ant-collapse-content { background: linear-gradient(180deg, #c0ddc3 0%, #f5edc4 100%); border-radius: 0 0 12px 12px; }
         .ant-collapse-arrow svg { fill: white; }
-        .ant-table-thead > tr > th { background: #1d174c !important; color: #fff !important; font-size: 18px !important; font-weight: 700 !important; border-bottom: 2px solid #e5e7eb !important; }
+        .ant-table-thead > tr > th { background: #214228 !important; color: #fff !important; font-size: 18px !important; font-weight: 700 !important; border-bottom: 2px solid #e6eae7 !important; }
         .ant-table-tbody > tr > td { color: #000 !important; font-size: 18px !important; font-weight: 700 !important; }
       `}</style>
 
@@ -1318,7 +1318,7 @@ const RequirementsTableAc = () => {
             textAlign: "center",
             fontSize: 48,
             fontWeight: 600,
-            color: "#1f2937",
+            color: "#243227",
             marginBottom: 24,
             letterSpacing: "-0.02em",
           }}

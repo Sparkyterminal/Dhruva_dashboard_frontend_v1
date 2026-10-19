@@ -815,7 +815,7 @@ const RequirementTableApprover = () => {
                 size="small"
                 onClick={() => handleComplete(row)}
                 icon={<CheckCircleOutlined />}
-                style={{ background: "#10b981", borderColor: "#10b981" }}
+                style={{ background: "#2f8a4b", borderColor: "#2f8a4b" }}
               >
                 Approved
               </Button>
@@ -979,11 +979,11 @@ const RequirementTableApprover = () => {
           opacity: 0.75;
         }
         .ant-table-thead > tr > th {
-          background: #1d174c !important;
+          background: #214228 !important;
           color: #fff !important;
           font-size: 18px !important;
           font-weight: 700 !important;
-          border-bottom: 2px solid #e5e7eb !important;
+          border-bottom: 2px solid #e6eae7 !important;
         }
         .ant-table-tbody > tr > td {
           color: #000 !important;
@@ -1029,7 +1029,7 @@ const RequirementTableApprover = () => {
             textAlign: "center",
             fontSize: 48,
             fontWeight: 600,
-            color: "#1f2937",
+            color: "#243227",
             marginBottom: 24,
             letterSpacing: "-0.02em",
           }}

@@ -49,7 +49,7 @@ const customStyles = `
 
   .shimmer {
     animation: shimmer 2s infinite;
-    background: linear-gradient(to right, #f6f7f8 0%, #edeef1 20%, #f6f7f8 40%, #f6f7f8 100%);
+    background: linear-gradient(to right, #f6f8f7 0%, #eef0ee 20%, #f6f8f7 40%, #f6f8f7 100%);
     background-size: 1000px 100%;
   }
 `;
@@ -133,7 +133,7 @@ const Departments = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative font-[cormoreg]">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
       <style>{customStyles}</style>
 
       {/* Animated Gradient Background */}

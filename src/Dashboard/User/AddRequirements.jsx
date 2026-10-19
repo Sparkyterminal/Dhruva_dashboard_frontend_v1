@@ -157,7 +157,7 @@ const AddRequirements = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-6 bg-linear-to-tr from-white to-indigo-50 font-[cormoreg] text-2xl">
+    <div className="min-h-screen flex items-center justify-center px-4 py-6 bg-linear-to-tr from-white to-indigo-50 text-[15px]">
       <div className="w-full max-w-md">
         <button
           onClick={() => navigate(-1)}
@@ -170,13 +170,13 @@ const AddRequirements = () => {
 
         <Card
           bordered={false}
-          className="rounded-3xl shadow-md bg-white font-[cormoreg] text-2xl"
+          className="rounded-3xl shadow-md bg-white text-[15px]"
           style={{ padding: "2rem" }}
         >
-          <h1 className="text-3xl font-semibold mb-1 text-indigo-700 text-center font-[cormoreg]">
+          <h1 className="text-3xl font-semibold mb-1 text-indigo-700 text-center">
             New Requirement
           </h1>
-          <p className="text-center text-gray-500 mb-6 font-[cormoreg] text-2xl">
+          <p className="text-center text-gray-500 mb-6 text-[15px]">
             Please fill all necessary details
           </p>
 
@@ -188,7 +188,7 @@ const AddRequirements = () => {
           >
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Purpose
                 </span>
               }
@@ -204,7 +204,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Remarks
                 </span>
               }
@@ -220,7 +220,7 @@ const AddRequirements = () => {
             <Form.Item
               label={
                 <div className="flex items-center justify-between gap-2 w-full">
-                  <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                  <span className="text-gray-700 font-medium text-[15px]">
                     Group by
                   </span>
                   <Button
@@ -334,7 +334,7 @@ const AddRequirements = () => {
             <Form.Item
               label={
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                  <span className="text-gray-700 font-medium text-[15px]">
                     Vendor{" "}
                   </span>
                   <Button
@@ -413,7 +413,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Event Reference{" "}
                 </span>
               }
@@ -481,7 +481,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Amount
                 </span>
               }
@@ -504,7 +504,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Required Date
                 </span>
               }
@@ -519,7 +519,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Expecting Transactions In
                 </span>
               }
@@ -540,7 +540,7 @@ const AddRequirements = () => {
 
             <Form.Item
               label={
-                <span className="text-gray-700 font-medium font-[cormoreg] text-2xl">
+                <span className="text-gray-700 font-medium text-[15px]">
                   Priority
                 </span>
               }
@@ -579,7 +579,7 @@ const AddRequirements = () => {
                 htmlType="submit"
                 size="large"
                 block
-                className="bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg shadow-md transition-colors duration-200 font-[cormoreg] text-2xl"
+                className="bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg shadow-md transition-colors duration-200 text-[15px]"
               >
                 Submit Requirement
               </Button>

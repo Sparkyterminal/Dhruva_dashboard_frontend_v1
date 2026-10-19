@@ -879,7 +879,7 @@ const ViewInflow = () => {
               <Card
                 className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
                 style={{
-                  background: "linear-gradient(135deg,#10b981,#059669)",
+                  background: "linear-gradient(135deg,#2f8a4b,#1f6f3a)",
                   color: "white",
                 }}
               >
@@ -911,7 +911,7 @@ const ViewInflow = () => {
               <Card
                 className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
                 style={{
-                  background: "linear-gradient(135deg,#22c55e,#16a34a)",
+                  background: "linear-gradient(135deg,#338147,#226a36)",
                   color: "white",
                 }}
               >
@@ -2116,7 +2116,7 @@ const ViewInflow = () => {
         }
 
         .custom-table .ant-table-tbody > tr:hover > td {
-          background: #f0f4ff !important;
+          background: #f3fcf5 !important;
         }
 
         .custom-table .ant-pagination-item-active {

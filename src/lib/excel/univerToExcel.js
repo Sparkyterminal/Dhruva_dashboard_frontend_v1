@@ -28,7 +28,7 @@ const BORDER_STYLE = {
 
 const hex2 = (n) => Math.max(0, Math.min(255, Math.round(Number(n)))).toString(16).padStart(2, "0");
 
-// "rgb(1,2,3)" | "#abc" | "#aabbcc" | "windowtext" -> "FFRRGGBB"
+// "rgb(1,2,3)" | "#abc" | "#b0c6b5" | "windowtext" -> "FFRRGGBB"
 const toArgb = (color) => {
   const raw = color?.rgb ?? color;
   if (typeof raw !== "string") return undefined;

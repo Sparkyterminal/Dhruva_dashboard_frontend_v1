@@ -539,7 +539,7 @@ const ViewClientsBookings = () => {
         onClose={closeDrawer}
         width="80%"
         className="event-details-drawer"
-        bodyStyle={{ padding: 24, background: "#f8fafc" }}
+        bodyStyle={{ padding: 24, background: "#f9fbf9" }}
       >
         {selectedEvent && (
           <div className="space-y-6" style={{ paddingRight: 8 }}>
@@ -548,8 +548,8 @@ const ViewClientsBookings = () => {
               className="border-0"
               style={{
                 borderRadius: "12px",
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
+                background: "#f9fbf9",
+                border: "1px solid #e5ede6",
               }}
               bodyStyle={{ padding: "20px" }}
             >
@@ -624,7 +624,7 @@ const ViewClientsBookings = () => {
                     style={{
                       borderRadius: "12px",
                       background: "white",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #e5ede6",
                     }}
                     title={
                       <span className="font-semibold text-slate-800 text-base">
@@ -720,7 +720,7 @@ const ViewClientsBookings = () => {
                     style={{
                       borderRadius: "12px",
                       background: "white",
-                      border: "1px solid #e2e8f0",
+                      border: "1px solid #e5ede6",
                       marginBottom: "16px",
                     }}
                     title={
@@ -750,8 +750,8 @@ const ViewClientsBookings = () => {
                         <div
                           className="flex items-center gap-3 p-3 rounded-lg"
                           style={{
-                            background: "#f8fafc",
-                            border: "1px solid #e2e8f0",
+                            background: "#f9fbf9",
+                            border: "1px solid #e5ede6",
                           }}
                         >
                           <CalendarOutlined className="text-slate-600" />
@@ -769,8 +769,8 @@ const ViewClientsBookings = () => {
                         <div
                           className="flex items-center gap-3 p-3 rounded-lg"
                           style={{
-                            background: "#f8fafc",
-                            border: "1px solid #e2e8f0",
+                            background: "#f9fbf9",
+                            border: "1px solid #e5ede6",
                           }}
                         >
                           <CalendarOutlined className="text-slate-600" />
@@ -788,8 +788,8 @@ const ViewClientsBookings = () => {
                         <div
                           className="flex items-center gap-3 p-3 rounded-lg"
                           style={{
-                            background: "#f8fafc",
-                            border: "1px solid #e2e8f0",
+                            background: "#f9fbf9",
+                            border: "1px solid #e5ede6",
                           }}
                         >
                           <EnvironmentOutlined className="text-slate-600" />
@@ -810,8 +810,8 @@ const ViewClientsBookings = () => {
                           <div
                             className="flex items-center gap-3 p-3 rounded-lg"
                             style={{
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
+                              background: "#f9fbf9",
+                              border: "1px solid #e5ede6",
                             }}
                           >
                             <EnvironmentOutlined className="text-slate-600" />
@@ -833,8 +833,8 @@ const ViewClientsBookings = () => {
                           <div
                             className="flex items-center gap-3 p-3 rounded-lg"
                             style={{
-                              background: "#f8fafc",
-                              border: "1px solid #e2e8f0",
+                              background: "#f9fbf9",
+                              border: "1px solid #e5ede6",
                             }}
                           >
                             <UserOutlined className="text-slate-600" />
@@ -861,7 +861,7 @@ const ViewClientsBookings = () => {
                   style={{
                     borderRadius: "12px",
                     background: "white",
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid #e5ede6",
                   }}
                   title={
                     <span className="font-semibold text-slate-800 text-base">
@@ -1140,7 +1140,7 @@ const ViewClientsBookings = () => {
                                   loading={isSaving}
                                   style={{
                                     background:
-                                      "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                      "linear-gradient(135deg, #2f8a4b 0%, #1f6f3a 100%)",
                                     border: "none",
                                   }}
                                 >
@@ -1186,7 +1186,7 @@ const ViewClientsBookings = () => {
                       style={{
                         borderRadius: "12px",
                         background: "white",
-                        border: "1px solid #e2e8f0",
+                        border: "1px solid #e5ede6",
                         marginBottom: "16px",
                       }}
                       title={
@@ -1218,8 +1218,8 @@ const ViewClientsBookings = () => {
                             <div
                               className="flex items-center gap-3 p-3 rounded-lg"
                               style={{
-                                background: "#f8fafc",
-                                border: "1px solid #e2e8f0",
+                                background: "#f9fbf9",
+                                border: "1px solid #e5ede6",
                               }}
                             >
                               <CalendarOutlined className="text-slate-600" />
@@ -1237,8 +1237,8 @@ const ViewClientsBookings = () => {
                             <div
                               className="flex items-center gap-3 p-3 rounded-lg"
                               style={{
-                                background: "#f8fafc",
-                                border: "1px solid #e2e8f0",
+                                background: "#f9fbf9",
+                                border: "1px solid #e5ede6",
                               }}
                             >
                               <CalendarOutlined className="text-slate-600" />
@@ -1256,8 +1256,8 @@ const ViewClientsBookings = () => {
                             <div
                               className="flex items-center gap-3 p-3 rounded-lg"
                               style={{
-                                background: "#f8fafc",
-                                border: "1px solid #e2e8f0",
+                                background: "#f9fbf9",
+                                border: "1px solid #e5ede6",
                               }}
                             >
                               <EnvironmentOutlined className="text-slate-600" />
@@ -1278,8 +1278,8 @@ const ViewClientsBookings = () => {
                               <div
                                 className="flex items-center gap-3 p-3 rounded-lg"
                                 style={{
-                                  background: "#f8fafc",
-                                  border: "1px solid #e2e8f0",
+                                  background: "#f9fbf9",
+                                  border: "1px solid #e5ede6",
                                 }}
                               >
                                 <EnvironmentOutlined className="text-slate-600" />
@@ -1304,8 +1304,8 @@ const ViewClientsBookings = () => {
                               <div
                                 className="flex items-center gap-3 p-3 rounded-lg"
                                 style={{
-                                  background: "#f8fafc",
-                                  border: "1px solid #e2e8f0",
+                                  background: "#f9fbf9",
+                                  border: "1px solid #e5ede6",
                                 }}
                               >
                                 <UserOutlined className="text-slate-600" />
@@ -1721,7 +1721,7 @@ const ViewClientsBookings = () => {
                                         loading={isSaving}
                                         style={{
                                           background:
-                                            "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                                            "linear-gradient(135deg, #2f8a4b 0%, #1f6f3a 100%)",
                                           border: "none",
                                         }}
                                       >
@@ -1764,10 +1764,10 @@ const ViewClientsBookings = () => {
 
       <style>{`
         .custom-table .ant-table-thead > tr > th {
-          background: #f8fafc;
+          background: #f9fbf9;
           font-weight: 600;
-          color: #475569;
-          border-bottom: 1px solid #e2e8f0;
+          color: #4d6352;
+          border-bottom: 1px solid #e5ede6;
           font-size: 13px;
           padding: 16px;
         }
@@ -1777,17 +1777,17 @@ const ViewClientsBookings = () => {
         }
 
         .custom-table .ant-table-tbody > tr:hover > td {
-          background: #f8fafc !important;
+          background: #f9fbf9 !important;
         }
 
         .custom-table .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #f1f5f9;
+          border-bottom: 1px solid #f3f7f4;
           padding: 16px;
         }
 
         .custom-table .ant-pagination-item {
           border-radius: 8px;
-          border-color: #e2e8f0;
+          border-color: #e5ede6;
         }
 
         .custom-table .ant-pagination-item-active {
@@ -1815,7 +1815,7 @@ const ViewClientsBookings = () => {
         }
 
         .modern-tabs .ant-tabs-tab-active {
-          background: #f8fafc;
+          background: #f9fbf9;
         }
 
         .modern-tabs .ant-tabs-ink-bar {
@@ -1838,32 +1838,32 @@ const ViewClientsBookings = () => {
 
         .event-details-drawer .ant-drawer-header {
           background: white;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e5ede6;
           padding: 20px 24px;
         }
 
         .event-details-drawer .ant-drawer-body {
           padding: 24px !important;
-          background: #f8fafc;
+          background: #f9fbf9;
         }
 
         .event-details-drawer .ant-drawer-content {
-          background: #f8fafc;
+          background: #f9fbf9;
         }
 
         .event-details-drawer .ant-descriptions-item-label {
           font-weight: 600;
-          color: #64748b;
+          color: #6b8470;
           font-size: 13px;
         }
 
         .event-details-drawer .ant-descriptions-item-content {
-          color: #1e293b;
+          color: #243527;
           font-size: 13px;
         }
 
         .ant-card-head {
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #e5ede6;
           padding: 16px 20px;
         }
 
@@ -1876,17 +1876,17 @@ const ViewClientsBookings = () => {
         }
 
         ::-webkit-scrollbar-track {
-          background: #f1f5f9;
+          background: #f3f7f4;
           border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
+          background: #cfddd2;
           border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
+          background: #9bb19f;
         }
       `}</style>
     </div>

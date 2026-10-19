@@ -60,7 +60,7 @@ const VendorViewDrawer = ({
               icon={<FileWordOutlined />}
               onClick={() => onExportDocx(vendor)}
               style={{
-                background: "#2980b9",
+                background: "#449e56",
                 color: "#fff",
                 border: "none",
               }}

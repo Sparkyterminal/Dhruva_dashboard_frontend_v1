@@ -82,6 +82,38 @@
   --color-fuchsia-600: #a88a33;
   --color-fuchsia-700: #82682a;
 
+  /* success greens: Tailwind emerald/green become the brand forest scale */
+  --color-emerald-50: #f2f8f2;
+  --color-emerald-100: #e0eee1;
+  --color-emerald-200: #c0ddc3;
+  --color-emerald-300: #92c29a;
+  --color-emerald-400: #5da06a;
+  --color-emerald-500: #338147;
+  --color-emerald-600: #226a36;
+  --color-emerald-700: #17542a;
+  --color-emerald-800: #0f4220;
+  --color-emerald-900: #0b3d0b;
+  --color-green-50: #f2f8f2;
+  --color-green-100: #e0eee1;
+  --color-green-200: #c0ddc3;
+  --color-green-300: #92c29a;
+  --color-green-400: #5da06a;
+  --color-green-500: #338147;
+  --color-green-600: #226a36;
+  --color-green-700: #17542a;
+  --color-green-800: #0f4220;
+  --color-green-900: #0b3d0b;
+
+  /* pink only appears next to violet in gradients: treat it as gold */
+  --color-pink-50: #fbf7e6;
+  --color-pink-100: #f5edc4;
+  --color-pink-200: #ede09c;
+  --color-pink-300: #e0d085;
+  --color-pink-400: #d3be62;
+  --color-pink-500: #c4a747;
+  --color-pink-600: #a88a33;
+  --color-pink-700: #82682a;
+
   /* Neutrals: slate/gray lean slightly green so text and borders sit with the brand */
   --color-slate-50: #f5f7f4;
   --color-slate-100: #eaeee9;
@@ -142,17 +174,14 @@ body {
 h1,
 h2,
 .font-display,
+h1.ant-typography,
+h2.ant-typography,
 .ant-typography h1,
 .ant-typography h2 {
   font-family: var(--font-display);
   font-weight: 600;
   letter-spacing: -0.01em;
   color: var(--brand);
-}
-
-/* The old home screens set this class; keep any stragglers on the new body font. */
-.font-\[cormoreg\] {
-  font-family: var(--font-sans);
 }
 
 /* Visible keyboard focus everywhere. */

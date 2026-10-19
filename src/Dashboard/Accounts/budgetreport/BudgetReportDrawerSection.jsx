@@ -52,7 +52,7 @@ const BudgetReportDrawerSection = ({ budgetReport, count }) => {
       style={{
         borderRadius: 12,
         background: "white",
-        border: "1px solid #e2e8f0",
+        border: "1px solid #e5ede6",
       }}
       title={
         <div className="flex flex-wrap items-center gap-2">

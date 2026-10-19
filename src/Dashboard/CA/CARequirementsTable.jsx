@@ -691,7 +691,7 @@ const CARequirementsTable = () => {
                 ? "#991b1b"
                 : priority === "MEDIUM"
                   ? "#92400e"
-                  : "#1e40af",
+                  : "#3a934c",
             borderRadius: 6,
             border: "none",
             fontWeight: 700,
@@ -897,7 +897,7 @@ const CARequirementsTable = () => {
                 disabled={isApproving}
                 onClick={() => handleComplete(row)}
                 icon={<CheckCircleOutlined />}
-                style={{ background: "#10b981", borderColor: "#10b981" }}
+                style={{ background: "#2f8a4b", borderColor: "#2f8a4b" }}
               >
                 Approve
               </Button>
@@ -1113,7 +1113,7 @@ const CARequirementsTable = () => {
           text-align: center;
           font-size: 42px;
           font-weight: 600;
-          color: #1f2937;
+          color: #243227;
           margin-bottom: 8px;
           letter-spacing: -0.02em;
         }
@@ -1124,11 +1124,11 @@ const CARequirementsTable = () => {
           margin-bottom: 32px;
         }
         .ca-requirements-page .ant-table-thead > tr > th {
-          background: #0f172a !important;
+          background: #142517 !important;
           color: #fff !important;
           font-size: 15px !important;
           font-weight: 600 !important;
-          border-bottom: 2px solid #e2e8f0 !important;
+          border-bottom: 2px solid #e5ede6 !important;
           padding: 14px 12px !important;
         }
         .ca-requirements-page .ant-table-tbody > tr > td {
@@ -1137,7 +1137,7 @@ const CARequirementsTable = () => {
           padding: 12px !important;
         }
         .ca-requirements-page .ant-table-tbody > tr:hover > td {
-          background: #f8fafc !important;
+          background: #f9fbf9 !important;
         }
         .ca-requirements-page .ca-row-completed {
           background: #f0fdf4 !important;
@@ -1173,7 +1173,7 @@ const CARequirementsTable = () => {
         .ca-requirements-page .ant-collapse-content {
           background: #fff;
           border-radius: 0 0 12px 12px;
-          border: 1px solid #e2e8f0;
+          border: 1px solid #e5ede6;
           border-top: none;
         }
         .ca-requirements-page .ant-collapse-content-box {
@@ -1196,7 +1196,7 @@ const CARequirementsTable = () => {
           padding: 20px 24px;
           border-radius: 16px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-          border: 1px solid #e5e7eb;
+          border: 1px solid #e6eae7;
         }
         .ca-requirements-page .ca-stat-card {
           border-radius: 16px;
@@ -1255,7 +1255,7 @@ const CARequirementsTable = () => {
               className="ca-stat-card"
               hoverable
               style={{
-                background: "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                background: "linear-gradient(135deg, #2f8a4b 0%, #1f6f3a 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}

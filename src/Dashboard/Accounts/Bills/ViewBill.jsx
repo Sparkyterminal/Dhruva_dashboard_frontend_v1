@@ -39,7 +39,7 @@ const customStyles = `
 
   .table-wrapper .ant-table {
     background: transparent;
-    font-family: 'cormoreg', sans-serif;
+    font-family: inherit;
   }
 
   .table-wrapper .ant-table-thead > tr > th {
@@ -115,27 +115,27 @@ const customStyles = `
   }
 
   .fc {
-    font-family: 'cormoreg', sans-serif;
+    font-family: inherit;
   }
   
   .fc .fc-toolbar-title {
     font-size: 1.75rem;
     font-weight: 700;
-    color: #1f2937;
+    color: #243227;
   }
   
   .fc-theme-standard td, .fc-theme-standard th {
-    border-color: #e5e7eb;
+    border-color: #e6eae7;
   }
   
   .fc-theme-standard .fc-scrollgrid {
-    border-color: #e5e7eb;
+    border-color: #e6eae7;
   }
   
   .fc .fc-daygrid-day-number {
     padding: 8px;
     font-weight: 600;
-    color: #374151;
+    color: #3c4c3f;
   }
   
   .fc .fc-daygrid-day.fc-day-today {
@@ -143,9 +143,9 @@ const customStyles = `
   }
   
   .fc .fc-col-header-cell {
-    background-color: #f9fafb;
+    background-color: #f9fbfa;
     font-weight: 600;
-    color: #4b5563;
+    color: #505e53;
     padding: 12px 0;
   }
   
@@ -799,7 +799,7 @@ const ViewBill = () => {
         // Determine color based on status
         let backgroundColor = "#f59e0b"; // yellow for pending
         if (isPaid) {
-          backgroundColor = "#10b981"; // green for paid
+          backgroundColor = "#2f8a4b"; // green for paid
         } else {
           const dueDate = new Date(year, currentMonth, actualDay);
           if (now > dueDate) {
@@ -860,7 +860,7 @@ const ViewBill = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative font-[cormoreg]">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
       <style>{customStyles}</style>
 
       <div
@@ -1209,7 +1209,7 @@ const ViewBill = () => {
         styles={{
           body: {
             padding: "24px",
-            background: "linear-gradient(to bottom, #f8fafc, #f1f5f9)",
+            background: "linear-gradient(to bottom, #f9fbf9, #f3f7f4)",
           },
         }}
       >

@@ -37,7 +37,7 @@ const BalanceValueCard = ({ title, amount, valueColor }) => {
     <Card
       style={{
         borderRadius: 12,
-        border: "1px solid #e2e8f0",
+        border: "1px solid #e5ede6",
         background: "#ffffff",
       }}
       styles={{ body: { padding: "14px 16px" } }}
@@ -51,7 +51,7 @@ const BalanceValueCard = ({ title, amount, valueColor }) => {
           fontSize: 22,
           lineHeight: 1.1,
           fontWeight: 800,
-          color: valueColor || "#0f172a",
+          color: valueColor || "#142517",
         }}
       >
         {formatAmountINR(safeAmount)}

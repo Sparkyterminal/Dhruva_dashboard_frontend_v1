@@ -37,7 +37,7 @@ const customStyles = `
     font-weight: 600;
     font-size: 16px;
     padding: 12px 24px;
-    color: #4b5563;
+    color: #505e53;
     transition: all 0.3s ease;
   }
 
@@ -56,7 +56,7 @@ const customStyles = `
 
   .custom-table .ant-table {
     background: transparent;
-    font-family: 'cormoreg', sans-serif;
+    font-family: inherit;
   }
 
   .custom-table .ant-table-thead > tr > th {
@@ -337,7 +337,7 @@ const Departmentwise = () => {
   const totalPaid = requests.reduce((sum, req) => sum + (req.amount_paid || 0), 0);
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative font-[cormoreg]">
+    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
       <style>{customStyles}</style>
 
       {/* Animated Gradient Background */}

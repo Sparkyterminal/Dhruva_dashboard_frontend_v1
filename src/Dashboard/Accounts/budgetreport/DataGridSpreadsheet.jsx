@@ -430,7 +430,7 @@ const DataGridSpreadsheet = ({
             alignItems: "center",
             padding: "0 8px",
             cursor: "pointer",
-            color: params.value ? "#1a1a1a" : "#94a3b8",
+            color: params.value ? "#1a1a1a" : "#9bb19f",
             fontSize: "13px",
           }}
           title={params.value ? displayValue : "Click to select vendor"}
@@ -749,7 +749,7 @@ const DataGridSpreadsheet = ({
               ? `₹${formatIndianRupee(params.value)}`
               : "",
         cellStyle: (params) => ({
-          backgroundColor: params.data.isGroupRow ? "#e2e8f0" : "#f8fafc",
+          backgroundColor: params.data.isGroupRow ? "#e5ede6" : "#f9fbf9",
           color: "#1a1a1a",
           fontWeight: params.data.isGroupRow ? 700 : 400,
         }),
@@ -771,7 +771,7 @@ const DataGridSpreadsheet = ({
       //     if (params.data?.isGroupRow) {
       //       return {
       //         backgroundColor: "#e0eee1",
-      //         color: "#1e40af",
+      //         color: "#3a934c",
       //         fontWeight: 700,
       //         fontSize: "15px",
       //         display: "flex",
@@ -779,7 +779,7 @@ const DataGridSpreadsheet = ({
       //         justifyContent: "flex-end",
       //       };
       //     }
-      //     return { backgroundColor: "#f8fafc", color: "#1a1a1a" };
+      //     return { backgroundColor: "#f9fbf9", color: "#1a1a1a" };
       //   },
       //   cellClass: "grand-total-cell",
       // },
@@ -814,7 +814,7 @@ const DataGridSpreadsheet = ({
         width: 180,
         editable: false,
         cellStyle: (params) => ({
-          backgroundColor: params.data.isGroupRow ? "#e2e8f0" : "#f8fafc",
+          backgroundColor: params.data.isGroupRow ? "#e5ede6" : "#f9fbf9",
           color: "#1a1a1a",
         }),
       },
@@ -824,7 +824,7 @@ const DataGridSpreadsheet = ({
         width: 160,
         editable: (params) => !params.data?.isGroupRow,
         cellStyle: () => ({
-        //   backgroundColor: params.data.isGroupRow ? "#e2e8f0" : "#f8fafc",
+        //   backgroundColor: params.data.isGroupRow ? "#e5ede6" : "#f9fbf9",
           color: "#1a1a1a",
         }),
       },
@@ -1083,7 +1083,7 @@ const DataGridSpreadsheet = ({
     }
     if (params.data?.isGroupRow) {
       return {
-        backgroundColor: "#e2e8f0",
+        backgroundColor: "#e5ede6",
         fontWeight: 700,
         color: "#1a1a1a",
         fontSize: "14px",

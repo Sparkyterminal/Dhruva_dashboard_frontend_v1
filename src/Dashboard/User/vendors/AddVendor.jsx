@@ -127,7 +127,7 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
         maxWidth: 800,
         margin: "auto",
         padding: 20,
-        fontFamily: "cormoreg",
+        fontFamily: "inherit",
         paddingTop: 10,
       }}
     >
@@ -142,7 +142,7 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
             >
               <span
                 style={{ borderBottom: "none" }}
-                className="back-button-text font-[cormoreg]"
+                className="back-button-text"
               >
                 Back
               </span>

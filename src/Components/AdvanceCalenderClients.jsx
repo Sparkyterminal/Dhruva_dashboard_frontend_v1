@@ -147,15 +147,15 @@ const AdvanceCalendarClients = () => {
                   pendingAmount: expectedAmount - receivedAmount,
                 },
                 backgroundColor: isFullyPaid
-                  ? "#10b981"
+                  ? "#2f8a4b"
                   : isPending
                   ? "#f59e0b"
                   : "#6b7280",
                 borderColor: isFullyPaid
-                  ? "#059669"
+                  ? "#1f6f3a"
                   : isPending
                   ? "#d97706"
-                  : "#4b5563",
+                  : "#505e53",
                 textColor: "#ffffff",
               });
             } catch (error) {
@@ -347,21 +347,21 @@ const AdvanceCalendarClients = () => {
         .fc .fc-toolbar-title {
           font-size: 1.75rem;
           font-weight: 700;
-          color: #1f2937;
+          color: #243227;
         }
         
         .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc-theme-standard .fc-scrollgrid {
-          border-color: #e5e7eb;
+          border-color: #e6eae7;
         }
         
         .fc .fc-daygrid-day-number {
           padding: 8px;
           font-weight: 600;
-          color: #374151;
+          color: #3c4c3f;
         }
         
         .fc .fc-daygrid-day.fc-day-today {
@@ -369,9 +369,9 @@ const AdvanceCalendarClients = () => {
         }
         
         .fc .fc-col-header-cell {
-          background-color: #f9fafb;
+          background-color: #f9fbfa;
           font-weight: 600;
-          color: #4b5563;
+          color: #505e53;
           padding: 12px 0;
         }
         
@@ -401,8 +401,8 @@ const AdvanceCalendarClients = () => {
         }
         
         .fc .fc-button:hover {
-          background-color: #6d28d9;
-          border-color: #6d28d9;
+          background-color: #4ab760;
+          border-color: #4ab760;
         }
         
         .fc .fc-button-primary:disabled {

@@ -82,14 +82,14 @@ const ViewVendorDetailsContent = ({ vendor, isMobile = false }) => {
             gridTemplateColumns: isMobile ? "1fr" : "180px 1fr",
             gap: "12px",
             padding: "14px",
-            background: index % 2 === 0 ? "#faf8fe" : "#fff",
+            background: index % 2 === 0 ? "#f9fdfa" : "#fff",
             borderRadius: "10px",
             transition: "all 0.2s",
           }}
         >
           <span
             style={{
-              color: "#32255e",
+              color: "#305337",
               fontWeight: 700,
               fontSize: "15px",
             }}
@@ -99,7 +99,7 @@ const ViewVendorDetailsContent = ({ vendor, isMobile = false }) => {
           <span
             style={{
               wordBreak: "break-word",
-              color: "#5b5270",
+              color: "#586a5b",
               fontSize: "15px",
             }}
           >

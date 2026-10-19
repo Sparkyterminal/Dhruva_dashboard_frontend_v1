@@ -157,7 +157,7 @@
 //         maxWidth: 800,
 //         margin: "auto",
 //         padding: 20,
-//         fontFamily: "cormoreg",
+//         fontFamily: "inherit",
 //         paddingTop: 10,
 //       }}
 //     >
@@ -171,7 +171,7 @@
 //           >
 //             <span
 //               style={{ borderBottom: "none" }}
-//               className="back-button-text font-[cormoreg]"
+//               className="back-button-text"
 //             >
 //               Back
 //             </span>
@@ -684,7 +684,7 @@ const EditVendor = () => {
         maxWidth: 800,
         margin: "auto",
         padding: 20,
-        fontFamily: "cormoreg",
+        fontFamily: "inherit",
         paddingTop: 10,
       }}
     >
@@ -698,7 +698,7 @@ const EditVendor = () => {
           >
             <span
               style={{ borderBottom: "none" }}
-              className="back-button-text font-[cormoreg]"
+              className="back-button-text"
             >
               Back
             </span>

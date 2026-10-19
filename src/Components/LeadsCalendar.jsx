@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 
 const STATUS_COLORS = {
   Cancelled: { bg: "#fecaca", border: "#ef4444", text: "#991b1b" },
-  Confirmed: { bg: "#bbf7d0", border: "#22c55e", text: "#166534" },
+  Confirmed: { bg: "#bbf7d0", border: "#338147", text: "#166534" },
   Inprogress: { bg: "#fef9c3", border: "#eab308", text: "#854d0e" },
 };
 
@@ -188,12 +188,12 @@ const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
     <div className="min-h-screen p-6">
       <style>{`
         .fc { font-family: system-ui, -apple-system, sans-serif; }
-        .fc .fc-toolbar-title { font-size: 1.5rem; font-weight: 600; color: #1f2937; }
-        .fc-theme-standard td, .fc-theme-standard th { border-color: #e5e7eb; }
-        .fc-theme-standard .fc-scrollgrid { border-color: #e5e7eb; }
-        .fc .fc-daygrid-day-number { padding: 8px; font-weight: 500; color: #374151; }
+        .fc .fc-toolbar-title { font-size: 1.5rem; font-weight: 600; color: #243227; }
+        .fc-theme-standard td, .fc-theme-standard th { border-color: #e6eae7; }
+        .fc-theme-standard .fc-scrollgrid { border-color: #e6eae7; }
+        .fc .fc-daygrid-day-number { padding: 8px; font-weight: 500; color: #3c4c3f; }
         .fc .fc-daygrid-day.fc-day-today { background-color: #fef3c7 !important; }
-        .fc .fc-col-header-cell { background-color: #f9fafb; font-weight: 500; color: #4b5563; padding: 12px 0; }
+        .fc .fc-col-header-cell { background-color: #f9fbfa; font-weight: 500; color: #505e53; padding: 12px 0; }
         .fc-event { cursor: pointer; margin: 3px 2px; border-radius: 4px; border-width: 1px; opacity: 1 !important; }
         .fc-event:hover { opacity: 0.9 !important; }
         .fc .fc-button { background-color: #f59e0b; border-color: #f59e0b; text-transform: capitalize; }
@@ -253,7 +253,7 @@ const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
               <div className="flex items-center gap-2">
                 <span
                   className="w-4 h-4 rounded border"
-                  style={{ backgroundColor: "#bbf7d0", borderColor: "#22c55e" }}
+                  style={{ backgroundColor: "#bbf7d0", borderColor: "#338147" }}
                 />
                 <span className="text-sm text-gray-600">Confirmed</span>
               </div>

@@ -109,13 +109,13 @@ const ClientBookingsStatsCards = ({
           <MoneyCard
             title="Total expected"
             value={totalPayableRevenue ?? 0}
-            color="#10b981"
+            color="#2f8a4b"
             formatAmount={fmt}
           />
           <MoneyCard
             title="Total received"
             value={totalReceivedRevenue ?? 0}
-            color="#22c55e"
+            color="#338147"
             formatAmount={fmt}
           />
           <MoneyCard
@@ -139,13 +139,13 @@ const ClientBookingsStatsCards = ({
           <MoneyCard
             title="Total expected"
             value={allTotalExpected}
-            color="#10b981"
+            color="#2f8a4b"
             formatAmount={fmt}
           />
           <MoneyCard
             title="Confirmed — total business"
             value={allRollup.confirmedTotalExpectedAmount ?? 0}
-            color="#22c55e"
+            color="#338147"
             formatAmount={fmt}
           />
           <MoneyCard
@@ -170,7 +170,7 @@ const ClientBookingsStatsCards = ({
             title="Confirmed bookings"
             subtitle="Events marked as confirmed"
             value={allRollup.confirmedTotalBookingsNumber ?? 0}
-            color="#22c55e"
+            color="#338147"
           />
           <CountCard
             title="In progress bookings"
@@ -193,13 +193,13 @@ const ClientBookingsStatsCards = ({
           <MoneyCard
             title="Total expected"
             value={bucket.totalExpectedAmount ?? 0}
-            color="#10b981"
+            color="#2f8a4b"
             formatAmount={fmt}
           />
           <MoneyCard
             title="Total received"
             value={bucket.totalReceivedAmount ?? 0}
-            color="#22c55e"
+            color="#338147"
             formatAmount={fmt}
           />
           <MoneyCard
@@ -225,7 +225,7 @@ const ClientBookingsStatsCards = ({
             title="Where payment has started"
             subtitle="Bookings where the client has already paid something (even a small part). Does not mean fully paid."
             value={bucket.bookingsWithAnyReceiptCount ?? 0}
-            color="#22c55e"
+            color="#338147"
           />
           <CountCard
             title="Where full amount is not yet settled"
@@ -255,7 +255,7 @@ const ClientBookingsStatsCards = ({
               }
               value={bucket.totalBookingsNumber ?? 0}
               valueStyle={{
-                color: "#1e293b",
+                color: "#243527",
                 fontSize: "26px",
                 fontWeight: 700,
                 marginTop: "8px",
@@ -266,7 +266,7 @@ const ClientBookingsStatsCards = ({
         <Col {...colThree}>
           <Card
             className="border-0 h-full"
-            style={cardStyle("#10b981")}
+            style={cardStyle("#2f8a4b")}
             bodyStyle={{ padding: "20px" }}
           >
             <Statistic
@@ -277,7 +277,7 @@ const ClientBookingsStatsCards = ({
               }
               value={bucket.totalExpectedAmount ?? 0}
               valueStyle={{
-                color: "#1e293b",
+                color: "#243527",
                 fontSize: "26px",
                 fontWeight: 700,
                 marginTop: "8px",
@@ -307,7 +307,7 @@ const ClientBookingsStatsCards = ({
               }
               value={bucket.totalBookingsNumber ?? 0}
               valueStyle={{
-                color: "#1e293b",
+                color: "#243527",
                 fontSize: "26px",
                 fontWeight: 700,
                 marginTop: "8px",
@@ -318,7 +318,7 @@ const ClientBookingsStatsCards = ({
         <Col {...colThree}>
           <Card
             className="border-0 h-full"
-            style={cardStyle("#94a3b8")}
+            style={cardStyle("#9bb19f")}
             bodyStyle={{ padding: "20px" }}
           >
             <Statistic
@@ -329,7 +329,7 @@ const ClientBookingsStatsCards = ({
               }
               value={bucket.totalExpectedAmount ?? 0}
               valueStyle={{
-                color: "#1e293b",
+                color: "#243527",
                 fontSize: "26px",
                 fontWeight: 700,
                 marginTop: "8px",

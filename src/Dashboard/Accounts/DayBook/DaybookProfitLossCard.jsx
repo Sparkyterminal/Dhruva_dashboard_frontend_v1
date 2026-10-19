@@ -13,7 +13,7 @@ const DaybookProfitLossCard = ({ profitAndLoss }) => {
 
   const isProfit = String(type).toUpperCase() === "PROFIT" || value >= 0;
   const gradient = isProfit
-    ? "linear-gradient(135deg,#22c55e 0%,#16a34a 100%)"
+    ? "linear-gradient(135deg,#338147 0%,#226a36 100%)"
     : "linear-gradient(135deg,#ef4444 0%,#dc2626 100%)";
   const icon = isProfit ? "📈" : "📉";
 

@@ -395,7 +395,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       width: 140,
       align: "right",
       render: (v) => (
-        <Text strong style={{ color: "#0f172a" }}>
+        <Text strong style={{ color: "#142517" }}>
           {formatAmountINR(v)}
         </Text>
       ),
@@ -637,7 +637,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               style={{
                 display: "block",
                 marginBottom: 6,
-                color: "#475569",
+                color: "#4d6352",
                 fontSize: 13,
               }}
             >
@@ -659,7 +659,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               style={{
                 display: "block",
                 marginBottom: 6,
-                color: "#475569",
+                color: "#4d6352",
                 fontSize: 13,
               }}
             >
@@ -687,7 +687,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               style={{
                 display: "block",
                 marginBottom: 6,
-                color: "#475569",
+                color: "#4d6352",
                 fontSize: 13,
               }}
             >
@@ -713,7 +713,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               style={{
                 display: "block",
                 marginBottom: 6,
-                color: "#475569",
+                color: "#4d6352",
                 fontSize: 13,
               }}
             >
@@ -737,7 +737,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               Clear filters
             </Button>
           </Col>
-          <Col xs={24} sm={12} md={5} lg={5}>
+          <Col xs={24} sm={12} md={4} lg={4}>
             <ExcelDownloadButton
               onDownload={handleDownloadExcel}
               style={{ width: "100%" }}
@@ -782,7 +782,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               children: (
                 <div
                   style={{
-                    border: "1px solid #e2e8f0",
+                    border: "1px solid #e5ede6",
                     borderRadius: 14,
                     padding: 14,
                     background: "#ffffff",
@@ -859,14 +859,14 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
               >
                 Status
               </div>
-              <div style={{ fontSize: 15, color: "#0f172a" }}>
+              <div style={{ fontSize: 15, color: "#142517" }}>
                 {viewingLead.status || "—"}
                 {viewingLead.convertedByMarketing ? (
                   <Tag color="success" style={{ marginLeft: 8 }}>
@@ -879,14 +879,14 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
               >
                 Estimated budget
               </div>
-              <div style={{ fontSize: 15, color: "#0f172a" }}>
+              <div style={{ fontSize: 15, color: "#142517" }}>
                 {formatAmountINR(viewingLead.estimatedBudget)}
               </div>
             </div>
@@ -894,14 +894,14 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
               >
                 Assign to
               </div>
-              <div style={{ fontSize: 15, color: "#0f172a" }}>
+              <div style={{ fontSize: 15, color: "#142517" }}>
                 {getPersonDisplayName(viewingLead.assignedTo) || "—"}
               </div>
             </div>
@@ -909,7 +909,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
@@ -919,7 +919,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 15,
-                  color: "#0f172a",
+                  color: "#142517",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
@@ -931,7 +931,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
@@ -941,7 +941,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 15,
-                  color: "#0f172a",
+                  color: "#142517",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}
@@ -953,14 +953,14 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
               >
                 Start date
               </div>
-              <div style={{ fontSize: 15, color: "#0f172a" }}>
+              <div style={{ fontSize: 15, color: "#142517" }}>
                 {formatDateDisplay(viewingLead.startDate)}
               </div>
             </div>
@@ -968,14 +968,14 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
               >
                 End date
               </div>
-              <div style={{ fontSize: 15, color: "#0f172a" }}>
+              <div style={{ fontSize: 15, color: "#142517" }}>
                 {formatDateDisplay(viewingLead.endDate)}
               </div>
             </div>
@@ -983,7 +983,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "#6b8470",
                   fontWeight: 600,
                   marginBottom: 4,
                 }}
@@ -993,7 +993,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               <div
                 style={{
                   fontSize: 15,
-                  color: "#0f172a",
+                  color: "#142517",
                   whiteSpace: "pre-wrap",
                   wordBreak: "break-word",
                 }}

@@ -223,7 +223,7 @@ const BudgetReportExcelWorkspace = ({ mode = "edit" }) => {
         flexDirection: "column",
         height: "100vh",
         overflow: "hidden",
-        background: "#f8fafc",
+        background: "#f9fbf9",
       }}
     >
       <div
@@ -232,7 +232,7 @@ const BudgetReportExcelWorkspace = ({ mode = "edit" }) => {
           alignItems: "center",
           gap: 12,
           padding: "12px 16px",
-          borderBottom: "1px solid #e2e8f0",
+          borderBottom: "1px solid #e5ede6",
           background: "#ffffff",
           flexShrink: 0,
           flexWrap: "wrap",
@@ -327,7 +327,7 @@ const BudgetReportExcelWorkspace = ({ mode = "edit" }) => {
             height: "100%",
             borderRadius: 12,
             overflow: "hidden",
-            border: "1px solid #e2e8f0",
+            border: "1px solid #e5ede6",
             background: "#fff",
             position: "relative",
           }}

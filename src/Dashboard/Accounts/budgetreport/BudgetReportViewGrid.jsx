@@ -27,7 +27,7 @@ const BudgetReportViewGrid = ({ rowData, pinnedBottomRowData = [] }) => {
         width: 240,
         cellStyle: (params) =>
           params.data?.isGroupRow
-            ? { fontWeight: 700, backgroundColor: "#e2e8f0" }
+            ? { fontWeight: 700, backgroundColor: "#e5ede6" }
             : {},
       },
       { headerName: "Size", field: "size", width: 110 },
@@ -118,7 +118,7 @@ const BudgetReportViewGrid = ({ rowData, pinnedBottomRowData = [] }) => {
     if (params.node.rowPinned === "bottom")
       return { fontWeight: 700, backgroundColor: "#d1fae5", fontSize: "14px" };
     if (params.data?.isGroupRow)
-      return { backgroundColor: "#e2e8f0", fontWeight: 700, fontSize: "14px" };
+      return { backgroundColor: "#e5ede6", fontWeight: 700, fontSize: "14px" };
     return {};
   };
 

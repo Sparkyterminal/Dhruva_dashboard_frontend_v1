@@ -80,7 +80,7 @@ const VendorEventsTab = ({ vendorId, config }) => {
 
   if (!vendorId) {
     return (
-      <div style={{ padding: 16, color: "#5b5270" }}>
+      <div style={{ padding: 16, color: "#586a5b" }}>
         No vendor selected.
       </div>
     );
@@ -118,7 +118,7 @@ const VendorEventsTab = ({ vendorId, config }) => {
 
   if (eventsWithRows.length === 0) {
     return (
-      <div style={{ padding: 16, color: "#5b5270" }}>
+      <div style={{ padding: 16, color: "#586a5b" }}>
         This vendor is not linked to any budget report line items yet.
       </div>
     );
@@ -203,7 +203,7 @@ const VendorEventsTab = ({ vendorId, config }) => {
           <Card
             key={report._id || index}
             title={
-              <span style={{ fontSize: 15, fontWeight: 600, color: "#0f172a" }}>
+              <span style={{ fontSize: 15, fontWeight: 600, color: "#142517" }}>
                 {eventName}
               </span>
             }
