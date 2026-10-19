@@ -128,7 +128,6 @@ const AddBill = () => {
       defaultAmount: values.amount,
     };
 
-    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
       const response = await fetch(`${API_BASE_URL}bills`, {

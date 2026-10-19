@@ -1,21 +1,5 @@
 // /* eslint-disable no-unused-vars */
-// import React, { useEffect, useState } from "react";
-// import {
-//   Form,
-//   Input,
-//   Button,
-//   Row,
-//   Col,
-//   message,
-//   Select,
-//   Typography,
-// } from "antd";
 // const { Option } = Select;
-// import { LeftOutlined } from "@ant-design/icons";
-// import axios from "axios";
-// import { API_BASE_URL } from "@/config/config";
-// import { useNavigate, useParams } from "react-router-dom";
-// import { useSelector } from "react-redux";
 
 // const { Title } = Typography;
 
@@ -683,7 +667,6 @@ const EditVendor = () => {
       material_desc: values.material_desc || null,
     };
 
-    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     try {
       await axiosClient.put(`vendor/${id}`, payload, config);

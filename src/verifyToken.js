@@ -17,19 +17,16 @@ const verifyToken = function (token) {
 
     // If token is expired, return false status
     if (isMyTokenExpired) {
-      console.log("Token is expired");
       return data;
     }
 
     // Check if decoded token exists and has the right structure
     if (!decodedToken) {
-      console.log("Failed to decode token");
       return data;
     }
 
     // Check role - allow all roles except CUSTOMER
     if (decodedToken?.role === "CUSTOMER") {
-      console.log("Customer role not allowed");
       return data;
     }
 

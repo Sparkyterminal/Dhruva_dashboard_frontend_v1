@@ -13,7 +13,6 @@ import { useNavigate } from "react-router-dom";
 import { AgGridReact } from "ag-grid-react";
 import { AllCommunityModule, ModuleRegistry } from "ag-grid-community";
 import axiosClient from "@/api/axiosClient";
-import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { message, Modal } from "antd";
 import { emptyChildRow, buildGroupRow } from "./budgetReportUtils";
@@ -824,7 +823,7 @@ const DataGridSpreadsheet = ({
         field: "vendorContactNumber",
         width: 160,
         editable: (params) => !params.data?.isGroupRow,
-        cellStyle: (params) => ({
+        cellStyle: () => ({
         //   backgroundColor: params.data.isGroupRow ? "#e2e8f0" : "#f8fafc",
           color: "#1a1a1a",
         }),

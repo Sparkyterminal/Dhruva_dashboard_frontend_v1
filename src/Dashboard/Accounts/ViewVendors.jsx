@@ -1,34 +1,4 @@
 // /* eslint-disable no-unused-vars */
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { API_BASE_URL } from "@/config/config";
-// import { message, Collapse, Table, Button, Card, Input } from "antd";
-// import {
-//   EyeOutlined,
-//   FilePdfOutlined,
-//   FileWordOutlined,
-//   SearchOutlined,
-//   TeamOutlined,
-//   DownloadOutlined,
-// } from "@ant-design/icons";
-// import { useSelector } from "react-redux";
-// import { jsPDF } from "jspdf";
-// import autoTable from "jspdf-autotable";
-// import { motion } from "framer-motion";
-// import VendorViewDrawer from "./VendorViewDrawer";
-// import {
-//   Document,
-//   Packer,
-//   Paragraph,
-//   Table as DocxTable,
-//   TableCell,
-//   TableRow,
-//   WidthType,
-//   BorderStyle,
-//   AlignmentType,
-//   TextRun,
-// } from "docx";
-// import { saveAs } from "file-saver";
 
 // const { Panel } = Collapse;
 

@@ -12,13 +12,9 @@ import {
   message,
   Pagination,
 } from "antd";
-// Removed Ant Design icons imports, replaced by Lottie anims
-import Lottie from "lottie-react";
+import { CircleCheck, ClipboardList, Clock3 } from "lucide-react";
 import axiosClient from "@/api/axiosClient";
 import dayjs from "dayjs";
-import totalrequest from "../../assets/totaluser.json";
-import pendingrequest from "../../assets/pendinguser.json";
-import completedrequest from "../../assets/successuser.json";
 import {
   DollarOutlined,
   ClockCircleOutlined,
@@ -29,7 +25,6 @@ import {
   ShopOutlined,
 } from "@ant-design/icons";
 
-const iconStyle = { width: 40, height: 40 };
 
 const ViewRequirements = () => {
   const user = useSelector((state) => state.user.value);
@@ -409,7 +404,7 @@ const ViewRequirements = () => {
 
       <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={8}>
-          <Card className="shadow-md" style={{ backgroundColor: "#e6f7ff" }}>
+          <Card className="shadow-md">
             <Statistic
               title={
                 <span className="text-xl font-medium">
@@ -421,19 +416,13 @@ const ViewRequirements = () => {
                 color: "#17542a",
                 fontFamily: "Cormorant Garamond",
               }}
-              prefix={
-                <Lottie
-                  animationData={totalrequest}
-                  loop={true}
-                  style={iconStyle}
-                />
-              }
+              prefix={<ClipboardList size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={8}>
-          <Card className="shadow-md" style={{ backgroundColor: "#fffbe6" }}>
+          <Card className="shadow-md">
             <Statistic
               title={
                 <span className="text-xl font-medium">
@@ -442,22 +431,16 @@ const ViewRequirements = () => {
               }
               value={pendingCount}
               valueStyle={{
-                color: "#faad14",
+                color: "#a88a33",
                 fontFamily: "Cormorant Garamond",
               }}
-              prefix={
-                <Lottie
-                  animationData={pendingrequest}
-                  loop={true}
-                  style={iconStyle}
-                />
-              }
+              prefix={<Clock3 size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
             />
           </Card>
         </Col>
 
         <Col xs={24} sm={8}>
-          <Card className="shadow-md" style={{ backgroundColor: "#f6ffed" }}>
+          <Card className="shadow-md">
             <Statistic
               title={
                 <span className="text-xl font-medium">
@@ -466,16 +449,10 @@ const ViewRequirements = () => {
               }
               value={confirmedCount}
               valueStyle={{
-                color: "#52c41a",
+                color: "#2e7d32",
                 fontFamily: "Cormorant Garamond",
               }}
-              prefix={
-                <Lottie
-                  animationData={completedrequest}
-                  loop={true}
-                  style={iconStyle}
-                />
-              }
+              prefix={<CircleCheck size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
             />
           </Card>
         </Col>

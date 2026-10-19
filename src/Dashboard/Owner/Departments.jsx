@@ -60,7 +60,6 @@ const Departments = () => {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  console.log("user", user);
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -70,7 +69,6 @@ const Departments = () => {
     setLoading(true);
     try {
       const res = await axiosClient.get(`department/all`, config);
-      console.log("view departments", res.data);
       setDepartments(res.data.departments || []);
     } catch (err) {
       message.error("Failed to fetch departments");
@@ -94,7 +92,6 @@ const Departments = () => {
       default:
         route = `/user/departments/${departmentId}`;
         break;
-        route = `/user/departments/${departmentId}`;
     }
 
     navigate(route);

@@ -95,8 +95,6 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
       material_desc: values.material_desc || null,
     };
 
-    console.log("Selected Department ID:", values.depId);
-    console.log("Payload being sent:", JSON.stringify(payload, null, 2));
 
     axiosClient
       .post(`vendor`, payload, config)

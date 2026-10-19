@@ -281,4 +281,5 @@ const LeadForm = ({
 };
 
 export default LeadForm;
+// eslint-disable-next-line react-refresh/only-export-components
 export { STATUS_OPTIONS };

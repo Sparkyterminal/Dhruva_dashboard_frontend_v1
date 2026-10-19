@@ -224,3 +224,32 @@ h2,
   --fc-neutral-bg-color: #f2f5f1;
   --fc-now-indicator-color: var(--gold-deep);
 }
+
+/* ---- Full-screen loader ---- */
+.dhruva-loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  background: var(--brand);
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.dhruva-loader-text {
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  animation: dhruva-breathe 1.6s ease-in-out infinite;
+}
+
+@keyframes dhruva-breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}

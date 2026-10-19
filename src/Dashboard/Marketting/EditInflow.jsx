@@ -480,30 +480,15 @@ const EditInflow = () => {
     const fetchAndPopulateEventData = async () => {
       // Wait for events, venues, and coordinators to be loaded first
       if (!id || events.length === 0 || venues.length === 0) {
-        console.log("⏳ Waiting for data to load...", {
-          id,
-          eventsLoaded: events.length > 0,
-          venuesLoaded: venues.length > 0,
-          coordinatorsLoaded: coordinators.length > 0,
-        });
         return;
       }
 
-      console.log("🔍 EditInflow - ID from URL params:", id);
-      console.log(
-        "🔍 EditInflow - Fetching event with URL:",
-        `${API_BASE_URL}events/${id}`,
-      );
-      console.log("✅ Venues available:", venues.length);
-      console.log("✅ Coordinators available:", coordinators.length);
 
       setInitialLoading(true);
       try {
         // Step 1: Fetch the event data
         const res = await axiosClient.get(`events/${id}`, axiosConfig);
         const event = res.data.event;
-        console.log("✅ Fetched event data:", event);
-        console.log("✅ Event ID from response:", event._id || event.id);
 
         // Step 2: Find the event in the events list
         // Handle both string and object eventName from API
@@ -516,9 +501,6 @@ const EditInflow = () => {
             ? event.eventName?.id
             : event.eventId;
 
-        console.log("🔍 Event name from API:", eventNameFromApi);
-        console.log("🔍 Event ID from API:", eventIdFromApi);
-        console.log("🔍 Available events:", events);
 
         // IMPORTANT: Match by ID first (most reliable), then by name as fallback
         const eventObj =
@@ -528,18 +510,15 @@ const EditInflow = () => {
               eventIdFromApi &&
               (e.id === eventIdFromApi || e._id === eventIdFromApi)
             ) {
-              console.log("✅ Matched event by ID:", e);
               return true;
             }
             // Fallback: match by name
             if (eventNameFromApi && e.name === eventNameFromApi) {
-              console.log("✅ Matched event by name:", e);
               return true;
             }
             return false;
           }) || null;
 
-        console.log("🔍 Final matched event object:", eventObj);
 
         if (!eventObj) {
           message.error("Event not found in events list");
@@ -603,14 +582,12 @@ const EditInflow = () => {
             })
             .filter(Boolean);
 
-          console.log("🔍 Selected event type IDs:", selectedTypeIds);
 
           setSelectedEventTypes(selectedTypeIds);
 
           // Check mode from advancePaymentType field
           const mode = event.advancePaymentType || "separate";
           setAdvanceMode(mode);
-          console.log("🔍 Advance Payment Mode from API:", mode);
 
           // Prepare form values
           // Extract IDs from objects for lead1 and lead2
@@ -663,7 +640,6 @@ const EditInflow = () => {
               return;
             }
 
-            console.log(`🔍 Processing event type ${idx}: typeId=${typeId}`);
 
             eventTypeDates[typeId] = {
               startDate: et.startDate ? dayjs(et.startDate) : undefined,
@@ -681,10 +657,6 @@ const EditInflow = () => {
                   (v) => v.name === et.venueLocation.name,
                 );
                 venueLocation = matchedVenue?.id || matchedVenue?._id;
-                console.log(
-                  `🔍 Matched venue by name "${et.venueLocation.name}":`,
-                  venueLocation,
-                );
               }
             } else {
               venueLocation = et.venueLocation;
@@ -713,21 +685,6 @@ const EditInflow = () => {
                 ? et.coordinator?.id || et.coordinator?._id
                 : et.coordinator;
 
-            console.log(
-              `🔍 Event Type ${typeId} Venue Location:`,
-              venueLocation,
-            );
-            console.log(`🔍 Event Type ${typeId} Sub Venue:`, subVenueLocation);
-            console.log(`🔍 Event Type ${typeId} Coordinator:`, coordinator);
-            console.log(
-              `🔍 Event Type ${typeId} Agreed Amount:`,
-              et.agreedAmount,
-            );
-            console.log(
-              `🔍 Event Type ${typeId} Account Amount:`,
-              et.accountAmount,
-            );
-            console.log(`🔍 Event Type ${typeId} Cash Amount:`, et.cashAmount);
 
             eventTypeMeta[typeId] = {
               venueLocation: venueLocation,
@@ -766,7 +723,6 @@ const EditInflow = () => {
 
           if (mode === "separate") {
             formValues.eventTypeAdvances = eventTypeAdvances;
-            console.log("🔍 Separate mode - event type meta:", eventTypeMeta);
           } else {
             // Complete package mode - get amounts and advances from first event type
             const firstEventType = eventTypesFromEvent[0];
@@ -792,18 +748,6 @@ const EditInflow = () => {
               updatedAt: adv.updatedAt,
             }));
 
-            console.log(
-              "🔍 Complete mode - Agreed Amount Total:",
-              formValues.agreedAmountTotal,
-            );
-            console.log(
-              "🔍 Complete mode - Account Amount:",
-              formValues.agreedAmountAccount,
-            );
-            console.log(
-              "🔍 Complete mode - Advances count:",
-              formValues.advances.length,
-            );
           }
 
           // Fetch sub-venues for each event type
@@ -817,7 +761,6 @@ const EditInflow = () => {
           form.setFieldsValue(formValues);
         } else {
           // Non-wedding event or event without event types
-          console.log("🔍 Processing non-wedding or single event type");
           const eventType = eventTypesFromEvent[0] || {};
 
           // Handle eventName as string or object
@@ -905,7 +848,6 @@ const EditInflow = () => {
           }
         }
 
-        console.log("✅ Form populated successfully");
       } catch (err) {
         console.error("Error fetching event:", err);
         message.error("Failed to fetch event data");
@@ -1202,12 +1144,6 @@ const EditInflow = () => {
       };
 
       // Log payload for debugging
-      console.log("🔥 FORM VALUES:", JSON.stringify(values, null, 2));
-      console.log(
-        "🔥 EVENT TYPE META:",
-        JSON.stringify(values.eventTypeMeta, null, 2),
-      );
-      console.log("🔥 Updating payload:", JSON.stringify(payload, null, 2));
 
       const response = await axiosClient.put(
         `events/${id}/edit`,

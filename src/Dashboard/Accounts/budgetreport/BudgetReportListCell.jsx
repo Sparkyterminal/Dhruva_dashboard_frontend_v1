@@ -26,7 +26,6 @@ import BudgetReportExcelViewDrawer from "./BudgetReportExcelViewDrawer";
 const BudgetReportListCell = ({
   record,
   getEventName = defaultGetEventName,
-  onView,
   onAfterMutation,
   accessToken,
   showAddNew = true,
@@ -249,4 +248,5 @@ const BudgetReportListCell = ({
 
 export default BudgetReportListCell;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { eventHasBudgetReport, getBudgetReportSourceEventId };

@@ -56,7 +56,6 @@ const AddChecklist = () => {
   const [loading, setLoading] = useState(false);
 
   const user = useSelector((state) => state.user.value);
-  const departmentId = user.departments[0]?.id;
 
   const config = {
     headers: {

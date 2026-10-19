@@ -102,7 +102,7 @@ const BalanceSheets = () => {
         pageSize: data?.limit ?? prev.pageSize,
         total: data?.totalEvents ?? events.length,
       }));
-    } catch (err) {
+    } catch {
       setRows([]);
       setSummary({
         totalPayableAmount: 0,

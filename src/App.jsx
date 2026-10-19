@@ -53,8 +53,6 @@ import EditBill from "./Dashboard/Accounts/Bills/EditBill";
 import ViewBill from "./Dashboard/Accounts/Bills/ViewBill";
 import ViewClientsBookings from "./Dashboard/Accounts/ViewClientsBookings";
 import Departmentwise from "./Dashboard/Accounts/Departmentwise";
-// import Daybookhome from "./Dashboard/Accounts/Daybookhome";
-// import ViewVendors from "./Dashboard/Accounts/ViewVendors";
 import ViewChecklist from "./Components/ViewChecklist";
 import EditChecklist from "./Components/EditChecklist";
 import AddChecklist from "./Components/AddChecklist";

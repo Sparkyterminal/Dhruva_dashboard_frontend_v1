@@ -1,338 +1,142 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { Layout, Menu, Button } from "antd";
+import React, { useMemo, useState } from "react";
+import { Layout, Menu } from "antd";
 import {
-  MenuUnfoldOutlined,
-  MenuFoldOutlined,
-  UserOutlined,
-  LogoutOutlined,
-  AppstoreOutlined,
-  PlusCircleOutlined,
-  EyeOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
+  CalendarClock,
+  Eye,
+  LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Plus,
+  UserRound,
+  Users,
+  Building2,
+} from "lucide-react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from "../reducers/users";
+import BrandMark from "../Components/BrandMark";
+import "./AdminLayout.css";
 
 const { Header, Sider, Content } = Layout;
 
-// Updated classic white and dark forest green theme
-const WHITE = "#ffffff";
-const DARK_FOREST_GREEN = "#0b3d0b"; // dark forest green color
-const TEXT_DARK = DARK_FOREST_GREEN;
+const icon = (glyph) => React.createElement(glyph, { size: 18, strokeWidth: 1.75 });
+
+const ADMIN_MENU_ITEMS = [
+  {
+    key: "Users",
+    icon: icon(Users),
+    label: "Users",
+    children: [
+      { key: "/dashboard/adduser", icon: icon(Plus), label: "Add Users" },
+      { key: "/dashboard/viewuser", icon: icon(Eye), label: "View Users" },
+    ],
+  },
+  {
+    key: "Departments",
+    icon: icon(Building2),
+    label: "Departments",
+    children: [
+      { key: "/dashboard/adddepartment", icon: icon(Plus), label: "Add Department" },
+      { key: "/dashboard/viewdepartment", icon: icon(Eye), label: "View Departments" },
+    ],
+  },
+  {
+    key: "Meetings",
+    icon: icon(CalendarClock),
+    label: "Meetings",
+    children: [
+      { key: "/dashboard/addmeeting", icon: icon(Plus), label: "Add Meetings" },
+      { key: "/dashboard/viewmeetings", icon: icon(Eye), label: "View Meetings" },
+    ],
+  },
+  {
+    key: "/dashboard/viewprojectcoordinator",
+    icon: icon(UserRound),
+    label: "View Project Coordinator",
+  },
+];
+
+const USER_MENU_ITEMS = [
+  { key: "/dashboard/getuserinfo", icon: icon(UserRound), label: "Get User Info" },
+];
+
+// Which submenu holds a given route, so the right group opens by itself.
+const parentOf = (items, path) =>
+  items.find((item) => item.children?.some((child) => child.key === path))?.key;
 
 const AdminLayout = () => {
-  const [collapsed, setCollapsed] = useState(false);
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [openKeys, setOpenKeys] = useState([]);
-  const borderRadiusLG = 8;
+  const [collapsed, setCollapsed] = useState(() => window.innerWidth < 1024);
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const location = useLocation();
+  const user = useSelector((state) => state.user.value);
+  const role = user.role || "USER";
 
-  // Get user role from redux (adjust according to your state shape)
-  const role = useSelector((state) => state.user.value.role || "USER");
-
-  //   useEffect(() => {
-  //     // Set selected menu item based on current route
-  //     const currentPath = location.pathname;
-  //     setSelectedKeys([currentPath]);
-
-  //     // Auto-open parent menu based on route
-  //     if (
-  //       currentPath.includes("/addmembership") ||
-  //       currentPath.includes("/viewmembership") ||
-  //       currentPath.includes("/membershipusers")
-  //     ) {
-  //       setOpenKeys(["Membership"]);
-  //     } else if (currentPath.includes("/workshop")) {
-  //       setOpenKeys(["workshops"]);
-  //     } else if (currentPath.includes("/classtype")) {
-  //       setOpenKeys(["ClassTypes"]);
-  //     } else if (currentPath.includes("/coach")) {
-  //       setOpenKeys(["AddCoach"]);
-  //     } else if (
-  //       currentPath.includes("/contactform") ||
-  //       currentPath.includes("/enquireform")
-  //     ) {
-  //       setOpenKeys(["ViewForms"]);
-  //     } else if (
-  //       currentPath.includes("/viewdemousers") ||
-  //       currentPath.includes("/viewallusers")
-  //     ) {
-  //       setOpenKeys(["ViewUsers"]);
-  //     }
-  //   }, [location.pathname]);
+  const menuItems = role === "ADMIN" ? ADMIN_MENU_ITEMS : USER_MENU_ITEMS;
+  const parentKey = useMemo(
+    () => parentOf(menuItems, location.pathname),
+    [menuItems, location.pathname],
+  );
+  const [openKeys, setOpenKeys] = useState(parentKey ? [parentKey] : []);
 
   const handleLogout = () => {
     dispatch(logout());
     navigate("/login", { replace: true });
   };
 
-  // Sidebar menu items for ADMIN
-  const adminMenuItems = [
-    {
-      key: "Users",
-      icon: <AppstoreOutlined style={{ color: DARK_FOREST_GREEN }} />,
-      label: <span style={{ color: TEXT_DARK }}>Users</span>,
-      children: [
-        {
-          key: "/dashboard/adduser",
-          icon: <PlusCircleOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>Add Users</span>,
-        },
-        {
-          key: "/dashboard/viewuser",
-          icon: <EyeOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>View Users</span>,
-        },
-      ],
-    },
-    {
-      key: "Departments",
-      icon: <AppstoreOutlined style={{ color: DARK_FOREST_GREEN }} />,
-      label: <span style={{ color: TEXT_DARK }}>Departments</span>,
-      children: [
-        {
-          key: "/dashboard/adddepartment",
-          icon: <PlusCircleOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>Add Department</span>,
-        },
-        {
-          key: "/dashboard/viewdepartment",
-          icon: <EyeOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>View Departments</span>,
-        },
-      ],
-    },
-    {
-      key: "Meetings",
-      icon: <AppstoreOutlined style={{ color: DARK_FOREST_GREEN }} />,
-      label: <span style={{ color: TEXT_DARK }}>Meetings</span>,
-      children: [
-        {
-          key: "/dashboard/addmeeting",
-          icon: <PlusCircleOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>Add Meetings</span>,
-        },
-        {
-          key: "/dashboard/viewmeetings",
-          icon: <EyeOutlined style={{ color: DARK_FOREST_GREEN }} />,
-          label: <span style={{ color: TEXT_DARK }}>View Meetings</span>,
-        },
-      ],
-    },
-    {
-      key: "/dashboard/viewprojectcoordinator",
-      icon: <UserOutlined style={{ color: DARK_FOREST_GREEN }} />,
-      label: <span style={{ color: TEXT_DARK }}>View Project Coordinator</span>,
-    },
-  ];
-
-  // Sidebar menu items for USER
-  const userMenuItems = [
-    {
-      key: "/dashboard/getuserinfo",
-      icon: <UserOutlined style={{ color: DARK_FOREST_GREEN }} />,
-      label: <span style={{ color: TEXT_DARK }}>Get User Info</span>,
-    },
-  ];
-
-  // Flatten menu items for Menu component
-  const getMenuItems = (items) =>
-    items.map((item) =>
-      item.children
-        ? {
-            ...item,
-            children: item.children.map((child) => ({
-              ...child,
-              onClick: child.onClick,
-            })),
-          }
-        : {
-            ...item,
-            onClick: item.onClick,
-          }
-    );
-
-  const handleOpenChange = (keys) => {
-    setOpenKeys(keys);
-  };
-
   return (
-    <Layout
-      style={{ minHeight: "100vh", background: WHITE, fontFamily: "glancyr" }}
-    >
+    <Layout className="admin-shell">
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
-        width={280}
-        collapsedWidth={130}
-        style={{
-          background: WHITE,
-          // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
-          boxShadow: "2px 0 8px rgba(11, 61, 11, 0.08)",
-        }}
+        width={272}
+        collapsedWidth={76}
+        className="admin-sider"
       >
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "24px 0 8px 0",
-            marginBottom: 8,
-          }}
-        >
-          {/* <img
-            src="/assets/dhruvalogo.png"
-            alt="Logo"
-            style={{ height: 100, width: 100, marginBottom: 8 }}
-          /> */}
-          <span
-            style={{
-              color: DARK_FOREST_GREEN,
-              fontWeight: 700,
-              fontSize: 18,
-              letterSpacing: 1,
-              textAlign: "center",
-            }}
-          >
-            {role === "ADMIN" ? "Admin" : "User"}
-          </span>
+        <div className="admin-brand">
+          {collapsed ? (
+            <img src="/assets/dhruvalogo-removed.png" alt="Dhruva" width={40} height={40} />
+          ) : (
+            <BrandMark markSize={42} wordSize={28} />
+          )}
         </div>
 
         <Menu
-          theme="light"
+          theme="dark"
           mode="inline"
-          inlineIndent={12}
-          selectedKeys={selectedKeys}
-          openKeys={openKeys}
-          onOpenChange={handleOpenChange}
-          style={{
-            background: WHITE,
-            color: TEXT_DARK,
-            fontWeight: 600,
-            fontSize: 16,
-            fontFamily: "glancyr",
-          }}
-          items={getMenuItems(
-            role === "ADMIN" ? adminMenuItems : userMenuItems
-          )}
+          inlineIndent={14}
+          selectedKeys={[location.pathname]}
+          openKeys={collapsed ? undefined : openKeys}
+          onOpenChange={setOpenKeys}
+          items={menuItems}
           onClick={({ key }) => {
-            if (key.startsWith("/dashboard")) {
-              navigate(key);
-            }
+            if (key.startsWith("/dashboard")) navigate(key);
           }}
         />
 
-        {/* Add custom CSS for text wrapping */}
-        <style>{`
-          .ant-menu-title-content {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          .ant-menu-item, .ant-menu-submenu-title {
-            overflow: hidden;
-          }
-          .ant-menu-submenu .ant-menu-item .ant-menu-title-content {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-          }
-          .ant-menu-inline .ant-menu-item {
-            overflow: hidden;
-          }
-        `}</style>
+        <button type="button" className="admin-signout" onClick={handleLogout}>
+          <LogOut size={18} strokeWidth={1.75} aria-hidden="true" />
+          {collapsed ? <span className="sr-only">Sign out</span> : "Sign out"}
+        </button>
       </Sider>
+
       <Layout>
-        <Header
-          style={{
-            padding: 0,
-            // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
-            background: WHITE,
-            boxShadow: "0 2px 8px rgba(11, 61, 11, 0.07)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            minHeight: 64,
-            position: "relative",
-            fontFamily: "glancyr",
-          }}
-        >
-          {/* Collapse Button on Left */}
-          <Button
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+        <Header className="admin-header">
+          <button
+            type="button"
+            className="admin-toggle"
             onClick={() => setCollapsed(!collapsed)}
-            style={{
-              fontSize: "20px",
-              width: 56,
-              height: 56,
-              marginLeft: 8,
-              color: TEXT_DARK,
-            }}
-          />
-
-          {/* Center Title */}
-          <div
-            style={{
-              position: "absolute",
-              left: 0,
-              right: 0,
-              textAlign: "center",
-              pointerEvents: "none",
-            }}
+            aria-label={collapsed ? "Expand menu" : "Collapse menu"}
           >
-            <span
-              style={{
-                fontFamily: "glancyr",
-                fontSize: 28,
-                color: TEXT_DARK,
-                letterSpacing: 1,
-                fontWeight: 600,
-              }}
-            >
-              Admin Dashboard
-            </span>
-          </div>
-
-          {/* Logout on Right */}
-          <Button
-            type="danger" // Change the logout button to Danger type
-            onClick={handleLogout}
-            icon={<LogoutOutlined />}
-            style={{
-              fontWeight: "bold",
-              marginRight: 16,
-              fontFamily: "glancyr",
-              color: WHITE,
-              borderColor: "red",
-              backgroundColor: "red",
-            }}
-          >
-            Logout
-          </Button>
+            {collapsed ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+          </button>
+          <h1 className="admin-title">{role === "ADMIN" ? "Admin dashboard" : "Dashboard"}</h1>
+          <span className="admin-user">{user.name}</span>
         </Header>
 
-        <Content
-          style={{
-            margin: "32px 16px",
-            padding: 32,
-            minHeight: 320,
-            // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
-            background: WHITE,
-            borderRadius: borderRadiusLG,
-            boxShadow: "0 2px 16px rgba(11, 61, 11, 0.06)",
-            fontFamily: "glancyr",
-          }}
-        >
-          <div>
-            <Outlet />
-          </div>
+        <Content className="admin-content">
+          <Outlet />
         </Content>
       </Layout>
     </Layout>

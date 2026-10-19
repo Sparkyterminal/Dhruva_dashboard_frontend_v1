@@ -397,12 +397,6 @@ const AddInflow = () => {
         ...(isWeddingLike && { advancePaymentType: advanceMode }),
       };
 
-      console.log("🔥 FORM VALUES:", JSON.stringify(values, null, 2));
-      console.log(
-        "🔥 EVENT TYPE META:",
-        JSON.stringify(values.eventTypeMeta, null, 2),
-      );
-      console.log("🔥 FINAL PAYLOAD:", JSON.stringify(payload, null, 2));
 
       // Validation removed: Amounts can be 0 or any value, advances are not mandatory
 

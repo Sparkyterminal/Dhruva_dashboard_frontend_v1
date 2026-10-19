@@ -1,0 +1,134 @@
+.admin-shell {
+  min-height: 100vh;
+  background: var(--bg-page);
+}
+
+.admin-sider.ant-layout-sider {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--brand);
+}
+
+.admin-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 0 12px 16px;
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 84px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(224, 208, 133, 0.2);
+}
+
+.admin-sider .ant-menu {
+  flex: 1;
+  background: transparent;
+  border: 0;
+}
+
+.admin-sider .ant-menu-item,
+.admin-sider .ant-menu-submenu-title {
+  font-weight: 500;
+}
+
+.admin-signout {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 0;
+  border-top: 1px solid rgba(224, 208, 133, 0.2);
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.admin-signout:hover {
+  background: rgba(224, 208, 133, 0.1);
+  color: #fff;
+}
+
+.admin-header.ant-layout-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  height: 64px;
+  padding: 0 24px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  line-height: normal;
+}
+
+.admin-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.admin-toggle:hover {
+  background: var(--bg-page);
+}
+
+.admin-title {
+  flex: 1;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.admin-user {
+  color: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.admin-content.ant-layout-content {
+  margin: 24px;
+  padding: 28px;
+  min-height: 320px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+@media (max-width: 767px) {
+  .admin-header.ant-layout-header {
+    padding: 0 14px;
+  }
+  .admin-user {
+    display: none;
+  }
+  .admin-content.ant-layout-content {
+    margin: 12px;
+    padding: 16px;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

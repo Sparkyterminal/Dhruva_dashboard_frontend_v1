@@ -38,14 +38,17 @@ const RailContent = ({ navItems, user, onNavigate, onChangePassword, onSignOut }
               Home
             </Link>
           </li>
-          {navItems.map(({ label, route, icon: Icon }) => (
-            <li key={route + label}>
-              <Link to={route} className="rh-link" onClick={onNavigate}>
-                <Icon aria-hidden="true" />
-                {label}
-              </Link>
-            </li>
-          ))}
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <li key={item.route + item.label}>
+                <Link to={item.route} className="rh-link" onClick={onNavigate}>
+                  <Icon aria-hidden="true" />
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
       </nav>
 

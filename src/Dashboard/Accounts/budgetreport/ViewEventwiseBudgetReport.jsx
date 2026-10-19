@@ -5,7 +5,7 @@ import { Spin, Alert } from "antd";
 import { parseBudgetDataToRowData } from "./budgetReportUtils";
 import BudgetReportViewGrid from "./BudgetReportViewGrid";
 
-const ViewEventwiseBudgetReport = ({ eventId, onClose }) => {
+const ViewEventwiseBudgetReport = ({ eventId }) => {
   const user = useSelector((state) => state.user.value);
   const [rowData, setRowData] = useState([]);
   const [loading, setLoading] = useState(true);

@@ -1,18 +1,4 @@
 // /* eslint-disable no-unused-vars */
-// import React, { useEffect, useState } from "react";
-// import { useSelector } from "react-redux";
-// import {
-//   Form,
-//   Input,
-//   Button,
-//   Card,
-//   Typography,
-//   Select,
-//   message,
-//   Spin,
-// } from "antd";
-// import { API_BASE_URL } from "@/config/config";
-// import axios from "axios";
 
 // const { Title } = Typography;
 

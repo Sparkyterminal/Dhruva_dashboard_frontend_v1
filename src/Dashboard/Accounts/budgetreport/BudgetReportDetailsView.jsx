@@ -47,12 +47,10 @@ const BudgetReportDetailsView = ({ reportData }) => {
 
     // Calculate from rowData
     let totalCost = 0;
-    let grandTotal = 0;
     let negotiatedAmount = 0;
     let actualPaidAmount = 0;
     for (const r of rowData) {
-      if (r.isGroupRow) grandTotal += Number(r.grandTotal) || 0;
-      else {
+      if (!r.isGroupRow) {
         totalCost += Number(r.totalCost) || 0;
         negotiatedAmount += Number(r.negotiatedAmount) || 0;
         actualPaidAmount += Number(r.actualPaidAmount) || 0;

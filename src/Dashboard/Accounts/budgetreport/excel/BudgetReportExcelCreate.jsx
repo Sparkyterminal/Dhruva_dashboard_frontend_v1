@@ -107,7 +107,7 @@ const BudgetReportExcelCreate = () => {
             : undefined,
         },
       });
-    } catch (err) {
+    } catch {
       // Still allow navigation — blank workbook on 404
       navigate(`/user/budgetreport/edit/${selectedEventId}`, {
         state: {

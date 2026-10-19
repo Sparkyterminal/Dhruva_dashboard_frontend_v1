@@ -77,8 +77,6 @@ const AgreedAmountBreakupCard = ({ event }) => {
     </Row>
   );
 
-  const eventName = typeof event.eventName === "object" ? event.eventName?.name : event.eventName;
-
   if (isCompletePaymentWedding(event) && event.eventTypes[0]) {
     return (
       <Card

@@ -70,7 +70,7 @@ const AddRequirements = () => {
     try {
       const res = await axiosClient.get(`vendor/all`, config);
       setVendors(res.data.vendors.reverse() || []);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch vendors");
     } finally {
       setLoading(false);

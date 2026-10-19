@@ -20,7 +20,6 @@ import {
   AppstoreOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
-import { motion } from "framer-motion";
 import {
   getEventName,
   formatDate,
