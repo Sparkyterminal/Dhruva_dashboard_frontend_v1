@@ -212,13 +212,13 @@ const ViewChecklist = () => {
           <meta charset="utf-8">
           <style>
             body { font-family: Arial, sans-serif; padding: 20px; }
-            h1 { color: #667eea; margin-bottom: 10px; }
-            h2 { color: #667eea; margin-top: 30px; margin-bottom: 15px; font-size: 16px; }
+            h1 { color: #226a36; margin-bottom: 10px; }
+            h2 { color: #226a36; margin-top: 30px; margin-bottom: 15px; font-size: 16px; }
             .metadata { margin-bottom: 20px; font-size: 14px; color: #666; }
             table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 20px; }
             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-            th { background-color: #667eea; color: white; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f8f7ff; }
+            th { background-color: #226a36; color: white; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f4f8f4; }
           </style>
         </head>
         <body>

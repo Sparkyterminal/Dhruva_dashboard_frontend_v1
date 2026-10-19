@@ -616,7 +616,7 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
                   className="p-4 rounded-xl shadow-lg"
                   style={{
                     background:
-                      "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                      "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
                   }}
                 >
                   <Trophy className="w-10 h-10 text-white" />

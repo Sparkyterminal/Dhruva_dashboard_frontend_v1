@@ -582,8 +582,8 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
               size="small"
               style={{
                 borderRadius: 14,
-                background: "linear-gradient(135deg,#eff6ff 0%,#f5f3ff 100%)",
-                border: "1px solid #e0e7ff",
+                background: "linear-gradient(135deg,#f2f8f2 0%,#f2f8f2 100%)",
+                border: "1px solid #e0eee1",
               }}
             >
               <Statistic

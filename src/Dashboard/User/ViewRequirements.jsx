@@ -249,7 +249,7 @@ const ViewRequirements = () => {
             >
               <div className="space-y-3">
                 <div className="flex justify-between items-start">
-                  <h3 className="font-cormorant text-xl font-bold text-black line-clamp-2">
+                  <h3 className="text-xl font-bold text-black line-clamp-2">
                     {req.purpose}
                   </h3>
                   <Tag color={getStatusColor(req.status)}>{req.status}</Tag>
@@ -259,7 +259,7 @@ const ViewRequirements = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-black flex items-center gap-2">
                       <DollarOutlined />
-                      <span className="font-cormorant font-semibold text-lg">
+                      <span className="font-semibold text-lg">
                         Amount:
                       </span>
                     </span>
@@ -271,7 +271,7 @@ const ViewRequirements = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-black flex items-center gap-2">
                       <FlagOutlined />
-                      <span className="font-cormorant font-semibold text-lg">
+                      <span className="font-semibold text-lg">
                         Priority:
                       </span>
                     </span>
@@ -283,7 +283,7 @@ const ViewRequirements = () => {
                   <div className="flex items-center justify-between">
                     <span className="text-black flex items-center gap-2">
                       <CalendarOutlined />
-                      <span className="font-cormorant font-semibold text-lg">
+                      <span className="font-semibold text-lg">
                         Transaction In:
                       </span>
                     </span>
@@ -295,7 +295,7 @@ const ViewRequirements = () => {
                       <div className="flex items-start gap-2">
                         <ShopOutlined className="mt-1" />
                         <div>
-                          <div className="font-cormorant font-semibold text-black">
+                          <div className="font-semibold text-black">
                             {req.vendor.name}
                           </div>
                           <div className="text-xs text-gray-600">
@@ -384,7 +384,7 @@ const ViewRequirements = () => {
     {
       key: "cards",
       label: (
-        <span className="font-cormorant text-base">
+        <span className="text-base">
           <DollarOutlined /> Cards
         </span>
       ),
@@ -393,7 +393,7 @@ const ViewRequirements = () => {
     {
       key: "list",
       label: (
-        <span className="font-cormorant text-base">
+        <span className="text-base">
           <ClockCircleOutlined /> List
         </span>
       ),
@@ -412,13 +412,13 @@ const ViewRequirements = () => {
           <Card className="shadow-md" style={{ backgroundColor: "#e6f7ff" }}>
             <Statistic
               title={
-                <span className="font-cormorant text-xl font-medium">
+                <span className="text-xl font-medium">
                   Total Request
                 </span>
               }
               value={totalCount}
               valueStyle={{
-                color: "#1890ff",
+                color: "#17542a",
                 fontFamily: "Cormorant Garamond",
               }}
               prefix={
@@ -436,7 +436,7 @@ const ViewRequirements = () => {
           <Card className="shadow-md" style={{ backgroundColor: "#fffbe6" }}>
             <Statistic
               title={
-                <span className="font-cormorant text-xl font-medium">
+                <span className="text-xl font-medium">
                   Pending Requests
                 </span>
               }
@@ -460,7 +460,7 @@ const ViewRequirements = () => {
           <Card className="shadow-md" style={{ backgroundColor: "#f6ffed" }}>
             <Statistic
               title={
-                <span className="font-cormorant text-xl font-medium">
+                <span className="text-xl font-medium">
                   Confirmed Requests
                 </span>
               }
@@ -491,9 +491,8 @@ const ViewRequirements = () => {
       </Card>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
 
-        .font-cormorant {
+        .{
           font-family: 'Cormorant Garamond', serif;
         }
 

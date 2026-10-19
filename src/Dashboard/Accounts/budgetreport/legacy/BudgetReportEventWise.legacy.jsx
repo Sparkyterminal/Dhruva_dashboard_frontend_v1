@@ -173,8 +173,8 @@ const BudgetReportEventWise = () => {
               className="rounded-xl shadow-md border-0"
               style={{
                 background:
-                  "linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%)",
-                boxShadow: "0 4px 14px -4px rgba(79, 70, 229, 0.45)",
+                  "linear-gradient(135deg, #17542a 0%, #338147 50%, #0f4220 100%)",
+                boxShadow: "0 4px 14px -4px rgba(23, 84, 42, 0.45)",
               }}
               onClick={() => navigate("/user/budgetreport")}
             >

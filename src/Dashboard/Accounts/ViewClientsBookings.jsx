@@ -520,7 +520,7 @@ const ViewClientsBookings = () => {
             <div
               className="w-10 h-10 rounded-lg flex items-center justify-center"
               style={{
-                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                background: "linear-gradient(135deg, #338147 0%, #2b7a41 100%)",
               }}
             >
               <CalendarOutlined className="text-white text-lg" />
@@ -1157,7 +1157,7 @@ const ViewClientsBookings = () => {
                               onClick={() => startEditingAdvance(record, index)}
                               style={{
                                 background:
-                                  "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                  "linear-gradient(135deg, #338147 0%, #2b7a41 100%)",
                                 border: "none",
                               }}
                             >
@@ -1740,7 +1740,7 @@ const ViewClientsBookings = () => {
                                     }
                                     style={{
                                       background:
-                                        "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
+                                        "linear-gradient(135deg, #338147 0%, #2b7a41 100%)",
                                       border: "none",
                                     }}
                                   >
@@ -1791,8 +1791,8 @@ const ViewClientsBookings = () => {
         }
 
         .custom-table .ant-pagination-item-active {
-          background: #6366f1;
-          border-color: #6366f1;
+          background: #338147;
+          border-color: #338147;
         }
 
         .custom-table .ant-pagination-item-active a {
@@ -1800,11 +1800,11 @@ const ViewClientsBookings = () => {
         }
 
         .custom-table .ant-pagination-item:hover {
-          border-color: #6366f1;
+          border-color: #338147;
         }
 
         .custom-table .ant-pagination-item:hover a {
-          color: #6366f1;
+          color: #338147;
         }
 
         .modern-tabs .ant-tabs-tab {

@@ -265,7 +265,7 @@ const BalanceSheets = () => {
           <StatCard
             title="Total Payable Amount"
             value={summary.totalPayableAmount}
-            color="#3b82f6"
+            color="#338147"
           />
         </Col>
         <Col xs={24} md={8}>

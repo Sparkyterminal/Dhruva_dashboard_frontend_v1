@@ -23,7 +23,7 @@ const customStyles = `
   }
 
   .gradient-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     border-radius: 1rem;
     padding: 1.5rem;
     color: white;
@@ -144,9 +144,9 @@ const Departments = () => {
         className="absolute inset-0 z-0 pointer-events-none opacity-40"
         style={{
           backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
         }}
       />
 

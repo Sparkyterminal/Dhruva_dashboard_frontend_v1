@@ -849,7 +849,7 @@ const ViewInflow = () => {
               <Card
                 className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
                 style={{
-                  background: "linear-gradient(135deg,#3b82f6,#8b5cf6)",
+                  background: "linear-gradient(135deg,#338147,#2b7a41)",
                   color: "white",
                 }}
               >
@@ -943,7 +943,7 @@ const ViewInflow = () => {
               <Card
                 className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
                 style={{
-                  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
+                  background: "linear-gradient(135deg,#17542a,#0b3d0b)",
                   color: "white",
                 }}
               >
@@ -2109,10 +2109,10 @@ const ViewInflow = () => {
 
       <style>{`
         .custom-table .ant-table-thead > tr > th {
-          background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+          background: linear-gradient(135deg, #e0eee1 0%, #e0eee1 100%);
           font-weight: 600;
-          color: #6366f1;
-          border-bottom: 2px solid #a5b4fc;
+          color: #338147;
+          border-bottom: 2px solid #92c29a;
         }
 
         .custom-table .ant-table-tbody > tr:hover > td {
@@ -2120,8 +2120,8 @@ const ViewInflow = () => {
         }
 
         .custom-table .ant-pagination-item-active {
-          background: linear-gradient(135deg, #6366f1, #8b5cf6);
-          border-color: #6366f1;
+          background: linear-gradient(135deg, #338147, #2b7a41);
+          border-color: #338147;
         }
 
         .custom-table .ant-pagination-item-active a {
@@ -2129,8 +2129,8 @@ const ViewInflow = () => {
         }
 
         .ant-drawer-header {
-          background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
-          border-bottom: 2px solid #c7d2fe;
+          background: linear-gradient(135deg, #e0eee1 0%, #e0eee1 100%);
+          border-bottom: 2px solid #c0ddc3;
         }
 
         .ant-drawer-body {
@@ -2143,7 +2143,7 @@ const ViewInflow = () => {
 
         .ant-descriptions-item-label {
           font-weight: 600;
-          color: #6366f1;
+          color: #338147;
         }
 
         ::-webkit-scrollbar {
@@ -2156,12 +2156,12 @@ const ViewInflow = () => {
         }
 
         ::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          background: linear-gradient(135deg, #338147, #2b7a41);
           border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #17542a, #0f4220);
         }
       `}</style>
     </div>

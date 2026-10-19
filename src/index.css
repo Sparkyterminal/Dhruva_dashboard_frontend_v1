@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/theme.css";
 
 @font-face {
   font-family: "cormoreg";
@@ -19,7 +20,7 @@
   background: linear-gradient(
     145deg,
     #f8fafc 0%,
-    #eef2ff 42%,
+    #f2f8f2 42%,
     #faf5ff 100%
   );
   padding: 24px 20px 40px;
@@ -48,7 +49,7 @@
   letter-spacing: -0.5px;
   margin: 0;
   padding-bottom: 12px;
-  border-bottom: 3px solid #3b82f6;
+  border-bottom: 3px solid #338147;
   display: inline-block;
 }
 
@@ -79,11 +80,11 @@
 }
 
 .budget-report-ant-table .ant-pagination-item-active {
-  border-color: #6366f1;
+  border-color: #338147;
 }
 
 .budget-report-ant-table .ant-pagination-item-active a {
-  color: #4f46e5;
+  color: #17542a;
 }
 
 /* ── Spreadsheet wrapper ── */
@@ -137,8 +138,8 @@
 }
 
 .group-name-input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  border-color: #338147;
+  box-shadow: 0 0 0 3px rgba(51, 129, 71, 0.15);
 }
 
 .group-name-input::placeholder {
@@ -157,15 +158,15 @@
 }
 
 .toolbar-btn-primary {
-  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 50%, #7c3aed 100%);
+  background: linear-gradient(135deg, #17542a 0%, #338147 50%, #0f4220 100%);
   color: #fff;
-  box-shadow: 0 4px 14px -4px rgba(79, 70, 229, 0.55);
+  box-shadow: 0 4px 14px -4px rgba(23, 84, 42, 0.55);
 }
 
 .toolbar-btn-primary:hover {
-  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 55%, #6d28d9 100%);
+  background: linear-gradient(135deg, #0b3d0b 0%, #17542a 55%, #6d28d9 100%);
   transform: translateY(-1px);
-  box-shadow: 0 6px 18px -4px rgba(79, 70, 229, 0.5);
+  box-shadow: 0 6px 18px -4px rgba(23, 84, 42, 0.5);
 }
 
 .toolbar-btn-primary:disabled {
@@ -185,9 +186,9 @@
 
 .row-count-badge {
   font-size: 12px;
-  color: #4338ca;
-  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-  border: 1px solid #c7d2fe;
+  color: #0b3d0b;
+  background: linear-gradient(135deg, #f2f8f2, #e0eee1);
+  border: 1px solid #c0ddc3;
   padding: 6px 14px;
   border-radius: 999px;
   font-weight: 600;
@@ -229,7 +230,7 @@
 /* Header styling */
 .ag-theme-alpine .ag-header {
   background: linear-gradient(135deg, #1e293b 0%, #312e81 100%) !important;
-  border-bottom: 2px solid rgba(99, 102, 241, 0.35) !important;
+  border-bottom: 2px solid rgba(51, 129, 71, 0.35) !important;
 }
 
 .ag-theme-alpine .ag-header-cell {
@@ -267,7 +268,7 @@
 }
 
 .ag-theme-alpine .ag-cell.editable-cell:hover {
-  background-color: #eff6ff !important;
+  background-color: #f2f8f2 !important;
 }
 
 /* Group row cell */
@@ -279,9 +280,9 @@
 
 /* Cell editing state */
 .ag-theme-alpine .ag-cell-inline-editing {
-  border: 2px solid #3b82f6 !important;
+  border: 2px solid #338147 !important;
   border-radius: 2px;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 3px rgba(51, 129, 71, 0.15) !important;
   padding: 0 !important;
   height: 100% !important;
   background: #fff !important;
@@ -339,7 +340,7 @@
 .grid-checkbox {
   width: 18px;
   height: 18px;
-  accent-color: #3b82f6;
+  accent-color: #338147;
   cursor: pointer;
 }
 

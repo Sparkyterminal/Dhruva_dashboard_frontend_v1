@@ -1,0 +1,226 @@
+/*
+  Dhruva design tokens.
+
+  Brand: forest green (#0B3D0B) with the logo's gold (#E0D085) as the only accent.
+  The Tailwind palettes the app already uses for decoration (indigo, violet, purple,
+  blue, fuchsia) are re-pointed at the brand colours, so every existing screen picks
+  up the new look without per-page edits.
+*/
+
+@theme {
+  /* Forest green scale (brand = 900) */
+  --color-forest-50: #f2f8f2;
+  --color-forest-100: #e0eee1;
+  --color-forest-200: #c0ddc3;
+  --color-forest-300: #92c29a;
+  --color-forest-400: #5da06a;
+  --color-forest-500: #338147;
+  --color-forest-600: #226a36;
+  --color-forest-700: #17542a;
+  --color-forest-800: #0f4220;
+  --color-forest-900: #0b3d0b;
+  --color-forest-950: #072907;
+
+  /* Gold, taken from the logo (300 = the login gold) */
+  --color-gold-50: #fbf7e6;
+  --color-gold-100: #f5edc4;
+  --color-gold-200: #ede09c;
+  --color-gold-300: #e0d085;
+  --color-gold-400: #d3be62;
+  --color-gold-500: #c4a747;
+  --color-gold-600: #a88a33;
+  --color-gold-700: #82682a;
+
+  /* Decorative palettes -> brand green */
+  --color-indigo-50: #f2f8f2;
+  --color-indigo-100: #e0eee1;
+  --color-indigo-200: #c0ddc3;
+  --color-indigo-300: #92c29a;
+  --color-indigo-400: #5da06a;
+  --color-indigo-500: #338147;
+  --color-indigo-600: #226a36;
+  --color-indigo-700: #17542a;
+  --color-indigo-800: #0f4220;
+  --color-indigo-900: #0b3d0b;
+  --color-violet-50: #f2f8f2;
+  --color-violet-100: #e0eee1;
+  --color-violet-200: #c0ddc3;
+  --color-violet-300: #92c29a;
+  --color-violet-400: #5da06a;
+  --color-violet-500: #2b7a41;
+  --color-violet-600: #1d6531;
+  --color-violet-700: #17542a;
+  --color-violet-800: #0f4220;
+  --color-violet-900: #0b3d0b;
+  --color-purple-50: #f2f8f2;
+  --color-purple-100: #e0eee1;
+  --color-purple-200: #c0ddc3;
+  --color-purple-300: #92c29a;
+  --color-purple-400: #5da06a;
+  --color-purple-500: #2b7a41;
+  --color-purple-600: #1d6531;
+  --color-purple-700: #17542a;
+  --color-purple-800: #0f4220;
+  --color-purple-900: #0b3d0b;
+  --color-blue-50: #f2f8f2;
+  --color-blue-100: #e0eee1;
+  --color-blue-200: #c0ddc3;
+  --color-blue-300: #92c29a;
+  --color-blue-400: #5da06a;
+  --color-blue-500: #338147;
+  --color-blue-600: #226a36;
+  --color-blue-700: #17542a;
+  --color-blue-800: #0f4220;
+  --color-blue-900: #0b3d0b;
+  /* fuchsia pairs with violet in gradients: green -> gold */
+  --color-fuchsia-50: #fbf7e6;
+  --color-fuchsia-100: #f5edc4;
+  --color-fuchsia-200: #ede09c;
+  --color-fuchsia-300: #e0d085;
+  --color-fuchsia-400: #d3be62;
+  --color-fuchsia-500: #c4a747;
+  --color-fuchsia-600: #a88a33;
+  --color-fuchsia-700: #82682a;
+
+  /* Neutrals: slate/gray lean slightly green so text and borders sit with the brand */
+  --color-slate-50: #f5f7f4;
+  --color-slate-100: #eaeee9;
+  --color-slate-200: #dce2db;
+  --color-slate-300: #c3cbc2;
+  --color-slate-400: #8f9a8e;
+  --color-slate-500: #667365;
+  --color-slate-600: #4e5a4d;
+  --color-slate-700: #3b453a;
+  --color-slate-800: #262e26;
+  --color-slate-900: #161c16;
+  --color-gray-50: #f5f7f4;
+  --color-gray-100: #eaeee9;
+  --color-gray-200: #dce2db;
+  --color-gray-300: #c3cbc2;
+  --color-gray-400: #8f9a8e;
+  --color-gray-500: #667365;
+  --color-gray-600: #4e5a4d;
+  --color-gray-700: #3b453a;
+  --color-gray-800: #262e26;
+  --color-gray-900: #161c16;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+}
+
+:root {
+  --bg-page: #f4f6f2;
+  --bg-panel: #ffffff;
+  --line: #e1e6df;
+  --line-strong: #cfd7cd;
+  --ink: #1d261d;
+  --ink-soft: #5b665a;
+  --brand: #0b3d0b;
+  --brand-action: #17542a;
+  --gold: #e0d085;
+  --gold-deep: #c4a747;
+  --radius-panel: 14px;
+  --radius-control: 10px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Page titles and greetings use the heritage serif; everything else is Inter. */
+h1,
+h2,
+.font-display,
+.ant-typography h1,
+.ant-typography h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--brand);
+}
+
+/* The old home screens set this class; keep any stragglers on the new body font. */
+.font-\[cormoreg\] {
+  font-family: var(--font-sans);
+}
+
+/* Visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--gold-deep);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--gold);
+  color: var(--brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---- Ant Design touches the token system cannot express ---- */
+.ant-table-wrapper .ant-table-thead > tr > th {
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: var(--radius-panel);
+}
+
+.ant-card {
+  border-color: var(--line);
+}
+
+.ant-tabs .ant-tabs-ink-bar {
+  background: var(--gold-deep);
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+}
+
+.ant-drawer .ant-drawer-header-title .ant-drawer-title {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--brand);
+}
+
+/* ---- Calendars: gold marks today / the selected day ---- */
+.ant-picker-calendar-full .ant-picker-panel .ant-picker-cell-selected .ant-picker-calendar-date,
+.ant-picker-calendar-full .ant-picker-panel .ant-picker-cell-selected:hover .ant-picker-calendar-date {
+  background: rgba(224, 208, 133, 0.3);
+}
+
+.ant-picker-calendar-full .ant-picker-panel .ant-picker-cell-selected .ant-picker-calendar-date .ant-picker-calendar-date-value {
+  color: var(--brand);
+  font-weight: 700;
+}
+
+.ant-picker-calendar-full .ant-picker-panel .ant-picker-cell-today .ant-picker-calendar-date {
+  border-top-color: var(--gold-deep);
+}
+
+.fc {
+  --fc-border-color: #e1e6df;
+  --fc-today-bg-color: rgba(224, 208, 133, 0.22);
+  --fc-neutral-bg-color: #f2f5f1;
+  --fc-now-indicator-color: var(--gold-deep);
+}

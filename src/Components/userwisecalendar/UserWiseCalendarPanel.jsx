@@ -28,12 +28,12 @@ const { Text, Title } = Typography;
 const { TextArea } = Input;
 
 const CATEGORY_OPTIONS = [
-  { label: "TODO LIST", value: "TODO_LIST", color: "blue" },
-  { label: "PROBLEM RESOLVES", value: "PROBLEM_RESOLVES", color: "orange" },
+  { label: "TODO LIST", value: "TODO_LIST", color: "green" },
+  { label: "PROBLEM RESOLVES", value: "PROBLEM_RESOLVES", color: "gold" },
   {
     label: "GENERAL MEETING NOTES",
     value: "GENERAL_MEETING_NOTES",
-    color: "purple",
+    color: "cyan",
   },
 ];
 

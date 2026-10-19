@@ -282,7 +282,7 @@ const ExpensesSpreadsheet = ({
           cursor: pointer;
         }
         .expenses-spreadsheet-toolbar .toolbar-btn-primary {
-          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          background: linear-gradient(135deg, #17542a, #0f4220);
           color: #fff;
           border: none;
         }

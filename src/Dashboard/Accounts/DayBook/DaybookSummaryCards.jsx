@@ -155,7 +155,7 @@ const DaybookSummaryCards = ({
                 title="Inflow"
                 amount={inflowTotal}
                 count={inflowCount}
-                gradient="linear-gradient(135deg,#3b82f6 0%,#8b5cf6 100%)"
+                gradient="linear-gradient(135deg,#338147 0%,#2b7a41 100%)"
               />
             </Col>
             <Col xs={24} md={12}>

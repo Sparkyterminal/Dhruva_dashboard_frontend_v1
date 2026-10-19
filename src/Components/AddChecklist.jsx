@@ -27,7 +27,7 @@ const customStyles = `
     }
   }
   .gradient-text {
-    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    background: linear-gradient(135deg, #17542a, #0f4220);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

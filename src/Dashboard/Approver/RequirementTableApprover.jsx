@@ -970,10 +970,6 @@ const RequirementTableApprover = () => {
       style={{ background: "transparent" }}
     >
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&display=swap');
-        * {
-          font-family: 'Cormorant Garamond', serif;
-        }
         .completed-row {
           background: #f0fdf4 !important;
           opacity: 0.85;
@@ -1001,7 +997,7 @@ const RequirementTableApprover = () => {
           border: none !important;
         }
         .ant-collapse-header {
-          background: linear-gradient(135deg, #7b2ff7, #f107a3);
+          background: linear-gradient(135deg, #226a36, #c4a747);
           color: white !important;
           font-weight: 700;
           font-size: 20px;
@@ -1009,7 +1005,7 @@ const RequirementTableApprover = () => {
           padding: 0 12px !important;
         }
         .ant-collapse-content {
-          background: linear-gradient(180deg, #d8b4fe 0%, #fbcfe8 100%);
+          background: linear-gradient(180deg, #c0ddc3 0%, #f5edc4 100%);
           border-radius: 0 0 12px 12px;
           padding: 12px !important;
         }
@@ -1047,7 +1043,7 @@ const RequirementTableApprover = () => {
             <Card
               hoverable
               style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                background: "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}
@@ -1062,7 +1058,7 @@ const RequirementTableApprover = () => {
             <Card
               hoverable
               style={{
-                background: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)",
+                background: "linear-gradient(135deg, #d3be62 0%, #a88a33 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}
@@ -1079,7 +1075,7 @@ const RequirementTableApprover = () => {
             <Card
               hoverable
               style={{
-                background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
+                background: "linear-gradient(135deg, #338147 0%, #5da06a 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}
@@ -1096,7 +1092,7 @@ const RequirementTableApprover = () => {
             <Card
               hoverable
               style={{
-                background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+                background: "linear-gradient(135deg, #b5483a 0%, #d9894a 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}

@@ -35,7 +35,7 @@ const AgreedAmountBreakupCard = ({ event }) => {
         </div>
       </Col>
       <Col xs={24} sm={12} md={8}>
-        <div className="p-2 rounded" style={{ background: "#eff6ff" }}>
+        <div className="p-2 rounded" style={{ background: "#f2f8f2" }}>
           <Text className="text-xs text-gray-500 block">Account Amount</Text>
           <Text strong style={{ color: "#1e40af" }}>
             {formatAmount(eventType.accountAmount)}

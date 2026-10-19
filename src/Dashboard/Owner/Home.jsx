@@ -1,233 +1,36 @@
-/* eslint-disable no-unused-vars */
-import React, { useState, useEffect } from "react";
-import { Dropdown } from "antd";
-import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { logout } from "../../reducers/users";
-import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
+import React from "react";
 import {
-  UnorderedListOutlined,
-  BookOutlined,
-  ShopOutlined,
-  CalendarOutlined,
-  FileTextOutlined,
-  CheckSquareOutlined,
-  TeamOutlined,
-  BarChartOutlined,
-  UserAddOutlined,
-  UserOutlined,
-  KeyOutlined,
-  LogoutOutlined,
-  WalletOutlined,
-} from "@ant-design/icons";
+  BookOpen,
+  Building2,
+  CalendarCheck,
+  ChartColumn,
+  ClipboardList,
+  ListChecks,
+  ReceiptText,
+  Store,
+  Target,
+  Wallet,
+} from "lucide-react";
+import RoleHome from "../../Components/RoleHome";
+import UserWiseCalendarPanel from "../../Components/userwisecalendar/UserWiseCalendarPanel";
 
-// CSS for Glassmorphism and Focus Animation
-const customStyles = `
-  .glass-header {
-    background: rgba(255,255,255,0.7);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.10);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border: 1px solid rgba(255,255,255,0.30);
-    overflow: visible;
-    position: relative;
-    z-index: 40;
-  }
-  @keyframes focus-in-expand {
-    0% {
-      letter-spacing: -0.5em;
-      filter: blur(12px);
-      opacity: 0;
-    }
-    100% {
-      letter-spacing: normal;
-      filter: blur(0px);
-      opacity: 1;
-    }
-  }
-  .focus-in-expand-normal {
-    animation: focus-in-expand 0.8s cubic-bezier(0.250,0.460,0.450,0.940) 0s 1 normal both;
-  }
-`;
+const NAV_ITEMS = [
+  { label: "Daily Expense", route: "/user/daily-expenses", icon: Wallet },
+  { label: "Requirements", route: "/user/allrequirements", icon: ClipboardList },
+  { label: "Daybook", route: "/user/daybook", icon: BookOpen },
+  { label: "Vendors", route: "/user/viewvendors", icon: Store },
+  { label: "Client Bookings", route: "/user/viewclientbookings", icon: CalendarCheck },
+  { label: "Bills", route: "/user/viewbills", icon: ReceiptText },
+  { label: "Checklists", route: "/user/checklists", icon: ListChecks },
+  { label: "Departments", route: "/user/departments", icon: Building2 },
+  { label: "Budget Report", route: "/user/budgetreport/eventwise", icon: ChartColumn },
+  { label: "Leads Tracker", route: "/user/client-leads", icon: Target },
+];
 
-const HomeOwner = () => {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const [currentTime, setCurrentTime] = useState(new Date());
+const TABS = [
+  { key: "calendar", label: "Personal Calendar", content: <UserWiseCalendarPanel />, framed: false },
+];
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const handleLogout = () => {
-    dispatch(logout());
-    navigate("/login", { replace: true });
-  };
-
-  const handleChangePassword = () => {
-    navigate("/user/changepassword");
-  };
-
-  const formatTime = (date) =>
-    date.toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-    });
-
-  const formatDate = (date) =>
-    date.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-  const navigationMenus = [
-    { label: "Daily Expense", route: "/user/daily-expenses", icon: WalletOutlined },
-    { label: "Requirements", route: "/user/allrequirements", icon: UnorderedListOutlined },
-    { label: "Daybook", route: "/user/daybook", icon: BookOutlined },
-    { label: "Vendors", route: "/user/viewvendors", icon: ShopOutlined },
-    { label: "Client Bookings", route: "/user/viewclientbookings", icon: CalendarOutlined },
-    { label: "Bills", route: "/user/viewbills", icon: FileTextOutlined },
-    { label: "Checklists", route: "/user/checklists", icon: CheckSquareOutlined },
-    { label: "Departments", route: "/user/departments", icon: TeamOutlined },
-    { label: "Budget Report", route: "/user/budgetreport/eventwise", icon: BarChartOutlined },
-    { label: "Leads Tracker", route: "/user/client-leads", icon: UserAddOutlined },
-  ];
-
-  const menuItems = [
-    {
-      key: "change-password",
-      label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1"
-          onClick={handleChangePassword}
-        >
-          <KeyOutlined style={{ fontSize: 18, marginRight: 8 }} />
-          <span>Change Password</span>
-        </div>
-      ),
-    },
-    {
-      key: "logout",
-      label: (
-        <div
-          className="flex items-center gap-2 px-2 py-1 text-red-600 cursor-pointer"
-          onClick={handleLogout}
-        >
-          <LogoutOutlined style={{ fontSize: 18, marginRight: 8 }} />
-          <span>Logout</span>
-        </div>
-      ),
-    },
-  ];
-
-  return (
-    <div className="min-h-screen w-full bg-[#fff9f5] relative font-[cormoreg]">
-      {/* Add custom styles to page head once */}
-      <style>{customStyles}</style>
-      {/* Gradient Bg Layer */}
-      <div
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            `radial-gradient(circle at 20% 80%, rgba(255,220,190,0.3) 0%, transparent 50%),` +
-            `radial-gradient(circle at 80% 20%, rgba(255,245,238,0.35) 0%, transparent 50%),` +
-            `radial-gradient(circle at 40% 40%, rgba(255,210,180,0.15) 0%, transparent 50%)`,
-        }}
-      />
-      <div className="relative z-10 px-2 pt-4 md:px-6 md:pt-8">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="max-w-7xl w-full mx-auto"
-        >
-          {/* Glassmorphism Header */}
-          <div className="glass-header flex flex-col gap-6 px-5 py-6 md:p-10 mb-8 focus-in-expand-normal shadow-lg">
-            {/* Top Row: Welcome & User Profile (side-by-side on mobile too) */}
-            <div className="relative z-50 flex flex-row justify-between items-center gap-3 sm:gap-6">
-              {/* Left Welcome */}
-              <div className="flex items-center gap-4 min-w-0 flex-1">
-                <div className="min-w-0">
-                  <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-gray-800 mb-2">
-                    Welcome
-                  </h1>
-                  <div className="text-gray-600 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-6">
-                    <motion.div
-                      className="text-lg md:text-xl font-semibold"
-                      animate={{ scale: [1, 1.02, 1] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 2,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      {formatTime(currentTime)}
-                    </motion.div>
-                    <div className="text-sm md:text-base text-gray-700 font-medium">
-                      {formatDate(currentTime)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* User actions */}
-              <motion.div className="relative z-[60] flex items-center gap-4 shrink-0">
-                <Dropdown
-                  menu={{ items: menuItems }}
-                  trigger={["click"]}
-                  placement="bottomRight"
-                  getPopupContainer={() => document.body}
-                  overlayStyle={{ zIndex: 2200 }}
-                >
-                  <div
-                    className="cursor-pointer flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 text-white shadow-md hover:shadow-lg transition-shadow"
-                    style={{ minWidth: 48, minHeight: 48 }}
-                  >
-                    <UserOutlined style={{ fontSize: 24 }} />
-                  </div>
-                </Dropdown>
-              </motion.div>
-            </div>
-
-            {/* Bottom Row: Navigation Menu */}
-            <div className="relative z-0 flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8 pt-4 border-t border-gray-200">
-              {navigationMenus.map((menu, index) => {
-                const Icon = menu.icon;
-                return (
-                  <a
-                    key={index}
-                    href="#"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      navigate(menu.route);
-                    }}
-                    className="font-semibold text-base md:text-lg tracking-wide cursor-pointer flex items-center gap-2 shrink-0 select-none text-black no-underline hover:text-[#ff7300]"
-                  >
-                    <Icon style={{ fontSize: 20, flexShrink: 0 }} />
-                    {menu.label}
-                  </a>
-                );
-              })}
-            </div>
-          </div>
-        </motion.div>
-        {/* Below Header: Personal Calendar */}
-        <div className="max-w-8xl w-full mx-auto mt-4">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-            Personal Calendar
-          </h2>
-          <UserWiseCalendarPanel />
-        </div>
-      </div>
-    </div>
-  );
-};
+const HomeOwner = () => <RoleHome navItems={NAV_ITEMS} tabs={TABS} />;
 
 export default HomeOwner;

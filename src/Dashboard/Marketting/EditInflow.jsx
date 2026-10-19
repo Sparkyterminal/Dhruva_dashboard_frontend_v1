@@ -51,7 +51,7 @@ const customStyles = `
   .slide-in-top {
     animation: slide-in-top 0.6s cubic-bezier(0.250, 0.460, 0.450, 0.940) both;
   }
-  @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); } 50% { box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); } }
+  @keyframes glow-pulse { 0%, 100% { box-shadow: 0 0 20px rgba(51, 129, 71, 0.3); } 50% { box-shadow: 0 0 30px rgba(51, 129, 71, 0.5); } }
   .form-glow { animation: glow-pulse 3s ease-in-out infinite; }
 `;
 
@@ -1265,7 +1265,7 @@ const EditInflow = () => {
         style={{
           minHeight: "100vh",
           background:
-            "linear-gradient(135deg, #eff6ff 0%, #e0e7ff 50%, #ede9fe 100%)",
+            "linear-gradient(135deg, #f2f8f2 0%, #e0eee1 50%, #e0eee1 100%)",
           padding: "24px",
           position: "relative",
         }}
@@ -1280,9 +1280,9 @@ const EditInflow = () => {
             pointerEvents: "none",
             opacity: 0.4,
             backgroundImage:
-              `radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),` +
-              `radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),` +
-              `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+              `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
+              `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
+              `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
           }}
         />
 
@@ -1299,12 +1299,12 @@ const EditInflow = () => {
                 width: "80px",
                 height: "80px",
                 borderRadius: "20px",
-                background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                background: "linear-gradient(135deg, #17542a, #0f4220)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: "40px",
-                boxShadow: "0 8px 24px rgba(79, 70, 229, 0.4)",
+                boxShadow: "0 8px 24px rgba(23, 84, 42, 0.4)",
               }}
               className="form-glow"
             >
@@ -1330,7 +1330,7 @@ const EditInflow = () => {
       style={{
         minHeight: "100vh",
         background:
-          "linear-gradient(135deg, #eff6ff 0%, #e0e7ff 50%, #ede9fe 100%)",
+          "linear-gradient(135deg, #f2f8f2 0%, #e0eee1 50%, #e0eee1 100%)",
         padding: "24px",
         position: "relative",
       }}
@@ -1345,9 +1345,9 @@ const EditInflow = () => {
           pointerEvents: "none",
           opacity: 0.4,
           backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
         }}
       />
 
@@ -1373,9 +1373,9 @@ const EditInflow = () => {
               style={{
                 borderRadius: 12,
                 background:
-                  "linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.1))",
-                border: "1px solid rgba(79, 70, 229, 0.3)",
-                color: "#4f46e5",
+                  "linear-gradient(135deg, rgba(23, 84, 42, 0.1), rgba(15, 66, 32, 0.1))",
+                border: "1px solid rgba(23, 84, 42, 0.3)",
+                color: "#17542a",
                 fontWeight: 600,
                 height: 48,
                 display: "flex",
@@ -1408,12 +1408,12 @@ const EditInflow = () => {
                     height: "80px",
                     margin: "0 auto 20px",
                     borderRadius: "20px",
-                    background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                    background: "linear-gradient(135deg, #17542a, #0f4220)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontSize: "40px",
-                    boxShadow: "0 8px 24px rgba(79, 70, 229, 0.3)",
+                    boxShadow: "0 8px 24px rgba(23, 84, 42, 0.3)",
                   }}
                   className="form-glow"
                 >
@@ -1676,7 +1676,7 @@ const EditInflow = () => {
                     placeholder="Enter client name"
                     prefix={
                       <span
-                        style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
+                        style={{ color: "#17542a", marginRight: 4, padding: 8 }}
                       >
                         👤
                       </span>
@@ -1745,7 +1745,7 @@ const EditInflow = () => {
                     placeholder="Enter contact number"
                     prefix={
                       <span
-                        style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
+                        style={{ color: "#17542a", marginRight: 4, padding: 8 }}
                       >
                         📞
                       </span>
@@ -1776,7 +1776,7 @@ const EditInflow = () => {
                     placeholder="Enter alternative contact number (optional)"
                     prefix={
                       <span
-                        style={{ color: "#4f46e5", marginRight: 4, padding: 8 }}
+                        style={{ color: "#17542a", marginRight: 4, padding: 8 }}
                       >
                         📞
                       </span>
@@ -3537,7 +3537,7 @@ const EditInflow = () => {
                         height: "48px",
                         borderRadius: "12px",
                         background:
-                          "linear-gradient(135deg, rgba(79, 70, 229, 0.1), rgba(124, 58, 237, 0.1))",
+                          "linear-gradient(135deg, rgba(23, 84, 42, 0.1), rgba(15, 66, 32, 0.1))",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -3550,7 +3550,7 @@ const EditInflow = () => {
                       style={{
                         fontWeight: 600,
                         fontSize: "18px",
-                        color: "#4f46e5",
+                        color: "#17542a",
                       }}
                     >
                       Advance Payments
@@ -3586,7 +3586,7 @@ const EditInflow = () => {
                                   <div
                                     style={{
                                       fontSize: "13px",
-                                      color: "#7c3aed",
+                                      color: "#0f4220",
                                       marginBottom: "12px",
                                       fontWeight: 600,
                                       display: "flex",
@@ -3600,7 +3600,7 @@ const EditInflow = () => {
                                         height: "24px",
                                         borderRadius: "6px",
                                         background:
-                                          "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                                          "linear-gradient(135deg, #17542a, #0f4220)",
                                         color: "white",
                                         display: "flex",
                                         alignItems: "center",
@@ -3760,9 +3760,9 @@ const EditInflow = () => {
                         borderRadius: "12px",
                         fontSize: "17px",
                         fontWeight: 600,
-                        background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                        background: "linear-gradient(135deg, #17542a, #0f4220)",
                         border: "none",
-                        boxShadow: "0 8px 24px rgba(79, 70, 229, 0.3)",
+                        boxShadow: "0 8px 24px rgba(23, 84, 42, 0.3)",
                       }}
                     >
                       💾 Update Booking

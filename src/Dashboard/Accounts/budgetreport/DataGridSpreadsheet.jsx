@@ -771,7 +771,7 @@ const DataGridSpreadsheet = ({
       //   cellStyle: (params) => {
       //     if (params.data?.isGroupRow) {
       //       return {
-      //         backgroundColor: "#dbeafe",
+      //         backgroundColor: "#e0eee1",
       //         color: "#1e40af",
       //         fontWeight: 700,
       //         fontSize: "15px",

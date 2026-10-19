@@ -17,7 +17,7 @@ const customStyles = `
   }
 
   .gradient-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     border-radius: 1rem;
     padding: 1.5rem;
     color: white;
@@ -42,11 +42,11 @@ const customStyles = `
   }
 
   .custom-tabs .ant-tabs-tab:hover {
-    color: #667eea;
+    color: #226a36;
   }
 
   .custom-tabs .ant-tabs-tab-active {
-    // background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    // background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     color: white !important;
   }
 
@@ -60,7 +60,7 @@ const customStyles = `
   }
 
   .custom-table .ant-table-thead > tr > th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     color: white;
     font-weight: 600;
     border: none;
@@ -69,13 +69,13 @@ const customStyles = `
   }
 
   .custom-table .ant-table-tbody > tr > td {
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    border-bottom: 1px solid rgba(43, 122, 65, 0.1);
     padding: 14px 12px;
     font-size: 14px;
   }
 
   .custom-table .ant-table-tbody > tr:hover > td {
-    background: rgba(102, 126, 234, 0.05);
+    background: rgba(34, 106, 54, 0.05);
   }
 
   .custom-table .ant-table-container {
@@ -84,8 +84,8 @@ const customStyles = `
   }
 
   .custom-table .ant-pagination-item-active {
-    border-color: #667eea;
-    background: #667eea;
+    border-color: #226a36;
+    background: #226a36;
   }
 
   .custom-table .ant-pagination-item-active a {
@@ -345,9 +345,9 @@ const Departmentwise = () => {
         className="absolute inset-0 z-0 pointer-events-none opacity-40"
         style={{
           backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
         }}
       />
 

@@ -9,6 +9,8 @@ import { PersistGate } from "redux-persist/integration/react";
 import { persistStore, persistReducer } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import { BrowserRouter } from "react-router-dom";
+import { ConfigProvider } from "antd";
+import antdTheme from "./config/theme";
 import '@ant-design/v5-patch-for-react-19';
 
 const reducers = combineReducers({
@@ -37,9 +39,11 @@ createRoot(document.getElementById("root")).render(
   // <StrictMode>
   <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
+      <ConfigProvider theme={antdTheme}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </ConfigProvider>
     </PersistGate>
   </Provider>
   // </StrictMode>,

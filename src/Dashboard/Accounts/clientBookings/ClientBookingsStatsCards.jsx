@@ -164,7 +164,7 @@ const ClientBookingsStatsCards = ({
             title="Total bookings"
             subtitle=" "
             value={allRollup.totalBookingsNumber ?? 0}
-            color="#6366f1"
+            color="#338147"
           />
           <CountCard
             title="Confirmed bookings"
@@ -219,7 +219,7 @@ const ClientBookingsStatsCards = ({
             title="Confirmed bookings"
             subtitle="Total confirmed events in this view"
             value={bucket.totalBookingsNumber ?? 0}
-            color="#6366f1"
+            color="#338147"
           />
           <CountCard
             title="Where payment has started"

@@ -172,7 +172,7 @@ const AdminLayout = () => {
         collapsedWidth={130}
         style={{
           background: WHITE,
-          // background: 'linear-gradient(to bottom right, #f5f3ff, #fce7f3, #dbeafe)',
+          // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
           boxShadow: "2px 0 8px rgba(11, 61, 11, 0.08)",
         }}
       >
@@ -252,7 +252,7 @@ const AdminLayout = () => {
         <Header
           style={{
             padding: 0,
-            // background: 'linear-gradient(to bottom right, #f5f3ff, #fce7f3, #dbeafe)',
+            // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
             background: WHITE,
             boxShadow: "0 2px 8px rgba(11, 61, 11, 0.07)",
             display: "flex",
@@ -323,7 +323,7 @@ const AdminLayout = () => {
             margin: "32px 16px",
             padding: 32,
             minHeight: 320,
-            // background: 'linear-gradient(to bottom right, #f5f3ff, #fce7f3, #dbeafe)',
+            // background: 'linear-gradient(to bottom right, #f2f8f2, #fbf7e6, #e0eee1)',
             background: WHITE,
             borderRadius: borderRadiusLG,
             boxShadow: "0 2px 16px rgba(11, 61, 11, 0.06)",

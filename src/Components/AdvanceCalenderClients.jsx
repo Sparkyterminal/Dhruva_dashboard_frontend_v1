@@ -392,8 +392,8 @@ const AdvanceCalendarClients = () => {
         }
         
         .fc .fc-button {
-          background-color: #7c3aed;
-          border-color: #7c3aed;
+          background-color: #0f4220;
+          border-color: #0f4220;
           text-transform: capitalize;
           font-weight: 500;
           padding: 8px 16px;
@@ -424,7 +424,7 @@ const AdvanceCalendarClients = () => {
                 className="p-3 rounded-xl"
                 style={{
                   background:
-                    "linear-gradient(135deg, #7c3aed 0%, #a855f7 100%)",
+                    "linear-gradient(135deg, #0f4220 0%, #338147 100%)",
                 }}
               >
                 <DollarSign className="w-8 h-8 text-white" />

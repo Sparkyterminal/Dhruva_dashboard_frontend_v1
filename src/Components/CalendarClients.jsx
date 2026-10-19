@@ -167,14 +167,14 @@ const CalendarClients = () => {
   const getEventColor = (seed) => {
     const s = String(seed || "");
     const colors = [
-      "#3b82f6",
+      "#338147",
       "#10b981",
       "#f59e0b",
-      "#8b5cf6",
+      "#2b7a41",
       "#ec4899",
       "#fb923c",
       "#34d399",
-      "#60a5fa",
+      "#5da06a",
       "#a78bfa",
       "#fb7185",
     ];
@@ -490,7 +490,7 @@ const CalendarClients = () => {
         }
         
         .fc .fc-daygrid-day.fc-day-today {
-          background-color: #dbeafe !important;
+          background-color: #e0eee1 !important;
         }
         
         .fc .fc-col-header-cell {
@@ -525,8 +525,8 @@ const CalendarClients = () => {
         }
         
         .fc .fc-button {
-          background-color: #667eea;
-          border-color: #667eea;
+          background-color: #226a36;
+          border-color: #226a36;
           text-transform: capitalize;
           font-weight: 500;
           padding: 8px 16px;
@@ -534,8 +534,8 @@ const CalendarClients = () => {
         }
         
         .fc .fc-button:hover {
-          background-color: #5568d3;
-          border-color: #5568d3;
+          background-color: #1d6531;
+          border-color: #1d6531;
         }
         
         .fc .fc-button-primary:disabled {
@@ -591,7 +591,7 @@ const CalendarClients = () => {
                 className="p-3 rounded-xl"
                 style={{
                   background:
-                    "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
                 }}
               >
                 <Calendar className="w-8 h-8 text-white" />
@@ -686,7 +686,7 @@ const CalendarClients = () => {
         {/* Event Details Section */}
         <div className="bg-white rounded-2xl shadow-xl p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg" style={{ background: "#667eea" }}>
+            <div className="p-2 rounded-lg" style={{ background: "#226a36" }}>
               <Users className="w-6 h-6 text-white" />
             </div>
             <div>
@@ -796,14 +796,14 @@ const CalendarClients = () => {
                                 <span className="inline-flex items-center gap-2 mr-4">
                                   <MapPin
                                     className="w-4 h-4 mt-0.5"
-                                    style={{ color: "#667eea" }}
+                                    style={{ color: "#226a36" }}
                                   />
                                   <span>{displayVenue}</span>
                                 </span>
                                 <span className="inline-flex items-center gap-2">
                                   <Clock
                                     className="w-4 h-4"
-                                    style={{ color: "#667eea" }}
+                                    style={{ color: "#226a36" }}
                                   />
                                   <span>
                                     {formatDate(start)} {formatTime(start)}

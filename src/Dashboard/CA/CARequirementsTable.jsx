@@ -683,7 +683,7 @@ const CARequirementsTable = () => {
               ? "#fee2e2"
               : priority === "MEDIUM"
                 ? "#fef3c7"
-                : "#dbeafe"
+                : "#e0eee1"
           }
           style={{
             color:
@@ -1156,7 +1156,7 @@ const CARequirementsTable = () => {
           box-shadow: 0 1px 3px rgba(0,0,0,0.08);
         }
         .ca-requirements-page .ant-collapse-header {
-          background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+          background: linear-gradient(135deg, #338147 0%, #338147 100%);
           color: #fff !important;
           font-weight: 600;
           font-size: 17px;
@@ -1221,7 +1221,7 @@ const CARequirementsTable = () => {
               className="ca-stat-card"
               hoverable
               style={{
-                background: "linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%)",
+                background: "linear-gradient(135deg, #338147 0%, #338147 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}
@@ -1273,7 +1273,7 @@ const CARequirementsTable = () => {
               className="ca-stat-card"
               hoverable
               style={{
-                background: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)",
+                background: "linear-gradient(135deg, #b5483a 0%, #d9894a 100%)",
                 borderColor: "transparent",
                 color: "#fff",
               }}

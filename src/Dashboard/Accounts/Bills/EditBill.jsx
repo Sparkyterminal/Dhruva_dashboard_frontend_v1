@@ -21,7 +21,7 @@ const customStyles = `
   .glass-card-bill {
     background: rgba(255,255,255,0.75);
     border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(99,102,241,0.15);
+    box-shadow: 0 8px 32px 0 rgba(51, 129, 71,0.15);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255,255,255,0.35);
@@ -32,7 +32,7 @@ const customStyles = `
   .custom-input-bill .ant-picker,
   .custom-input-bill .ant-select-selector {
     background: rgba(255,255,255,0.6);
-    border: 1px solid rgba(139,92,246,0.2);
+    border: 1px solid rgba(43, 122, 65,0.2);
     border-radius: 0.75rem;
     padding: 0.75rem 1rem;
     font-size: 1rem;
@@ -55,14 +55,14 @@ const customStyles = `
   .custom-input-bill .ant-picker:focus,
   .custom-input-bill .ant-picker-focused {
     background: rgba(255,255,255,0.9);
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 2px rgba(139,92,246,0.1);
+    border-color: #2b7a41;
+    box-shadow: 0 0 0 2px rgba(43, 122, 65,0.1);
   }
 
   .custom-input-bill .ant-select-focused .ant-select-selector {
     background: rgba(255,255,255,0.9);
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 2px rgba(139,92,246,0.1);
+    border-color: #2b7a41;
+    box-shadow: 0 0 0 2px rgba(43, 122, 65,0.1);
   }
   
   .custom-input-bill .ant-form-item-label > label {
@@ -72,21 +72,21 @@ const customStyles = `
   }
   
   .custom-button-bill {
-    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    background: linear-gradient(135deg, #2b7a41 0%, #338147 100%);
     border: none;
     border-radius: 0.75rem;
     padding: 0.75rem 2rem;
     height: auto;
     font-size: 1.1rem;
     font-weight: 600;
-    box-shadow: 0 4px 15px rgba(139,92,246,0.3);
+    box-shadow: 0 4px 15px rgba(43, 122, 65,0.3);
     transition: all 0.3s ease;
   }
   
   .custom-button-bill:hover {
-    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%) !important;
+    background: linear-gradient(135deg, #0f4220 0%, #17542a 100%) !important;
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139,92,246,0.4);
+    box-shadow: 0 6px 20px rgba(43, 122, 65,0.4);
   }
 `;
 
@@ -182,8 +182,8 @@ const EditBill = () => {
         className="absolute inset-0 z-0 pointer-events-none"
         style={{
           backgroundImage:
-            `radial-gradient(circle at 20% 80%, rgba(139,92,246,0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 80% 20%, rgba(99,102,241,0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 20% 80%, rgba(43, 122, 65,0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 80% 20%, rgba(51, 129, 71,0.15) 0%, transparent 50%),` +
             `radial-gradient(circle at 40% 40%, rgba(167,139,250,0.1) 0%, transparent 50%)`,
         }}
       />

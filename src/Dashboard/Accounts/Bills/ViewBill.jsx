@@ -32,9 +32,9 @@ const customStyles = `
   }
 
   .gradient-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     border-radius: 1.5rem;
-    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 10px 40px rgba(34, 106, 54, 0.3);
   }
 
   .table-wrapper .ant-table {
@@ -43,7 +43,7 @@ const customStyles = `
   }
 
   .table-wrapper .ant-table-thead > tr > th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
     color: white;
     font-weight: 600;
     border: none;
@@ -52,13 +52,13 @@ const customStyles = `
   }
 
   .table-wrapper .ant-table-tbody > tr > td {
-    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+    border-bottom: 1px solid rgba(43, 122, 65, 0.1);
     padding: 16px;
     font-size: 15px;
   }
 
   .table-wrapper .ant-table-tbody > tr:hover > td {
-    background: rgba(102, 126, 234, 0.05);
+    background: rgba(34, 106, 54, 0.05);
   }
 
   .table-wrapper .ant-table-container {
@@ -67,8 +67,8 @@ const customStyles = `
   }
 
   .table-wrapper .ant-pagination-item-active {
-    border-color: #667eea;
-    background: #667eea;
+    border-color: #226a36;
+    background: #226a36;
   }
 
   .table-wrapper .ant-pagination-item-active a {
@@ -139,7 +139,7 @@ const customStyles = `
   }
   
   .fc .fc-daygrid-day.fc-day-today {
-    background-color: #dbeafe !important;
+    background-color: #e0eee1 !important;
   }
   
   .fc .fc-col-header-cell {
@@ -174,8 +174,8 @@ const customStyles = `
   }
   
   .fc .fc-button {
-    background-color: #667eea;
-    border-color: #667eea;
+    background-color: #226a36;
+    border-color: #226a36;
     text-transform: capitalize;
     font-weight: 500;
     padding: 8px 16px;
@@ -183,8 +183,8 @@ const customStyles = `
   }
   
   .fc .fc-button:hover {
-    background-color: #5568d3;
-    border-color: #5568d3;
+    background-color: #1d6531;
+    border-color: #1d6531;
   }
   
   .fc .fc-button-primary:disabled {
@@ -867,9 +867,9 @@ const ViewBill = () => {
         className="absolute inset-0 z-0 pointer-events-none opacity-40"
         style={{
           backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 50%)`,
+            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
+            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
         }}
       />
 
