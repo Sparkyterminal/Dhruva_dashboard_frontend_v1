@@ -1,0 +1,244 @@
+/* Shared look for the Request's Dashboard of every role (Owner, Approver, CA, Accounts). */
+
+.rd-page {
+  width: 100%;
+}
+
+.rd-head {
+  margin: 0 0 20px;
+}
+
+.rd-head h1 {
+  margin: 0;
+  text-align: left;
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--brand);
+}
+
+.rd-head p {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+}
+
+/* ---- Summary cards: soft tints, one per status ---- */
+.rd-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.rd-stats > div {
+  --tint: #e0eee1;
+  --accent: #226a36;
+  padding: 16px 20px;
+  background: var(--tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-radius: var(--radius-panel);
+}
+
+.rd-stats .is-pending {
+  --tint: #fbf3d2;
+  --accent: #a88a33;
+}
+.rd-stats .is-approved {
+  --tint: #dff1e2;
+  --accent: #2b7a41;
+}
+.rd-stats .is-rejected {
+  --tint: #fbe4e1;
+  --accent: #b03a2e;
+}
+
+.rd-stats dt {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--accent) 80%, #1d261d);
+}
+
+.rd-stats dt::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.rd-stats dd {
+  margin: 4px 0 0;
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 720px) {
+  .rd-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ---- Filters ---- */
+.rd-page .filter-section,
+.rd-page .ca-filter-card {
+  margin-bottom: 18px !important;
+  padding: 16px 18px !important;
+  background: var(--bg-panel);
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-panel) !important;
+  box-shadow: none !important;
+}
+
+.rd-page .filter-section > span,
+.rd-page .ca-filter-card .ant-space-item > span {
+  font-size: 12.5px;
+  font-weight: 500 !important;
+  color: var(--ink-soft);
+}
+
+/* ---- Status tabs ---- */
+.rd-page .ant-tabs {
+  margin-bottom: 14px !important;
+}
+
+/* ---- Department groups: quiet white panels, no gradients ---- */
+.rd-page .ant-collapse {
+  background: transparent;
+}
+
+.rd-page .ant-collapse-item {
+  margin-bottom: 14px !important;
+  overflow: hidden;
+  background: var(--bg-panel);
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-panel) !important;
+  box-shadow: none !important;
+}
+
+.rd-page .ant-collapse-header {
+  align-items: center !important;
+  padding: 14px 18px !important;
+  background: var(--bg-panel) !important;
+  border-radius: 0 !important;
+}
+
+.rd-page .ant-collapse-header * {
+  color: var(--ink) !important;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  height: auto !important;
+}
+
+.rd-page .ant-collapse-header-text > div > span:last-child,
+.rd-page .ca-panel-header span:last-child {
+  font-size: 12.5px !important;
+  font-weight: 500 !important;
+  color: var(--ink-soft) !important;
+}
+
+.rd-page .ant-collapse-arrow svg {
+  fill: var(--ink-soft) !important;
+}
+
+.rd-page .ant-collapse > .ant-collapse-item > .ant-collapse-content {
+  background: var(--bg-panel) !important;
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  border-radius: 0 !important;
+}
+
+.rd-page .ant-collapse-content > .ant-collapse-content-box {
+  padding: 0 !important;
+}
+
+.rd-page .ca-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding-right: 16px;
+}
+
+/* ---- Tables ---- */
+.rd-page .ant-table-thead > tr > th {
+  background: #f7f9f6 !important;
+  color: var(--ink-soft) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--line) !important;
+}
+
+.rd-page .ant-table-thead > tr > th::before {
+  display: none !important;
+}
+
+.rd-page .ant-table-tbody > tr > td {
+  color: var(--ink) !important;
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+  border-bottom: 1px solid #eef1ec !important;
+}
+
+.rd-page .ant-table-tbody > tr:hover > td {
+  background: #f8fbf7 !important;
+}
+
+/* finished rows tint green; rejected rows tint red with a thin edge */
+.rd-page .completed-row > td,
+.rd-page .ca-row-completed > td,
+.rd-page .ca-row-ca-approved > td {
+  background: #f6fbf6 !important;
+}
+
+.rd-page .rejected-row > td,
+.rd-page .ca-row-rejected > td {
+  background: #fdf6f5 !important;
+}
+
+.rd-page .rejected-row > td:first-child,
+.rd-page .ca-row-rejected > td:first-child {
+  box-shadow: inset 3px 0 0 #c0392b;
+}
+
+.rd-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  padding: 6px 16px 6px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--brand);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.rd-back:hover {
+  border-color: var(--brand-action);
+  background: #f2f8f2;
+}
+
+.rd-page .ca-content {
+  padding: 24px clamp(16px, 3vw, 40px) 40px;
+}
+
+/* Cell renderers set their own large bold type inline; bring them down to one calm size. */
+.rd-page .ant-table-tbody > tr > td :where(div, span, p, a):not(.ant-btn, .ant-btn *, .ant-tag, .ant-tag *) {
+  font-size: 13.5px !important;
+  font-weight: 400 !important;
+}
+
+.rd-page .ant-table-tbody > tr > td :where(strong, b) {
+  font-size: 13.5px !important;
+  font-weight: 600 !important;
+}
+

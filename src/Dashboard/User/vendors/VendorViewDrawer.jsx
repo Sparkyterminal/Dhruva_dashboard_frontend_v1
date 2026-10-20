@@ -27,7 +27,7 @@ const VendorViewDrawer = ({
 
   return (
     <Drawer
-      title={vendor ? `Vendor - ${vendor.name}` : "Vendor Details"}
+      title={vendor ? vendor.name : "Vendor details"}
       placement="right"
       width={isMobile ? "100%" : 560}
       onClose={onClose}

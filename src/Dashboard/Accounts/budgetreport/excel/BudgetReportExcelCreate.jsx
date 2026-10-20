@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Button, Card, Select, Typography, message } from "antd";
-import { ArrowLeftOutlined, FileExcelOutlined } from "@ant-design/icons";
+import { Select, message } from "antd";
+import { FileSpreadsheet } from "lucide-react";
+import { PageHero } from "@/Components/PageKit";
 import {
   fetchBudgetReportEligibleEvents,
   fetchBudgetReportWorkbook,
@@ -13,8 +14,6 @@ import {
   getEventName,
 } from "./budgetReportExcelUtils";
 import AgreedAmountBreakupCard from "../AgreedAmountBreakupCard";
-
-const { Title, Text } = Typography;
 
 /**
  * Create / open budget report Excel for a Confirmed or InProgress event.
@@ -126,71 +125,33 @@ const BudgetReportExcelCreate = () => {
   };
 
   return (
-    <div className="budget-report-container">
-      <div className="budget-report-shell space-y-6">
-        <Card
-          className="border-0 shadow-md"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.92)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "20px 24px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 20,
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate("/user/budgetreport/eventwise")}
-                size="large"
-                className="rounded-xl"
-              >
-                Back
-              </Button>
-              <div>
-                <Title level={3} className="!mb-0 !text-slate-800">
-                  Add budget report Excel
-                </Title>
-                <Text type="secondary" className="text-sm block mt-1">
-                  Map a multi-sheet Excel workbook to a confirmed or in-progress
-                  event.
-                </Text>
-              </div>
-            </div>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                flex: "1 1 320px",
-                minWidth: 280,
-                maxWidth: 520,
-                justifyContent: "flex-end",
-              }}
-            >
-              <Text strong className="text-slate-600 whitespace-nowrap text-sm">
-                Event
-              </Text>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Budget reports"
+          title="Add budget report"
+          subtitle="Pick a confirmed or in-progress event, then open its multi-sheet Excel workbook."
+          onBack={() => navigate("/user/budgetreport/eventwise")}
+          backLabel="Back to reports"
+        />
+
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <div className="pk-toolbar-left" style={{ flexDirection: "column", alignItems: "stretch", gap: 8 }}>
+              <label htmlFor="br-event" style={{ fontWeight: 600, color: "var(--ink)" }}>
+                1. Choose the event
+              </label>
               <Select
-                className="min-w-[200px] flex-1"
+                id="br-event"
                 placeholder="Select confirmed or in-progress event"
                 loading={loading}
                 value={selectedEventId}
                 onChange={setSelectedEventId}
                 showSearch
                 size="large"
+                style={{ width: "100%", maxWidth: 640 }}
                 filterOption={(input, option) =>
-                  (option?.label ?? "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
+                  (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                 }
                 options={events.map((ev) => ({
                   value: String(getEventId(ev)),
@@ -199,50 +160,36 @@ const BudgetReportExcelCreate = () => {
               />
             </div>
           </div>
-        </Card>
 
-        {selectedEvent && (
-          <div style={{ marginBottom: 8 }}>
-            <AgreedAmountBreakupCard event={selectedEvent} />
-          </div>
-        )}
+          <div style={{ padding: "20px" }}>
+            {selectedEvent ? (
+              <div style={{ marginBottom: 20 }}>
+                <AgreedAmountBreakupCard event={selectedEvent} />
+              </div>
+            ) : null}
 
-        <Card
-          className="border-0 shadow-md"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.95)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "28px 24px" }}
-        >
-          <div className="flex flex-col items-start gap-4 max-w-xl">
-            <Text className="text-slate-600">
-              {selectedEventId
-                ? `Ready to open Excel for: ${
-                    selectedEvent
-                      ? getEventDisplayLabel(selectedEvent)
-                      : selectedEventId
-                  }`
-                : "Select a confirmed or in-progress event above, then open the Excel editor. You can add multiple sheets and large data per sheet."}
-            </Text>
-            <Button
-              type="primary"
-              size="large"
-              icon={<FileExcelOutlined />}
-              loading={opening}
-              disabled={!selectedEventId}
-              className="rounded-xl border-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, #17542a 0%, #338147 50%, #0f4220 100%)",
-              }}
-              onClick={openExcel}
-            >
-              Open Excel editor
-            </Button>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "flex-start" }}>
+              <label style={{ fontWeight: 600, color: "var(--ink)" }}>2. Open the workbook</label>
+              <p className="pk-muted" style={{ margin: 0, maxWidth: 560 }}>
+                {selectedEventId
+                  ? `Ready to open Excel for: ${
+                      selectedEvent ? getEventDisplayLabel(selectedEvent) : selectedEventId
+                    }`
+                  : "Select an event above first. You can then add multiple sheets with plenty of data on each."}
+              </p>
+              <button
+                type="button"
+                className="pk-btn is-solid"
+                style={{ padding: "11px 20px", fontSize: 14 }}
+                disabled={!selectedEventId || opening}
+                onClick={openExcel}
+              >
+                <FileSpreadsheet size={16} aria-hidden="true" />
+                {opening ? "Opening…" : "Open Excel editor"}
+              </button>
+            </div>
           </div>
-        </Card>
+        </section>
       </div>
     </div>
   );

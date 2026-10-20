@@ -1,42 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axiosClient from "@/api/axiosClient";
-import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Empty,
-  Row,
-  Space,
-  Spin,
-  Table,
-  Tag,
-  Typography,
-  message,
-} from "antd";
+import { DatePicker, Spin, Table, message } from "antd";
+import { X } from "lucide-react";
 import { useSelector } from "react-redux";
 import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
+import "@/Components/PageKit/PageKit.css";
+import "./Bookings.css";
 
 const { RangePicker } = DatePicker;
-
-const { Text, Title } = Typography;
 
 const formatAmount = (value) => {
   const n = Number(value);
   if (value === null || value === undefined || Number.isNaN(n)) return "₹0";
   return `₹${n.toLocaleString("en-IN")}`;
 };
-
-const StatCard = ({ title, value, color }) => (
-  <Card
-    className="border-0 shadow-sm"
-    style={{ borderRadius: 12, borderLeft: `4px solid ${color}` }}
-    bodyStyle={{ padding: "14px 16px" }}
-  >
-    <Text type="secondary">{title}</Text>
-    <div className="text-xl font-semibold mt-1">{formatAmount(value)}</div>
-  </Card>
-);
 
 const BalanceSheets = () => {
   const user = useSelector((state) => state.user.value);
@@ -129,64 +106,66 @@ const BalanceSheets = () => {
   const columns = useMemo(
     () => [
       {
-        title: "Client Name",
+        title: "Client",
         dataIndex: "clientName",
         key: "clientName",
-        width: 220,
-        render: (value) => <Text strong>{value || "-"}</Text>,
+        width: 240,
+        render: (value) => (
+          <div className="pk-who">
+            <span className="pk-avatar is-soft" aria-hidden="true">
+              {String(value || "?").trim().charAt(0).toUpperCase()}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <strong className="bk-wrap">{value || "-"}</strong>
+            </div>
+          </div>
+        ),
       },
       {
-        title: "Event Name",
+        title: "Event",
         key: "eventName",
-        width: 220,
+        width: 200,
         render: (_, record) => (
-          <Text>{record?.eventName?.name || record?.eventName || "-"}</Text>
+          <span className="bk-event">{record?.eventName?.name || record?.eventName || "-"}</span>
         ),
       },
       {
         title: "Status",
         dataIndex: "eventConfirmation",
         key: "eventConfirmation",
-        width: 180,
-        render: (value) => <Tag color="blue">{value || "-"}</Tag>,
+        width: 170,
+        render: (value) => <span className="pk-pill">{value || "-"}</span>,
       },
-    //   {
-    //     title: "Advance Type",
-    //     dataIndex: "advancePaymentType",
-    //     key: "advancePaymentType",
-    //     width: 160,
-    //     render: (value) => (
-    //       <Text>{value ? String(value).toUpperCase() : "-"}</Text>
-    //     ),
-    //   },
       {
-        title: "Payable Amount",
+        title: "Payable",
         dataIndex: "payableAmount",
         key: "payableAmount",
-        width: 170,
+        width: 150,
         align: "right",
-        render: (value) => <Text>{formatAmount(value)}</Text>,
+        render: (value) => <span className="pk-money">{formatAmount(value)}</span>,
       },
       {
-        title: "Received Amount",
+        title: "Received",
         dataIndex: "receivedAmount",
         key: "receivedAmount",
-        width: 170,
+        width: 150,
         align: "right",
         render: (value) => (
-          <Text className="text-green-700">{formatAmount(value)}</Text>
+          <span className="pk-money" style={{ color: "#226a36" }}>
+            {formatAmount(value)}
+          </span>
         ),
       },
       {
-        title: "Balance Amount",
+        title: "Balance",
         dataIndex: "balanceAmount",
         key: "balanceAmount",
-        width: 170,
+        width: 150,
         align: "right",
         render: (value) => (
-          <Text className={Number(value) < 0 ? "text-red-600" : "text-orange-600"}>
+          <span className="pk-money" style={{ color: Number(value) < 0 ? "#b03a2e" : "#82682a" }}>
             {formatAmount(value)}
-          </Text>
+          </span>
         ),
       },
     ],
@@ -224,93 +203,91 @@ const BalanceSheets = () => {
     setPagination((p) => ({ ...p, current: 1 }));
   };
 
+  const collectedPct =
+    Number(summary.totalPayableAmount) > 0
+      ? Math.min(
+          Math.round((Number(summary.totalReceivedAmount) / Number(summary.totalPayableAmount)) * 100),
+          100,
+        )
+      : 0;
+
   return (
-    <div className="space-y-4">
-      <Card className="border-0 shadow-sm" style={{ borderRadius: 12 }}>
-        <Title level={4} className="mb-1!">
-          Balance Sheet
-        </Title>
-        <Text type="secondary">
-          Confirmed events summary and balances. Filter by event type dates
-          (start / end on an event type must fall in the range you pick).
-        </Text>
+    <div className="bk-list">
+      <div className="bk-intro">
+        <h3>Balance sheet</h3>
+        <p>
+          Confirmed events summary and balances. Filter by event type dates (start / end on an
+          event type must fall in the range you pick).
+        </p>
+      </div>
 
-        <Row gutter={[16, 16]} align="middle" className="mt-4">
-          <Col xs={24} md={16} lg={14}>
-            <Space direction="vertical" size={4} className="w-full">
-              <Text className="text-slate-600 text-sm font-medium">
-                Event date range
-              </Text>
-              <RangePicker
-                value={dateRange}
-                onChange={handleDateRangeChange}
-                format="YYYY-MM-DD"
-                allowEmpty={[true, true]}
-                className="w-full max-w-md"
-                size="large"
-                placeholder={["Start date", "End date"]}
-              />
-            </Space>
-          </Col>
-          <Col xs={24} md={8} lg={10} className="text-left md:text-right">
-            <Button size="large" onClick={clearDateFilter} disabled={!dateRange}>
-              Clear dates
-            </Button>
-          </Col>
-        </Row>
-      </Card>
+      <div className="bk-filters">
+        <div className="bk-field bk-field-wide">
+          <label>Event date range</label>
+          <RangePicker
+            value={dateRange}
+            onChange={handleDateRangeChange}
+            format="YYYY-MM-DD"
+            allowEmpty={[true, true]}
+            style={{ width: "100%" }}
+            size="large"
+            placeholder={["Start date", "End date"]}
+          />
+        </div>
+        <button type="button" className="pk-btn bk-clear" onClick={clearDateFilter} disabled={!dateRange}>
+          <X size={14} aria-hidden="true" /> Clear dates
+        </button>
+      </div>
 
-      <Row gutter={[12, 12]}>
-        <Col xs={24} md={8}>
-          <StatCard
-            title="Total Payable Amount"
-            value={summary.totalPayableAmount}
-            color="#338147"
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <StatCard
-            title="Total Received Amount"
-            value={summary.totalReceivedAmount}
-            color="#226a36"
-          />
-        </Col>
-        <Col xs={24} md={8}>
-          <StatCard
-            title="Total Balance Amount"
-            value={summary.totalBalanceAmount}
-            color="#f97316"
-          />
-        </Col>
-      </Row>
-
-      <Card className="border-0 shadow-sm" style={{ borderRadius: 12 }}>
-        {loading ? (
-          <div className="py-10 text-center">
-            <Spin />
+      <div className="bk-stats">
+        <div className="bk-stat-grid">
+          <div className="bk-stat">
+            <p className="bk-stat-title">Total payable amount</p>
+            <p className="bk-stat-value">{formatAmount(summary.totalPayableAmount)}</p>
           </div>
-        ) : rows.length ? (
-          <Table
-            rowKey={(record, idx) => record?._id || `balance-row-${idx}`}
-            columns={columns}
-            dataSource={rows}
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "50"],
-            }}
-            onChange={onTableChange}
-            scroll={{ x: 1200 }}
-          />
-        ) : (
-          <Empty description="No balance sheet events found." />
-        )}
-      </Card>
+          <div className="bk-stat">
+            <p className="bk-stat-title">Total received amount</p>
+            <p className="bk-stat-value">{formatAmount(summary.totalReceivedAmount)}</p>
+            <div className="bk-bar" aria-hidden="true">
+              <i style={{ width: `${collectedPct}%` }} />
+            </div>
+            <p className="bk-stat-sub">{collectedPct}% of payable collected</p>
+          </div>
+          <div className="bk-stat is-gold">
+            <p className="bk-stat-title">Total balance amount</p>
+            <p className="bk-stat-value">{formatAmount(summary.totalBalanceAmount)}</p>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="bk-center">
+          <Spin />
+        </div>
+      ) : rows.length ? (
+        <Table
+          className="pk-table bk-table"
+          rowKey={(record, idx) => record?._id || `balance-row-${idx}`}
+          columns={columns}
+          dataSource={rows}
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+          }}
+          onChange={onTableChange}
+          scroll={{ x: 1100 }}
+        />
+      ) : (
+        <div className="pk-empty">
+          <strong>No balance sheet events found</strong>
+          <span>Try a different date range.</span>
+        </div>
+      )}
     </div>
   );
 };
 
 export default BalanceSheets;
-

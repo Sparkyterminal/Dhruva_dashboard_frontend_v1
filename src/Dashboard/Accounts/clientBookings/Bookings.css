@@ -1,0 +1,355 @@
+/* Bookings Dashboard: list tab, stats, filters, tab bar and the event drawer. */
+
+/* ---- Tab bar (the seven sections) ---- */
+.bk-tabs.ant-tabs > .ant-tabs-nav {
+  margin: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfa;
+}
+
+.bk-tabs.ant-tabs > .ant-tabs-nav::before {
+  display: none;
+}
+
+.bk-tabs .ant-tabs-tab {
+  padding: 14px 6px;
+  margin: 0 14px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.bk-tabs .ant-tabs-tab:hover {
+  color: var(--brand);
+}
+
+.bk-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--brand) !important;
+}
+
+.bk-tabs .ant-tabs-ink-bar {
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--gold-deep);
+}
+
+.bk-tabs .ant-tabs-content-holder {
+  padding: 18px 20px 24px;
+}
+
+/* ---- List tab ---- */
+.bk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.bk-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bk-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: #fbfcfa;
+}
+
+.bk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1 1 200px;
+  max-width: 260px;
+}
+
+.bk-field.bk-field-wide {
+  flex: 1 1 280px;
+  max-width: 340px;
+}
+
+.bk-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.bk-clear {
+  height: 40px;
+}
+
+/* ---- Stat cards ---- */
+.bk-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bk-stat-group h3 {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.bk-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 12px;
+}
+
+.bk-stat {
+  --accent: #226a36;
+  --tint: #f2f8f2;
+  padding: 14px 18px;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: var(--tint);
+}
+
+.bk-stat.is-gold {
+  --accent: #a88a33;
+  --tint: #fcf8e8;
+}
+.bk-stat.is-red {
+  --accent: #b03a2e;
+  --tint: #fdf1ef;
+}
+.bk-stat.is-grey {
+  --accent: #8f9a8e;
+  --tint: #f5f7f4;
+}
+
+.bk-stat p {
+  margin: 0;
+}
+
+.bk-stat-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.bk-stat-value {
+  margin-top: 4px !important;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-stat-sub {
+  margin-top: 6px !important;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* ---- Table cells ---- */
+.bk-table .ant-table-tbody > tr > td {
+  vertical-align: top;
+}
+
+.bk-wrap {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.bk-event {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 8px;
+  background: #fbf7e6;
+  border: 1px solid #ede09c;
+  color: #82682a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.bk-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bk-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.bk-line svg {
+  flex: none;
+  color: var(--brand-action);
+}
+
+.bk-line.is-muted,
+.bk-line.is-muted svg {
+  color: var(--ink-soft);
+}
+
+.bk-heart svg {
+  display: inline;
+  vertical-align: -1px;
+  color: #b8745a;
+}
+
+.bk-pay {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+}
+
+.bk-pay-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.bk-pay-row strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.bk-pay-row .is-green {
+  color: #226a36;
+}
+
+.bk-pay-row .is-red {
+  color: #b03a2e;
+}
+
+.bk-bar {
+  height: 6px;
+  margin-top: 4px;
+  border-radius: 999px;
+  background: #e9eee8;
+  overflow: hidden;
+}
+
+.bk-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5da06a, #226a36);
+}
+
+.bk-pay-pct {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+/* ---- Event details drawer: calm up the existing cards and tables ---- */
+.event-details-drawer .ant-drawer-header {
+  border-bottom: 1px solid var(--line);
+}
+
+.event-details-drawer .ant-card {
+  border-radius: var(--radius-panel) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: none !important;
+}
+
+.event-details-drawer .ant-card-head {
+  min-height: 52px;
+  border-bottom: 1px solid #eef1ec;
+}
+
+.event-details-drawer .ant-table-thead > tr > th {
+  background: #f7f9f6;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.event-details-drawer .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #eef1ec;
+}
+
+.event-details-drawer .ant-divider {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Sections that were built as full pages (calendars, leaderboard, in-progress) now sit inside
+   the tab panel: drop their own full-height page padding and backdrop. */
+.bk-tabs .ant-tabs-tabpane .min-h-screen {
+  min-height: 0 !important;
+  padding: 0 !important;
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+.bk-tabs .ant-tabs-tabpane .h-screen {
+  height: auto !important;
+  min-height: 240px;
+  background-image: none !important;
+}
+
+/* Marketing bookings: scope label and a filter row that sits flat inside the panel. */
+.bk-scope-label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.bk-filters.bk-filters-flat {
+  margin: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+}
+
+.pk-panel > .bk-stats,
+.pk-wrap > .bk-stats {
+  margin: 0;
+}
+
+/* Balance sheet intro + centred spinner. */
+.bk-intro h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.bk-intro p {
+  margin: 4px 0 0;
+  max-width: 640px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.bk-center {
+  display: grid;
+  place-items: center;
+  padding: 48px 0;
+}
+
+.bk-stat .bk-bar {
+  margin-top: 10px;
+}

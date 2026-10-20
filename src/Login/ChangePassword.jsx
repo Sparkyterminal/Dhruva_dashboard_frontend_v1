@@ -1,101 +1,148 @@
 import React, { useState } from "react";
-import { Form, Input, Button, message } from "antd";
+import { Eye, EyeOff, KeyRound } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import axiosClient from "@/api/axiosClient";
+import { toast } from "@/Components/AdminKit/toast";
+import { Toaster } from "@/Components/AdminKit";
 import AuthLayout from "./AuthLayout";
+
+const STRENGTH = ["", "Weak", "Fair", "Good", "Strong"];
+
+/** 0-4 from length and character variety. Only a hint; the real rule is "at least 6 characters". */
+const strengthOf = (pw) => {
+  if (!pw) return 0;
+  let score = 0;
+  if (pw.length >= 6) score += 1;
+  if (pw.length >= 10) score += 1;
+  if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score += 1;
+  if (/\d/.test(pw) && /[^A-Za-z0-9]/.test(pw)) score += 1;
+  return Math.max(1, Math.min(score, 4));
+};
+
+const PasswordInput = ({ id, label, value, onChange, placeholder, error, autoComplete }) => {
+  const [shown, setShown] = useState(false);
+  return (
+    <div className="auth-field">
+      <label htmlFor={id} className="auth-label">
+        {label}
+      </label>
+      <div className="auth-password">
+        <input
+          id={id}
+          type={shown ? "text" : "password"}
+          className="auth-input"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          aria-invalid={Boolean(error)}
+        />
+        <button
+          type="button"
+          className="auth-eye"
+          onClick={() => setShown((s) => !s)}
+          aria-label={shown ? "Hide password" : "Show password"}
+        >
+          {shown ? <EyeOff size={19} /> : <Eye size={19} />}
+        </button>
+      </div>
+      {error ? <p className="auth-field-error">{error}</p> : null}
+    </div>
+  );
+};
 
 const ChangePassword = () => {
   const navigate = useNavigate();
   const user = useSelector((state) => state.user.value);
   const [loading, setLoading] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState({});
 
   const config = {
     headers: { Authorization: user?.access_token },
   };
 
-  const onFinish = async (values) => {
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    const next = {};
+    if (!newPassword) next.newPassword = "Please input your new password";
+    else if (newPassword.length < 6) next.newPassword = "Password must be at least 6 characters";
+    if (!confirmPassword) next.confirmPassword = "Please confirm your new password";
+    else if (confirmPassword !== newPassword) next.confirmPassword = "The two passwords do not match";
+    setErrors(next);
+    if (Object.keys(next).length) return;
+
     setLoading(true);
     try {
-      await axiosClient.patch(
-        `user/change/password`,
-        {
-          password: values.newPassword,
-        },
-        config
-      );
-      message.success("Password changed successfully");
+      await axiosClient.patch(`user/change/password`, { password: newPassword }, config);
+      toast.success("Password changed successfully");
       navigate("/user");
     } catch {
-      message.error("Failed to change password");
+      toast.error("Failed to change password");
     } finally {
       setLoading(false);
     }
   };
 
-  const validateConfirmPassword = ({ getFieldValue }) => ({
-    validator(_, value) {
-      if (!value || getFieldValue("newPassword") === value) {
-        return Promise.resolve();
-      }
-      return Promise.reject(new Error("The two passwords do not match!"));
-    },
-  });
+  const level = strengthOf(newPassword);
 
   return (
-    <AuthLayout
-      title="Change password"
-      subtitle="Choose a new password for your account"
-    >
-      <Form
-        name="changePassword"
-        onFinish={onFinish}
-        layout="vertical"
-        requiredMark={false}
+    <>
+      <AuthLayout
+        title="Change password"
+        subtitle="Choose a new password for your account"
+        icon={KeyRound}
       >
-        <Form.Item
-          label="New password"
-          name="newPassword"
-          rules={[
-            { required: true, message: "Please input your new password!" },
-            { min: 6, message: "Password must be at least 6 characters." },
-          ]}
-          hasFeedback
-        >
-          <Input.Password size="large" placeholder="Enter new password" />
-        </Form.Item>
+        <form onSubmit={onSubmit} noValidate>
+          <PasswordInput
+            id="newPassword"
+            label="New password"
+            value={newPassword}
+            onChange={(v) => {
+              setNewPassword(v);
+              if (errors.newPassword) setErrors((p) => ({ ...p, newPassword: "" }));
+            }}
+            placeholder="Enter new password"
+            error={errors.newPassword}
+            autoComplete="new-password"
+          />
+          {newPassword ? (
+            <div className="auth-meter" data-level={level} style={{ marginTop: -8, marginBottom: 18 }}>
+              <span className="auth-meter-bars" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+                <i />
+              </span>
+              <span>{STRENGTH[level]}</span>
+            </div>
+          ) : null}
 
-        <Form.Item
-          label="Confirm new password"
-          name="confirmPassword"
-          dependencies={["newPassword"]}
-          rules={[
-            { required: true, message: "Please confirm your new password!" },
-            validateConfirmPassword,
-          ]}
-          hasFeedback
-        >
-          <Input.Password size="large" placeholder="Confirm new password" />
-        </Form.Item>
+          <PasswordInput
+            id="confirmPassword"
+            label="Confirm new password"
+            value={confirmPassword}
+            onChange={(v) => {
+              setConfirmPassword(v);
+              if (errors.confirmPassword) setErrors((p) => ({ ...p, confirmPassword: "" }));
+            }}
+            placeholder="Confirm new password"
+            error={errors.confirmPassword}
+            autoComplete="new-password"
+          />
 
-        <Form.Item className="mb-0">
-          <div className="flex flex-col gap-3 pt-2">
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={loading}
-              size="large"
-              block
-            >
-              Change password
-            </Button>
-            <Button onClick={() => navigate(-1)} size="large" block>
-              Back home
-            </Button>
-          </div>
-        </Form.Item>
-      </Form>
-    </AuthLayout>
+          <button type="submit" disabled={loading} className="auth-submit">
+            {loading ? "Saving…" : "Change password"}
+          </button>
+          <button type="button" className="auth-secondary" onClick={() => navigate(-1)}>
+            Cancel
+          </button>
+        </form>
+      </AuthLayout>
+      <Toaster />
+    </>
   );
 };
 

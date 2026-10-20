@@ -1,0 +1,557 @@
+/* Own form controls: text field, searchable select, dialog, buttons. No UI library involved. */
+
+.fk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+
+.fk-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.fk-req {
+  color: #c0392b;
+}
+
+.fk-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.fk-input::placeholder {
+  color: #9aa59a;
+}
+
+.fk-input:hover:not(:disabled) {
+  border-color: var(--brand-action);
+}
+
+.fk-input:focus {
+  outline: none;
+  border-color: var(--brand-action);
+  box-shadow: 0 0 0 3px rgba(34, 106, 54, 0.15);
+}
+
+.fk-input:disabled {
+  background: #f3f6f2;
+  color: var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.has-error .fk-input {
+  border-color: #c0392b;
+}
+
+.has-error .fk-input:focus {
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.15);
+}
+
+.fk-error {
+  margin: 0;
+  font-size: 12.5px;
+  color: #b03a2e;
+}
+
+.fk-hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+/* ---- Searchable select ---- */
+.fk-select {
+  position: relative;
+}
+
+.fk-select-input {
+  padding-right: 38px;
+  cursor: pointer;
+}
+
+.fk-select-caret {
+  position: absolute;
+  top: 50%;
+  right: 13px;
+  transform: translateY(-50%);
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.fk-menu {
+  position: absolute;
+  z-index: 50;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  margin: 0;
+  padding: 6px;
+  overflow-y: auto;
+  list-style: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 18px 36px -18px rgba(11, 61, 11, 0.45);
+}
+
+.fk-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.fk-option.is-active {
+  background: #f2f8f2;
+}
+
+.fk-option.is-selected {
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.fk-option svg {
+  color: var(--brand-action);
+}
+
+.fk-menu-empty {
+  padding: 12px 10px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ---- Buttons ---- */
+.fk-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.fk-btn {
+  padding: 11px 20px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--brand);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.fk-btn:hover:not(:disabled) {
+  background: #f2f8f2;
+  border-color: var(--brand-action);
+}
+
+.fk-btn.is-primary {
+  background: var(--brand-action);
+  border-color: var(--brand-action);
+  color: #fff;
+}
+
+.fk-btn.is-primary:hover:not(:disabled) {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+
+.fk-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---- Card for full-page forms ---- */
+.fk-card {
+  width: 100%;
+  margin: 0 auto;
+  padding: 26px clamp(18px, 3vw, 30px) 22px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(11, 61, 11, 0.04), 0 14px 30px -24px rgba(11, 61, 11, 0.35);
+}
+
+/* ---- Dialog ---- */
+.fk-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgba(7, 41, 7, 0.42);
+  animation: fk-fade 0.15s ease both;
+}
+
+.fk-dialog {
+  width: 100%;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 30px 60px -24px rgba(0, 0, 0, 0.5);
+  animation: fk-pop 0.18s ease both;
+}
+
+.fk-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.fk-dialog-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.fk-close {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.fk-close:hover {
+  background: #eef1ec;
+  color: var(--ink);
+}
+
+.fk-dialog-body {
+  padding: 22px;
+}
+
+@keyframes fk-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fk-pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* ---- Password + multi select ---- */
+.fk-password {
+  position: relative;
+}
+
+.fk-password .fk-input {
+  padding-right: 44px;
+}
+
+.fk-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.fk-password-toggle:hover {
+  background: #eef1ec;
+  color: var(--ink);
+}
+
+.fk-multi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  height: auto;
+  min-height: 44px;
+  padding: 6px 38px 6px 8px;
+  cursor: text;
+}
+
+.fk-multi.is-open {
+  border-color: var(--brand-action);
+  box-shadow: 0 0 0 3px rgba(34, 106, 54, 0.15);
+}
+
+.fk-multi.is-disabled {
+  background: #f3f6f2;
+  cursor: not-allowed;
+}
+
+.fk-multi-input {
+  flex: 1 1 80px;
+  min-width: 60px;
+  height: 30px;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.fk-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 10px;
+  border-radius: 999px;
+  background: #e0eee1;
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.fk-chip button {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--brand-action);
+  cursor: pointer;
+}
+
+.fk-chip button:hover {
+  background: rgba(34, 106, 54, 0.18);
+}
+
+/* ---- Label row, clear button, textarea, amount, choices ---- */
+.fk-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.fk-label-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--brand-action);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fk-label-action:hover {
+  background: #e0eee1;
+}
+
+.fk-select-clear {
+  position: absolute;
+  top: 50%;
+  right: 34px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: #eef1ec;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.fk-select-clear:hover {
+  background: #dfe5dd;
+  color: var(--ink);
+}
+
+.fk-textarea {
+  height: auto;
+  min-height: 96px;
+  padding: 11px 14px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.fk-amount {
+  position: relative;
+}
+
+.fk-amount .fk-input {
+  padding-left: 34px;
+  font-variant-numeric: tabular-nums;
+}
+
+.fk-amount-sign {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  font-weight: 600;
+  color: var(--ink-soft);
+  pointer-events: none;
+}
+
+.fk-choices {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fk-choice {
+  flex: 1 1 0;
+  min-width: 90px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.fk-choice i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--dot, #8f9a8e);
+}
+
+.fk-choice.is-red {
+  --dot: #c0392b;
+}
+.fk-choice.is-gold {
+  --dot: #c4a747;
+}
+.fk-choice.is-green {
+  --dot: #338147;
+}
+
+.fk-choice:hover {
+  border-color: var(--brand-action);
+}
+
+.fk-choice.is-on {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #fff;
+}
+
+.fk-choice.is-on i {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
+}
+
+/* Ant Design popups (selects, date pickers) opened from forms shown inside a FormKit dialog
+   must sit above the dialog backdrop. */
+.ant-select-dropdown,
+.ant-picker-dropdown,
+.ant-dropdown,
+.ant-popover,
+.ant-tooltip {
+  z-index: 1300;
+}
+
+/* ---- Side drawer ---- */
+.fk-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  justify-content: flex-end;
+  background: rgba(7, 41, 7, 0.42);
+  animation: fk-fade 0.15s ease both;
+}
+
+.fk-drawer {
+  display: flex;
+  flex-direction: column;
+  max-width: 100vw;
+  height: 100%;
+  background: #fff;
+  box-shadow: -24px 0 50px -24px rgba(0, 0, 0, 0.5);
+  animation: fk-slide 0.22s ease both;
+}
+
+.fk-drawer-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.fk-drawer-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.fk-drawer-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.fk-drawer-body {
+  flex: 1;
+  min-height: 0;
+  padding: 22px 24px 28px;
+  overflow-y: auto;
+}
+
+.fk-drawer .adm-grid {
+  grid-template-columns: 1fr;
+}
+
+@keyframes fk-slide {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}

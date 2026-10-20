@@ -1,52 +1,52 @@
 import React from "react";
-import { Card, DatePicker, Col, Row, Typography } from "antd";
+import { DatePicker } from "antd";
 import dayjs from "dayjs";
 
-const { Text } = Typography;
 const { RangePicker } = DatePicker;
+
+const PRESETS = [
+  { key: "today", label: "Today", range: () => [dayjs(), dayjs()] },
+  {
+    key: "yesterday",
+    label: "Yesterday",
+    range: () => [dayjs().subtract(1, "day"), dayjs().subtract(1, "day")],
+  },
+  { key: "week", label: "Last 7 days", range: () => [dayjs().subtract(6, "day"), dayjs()] },
+  { key: "month", label: "This month", range: () => [dayjs().startOf("month"), dayjs()] },
+];
+
+const sameRange = (value, range) =>
+  value?.[0]?.isSame?.(range[0], "day") && value?.[1]?.isSame?.(range[1], "day");
 
 /**
  * value: [startDayjs, endDayjs] (Dayjs objects)
+ * Quick presets plus a custom range picker.
  */
-const DaybookDateSelector = ({ value, onChange, cutoffDate }) => {
-  return (
-    <Card
-      className="border-0 shadow-sm"
-      style={{
-        borderRadius: "16px",
-        background: "rgba(255, 255, 255, 0.85)",
-        backdropFilter: "blur(10px)",
-      }}
-      styles={{ body: { padding: "18px 20px" } }}
-    >
-      <Row gutter={[16, 16]} align="middle">
-        <Col xs={24} md={6}>
-          <Text className="text-slate-700 font-semibold">
-            Select date range
-          </Text>
-        </Col>
-        <Col xs={24} md={10}>
-          <RangePicker
-            value={value}
-            onChange={(d) => onChange?.(d)}
-            disabledDate={(current) =>
-              cutoffDate ? current && current.isBefore(dayjs(cutoffDate), "day") : false
-            }
-            format="YYYY-MM-DD"
-            style={{ width: "100%" }}
-            size="large"
-            allowEmpty={[false, false]}
-          />
-        </Col>
-        {/* <Col xs={24} md={8}>
-          <Text type="secondary">
-            Backend day boundary is UTC. This date is sent as `YYYY-MM-DD`.
-          </Text>
-        </Col> */}
-      </Row>
-    </Card>
-  );
-};
+const DaybookDateSelector = ({ value, onChange, cutoffDate }) => (
+  <div className="db-controls-left">
+    <div className="db-presets" role="group" aria-label="Quick range">
+      {PRESETS.map((p) => (
+        <button
+          key={p.key}
+          type="button"
+          aria-pressed={sameRange(value, p.range())}
+          onClick={() => onChange?.(p.range())}
+        >
+          {p.label}
+        </button>
+      ))}
+    </div>
+    <RangePicker
+      value={value}
+      onChange={(d) => onChange?.(d)}
+      disabledDate={(current) =>
+        cutoffDate ? current && current.isBefore(dayjs(cutoffDate), "day") : false
+      }
+      format="DD MMM YYYY"
+      size="large"
+      allowEmpty={[false, false]}
+    />
+  </div>
+);
 
 export default DaybookDateSelector;
-

@@ -1,48 +1,18 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  message,
-  Table,
-  Button,
-  Card,
-  Typography,
-  Space,
-  Row,
-  Col,
-  Tag,
-  Drawer,
-  Descriptions,
-  Divider,
-  Badge,
-  Statistic,
-  Select,
-  Radio,
-  Grid,
-  Tabs,
-  Popconfirm,
-} from "antd";
-import {
-  ArrowLeftOutlined,
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  CalendarOutlined,
-  EnvironmentOutlined,
-  DollarOutlined,
-  UserOutlined,
-  PhoneOutlined,
-  HeartOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  TeamOutlined,
-} from "@ant-design/icons";
+import { message, Table, Typography, Select, Popconfirm } from "antd";
+import { CheckCircleOutlined, ClockCircleOutlined } from "@ant-design/icons";
 import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { CLIENT_BOOKINGS_LIST_TAB_API_STATUS } from "../Accounts/clientBookings/clientBookingsUtils";
+import {
+  CLIENT_BOOKINGS_LIST_TAB_API_STATUS,
+} from "../Accounts/clientBookings/clientBookingsUtils";
 import BudgetReportListCell from "../Accounts/budgetreport/BudgetReportListCell";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
+import { CalendarDays, Eye, Heart, Pencil, Phone, Plus, Trash2, Users, X } from "lucide-react";
+import { PageHero, Segmented } from "@/Components/PageKit";
+import EventDetailsDrawer from "../Accounts/clientBookings/EventDetailsDrawer";
+import "../Accounts/clientBookings/Bookings.css";
 
 const { Title, Text } = Typography;
 
@@ -64,20 +34,6 @@ const ViewInflow = () => {
   });
 
   const user = useSelector((state) => state.user.value);
-  const screens = Grid.useBreakpoint();
-  const statsValueFontSize = screens.xl
-    ? 30
-    : screens.lg
-      ? 26
-      : screens.md
-        ? 22
-        : 18;
-  const statsValueCommonStyle = {
-    lineHeight: 1.1,
-    wordBreak: "break-word",
-    overflowWrap: "anywhere",
-    whiteSpace: "normal",
-  };
 
   const fetchRequirementsData = useCallback(async () => {
     setLoading(true);
@@ -240,44 +196,12 @@ const ViewInflow = () => {
     fetchEventNameOptions();
   }, [fetchEventNameOptions]);
 
-  // Helper function to check if should display as single/complete event
-  const isSingleDisplayEvent = (record) => {
-    const eventNameStr = getEventName(record.eventName);
-    // If Wedding with 'complete' advancePaymentType, treat as single event display
-    if (
-      eventNameStr === "Wedding" &&
-      record.advancePaymentType === "complete"
-    ) {
-      return true;
-    }
-    // Non-wedding events are always single display
-    if (eventNameStr !== "Wedding") {
-      return true;
-    }
-    // Wedding with 'separate' shows each event type separately
-    return false;
-  };
-
   // Helper function to check if Wedding with complete advancePaymentType
   const isCompletePaymentWedding = (record) => {
     const eventNameStr = getEventName(record.eventName);
     return (
       eventNameStr === "Wedding" && record.advancePaymentType === "complete"
     );
-  };
-
-  // Calculate total payable for a booking
-  const getTotalPayable = (record) => {
-    if (isCompletePaymentWedding(record)) {
-      // Complete wedding: use only first event type (represents whole package)
-      return record.eventTypes?.[0]?.totalPayable || 0;
-    } else {
-      // Other events: sum all event types
-      return record.eventTypes.reduce(
-        (sum, et) => sum + (et.totalPayable || 0),
-        0,
-      );
-    }
   };
 
   // Calculate total agreed amount for a booking (for display purposes)
@@ -393,11 +317,19 @@ const ViewInflow = () => {
     }
   };
 
+  const CONFIRMATION_TONE = {
+    "Confirmed Event": "",
+    "In Progress": "is-gold",
+    InProgress: "is-gold",
+    "Almost Booked": "is-blue",
+    Cancelled: "is-red",
+  };
+
   const columns = [
     {
-      title: "Booked By",
+      title: "Booked by",
       key: "bookedBy",
-      width: 160,
+      width: 130,
       render: (_, record) => {
         const bookedByFirst =
           record?.bookedBy?.first_name ?? record?.bookedBy?.firstName ?? null;
@@ -408,43 +340,22 @@ const ViewInflow = () => {
         const firstName =
           typeof raw === "string" ? raw.trim().split(/\s+/)[0] : null;
 
-        return (
-          <Text strong className="text-slate-800">
-            {firstName || "-"}
-          </Text>
-        );
+        return <strong style={{ fontWeight: 600 }}>{firstName || "-"}</strong>;
       },
     },
     {
       title: "Status",
       dataIndex: "eventConfirmation",
       key: "eventConfirmation",
-      width: 120,
-      render: (status) => {
-        let color = "default";
-        let icon = "⏳";
-        if (status === "Confirmed Event") {
-          color = "success";
-          icon = "✅";
-        } else if (status === "In Progress") {
-          color = "processing";
-          icon = "🔄";
-        } else {
-          color = "warning";
-          icon = "⏳";
-        }
-        return (
-          <Tag
-            color={color}
-            className="text-xs font-semibold px-2 py-1 break-words whitespace-normal"
-          >
-            {icon} {status || "Pending"}
-          </Tag>
-        );
-      },
+      width: 150,
+      render: (status) => (
+        <span className={`pk-pill ${CONFIRMATION_TONE[status] ?? "is-gold"}`}>
+          {status || "Pending"}
+        </span>
+      ),
     },
     {
-      title: "Event Name",
+      title: "Event",
       dataIndex: "eventName",
       key: "eventName",
       width: 140,
@@ -452,149 +363,108 @@ const ViewInflow = () => {
         // Handle both string and object cases
         const eventNameStr =
           typeof text === "string" ? text : text?.name || text?.id || "N/A";
-        return (
-          <Tag
-            color="purple"
-            className="text-sm font-semibold px-3 py-1 text-wrap"
-          >
-            {eventNameStr}
-          </Tag>
-        );
+        return <span className="bk-event">{eventNameStr}</span>;
       },
     },
     {
       title: "Note",
       key: "note",
-      width: 120,
-      align: "right",
+      width: 200,
       render: (_, record) => (
-        <Text strong className="text-black text-wrap">
+        <span className={`bk-wrap${record.note ? "" : " pk-muted"}`}>
           {record.note ? record.note : "N/A"}
-        </Text>
+        </span>
       ),
     },
-    ...(listStatusTab === "inprogress" || listStatusTab === "cancelled"
+    ...(["inprogress", "almostbooked", "cancelled"].includes(listStatusTab)
       ? [
           {
-            title: "Next Meeting Date",
+            title: "Next meeting",
             key: "meetingDate",
-            width: 140,
-            render: (_, record) => (
-              <div className="flex items-center gap-1">
-                {/* <CalendarOutlined className="text-blue-500 text-xs" /> */}
-                <Text className="text-sm">
-                  {record.meetingDate
-                    ? formatDate(record.meetingDate)
-                    : "Not Set"}
-                </Text>
-              </div>
-            ),
+            width: 170,
+            render: (_, record) =>
+              record.meetingDate ? (
+                <span className="bk-line">
+                  <CalendarDays size={14} aria-hidden="true" /> {formatDate(record.meetingDate)}
+                </span>
+              ) : (
+                <span className="pk-muted">Not set</span>
+              ),
           },
         ]
       : []),
     {
-      title: "Client Details",
+      title: "Client",
       key: "clientDetails",
-      width: 180,
+      width: 220,
       render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <UserOutlined className="text-blue-500" />
-            <Text strong className="text-base">
-              {record.clientName}
-            </Text>
+        <div className="pk-who bk-client">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            {String(record.clientName || "?").trim().charAt(0).toUpperCase()}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong className="bk-wrap">{record.clientName}</strong>
+            {record.brideName && record.groomName && (
+              <span className="bk-wrap bk-heart">
+                <Heart size={12} aria-hidden="true" /> {record.brideName} &amp; {record.groomName}
+              </span>
+            )}
           </div>
-          {record.brideName && record.groomName && (
-            <div className="flex items-center gap-2">
-              <HeartOutlined className="text-pink-500" />
-              <Text className="text-sm text-gray-600">
-                {record.brideName} & {record.groomName}
-              </Text>
-            </div>
-          )}
         </div>
       ),
     },
     {
       title: "Contact",
       key: "contact",
-      width: 130,
+      width: 150,
       render: (_, record) => (
-        <div className="space-y-1">
-          <div className="flex items-center gap-1">
-            <PhoneOutlined className="text-green-500 text-xs" />
-            <Text className="text-sm">{record.contactNumber}</Text>
-          </div>
-          {record.altContactNumber &&
-            record.altContactNumber !== record.contactNumber && (
-              <div className="flex items-center gap-1">
-                <PhoneOutlined className="text-orange-500 text-xs" />
-                <Text className="text-sm text-gray-500">
-                  {record.altContactNumber}
-                </Text>
-              </div>
-            )}
+        <div className="bk-stack">
+          <span className="bk-line">
+            <Phone size={13} aria-hidden="true" /> {record.contactNumber}
+          </span>
+          {record.altContactNumber && record.altContactNumber !== record.contactNumber && (
+            <span className="bk-line is-muted">
+              <Phone size={13} aria-hidden="true" /> {record.altContactNumber}
+            </span>
+          )}
         </div>
       ),
     },
     {
       title: "Leads",
       key: "leads",
-      width: 120,
+      width: 150,
       render: (_, record) => (
-        <div className="space-y-1">
+        <div className="bk-stack">
           {record.lead1 && (
-            <div className="flex items-center gap-1">
-              <TeamOutlined className="text-blue-500 text-xs" />
-              <Text className="text-sm">
-                {typeof record.lead1 === "string"
-                  ? record.lead1
-                  : record.lead1?.name || "N/A"}
-              </Text>
-            </div>
+            <span className="bk-line">
+              <Users size={13} aria-hidden="true" />
+              {typeof record.lead1 === "string" ? record.lead1 : record.lead1?.name || "N/A"}
+            </span>
           )}
           {record.lead2 && (
-            <div className="flex items-center gap-1">
-              <TeamOutlined className="text-purple-500 text-xs" />
-              <Text className="text-sm">
-                {typeof record.lead2 === "string"
-                  ? record.lead2
-                  : record.lead2?.name || "N/A"}
-              </Text>
-            </div>
+            <span className="bk-line">
+              <Users size={13} aria-hidden="true" />
+              {typeof record.lead2 === "string" ? record.lead2 : record.lead2?.name || "N/A"}
+            </span>
           )}
-          {!record.lead1 && !record.lead2 && (
-            <Text className="text-xs text-gray-400">No leads</Text>
-          )}
+          {!record.lead1 && !record.lead2 && <span className="pk-muted">No leads</span>}
         </div>
       ),
     },
-    // {
-    //   title: "Total Payable",
-    //   key: "totalPayable",
-    //   width: 120,
-    //   align: "right",
-    //   render: (_, record) => (
-    //     <Text strong className="text-green-600 text-base">
-    //       {formatAmount(getTotalPayable(record))}
-    //     </Text>
-    //   ),
-    // },
     {
-      title: "Agreed Amount",
+      title: "Agreed amount",
       key: "agreedAmount",
-      width: 130,
+      width: 140,
       align: "right",
       render: (_, record) => (
-        <Text strong className="text-slate-800">
-          {formatAmount(getTotalAgreedAmount(record))}
-        </Text>
+        <span className="pk-money">{formatAmount(getTotalAgreedAmount(record))}</span>
       ),
     },
     {
-      title: "Payment Status",
+      title: "Payment",
       key: "paymentStatus",
-      width: 150,
+      width: 200,
       render: (_, record) => {
         const agreed = getTotalAgreedAmount(record);
         const received = getTotalReceivedAmount(record);
@@ -603,38 +473,27 @@ const ViewInflow = () => {
           agreed > 0 ? Math.min(Math.round((received / agreed) * 100), 100) : 0;
 
         return (
-          <div className="space-y-1">
-            <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Received:</Text>
-              <Text strong className="text-sm text-green-600">
-                {formatAmount(received)}
-              </Text>
+          <div className="bk-pay">
+            <div className="bk-pay-row">
+              <span>Received</span>
+              <strong className="is-green">{formatAmount(received)}</strong>
             </div>
-            <div className="flex justify-between items-center">
-              <Text className="text-xs text-gray-500">Balance:</Text>
-              <Text strong className="text-sm text-red-500">
-                {formatAmount(balance)}
-              </Text>
+            <div className="bk-pay-row">
+              <span>Balance</span>
+              <strong className="is-red">{formatAmount(balance)}</strong>
             </div>
-            <Tag
-              color={
-                percentage === 100
-                  ? "success"
-                  : percentage > 0
-                    ? "warning"
-                    : "default"
-              }
-            >
-              {percentage}% Collected
-            </Tag>
+            <div className="bk-bar" aria-hidden="true">
+              <i style={{ width: `${percentage}%` }} />
+            </div>
+            <span className="bk-pay-pct">{percentage}% collected</span>
           </div>
         );
       },
     },
     {
-      title: "Budget Report",
+      title: "Budget report",
       key: "budgetReport",
-      width: 120,
+      width: 150,
       align: "center",
       render: (_, record) => (
         <BudgetReportListCell
@@ -646,40 +505,33 @@ const ViewInflow = () => {
       ),
     },
     {
-      title: "Event Types",
+      title: "",
       key: "eventTypes",
-      width: 110,
-      align: "center",
+      width: 120,
+      align: "right",
       render: (_, record) => (
-        <Button
-          type="primary"
-          icon={<EyeOutlined />}
-          onClick={() => showEventDetailsDrawer(record)}
-          className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
-        >
-          View ({record.eventTypes?.length || 0})
-        </Button>
+        <button type="button" className="pk-btn" onClick={() => showEventDetailsDrawer(record)}>
+          <Eye size={14} aria-hidden="true" /> View ({record.eventTypes?.length || 0})
+        </button>
       ),
     },
     ...(eventsScope === "mine"
       ? [
           {
-            title: "Actions",
+            title: "",
             key: "actions",
             fixed: "right",
-            width: 160,
-            align: "center",
+            width: 190,
+            align: "right",
             render: (_, record) => (
-              <Space size="small">
-                <Button
-                  type="default"
-                  icon={<EditOutlined />}
+              <div className="pk-actions">
+                <button
+                  type="button"
+                  className="pk-btn is-solid"
                   onClick={() => navigate(`/user/editclient/${record._id}`)}
-                  className="border-blue-400 text-blue-600 hover:bg-blue-50"
-                  size="small"
                 >
-                  Edit
-                </Button>
+                  <Pencil size={13} aria-hidden="true" /> Edit
+                </button>
                 <Popconfirm
                   title="Delete Booking"
                   description="Are you sure you want to delete this booking? This action cannot be reversed."
@@ -689,45 +541,16 @@ const ViewInflow = () => {
                   cancelText="No, Cancel"
                   okButtonProps={{ danger: true }}
                 >
-                  <Button
-                    type="default"
-                    icon={<DeleteOutlined />}
-                    danger
-                    size="small"
-                  >
-                    Delete
-                  </Button>
+                  <button type="button" className="pk-btn is-danger" aria-label="Delete booking">
+                    <Trash2 size={14} aria-hidden="true" /> Delete
+                  </button>
                 </Popconfirm>
-              </Space>
+              </div>
             ),
           },
         ]
       : []),
   ];
-
-  // Calculate statistics
-  const totalBookings = bookings.length;
-  const totalAgreedRevenue = bookings.reduce(
-    (acc, curr) => acc + getTotalAgreedAmount(curr),
-    0,
-  );
-  const totalPayableRevenue = bookings.reduce(
-    (acc, curr) => acc + getTotalPayable(curr),
-    0,
-  );
-  const totalReceivedRevenue = bookings.reduce(
-    (acc, curr) => acc + getTotalReceivedAdvances(curr),
-    0,
-  );
-  const totalPendingRevenue = bookings.reduce((acc, curr) => {
-    const expected = getTotalExpectedAdvances(curr);
-    const received = getTotalReceivedAdvances(curr);
-    return acc + (expected - received);
-  }, 0);
-  const totalEventTypes = bookings.reduce(
-    (acc, curr) => acc + (curr.eventTypes?.length || 0),
-    0,
-  );
 
   // Summary from `/events/my-events` (Mine scope) — agreed / received / pending
   const pageAgreedSum = bookings.reduce(
@@ -771,247 +594,92 @@ const ViewInflow = () => {
           )
         : pageExpectedAdvancePendingSum;
 
-  // Tab items
-  const tabItems = [
-    {
-      key: "inprogress",
-      label: (
-        <span>
-          <ClockCircleOutlined /> InProgress
-          {listStatusTab === "inprogress" ? ` (${bookings.length})` : ""}
-        </span>
-      ),
-    },
-    {
-      key: "confirmed",
-      label: (
-        <span>
-          <CheckCircleOutlined /> Confirmed Event
-          {listStatusTab === "confirmed" ? ` (${bookings.length})` : ""}
-        </span>
-      ),
-    },
-    {
-      key: "cancelled",
-      label: (
-        <span>
-          ❌ Cancelled
-          {listStatusTab === "cancelled" ? ` (${bookings.length})` : ""}
-        </span>
-      ),
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-linear-to-br from-blue-50 via-purple-50 to-pink-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-10">
-        {/* Header */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl">
-          <Row justify="space-between" align="middle" gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate("/user")}
-                size="large"
-                className="border-gray-300 hover:border-blue-500 hover:text-blue-500"
-              >
-                Back Home
-              </Button>
-            </Col>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Marketing"
+          title="Bookings Dashboard"
+          subtitle="Your client bookings, their payments and what is still to be collected."
+          onBack={() => navigate("/user")}
+          backLabel="Back home"
+        >
+          <button type="button" className="pk-cta" onClick={() => navigate("/user/addclient")}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> New booking
+          </button>
+        </PageHero>
 
-            <Col xs={24} sm={8} className="text-center">
-              <Title
-                level={2}
-                className="!mb-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
-              >
-                📋 Bookings Dashboard
-              </Title>
-            </Col>
-
-            <Col xs={24} sm={8} className="text-right">
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                size="large"
-                onClick={() => navigate("/user/addclient")}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 border-none shadow-lg hover:shadow-xl"
-              >
-                New Booking
-              </Button>
-            </Col>
-          </Row>
-        </Card>
-
-        {/* Statistics Cards (Mine only) */}
+        {/* Statistics (Mine only) */}
         {eventsScope === "mine" && mineSummary && (
-          <div className="mt-4 w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#338147,#2b7a41)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Total Bookings
-                    </Text>
-                  }
-                  value={mineTotalBookings}
-                  prefix="📊"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Bookings matching current filters
-                </Text>
-              </Card>
-            </div>
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#2f8a4b,#1f6f3a)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Total Agreed Amount
-                    </Text>
-                  }
-                  value={mineTotalAgreedAmount}
-                  prefix="💰"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                  formatter={(value) => formatAmount(value)}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Sum of agreed amounts for filtered bookings
-                </Text>
-              </Card>
-            </div>
-
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#338147,#226a36)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Received Amount
-                    </Text>
-                  }
-                  value={mineTotalReceivedAmount}
-                  prefix="✅"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                  formatter={(value) => formatAmount(value)}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Amount received so far
-                </Text>
-              </Card>
-            </div>
-
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#17542a,#0b3d0b)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Expected Advance
-                    </Text>
-                  }
-                  value={mineExpectedAdvanceNotReceived}
-                  prefix="📈"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                  formatter={(value) => formatAmount(value)}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Expected advance not yet received
-                </Text>
-              </Card>
-            </div>
-
-            <div>
-              <Card
-                className="border-0 rounded-xl shadow-lg hover:shadow-xl transition-all h-full"
-                style={{
-                  background: "linear-gradient(135deg,#f59e0b,#d97706)",
-                  color: "white",
-                }}
-              >
-                <Statistic
-                  title={
-                    <Text
-                      style={{ color: "rgba(255,255,255,0.9)", fontSize: 14 }}
-                    >
-                      Pending Amount
-                    </Text>
-                  }
-                  value={mineTotalPendingAmount}
-                  prefix="⏳"
-                  valueStyle={{
-                    color: "white",
-                    fontSize: statsValueFontSize,
-                    fontWeight: "bold",
-                    ...statsValueCommonStyle,
-                  }}
-                  formatter={(value) => formatAmount(value)}
-                />
-                <Text style={{ color: "rgba(255,255,255,0.8)", fontSize: 12 }}>
-                  Agreed amount − received amount
-                </Text>
-              </Card>
+          <div className="bk-stats">
+            <div className="bk-stat-grid">
+              <div className="bk-stat">
+                <p className="bk-stat-title">Total bookings</p>
+                <p className="bk-stat-value">{mineTotalBookings}</p>
+                <p className="bk-stat-sub">Bookings matching current filters</p>
+              </div>
+              <div className="bk-stat">
+                <p className="bk-stat-title">Total agreed amount</p>
+                <p className="bk-stat-value">{formatAmount(mineTotalAgreedAmount)}</p>
+                <p className="bk-stat-sub">Sum of agreed amounts for filtered bookings</p>
+              </div>
+              <div className="bk-stat">
+                <p className="bk-stat-title">Received amount</p>
+                <p className="bk-stat-value">{formatAmount(mineTotalReceivedAmount)}</p>
+                <p className="bk-stat-sub">Amount received so far</p>
+              </div>
+              <div className="bk-stat is-grey">
+                <p className="bk-stat-title">Expected advance</p>
+                <p className="bk-stat-value">{formatAmount(mineExpectedAdvanceNotReceived)}</p>
+                <p className="bk-stat-sub">Expected advance not yet received</p>
+              </div>
+              <div className="bk-stat is-gold">
+                <p className="bk-stat-title">Pending amount</p>
+                <p className="bk-stat-value">{formatAmount(mineTotalPendingAmount)}</p>
+                <p className="bk-stat-sub">Agreed amount − received amount</p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Table */}
-        <Card className="bg-white/80 backdrop-blur-sm shadow-lg border-0 rounded-2xl overflow-hidden">
-          <Row gutter={[16, 12]} align="middle" style={{ padding: 16 }}>
-            <Col xs={24} sm={12} md={8}>
-              <Text strong className="text-slate-700 text-sm block mb-1">
-                Event Name
-              </Text>
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <div className="pk-toolbar-left">
+              <Segmented
+                label="Booking status"
+                value={listStatusTab}
+                onChange={(key) => {
+                  setListStatusTab(key);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+                options={[
+                  { value: "inprogress", label: "In progress", count: listStatusTab === "inprogress" ? bookings.length : undefined },
+                  { value: "almostbooked", label: "Almost booked", count: listStatusTab === "almostbooked" ? bookings.length : undefined },
+                  { value: "confirmed", label: "Confirmed", count: listStatusTab === "confirmed" ? bookings.length : undefined },
+                  { value: "cancelled", label: "Cancelled", count: listStatusTab === "cancelled" ? bookings.length : undefined },
+                ]}
+              />
+            </div>
+            <div className="pk-toolbar-right">
+              <span className="bk-scope-label">Show</span>
+              <Segmented
+                label="Scope"
+                value={eventsScope}
+                onChange={(value) => {
+                  setEventsScope(value);
+                  setPagination((p) => ({ ...p, current: 1 }));
+                }}
+                options={[
+                  { value: "mine", label: "Mine" },
+                  { value: "all", label: "All" },
+                ]}
+              />
+            </div>
+          </div>
+
+          <div className="bk-filters bk-filters-flat">
+            <div className="bk-field">
+              <label>Event name</label>
               <Select
                 allowClear
                 placeholder="All events"
@@ -1024,52 +692,20 @@ const ViewInflow = () => {
                 style={{ width: "100%" }}
                 size="large"
               />
-            </Col>
-            <Col xs={24} sm={12} md={4}>
-              <Button
-                size="large"
-                onClick={() => {
-                  setFilterEventName(undefined);
-                  setPagination((p) => ({ ...p, current: 1 }));
-                }}
-                style={{ marginTop: 30 }}
-                disabled={!filterEventName}
-              >
-                Clear
-              </Button>
-            </Col>
-          </Row>
-          <Row
-            gutter={[16, 12]}
-            align="middle"
-            style={{ padding: "0 16px 16px" }}
-          >
-            <Col xs={24} sm={12} md={6}>
-              <Text strong className="text-slate-700 text-sm block mb-1">
-                Scope
-              </Text>
-              <Radio.Group
-                value={eventsScope}
-                onChange={(e) => {
-                  setEventsScope(e.target.value);
-                  setPagination((p) => ({ ...p, current: 1 }));
-                }}
-              >
-                <Radio.Button value="mine">Mine</Radio.Button>
-                <Radio.Button value="all">All</Radio.Button>
-              </Radio.Group>
-            </Col>
-          </Row>
-          <Tabs
-            activeKey={listStatusTab}
-            onChange={(key) => {
-              setListStatusTab(key);
-              setPagination((p) => ({ ...p, current: 1 }));
-            }}
-            items={tabItems}
-            size="large"
-            className="mb-4"
-          />
+            </div>
+            <button
+              type="button"
+              className="pk-btn bk-clear"
+              disabled={!filterEventName}
+              onClick={() => {
+                setFilterEventName(undefined);
+                setPagination((p) => ({ ...p, current: 1 }));
+              }}
+            >
+              <X size={14} aria-hidden="true" /> Clear
+            </button>
+          </div>
+
           <Table
             columns={columns}
             dataSource={bookings}
@@ -1083,1087 +719,19 @@ const ViewInflow = () => {
               pageSizeOptions: ["10", "20", "50"],
             }}
             onChange={handleTableChange}
-            scroll={{ x: 1320 }}
-            className="custom-table"
+            scroll={{ x: 1650 }}
+            className="pk-table bk-table"
           />
-        </Card>
+        </section>
       </div>
 
-      {/* Event Details Drawer */}
-      <Drawer
-        title={
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🎯</span>
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Event Details - {getEventName(selectedEvent?.eventName)}
-            </span>
-          </div>
-        }
+      <EventDetailsDrawer
         open={drawerVisible}
         onClose={() => setDrawerVisible(false)}
-        width="80%"
-        placement="right"
-        styles={{ body: { padding: 24 } }}
-      >
-        {selectedEvent && (
-          <div className="space-y-6" style={{ paddingRight: 8 }}>
-            {/* Client Info */}
-            <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-              <Descriptions column={2} size="small">
-                <Descriptions.Item
-                  label={<span className="font-semibold">Client Name</span>}
-                >
-                  <Text strong>{selectedEvent.clientName}</Text>
-                </Descriptions.Item>
-                {selectedEvent.brideName && selectedEvent.groomName && (
-                  <>
-                    <Descriptions.Item
-                      label={<span className="font-semibold">Bride</span>}
-                    >
-                      {selectedEvent.brideName}
-                    </Descriptions.Item>
-                    <Descriptions.Item
-                      label={<span className="font-semibold">Groom</span>}
-                    >
-                      {selectedEvent.groomName}
-                    </Descriptions.Item>
-                  </>
-                )}
-                <Descriptions.Item
-                  label={<span className="font-semibold">Contact</span>}
-                >
-                  {selectedEvent.contactNumber}
-                </Descriptions.Item>
-                {selectedEvent.altContactNumber && (
-                  <Descriptions.Item
-                    label={<span className="font-semibold">Alt Contact</span>}
-                  >
-                    {selectedEvent.altContactNumber}
-                    {selectedEvent.altContactName && (
-                      <Text type="secondary" className="ml-2">
-                        ({selectedEvent.altContactName})
-                      </Text>
-                    )}
-                  </Descriptions.Item>
-                )}
-                {selectedEvent.lead1 && (
-                  <Descriptions.Item
-                    label={
-                      <span className="font-semibold">
-                        Project Coordinator 1
-                      </span>
-                    }
-                  >
-                    {typeof selectedEvent.lead1 === "string"
-                      ? selectedEvent.lead1
-                      : selectedEvent.lead1?.name || "N/A"}
-                  </Descriptions.Item>
-                )}
-                {selectedEvent.lead2 && (
-                  <Descriptions.Item
-                    label={
-                      <span className="font-semibold">
-                        Project Coordinator 2
-                      </span>
-                    }
-                  >
-                    {typeof selectedEvent.lead2 === "string"
-                      ? selectedEvent.lead2
-                      : selectedEvent.lead2?.name || "N/A"}
-                  </Descriptions.Item>
-                )}
-                {selectedEvent.note && (
-                  <Descriptions.Item
-                    label={<span className="font-semibold">Note</span>}
-                    span={2}
-                  >
-                    <Text>{selectedEvent.note}</Text>
-                  </Descriptions.Item>
-                )}
-              </Descriptions>
-            </Card>
-
-            {/* Check event type and render accordingly */}
-            {isSingleDisplayEvent(selectedEvent) && (
-              // Single display mode: Wedding with 'complete' OR Non-wedding events
-              <>
-                {/* For complete wedding: Show all event details first, then complete package card */}
-                {isCompletePaymentWedding(selectedEvent) && (
-                  <>
-                    {/* Show each event type's details */}
-                    {selectedEvent.eventTypes?.map((eventType, index) => {
-                      const eventTypeName = !eventType.eventType
-                        ? "Main Event"
-                        : typeof eventType.eventType === "string"
-                          ? eventType.eventType
-                          : eventType.eventType?.name || "N/A";
-                      return (
-                        <Card
-                          key={index}
-                          className="border-2 border-green-200 hover:border-green-400 transition-all mb-4"
-                          title={
-                            <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold text-green-700">
-                                {eventTypeName}
-                              </span>
-                              <Tag color="green" className="text-sm">
-                                Event {index + 1}
-                              </Tag>
-                            </div>
-                          }
-                        >
-                          <div className="space-y-4">
-                            {/* Event Details */}
-                            <Row gutter={[16, 16]}>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                                  <CalendarOutlined className="text-blue-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      Start Date
-                                    </Text>
-                                    <Text strong>
-                                      {formatDate(eventType.startDate)}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                                  <CalendarOutlined className="text-purple-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      End Date
-                                    </Text>
-                                    <Text strong>
-                                      {formatDate(eventType.endDate)}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
-                                  <EnvironmentOutlined className="text-pink-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      Venue
-                                    </Text>
-                                    <Text strong>
-                                      {eventType.venueLocation?.name ||
-                                        eventType.venueLocation ||
-                                        "-"}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              {eventType.subVenueLocation && (
-                                <Col span={8}>
-                                  <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                                    <EnvironmentOutlined className="text-orange-600 text-lg" />
-                                    <div>
-                                      <Text className="text-xs text-gray-500 block">
-                                        Sub Venue
-                                      </Text>
-                                      <Text strong>
-                                        {eventType.subVenueLocation?.name ||
-                                          eventType.subVenueLocation ||
-                                          "-"}
-                                      </Text>
-                                    </div>
-                                  </div>
-                                </Col>
-                              )}
-                              {eventType.coordinator && (
-                                <Col span={8}>
-                                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                                    <UserOutlined className="text-green-600 text-lg" />
-                                    <div>
-                                      <Text className="text-xs text-gray-500 block">
-                                        Event Coordinator
-                                      </Text>
-                                      <Text strong>
-                                        {eventType.coordinator?.name ||
-                                          eventType.coordinator ||
-                                          "-"}
-                                      </Text>
-                                    </div>
-                                  </div>
-                                </Col>
-                              )}
-                            </Row>
-                          </div>
-                        </Card>
-                      );
-                    })}
-
-                    {/* Complete Package Card with Amounts and Advances */}
-                    <Card
-                      className="border-2 border-blue-200 hover:border-blue-400 transition-all"
-                      title={
-                        <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-blue-700">
-                            Complete Package
-                          </span>
-                        </div>
-                      }
-                    >
-                      <div className="space-y-4">
-                        {/* Amount breakdown for first event type */}
-                        {selectedEvent.eventTypes?.[0] && (
-                          <>
-                            <Divider className="my-2">Amount Breakdown</Divider>
-                            <Row gutter={[12, 12]}>
-                              <Col span={12}>
-                                <div className="p-2 bg-green-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Agreed Amount
-                                  </Text>
-                                  <Text strong className="text-green-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0]
-                                        .agreedAmount || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-blue-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account Amount
-                                  </Text>
-                                  <Text strong className="text-blue-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0]
-                                        .accountAmount || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-purple-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    GST (18%)
-                                  </Text>
-                                  <Text strong className="text-purple-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0].accountGst ||
-                                        0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-pink-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account + GST
-                                  </Text>
-                                  <Text strong className="text-pink-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0]
-                                        .accountAmountWithGst || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-yellow-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Cash Amount
-                                  </Text>
-                                  <Text strong className="text-yellow-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0].cashAmount ||
-                                        0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-emerald-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Total Payable
-                                  </Text>
-                                  <Text strong className="text-emerald-700">
-                                    {formatAmount(
-                                      selectedEvent.eventTypes[0]
-                                        .totalPayable || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                            </Row>
-
-                            <Divider className="my-2">Advance Payments</Divider>
-
-                            {/* Advances from first event type */}
-                            {selectedEvent.eventTypes[0].advances &&
-                            selectedEvent.eventTypes[0].advances.length > 0 ? (
-                              selectedEvent.eventTypes[0].advances.map(
-                                (advance, advIndex) => (
-                                  <Card
-                                    key={advIndex}
-                                    size="small"
-                                    className="bg-gray-50 border border-gray-200"
-                                    title={
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-semibold">
-                                          Advance #{advance.advanceNumber}
-                                        </span>
-                                        {advance.receivedAmount > 0 ? (
-                                          <Badge
-                                            status="success"
-                                            text={
-                                              <span className="font-semibold text-green-600">
-                                                Received
-                                              </span>
-                                            }
-                                          />
-                                        ) : (
-                                          <Badge
-                                            status="warning"
-                                            text={
-                                              <span className="font-semibold text-orange-600">
-                                                Pending
-                                              </span>
-                                            }
-                                          />
-                                        )}
-                                      </div>
-                                    }
-                                    style={{ marginBottom: 8 }}
-                                  >
-                                    <Row gutter={[8, 8]}>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Expected Amount
-                                        </Text>
-                                        <div className="font-semibold text-blue-600">
-                                          {formatAmount(advance.expectedAmount)}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Received Amount
-                                        </Text>
-                                        <div className="font-semibold text-green-600">
-                                          {formatAmount(advance.receivedAmount)}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Expected Date
-                                        </Text>
-                                        <div className="font-medium">
-                                          {formatDate(advance.advanceDate)}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Received Date
-                                        </Text>
-                                        <div className="font-medium">
-                                          {advance.receivedDate
-                                            ? formatDate(advance.receivedDate)
-                                            : "-"}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Given By
-                                        </Text>
-                                        <div className="font-medium">
-                                          {advance.givenBy || "-"}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Collected By
-                                        </Text>
-                                        <div className="font-medium">
-                                          {advance.collectedBy || "-"}
-                                        </div>
-                                      </Col>
-                                      <Col span={12}>
-                                        <Text className="text-xs text-gray-500">
-                                          Mode of Payment
-                                        </Text>
-                                        <div className="font-medium">
-                                          {advance.modeOfPayment || "-"}
-                                        </div>
-                                      </Col>
-                                    </Row>
-                                  </Card>
-                                ),
-                              )
-                            ) : (
-                              <Text className="text-xs text-gray-400">
-                                No advances configured
-                              </Text>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </Card>
-                  </>
-                )}
-
-                {/* For non-wedding events or single event: Show event details with amounts */}
-                {!isCompletePaymentWedding(selectedEvent) &&
-                  selectedEvent.eventTypes
-                    ?.slice(0, undefined)
-                    .map((eventType, index) => {
-                      const eventTypeName = !eventType.eventType
-                        ? "Main Event"
-                        : typeof eventType.eventType === "string"
-                          ? eventType.eventType
-                          : eventType.eventType?.name || "N/A";
-                      return (
-                        <Card
-                          key={index}
-                          className="border-2 border-blue-200 hover:border-blue-400 transition-all"
-                          title={
-                            <div className="flex items-center justify-between">
-                              <span className="text-lg font-bold text-blue-700">
-                                {selectedEvent.eventTypes?.length > 1
-                                  ? eventTypeName
-                                  : "Event Details"}
-                              </span>
-                              {selectedEvent.eventTypes?.length > 1 && (
-                                <Tag color="blue" className="text-sm">
-                                  Event {index + 1}
-                                </Tag>
-                              )}
-                            </div>
-                          }
-                        >
-                          <div className="space-y-4">
-                            {/* Dates and Venue */}
-                            <Row gutter={[16, 16]}>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                                  <CalendarOutlined className="text-blue-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      Start Date
-                                    </Text>
-                                    <Text strong>
-                                      {formatDate(eventType.startDate)}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                                  <CalendarOutlined className="text-purple-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      End Date
-                                    </Text>
-                                    <Text strong>
-                                      {formatDate(eventType.endDate)}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              <Col span={8}>
-                                <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
-                                  <EnvironmentOutlined className="text-pink-600 text-lg" />
-                                  <div>
-                                    <Text className="text-xs text-gray-500 block">
-                                      Venue
-                                    </Text>
-                                    <Text strong>
-                                      {eventType.venueLocation?.name ||
-                                        eventType.venueLocation ||
-                                        "-"}
-                                    </Text>
-                                  </div>
-                                </div>
-                              </Col>
-                              {eventType.subVenueLocation && (
-                                <Col span={8}>
-                                  <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                                    <EnvironmentOutlined className="text-orange-600 text-lg" />
-                                    <div>
-                                      <Text className="text-xs text-gray-500 block">
-                                        Sub Venue
-                                      </Text>
-                                      <Text strong>
-                                        {eventType.subVenueLocation?.name ||
-                                          eventType.subVenueLocation ||
-                                          "-"}
-                                      </Text>
-                                    </div>
-                                  </div>
-                                </Col>
-                              )}
-                              {eventType.coordinator && (
-                                <Col span={8}>
-                                  <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                                    <UserOutlined className="text-green-600 text-lg" />
-                                    <div>
-                                      <Text className="text-xs text-gray-500 block">
-                                        Event Coordinator
-                                      </Text>
-                                      <Text strong>
-                                        {eventType.coordinator?.name ||
-                                          eventType.coordinator ||
-                                          "-"}
-                                      </Text>
-                                    </div>
-                                  </div>
-                                </Col>
-                              )}
-                            </Row>
-
-                            <Divider className="my-2">Amount Breakdown</Divider>
-
-                            {/* Amount breakdown */}
-                            <Row gutter={[12, 12]}>
-                              <Col span={12}>
-                                <div className="p-2 bg-green-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Agreed Amount
-                                  </Text>
-                                  <Text strong className="text-green-700">
-                                    {formatAmount(eventType.agreedAmount || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-blue-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account Amount
-                                  </Text>
-                                  <Text strong className="text-blue-700">
-                                    {formatAmount(eventType.accountAmount || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-purple-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    GST (18%)
-                                  </Text>
-                                  <Text strong className="text-purple-700">
-                                    {formatAmount(eventType.accountGst || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-pink-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account + GST
-                                  </Text>
-                                  <Text strong className="text-pink-700">
-                                    {formatAmount(
-                                      eventType.accountAmountWithGst || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-yellow-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Cash Amount
-                                  </Text>
-                                  <Text strong className="text-yellow-700">
-                                    {formatAmount(eventType.cashAmount || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-emerald-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Total Payable
-                                  </Text>
-                                  <Text strong className="text-emerald-700">
-                                    {formatAmount(eventType.totalPayable || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                            </Row>
-
-                            <Divider className="my-2">Advance Payments</Divider>
-
-                            {/* Advances */}
-                            {eventType.advances &&
-                            eventType.advances.length > 0 ? (
-                              eventType.advances.map((advance, advIndex) => (
-                                <Card
-                                  key={advIndex}
-                                  size="small"
-                                  className="bg-gray-50 border border-gray-200"
-                                  title={
-                                    <div className="flex items-center justify-between">
-                                      <span className="font-semibold">
-                                        Advance #{advance.advanceNumber}
-                                      </span>
-                                      {advance.receivedAmount > 0 ? (
-                                        <Badge
-                                          status="success"
-                                          text={
-                                            <span className="font-semibold text-green-600">
-                                              Received
-                                            </span>
-                                          }
-                                        />
-                                      ) : (
-                                        <Badge
-                                          status="warning"
-                                          text={
-                                            <span className="font-semibold text-orange-600">
-                                              Pending
-                                            </span>
-                                          }
-                                        />
-                                      )}
-                                    </div>
-                                  }
-                                  style={{ marginBottom: 8 }}
-                                >
-                                  <Row gutter={[8, 8]}>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Expected Amount
-                                      </Text>
-                                      <div className="font-semibold text-blue-600">
-                                        {formatAmount(advance.expectedAmount)}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Received Amount
-                                      </Text>
-                                      <div className="font-semibold text-green-600">
-                                        {formatAmount(advance.receivedAmount)}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Expected Date
-                                      </Text>
-                                      <div className="font-medium">
-                                        {formatDate(advance.advanceDate)}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Received Date
-                                      </Text>
-                                      <div className="font-medium">
-                                        {advance.receivedDate
-                                          ? formatDate(advance.receivedDate)
-                                          : "-"}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Given By
-                                      </Text>
-                                      <div className="font-medium">
-                                        {advance.givenBy || "-"}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Collected By
-                                      </Text>
-                                      <div className="font-medium">
-                                        {advance.collectedBy || "-"}
-                                      </div>
-                                    </Col>
-                                    <Col span={12}>
-                                      <Text className="text-xs text-gray-500">
-                                        Mode of Payment
-                                      </Text>
-                                      <div className="font-medium">
-                                        {advance.modeOfPayment || "-"}
-                                      </div>
-                                    </Col>
-                                  </Row>
-                                </Card>
-                              ))
-                            ) : (
-                              <Text className="text-xs text-gray-400">
-                                No advances configured
-                              </Text>
-                            )}
-                          </div>
-                        </Card>
-                      );
-                    })}
-              </>
-            )}
-
-            {!isSingleDisplayEvent(selectedEvent) &&
-              // Type 1: Wedding with event-specific amounts OR Type 3: Other events
-              selectedEvent.eventTypes?.map((eventType, index) => {
-                const eventTypeName = !eventType.eventType
-                  ? "Engagement"
-                  : typeof eventType.eventType === "string"
-                    ? eventType.eventType
-                    : eventType.eventType?.name || "N/A";
-                return (
-                  <Card
-                    key={index}
-                    className="border-2 border-purple-200 hover:border-purple-400 transition-all"
-                    title={
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-purple-700">
-                          {eventTypeName}
-                        </span>
-                        <Tag color="purple" className="text-sm">
-                          Event {index + 1}
-                        </Tag>
-                      </div>
-                    }
-                  >
-                    <div className="space-y-4">
-                      {/* Event Basic Info */}
-                      <Row gutter={[16, 16]}>
-                        <Col span={8}>
-                          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
-                            <CalendarOutlined className="text-blue-600 text-lg" />
-                            <div>
-                              <Text className="text-xs text-gray-500 block">
-                                Start Date
-                              </Text>
-                              <Text strong>
-                                {formatDate(eventType.startDate)}
-                              </Text>
-                            </div>
-                          </div>
-                        </Col>
-                        <Col span={8}>
-                          <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-lg">
-                            <CalendarOutlined className="text-purple-600 text-lg" />
-                            <div>
-                              <Text className="text-xs text-gray-500 block">
-                                End Date
-                              </Text>
-                              <Text strong>
-                                {formatDate(eventType.endDate)}
-                              </Text>
-                            </div>
-                          </div>
-                        </Col>
-                        <Col span={8}>
-                          <div className="flex items-center gap-2 p-3 bg-pink-50 rounded-lg">
-                            <EnvironmentOutlined className="text-pink-600 text-lg" />
-                            <div>
-                              <Text className="text-xs text-gray-500 block">
-                                Venue
-                              </Text>
-                              <Text strong>
-                                {eventType.venueLocation?.name ||
-                                  eventType.venueLocation ||
-                                  "-"}
-                              </Text>
-                            </div>
-                          </div>
-                        </Col>
-                        {eventType.subVenueLocation && (
-                          <Col span={8}>
-                            <div className="flex items-center gap-2 p-3 bg-orange-50 rounded-lg">
-                              <EnvironmentOutlined className="text-orange-600 text-lg" />
-                              <div>
-                                <Text className="text-xs text-gray-500 block">
-                                  Sub Venue
-                                </Text>
-                                <Text strong>
-                                  {eventType.subVenueLocation?.name ||
-                                    eventType.subVenueLocation ||
-                                    "-"}
-                                </Text>
-                              </div>
-                            </div>
-                          </Col>
-                        )}
-                        {eventType.coordinator && (
-                          <Col span={8}>
-                            <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                              <UserOutlined className="text-green-600 text-lg" />
-                              <div>
-                                <Text className="text-xs text-gray-500 block">
-                                  Event Coordinator
-                                </Text>
-                                <Text strong>
-                                  {eventType.coordinator?.name ||
-                                    eventType.coordinator ||
-                                    "-"}
-                                </Text>
-                              </div>
-                            </div>
-                          </Col>
-                        )}
-                        {eventType.agreedAmount !== undefined &&
-                          eventType.agreedAmount > 0 && (
-                            <>
-                              <Col span={24}>
-                                <Divider className="my-2">
-                                  Amount Breakdown
-                                </Divider>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-green-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Agreed Amount
-                                  </Text>
-                                  <Text strong className="text-green-700">
-                                    {formatAmount(eventType.agreedAmount)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-blue-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account Amount
-                                  </Text>
-                                  <Text strong className="text-blue-700">
-                                    {formatAmount(eventType.accountAmount || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-purple-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    GST (18%)
-                                  </Text>
-                                  <Text strong className="text-purple-700">
-                                    {formatAmount(eventType.accountGst || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-pink-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Account + GST
-                                  </Text>
-                                  <Text strong className="text-pink-700">
-                                    {formatAmount(
-                                      eventType.accountAmountWithGst || 0,
-                                    )}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-yellow-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Cash Amount
-                                  </Text>
-                                  <Text strong className="text-yellow-700">
-                                    {formatAmount(eventType.cashAmount || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                              <Col span={12}>
-                                <div className="p-2 bg-emerald-50 rounded">
-                                  <Text className="text-xs text-gray-500 block">
-                                    Total Payable
-                                  </Text>
-                                  <Text strong className="text-emerald-700">
-                                    {formatAmount(eventType.totalPayable || 0)}
-                                  </Text>
-                                </div>
-                              </Col>
-                            </>
-                          )}
-                      </Row>
-
-                      <Divider className="my-4">Advance Payments</Divider>
-
-                      {/* Advances */}
-                      {eventType.advances?.map((advance, advIndex) => (
-                        <Card
-                          key={advIndex}
-                          size="small"
-                          className="bg-gray-50 border border-gray-200"
-                          title={
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold">
-                                Advance #{advance.advanceNumber}
-                              </span>
-                              {advance.receivedAmount > 0 ? (
-                                <Badge
-                                  status="success"
-                                  text={
-                                    <span className="font-semibold text-green-600">
-                                      Received
-                                    </span>
-                                  }
-                                />
-                              ) : (
-                                <Badge
-                                  status="warning"
-                                  text={
-                                    <span className="font-semibold text-orange-600">
-                                      Pending
-                                    </span>
-                                  }
-                                />
-                              )}
-                            </div>
-                          }
-                          style={{ marginBottom: 12 }}
-                        >
-                          <Row gutter={[8, 8]}>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Expected Amount
-                              </Text>
-                              <div className="font-semibold text-blue-600">
-                                {formatAmount(advance.expectedAmount)}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Received Amount
-                              </Text>
-                              <div className="font-semibold text-green-600">
-                                {formatAmount(advance.receivedAmount)}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Expected Date
-                              </Text>
-                              <div className="font-medium">
-                                {formatDate(advance.advanceDate)}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Received Date
-                              </Text>
-                              <div className="font-medium">
-                                {advance.receivedDate
-                                  ? formatDate(advance.receivedDate)
-                                  : "-"}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Given By
-                              </Text>
-                              <div className="font-medium">
-                                {advance.givenBy || "-"}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Collected By
-                              </Text>
-                              <div className="font-medium">
-                                {advance.collectedBy || "-"}
-                              </div>
-                            </Col>
-                            <Col span={12}>
-                              <Text className="text-xs text-gray-500">
-                                Mode of Payment
-                              </Text>
-                              <div className="font-medium">
-                                {advance.modeOfPayment || "-"}
-                              </div>
-                            </Col>
-                          </Row>
-
-                          {(advance.remarks?.accounts ||
-                            advance.remarks?.owner ||
-                            advance.remarks?.approver) && (
-                            <div className="mt-3 pt-3 border-t border-gray-200">
-                              <Text className="text-xs text-gray-500 block mb-2">
-                                Remarks:
-                              </Text>
-                              <div className="space-y-1">
-                                {advance.remarks.accounts && (
-                                  <div className="text-sm">
-                                    <Text type="secondary">Accounts:</Text>{" "}
-                                    {advance.remarks.accounts}
-                                  </div>
-                                )}
-                                {advance.remarks.owner && (
-                                  <div className="text-sm">
-                                    <Text type="secondary">Owner:</Text>{" "}
-                                    {advance.remarks.owner}
-                                  </div>
-                                )}
-                                {advance.remarks.approver && (
-                                  <div className="text-sm">
-                                    <Text type="secondary">Approver:</Text>{" "}
-                                    {advance.remarks.approver}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </Card>
-                      ))}
-                    </div>
-                  </Card>
-                );
-              })}
-          </div>
-        )}
-      </Drawer>
-
-      <style>{`
-        .custom-table .ant-table-thead > tr > th {
-          background: linear-gradient(135deg, #e0eee1 0%, #e0eee1 100%);
-          font-weight: 600;
-          color: #338147;
-          border-bottom: 2px solid #92c29a;
-        }
-
-        .custom-table .ant-table-tbody > tr:hover > td {
-          background: #f3fcf5 !important;
-        }
-
-        .custom-table .ant-pagination-item-active {
-          background: linear-gradient(135deg, #338147, #2b7a41);
-          border-color: #338147;
-        }
-
-        .custom-table .ant-pagination-item-active a {
-          color: white;
-        }
-
-        .ant-drawer-header {
-          background: linear-gradient(135deg, #e0eee1 0%, #e0eee1 100%);
-          border-bottom: 2px solid #c0ddc3;
-        }
-
-        .ant-drawer-body {
-          padding: 24px !important;
-        }
-
-        .ant-drawer-content {
-          border-radius: 12px 0 0 12px;
-        }
-
-        .ant-descriptions-item-label {
-          font-weight: 600;
-          color: #338147;
-        }
-
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, #338147, #2b7a41);
-          border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, #17542a, #0f4220);
-        }
-      `}</style>
+        event={selectedEvent}
+        balanceBasis="agreed"
+        amountsRule="always-or-positive"
+      />
     </div>
   );
 };

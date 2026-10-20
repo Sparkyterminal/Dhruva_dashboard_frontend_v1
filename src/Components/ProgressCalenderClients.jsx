@@ -1,13 +1,20 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Calendar, MapPin, Clock, Users, AlertCircle } from "lucide-react";
-import axiosClient from "@/api/axiosClient";
+import { Calendar, Clock, AlertCircle } from "lucide-react";
+import { CalendarEmpty, CalendarSkeleton } from "./CalendarKit";
+import { sameMonth, softEvent } from "./CalendarKit/calendarHelpers";
+import "@/Components/PageKit/PageKit.css";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
+
+const progressCache = new Map();
+
+/** Calendar accent per status: gold = in progress, blue = almost booked, red = cancelled. */
+const statusAccent = (status) =>
+  status === "Cancelled" ? "#c0392b" : status === "Almost Booked" ? "#2f5d8c" : "#c4a747";
 
 const ProgressCalenderClients = () => {
   const [events, setEvents] = useState([]);
@@ -22,18 +29,22 @@ const ProgressCalenderClients = () => {
       return;
     }
 
-    const config = {
-      headers: { Authorization: user?.access_token },
-    };
-
+    const cacheKey = `progress:${user.access_token}`;
+    const cached = progressCache.get(cacheKey);
+    if (cached) setEvents(cached);
     setLoading(true);
     try {
       const authHeaders = { Authorization: user.access_token };
-      const [inProgressList, cancelledList] = await Promise.all([
+      const [inProgressList, almostBookedList, cancelledList] = await Promise.all([
         fetchAllMyEventsPages(authHeaders, {
           status: "inprogress",
           limit: 100,
         }),
+        // Backends without the Almost Booked status yet simply return nothing here.
+        fetchAllMyEventsPages(authHeaders, {
+          status: "almostbooked",
+          limit: 100,
+        }).catch(() => []),
         fetchAllMyEventsPages(authHeaders, {
           status: "cancelled",
           limit: 100,
@@ -41,7 +52,7 @@ const ProgressCalenderClients = () => {
       ]);
 
       const byId = new Map();
-      [...inProgressList, ...cancelledList].forEach((event) => {
+      [...inProgressList, ...almostBookedList, ...cancelledList].forEach((event) => {
         if (event?._id) byId.set(String(event._id), event);
       });
 
@@ -50,14 +61,12 @@ const ProgressCalenderClients = () => {
           event &&
           event.eventName &&
           (event.eventConfirmation === "InProgress" ||
+          event.eventConfirmation === "Almost Booked" ||
             event.eventConfirmation === "Cancelled"),
       );
 
+      progressCache.set(cacheKey, eventsData);
       setEvents(eventsData);
-
-      if (eventsData.length === 0) {
-        message.info("No InProgress or Cancelled events found");
-      }
     } catch (err) {
       console.error("Error fetching events:", err);
       if (err.response?.status === 401) {
@@ -107,15 +116,7 @@ const ProgressCalenderClients = () => {
                   eventConfirmation: event.eventConfirmation || "Pending",
                   isMeeting: true,
                 },
-                backgroundColor:
-                  event.eventConfirmation === "Cancelled"
-                    ? "#ef4444"
-                    : "#f59e0b",
-                borderColor:
-                  event.eventConfirmation === "Cancelled"
-                    ? "#dc2626"
-                    : "#d97706",
-                textColor: "#ffffff",
+                ...softEvent(statusAccent(event.eventConfirmation)),
               });
             }
           } catch (error) {
@@ -165,15 +166,7 @@ const ProgressCalenderClients = () => {
                   eventConfirmation: event.eventConfirmation || "Pending",
                   isMeeting: false,
                 },
-                backgroundColor:
-                  event.eventConfirmation === "Cancelled"
-                    ? "#ef4444"
-                    : "#f59e0b",
-                borderColor:
-                  event.eventConfirmation === "Cancelled"
-                    ? "#dc2626"
-                    : "#d97706",
-                textColor: "#ffffff",
+                ...softEvent(statusAccent(event.eventConfirmation)),
               });
             } catch (error) {
               console.error(
@@ -218,43 +211,24 @@ const ProgressCalenderClients = () => {
       const { eventName, eventType, clientName, eventConfirmation, isMeeting } =
         eventInfo.event.extendedProps || {};
 
-      const statusIcon = eventConfirmation === "Cancelled" ? "✕" : "◐";
+      const statusIcon =
+        eventConfirmation === "Cancelled" ? "✕" : eventConfirmation === "Almost Booked" ? "◕" : "◐";
 
       return (
-        <div
-          className="p-2 text-xs overflow-hidden leading-snug"
-          style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
-        >
-          <div
-            className="font-semibold truncate mb-1 flex items-center gap-1"
-            style={{ fontSize: "11px" }}
-          >
-            <span>{statusIcon}</span>
-            <span>{formatText(eventName)}</span>
+        <div className="fc-event-body">
+          <div className="t">
+            {statusIcon} {formatText(eventName)}
           </div>
-          {eventType && !isMeeting && (
-            <div className="truncate mb-1" style={{ fontSize: "10px" }}>
-              {formatText(eventType)}
-            </div>
-          )}
-          {isMeeting && (
-            <div
-              className="truncate mb-1"
-              style={{ fontSize: "10px", fontStyle: "italic" }}
-            >
-              Meeting Date
-            </div>
-          )}
-          <div className="truncate" style={{ fontSize: "10px" }}>
-            {formatText(clientName)}
-          </div>
+          {eventType && !isMeeting && <div className="s">{formatText(eventType)}</div>}
+          {isMeeting && <div className="s" style={{ fontStyle: "italic" }}>Meeting date</div>}
+          <div className="s">{formatText(clientName)}</div>
         </div>
       );
     } catch (error) {
       console.error("Error rendering event content:", error);
       return (
-        <div className="p-1 text-xs">
-          <div className="font-semibold">Event</div>
+        <div className="fc-event-body">
+          <div className="t">Event</div>
         </div>
       );
     }
@@ -266,14 +240,8 @@ const ProgressCalenderClients = () => {
     }
 
     try {
-      const calendarApi = calendarRef.current?.getApi();
-      if (!calendarApi) {
-        return [];
-      }
-
-      const currentDate = calendarApi.getDate();
-      const month = currentDate.getMonth();
-      const year = currentDate.getFullYear();
+      const month = selectedMonth.getMonth();
+      const year = selectedMonth.getFullYear();
 
       const filteredEvents = [];
 
@@ -417,407 +385,193 @@ const ProgressCalenderClients = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
-          <div className="text-lg text-white">Loading events...</div>
-        </div>
-      </div>
-    );
-  }
+  const calendarEvents = useMemo(() => getCalendarEvents(), [events]);
+  const monthEvents = useMemo(() => getMonthEvents(), [events, selectedMonth]);
 
   const inProgressCount = events.filter(
     (e) => e.eventConfirmation === "InProgress",
+  ).length;
+  const almostBookedCount = events.filter(
+    (e) => e.eventConfirmation === "Almost Booked",
   ).length;
   const cancelledCount = events.filter(
     (e) => e.eventConfirmation === "Cancelled",
   ).length;
 
+  if (loading && events.length === 0) {
+    return (
+      <div className="ck">
+        <CalendarSkeleton />
+      </div>
+    );
+  }
+
+  const accentFor = statusAccent;
+
   return (
-    <div className="min-h-screen p-6">
+    <div className="ck print-full">
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          .print-full { 
-            width: 100% !important; 
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
-          }
-          body { 
-            print-color-adjust: exact; 
-            -webkit-print-color-adjust: exact;
-            background: white !important;
-          }
-        }
-        
-        .fc {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .fc .fc-toolbar-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #243227;
-        }
-        
-        .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #e6eae7;
-        }
-        
-        .fc-theme-standard .fc-scrollgrid {
-          border-color: #e6eae7;
-        }
-        
-        .fc .fc-daygrid-day-number {
-          padding: 8px;
-          font-weight: 500;
-          color: #3c4c3f;
-        }
-        
-        .fc .fc-daygrid-day.fc-day-today {
-          background-color: #fef3c7 !important;
-        }
-        
-        .fc .fc-col-header-cell {
-          background-color: #f9fbfa;
-          font-weight: 500;
-          color: #505e53;
-          padding: 12px 0;
-        }
-        
-        .fc-event {
-          cursor: pointer;
-          margin: 3px 2px;
-          border-radius: 4px;
-          border-width: 0;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          opacity: 1 !important;
-        }
-        
-        .fc-event:hover {
-          opacity: 0.9 !important;
-          transform: translateY(-1px);
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-        }
-        
-        .fc-event-main {
-          opacity: 1 !important;
-        }
-        
-        .fc-daygrid-event {
-          opacity: 1 !important;
-        }
-        
-        .fc .fc-button {
-          background-color: #f59e0b;
-          border-color: #f59e0b;
-          text-transform: capitalize;
-          font-weight: 500;
-          padding: 8px 16px;
-          border-radius: 8px;
-        }
-        
-        .fc .fc-button:hover {
-          background-color: #d97706;
-          border-color: #d97706;
-        }
-        
-        .fc .fc-button-primary:disabled {
-          background-color: #9ca3af;
-          border-color: #9ca3af;
-        }
-        
-        .fc-daygrid-event {
-          white-space: normal !important;
-          overflow: visible !important;
-        }
-        
-        .fc-daygrid-day-frame {
-          min-height: 140px !important;
-        }
-        
-        .fc-daygrid-day-events {
-          margin-bottom: 0 !important;
-        }
-        
-        .fc-event-main {
-          overflow: visible !important;
-        }
-        
-        .fc-daygrid-event-harness {
-          margin-bottom: 4px !important;
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; background: white !important; }
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto print-full">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 no-print">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #f59e0b 0%, #d97706 100%)",
-                }}
-              >
-                <AlertCircle className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-semibold text-gray-800">
-                  InProgress and Cancelled Events
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  Track pending and cancelled events
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <div className="text-sm text-gray-600 px-4 py-2 bg-amber-100 rounded-lg">
-                <span className="font-medium">{inProgressCount}</span>{" "}
-                InProgress
-              </div>
-              <div className="text-sm text-gray-600 px-4 py-2 bg-red-100 rounded-lg">
-                <span className="font-medium">{cancelledCount}</span> Cancelled
-              </div>
-            </div>
-          </div>
-
-          {/* Legend */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm font-semibold text-gray-700 mb-3">
-              Event Status:
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-amber-600">◐</span>
-                <span className="text-sm text-gray-600">InProgress</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-red-600">✕</span>
-                <span className="text-sm text-gray-600">Cancelled</span>
-              </div>
-            </div>
+      <div className="ck-head no-print">
+        <div className="ck-title">
+          <span className="ck-title-icon">
+            <AlertCircle size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2>In progress, almost booked &amp; cancelled events</h2>
+            <p>Track pending, almost booked and cancelled events, and their meeting dates</p>
           </div>
         </div>
+        <div className="ck-chips">
+          <span className="ck-chip is-gold">
+            <i /> <b>{inProgressCount}</b> InProgress
+          </span>
+          <span className="ck-chip is-blue">
+            <i /> <b>{almostBookedCount}</b> Almost booked
+          </span>
+          <span className="ck-chip is-red">
+            <i /> <b>{cancelledCount}</b> Cancelled
+          </span>
+        </div>
+      </div>
 
-        {/* Calendar */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 pdf-export-section">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth",
-            }}
-            events={getCalendarEvents()}
-            eventContent={renderEventContent}
-            height="auto"
-            dayMaxEvents={false}
-            eventMaxStack={15}
-            datesSet={(dateInfo) => {
-              try {
-                if (dateInfo.start) {
-                  const calendarApi = calendarRef.current?.getApi();
-                  if (calendarApi) {
-                    const currentDate = calendarApi.getDate();
-                    setSelectedMonth(currentDate);
-                  }
-                }
-              } catch (error) {
-                console.error("Error setting selected month:", error);
+      <div className="ck-card pdf-export-section">
+        {loading && <span className="ck-refresh no-print">Refreshing…</span>}
+        <div className="ck-legend" style={{ marginBottom: 12 }}>
+          <span><i style={{ "--c": "#c4a747" }} /> ◐ InProgress</span>
+          <span><i style={{ "--c": "#2f5d8c" }} /> ◕ Almost booked</span>
+          <span><i style={{ "--c": "#c0392b" }} /> ✕ Cancelled</span>
+        </div>
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridMonth",
+          }}
+          events={calendarEvents}
+          eventContent={renderEventContent}
+          height="auto"
+          dayMaxEvents={false}
+          eventMaxStack={15}
+          datesSet={() => {
+            try {
+              const calendarApi = calendarRef.current?.getApi();
+              if (calendarApi) {
+                const currentDate = calendarApi.getDate();
+                setSelectedMonth((prev) =>
+                  sameMonth(prev, currentDate) ? prev : currentDate,
+                );
               }
-            }}
-            eventDidMount={(info) => {
-              try {
-                const {
-                  clientName,
-                  eventName,
-                  eventType,
-                  eventConfirmation,
-                  isMeeting,
-                } = info.event.extendedProps;
+            } catch (error) {
+              console.error("Error setting selected month:", error);
+            }
+          }}
+          eventDidMount={(info) => {
+            try {
+              const { clientName, eventName, eventType, eventConfirmation, isMeeting } =
+                info.event.extendedProps;
 
-                let tooltip = `${formatText(eventName)}`;
-                if (eventType && !isMeeting) {
-                  tooltip += ` - ${formatText(eventType)}`;
-                }
-                if (isMeeting) {
-                  tooltip += ` - Meeting Date`;
-                }
-                tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
-                tooltip += `\nStatus: ${eventConfirmation}`;
-
-                info.el.setAttribute("title", tooltip);
-              } catch (error) {
-                console.error("Error mounting event:", error);
+              let tooltip = `${formatText(eventName)}`;
+              if (eventType && !isMeeting) {
+                tooltip += ` - ${formatText(eventType)}`;
               }
-            }}
+              if (isMeeting) {
+                tooltip += ` - Meeting Date`;
+              }
+              tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
+              tooltip += `\nStatus: ${eventConfirmation}`;
+
+              info.el.setAttribute("title", tooltip);
+            } catch (error) {
+              console.error("Error mounting event:", error);
+            }
+          }}
+        />
+      </div>
+
+      <div className="ck-card pdf-export-section">
+        <h3 className="ck-card-title">
+          Events this month{" "}
+          <span>
+            {selectedMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+          </span>
+        </h3>
+
+        {monthEvents.length === 0 ? (
+          <CalendarEmpty
+            icon={<Calendar size={24} aria-hidden="true" />}
+            title="No InProgress, Almost Booked or Cancelled events this month"
+            hint="Use the arrows above to look at another month."
           />
-        </div>
-
-        {/* Event Details Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 pdf-export-section">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg" style={{ background: "#f59e0b" }}>
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <h3 className="text-2xl font-semibold text-gray-800">
-              Events This Month
-            </h3>
-          </div>
-
-          <div className="grid gap-4">
-            {getMonthEvents().length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-10 h-10 text-gray-400" />
+        ) : (
+          <div className="ck-list">
+            {monthEvents.map((event) => (
+              <article
+                key={event._id}
+                className="ck-item"
+                style={{ "--accent": accentFor(event.eventConfirmation) }}
+              >
+                <div className="pk-pills">
+                  <span className={`pk-pill ${event.eventConfirmation === "Cancelled" ? "is-red" : event.eventConfirmation === "Almost Booked" ? "is-blue" : "is-gold"}`}>
+                    {formatText(event.eventName)}
+                  </span>
+                  <span className="pk-pill is-grey">{event.eventConfirmation}</span>
                 </div>
-                <p className="text-gray-500 text-lg">
-                  No InProgress or Cancelled events for this month
+                <h4>{formatText(event.clientName)}</h4>
+                <p className="ck-item-meta">
+                  <b>Project coordinators:</b> {formatText(event.lead1) || "-"}
+                  {formatText(event.lead2) ? `, ${formatText(event.lead2)}` : ""}
                 </p>
-              </div>
-            ) : (
-              getMonthEvents().map((event) => (
-                <div
-                  key={event._id}
-                  className="border-l-4 rounded-lg p-6 bg-white hover:shadow-lg transition-shadow"
-                  style={{
-                    borderColor:
-                      event.eventConfirmation === "Cancelled"
-                        ? "#ef4444"
-                        : "#f59e0b",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span
-                          className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                          style={{
-                            backgroundColor:
-                              event.eventConfirmation === "Cancelled"
-                                ? "#ef4444"
-                                : "#f59e0b",
-                          }}
-                        >
-                          {formatText(event.eventName)}
-                        </span>
-                        <span
-                          className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                          style={{
-                            backgroundColor:
-                              event.eventConfirmation === "Cancelled"
-                                ? "#dc2626"
-                                : "#d97706",
-                          }}
-                        >
-                          {event.eventConfirmation}
-                        </span>
-                      </div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-1">
-                        {formatText(event.clientName)}
-                      </h4>
-                      <div className="flex items-center gap-3 text-sm text-amber-600 mb-2">
-                        <span className="font-medium">
-                          Project Coordinators:
-                        </span>
-                        <span>{formatText(event.lead1) || "-"}</span>
+
+                <div className="ck-sub">
+                  {/* Meeting Date */}
+                  {event.meetings && event.meetings.length > 0 && (
+                    <div className="ck-row is-meeting">
+                      <span className="ck-date is-gold">Meeting</span>
+                      <div className="ck-row-body">
+                        <strong>Meeting date</strong>
                         <span>
-                          {formatText(event.lead2)
-                            ? `, ${formatText(event.lead2)}`
-                            : ""}
+                          <Clock size={14} aria-hidden="true" />
+                          {formatDate(event.meetings[0].meetingDate)}{" "}
+                          {formatTime(event.meetings[0].meetingDate)}
                         </span>
                       </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="space-y-3">
-                    {/* Meeting Date */}
-                    {event.meetings && event.meetings.length > 0 && (
-                      <div className="bg-amber-50 rounded-lg p-4 border border-amber-200">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0">
-                            <div className="text-sm font-medium bg-amber-600 text-white px-3 py-2 rounded">
-                              Meeting
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-gray-800 mb-1">
-                              Meeting Date
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              <span className="inline-flex items-center gap-2">
-                                <Clock
-                                  className="w-4 h-4"
-                                  style={{ color: "#f59e0b" }}
-                                />
-                                <span>
-                                  {formatDate(event.meetings[0].meetingDate)}{" "}
-                                  {formatTime(event.meetings[0].meetingDate)}
-                                </span>
-                              </span>
-                            </div>
+                  {/* Event Types */}
+                  {event.eventTypes &&
+                    event.eventTypes.map((et, idx) => {
+                      const start = et?.startDate;
+                      const end = et?.endDate;
+                      const multiDay = start && end && start !== end;
+
+                      return (
+                        <div key={idx} className="ck-row">
+                          <span className="ck-date is-grey">Event</span>
+                          <div className="ck-row-body">
+                            <strong>{formatText(et.eventType) || formatText(event.eventName)}</strong>
+                            <span>
+                              <Clock size={14} aria-hidden="true" />
+                              {formatDate(start)} {formatTime(start)}
+                              {multiDay && end ? ` → ${formatDate(end)} ${formatTime(end)}` : ""}
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    )}
-
-                    {/* Event Types */}
-                    {event.eventTypes &&
-                      event.eventTypes.map((et, idx) => {
-                        const start = et?.startDate;
-                        const end = et?.endDate;
-                        const multiDay = start && end && start !== end;
-
-                        return (
-                          <div
-                            key={idx}
-                            className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-amber-300 transition-colors"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className="flex-shrink-0">
-                                <div className="text-sm font-medium bg-gray-600 text-white px-3 py-2 rounded">
-                                  Event
-                                </div>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="font-medium text-gray-800 mb-1">
-                                  {formatText(et.eventType) ||
-                                    formatText(event.eventName)}
-                                </div>
-                                <div className="text-sm text-gray-600">
-                                  <span className="inline-flex items-center gap-2">
-                                    <Clock
-                                      className="w-4 h-4"
-                                      style={{ color: "#f59e0b" }}
-                                    />
-                                    <span>
-                                      {formatDate(start)} {formatTime(start)}
-                                      {multiDay && end
-                                        ? ` → ${formatDate(end)} ${formatTime(end)}`
-                                        : ""}
-                                    </span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
+                      );
+                    })}
                 </div>
-              ))
-            )}
+              </article>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

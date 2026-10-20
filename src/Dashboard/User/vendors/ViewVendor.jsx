@@ -1,10 +1,8 @@
-/* eslint-disable no-unused-vars */
 import axiosClient from "@/api/axiosClient";
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { message, Table, Button, Card, Input, Select, Modal } from "antd";
+import { message, Table, Modal, Dropdown, Spin } from "antd";
 import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import { downloadVendorsExcel } from "./vendorsExcel";
 import {
@@ -12,10 +10,13 @@ import {
   EditOutlined,
   ArrowLeftOutlined,
   PlusOutlined,
-  UserOutlined,
   SearchOutlined,
   FilePdfOutlined,
   FileWordOutlined,
+  DeleteOutlined,
+  EllipsisOutlined,
+  TeamOutlined,
+  AppstoreOutlined,
 } from "@ant-design/icons";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -33,99 +34,8 @@ import {
 } from "docx";
 import { saveAs } from "file-saver";
 import VendorViewDrawer from "./VendorViewDrawer";
-import { DeleteOutlined } from "@ant-design/icons";
+import "./Vendors.css";
 
-const customStyles = `
-  .vendor-glass-card {
-    background: rgba(255,255,255,0.85);
-    border-radius: 1.25rem;
-    box-shadow: 0 8px 32px 0 rgba(34, 106, 54,0.12);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.4);
-    transition: all 0.3s ease;
-  }
-  
-  .vendor-glass-card:hover {
-    box-shadow: 0 12px 40px 0 rgba(34, 106, 54,0.18);
-    transform: translateY(-2px);
-  }
-  
-  .vendor-stats-card {
-    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
-    border-radius: 1.25rem;
-    border: none;
-    box-shadow: 0 8px 32px rgba(34, 106, 54,0.25);
-  }
-  
-  .vendor-btn-primary {
-    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
-    border: none;
-    border-radius: 0.65rem;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(34, 106, 54,0.25);
-    transition: all 0.3s ease;
-  }
-  
-  .vendor-btn-primary:hover {
-    background: linear-gradient(135deg, #1d6531 0%, #0f4220 100%) !important;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(34, 106, 54,0.35) !important;
-  }
-  
-  .vendor-search-input {
-    border-radius: 0.65rem;
-    border: 1.5px solid rgba(34, 106, 54,0.2);
-    transition: all 0.3s ease;
-  }
-  
-  .vendor-search-input:hover,
-  .vendor-search-input:focus {
-    border-color: #226a36;
-    box-shadow: 0 0 0 2px rgba(34, 106, 54,0.1);
-  }
-  
-  .vendor-table .ant-table {
-    border-radius: 0.75rem;
-    overflow: hidden;
-  }
-  
-  .vendor-table .ant-table-thead > tr > th {
-    background: linear-gradient(135deg, #f4f8f4 0%, #eaf2eb 100%);
-    color: #305337;
-    font-weight: 700;
-    border: none;
-    font-size: 15px;
-  }
-  
-  .vendor-table .ant-table-tbody > tr:hover > td {
-    background: #f9fdfa !important;
-  }
-  
-  .vendor-mobile-card {
-    background: rgba(255,255,255,0.9);
-    border-radius: 1rem;
-    border: 1px solid rgba(34, 106, 54,0.15);
-    box-shadow: 0 4px 16px rgba(34, 106, 54,0.08);
-    transition: all 0.3s ease;
-  }
-  
-  .vendor-mobile-card:hover {
-    box-shadow: 0 8px 24px rgba(34, 106, 54,0.15);
-    transform: translateY(-2px);
-  }
-  
-  .vendor-modal .ant-modal-header {
-    background: linear-gradient(135deg, #f4f8f4 0%, #eaf2eb 100%);
-    border-radius: 1rem 1rem 0 0;
-    border: none;
-  }
-  
-  .vendor-modal .ant-modal-content {
-    border-radius: 1rem;
-    overflow: hidden;
-  }
-`;
 
 const ViewVendor = () => {
   const [vendors, setVendors] = useState([]);
@@ -138,8 +48,6 @@ const ViewVendor = () => {
 
   const user = useSelector((state) => state.user.value);
   const navigate = useNavigate();
-
-  const deptId = user?.departments?.length ? user.departments[0].id : null;
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -157,45 +65,9 @@ const ViewVendor = () => {
     }
   };
 
-  const getAddVendorPath = () => {
-    if (!user) return "/user/addvendor";
-    const candidates = [];
-    if (user.role) candidates.push(user.role);
-    if (user.user_role) candidates.push(user.user_role);
-    if (user.roles) {
-      if (Array.isArray(user.roles)) {
-        user.roles.forEach((r) => {
-          if (!r) return;
-          if (typeof r === "string") candidates.push(r);
-          else if (r.role) candidates.push(r.role);
-          else if (r.name) candidates.push(r.name);
-        });
-      } else if (typeof user.roles === "string") candidates.push(user.roles);
-    }
+  const getAddVendorPath = () => "/user/addvendor";
 
-    const normalized = candidates.map((s) => String(s).toUpperCase());
-    return "/user/addvendor";
-  };
-
-  const getEditVendorPath = (id) => {
-    if (!id) return "/user/editvendor/";
-    if (!user) return `/user/editvendor/${id}`;
-    const candidates = [];
-    if (user.role) candidates.push(user.role);
-    if (user.user_role) candidates.push(user.user_role);
-    if (user.roles) {
-      if (Array.isArray(user.roles)) {
-        user.roles.forEach((r) => {
-          if (!r) return;
-          if (typeof r === "string") candidates.push(r);
-          else if (r.role) candidates.push(r.role);
-          else if (r.name) candidates.push(r.name);
-        });
-      } else if (typeof user.roles === "string") candidates.push(user.roles);
-    }
-    const normalized = candidates.map((s) => String(s).toUpperCase());
-    return `/user/editvendor/${id}`;
-  };
+  const getEditVendorPath = (id) => `/user/editvendor/${id || ""}`;
 
   useEffect(() => {
     const handleResize = () => {
@@ -213,7 +85,7 @@ const ViewVendor = () => {
         : `vendor/all`;
       const res = await axiosClient.get(url, config);
       setVendors(res.data.vendors.reverse() || []);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch vendors");
     } finally {
       setLoading(false);
@@ -767,540 +639,268 @@ const ViewVendor = () => {
     await downloadVendorsExcel(filteredVendors, { filterLines });
   };
 
+  const CATEGORIES = [
+    { value: null, label: "All" },
+    { value: "cash", label: "Cash" },
+    { value: "account", label: "Account" },
+    { value: "cash_and_account", label: "Cash & Account" },
+  ];
+
+  const confirmDelete = (record) =>
+    Modal.confirm({
+      title: "Delete vendor",
+      content:
+        "Are you sure you want to delete this vendor? Once deleted, it cannot be retrieved.",
+      okText: "Delete",
+      okType: "danger",
+      cancelText: "Cancel",
+      onOk: () => handleDeleteVendor(record._id || record.id),
+    });
+
+  const moreMenu = (record) => ({
+    items: [
+      { key: "pdf", icon: <FilePdfOutlined />, label: "Export PDF" },
+      { key: "word", icon: <FileWordOutlined />, label: "Export Word" },
+      { type: "divider" },
+      { key: "delete", icon: <DeleteOutlined />, label: "Delete", danger: true },
+    ],
+    onClick: ({ key }) => {
+      if (key === "pdf") exportToPDF(record);
+      else if (key === "word") exportToWord(record);
+      else if (key === "delete") confirmDelete(record);
+    },
+  });
+
+  const initialOf = (name) => (String(name || "?").trim()[0] || "?").toUpperCase();
+
+  const typeCount = new Set(vendors.map((v) => v.vendor_type).filter(Boolean)).size;
+
   const columns = [
     {
-      title: "Vendor Code",
+      title: "Vendor",
+      key: "vendor",
+      render: (_, record) => (
+        <div className="vm-who">
+          <span className="vm-avatar" aria-hidden="true">
+            {initialOf(record.name)}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{record.name || "—"}</strong>
+            <span>{record.company_name || "No company"}</span>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Code",
       dataIndex: "vendor_code",
       key: "vendor_code",
+      width: 130,
       responsive: ["sm"],
-      render: (text) => (
-        <span style={{ fontWeight: 700, color: "#305337" }}>
-          {text.toUpperCase() || "N/A"}
-        </span>
-      ),
-    },
-    {
-      title: "Vendor Name",
-      dataIndex: "name",
-      key: "name",
-      responsive: ["md"],
-      render: (text) => (
-        <span style={{ fontWeight: 600, color: "#305337" }}>{text}</span>
-      ),
-    },
-    {
-      title: "Company Name",
-      dataIndex: "company_name",
-      key: "company_name",
-      responsive: ["lg"],
-      render: (text) => <span>{text || "N/A"}</span>,
+      render: (text) =>
+        text ? <span className="vm-code">{String(text).toUpperCase()}</span> : <span className="vm-muted">—</span>,
     },
     {
       title: "GST No",
       dataIndex: "gst_no",
       key: "gst_no",
+      width: 190,
       responsive: ["lg"],
-      render: (text) => <span>{text || "N/A"}</span>,
+      render: (text) => (text ? <span>{text}</span> : <span className="vm-muted">—</span>),
     },
     {
-      title: "Vendor Type",
+      title: "Type",
       dataIndex: "vendor_type",
       key: "vendor_type",
+      width: 170,
       responsive: ["md"],
-      render: (text) => (
-        <span
-          style={{
-            padding: "4px 12px",
-            background: "linear-gradient(135deg, #226a3615 0%, #0f422015 100%)",
-            borderRadius: "6px",
-            color: "#226a36",
-            fontWeight: 500,
-          }}
-        >
-          {text || "N/A"}
-        </span>
-      ),
+      render: (text) =>
+        text ? <span className="vm-pill">{text}</span> : <span className="vm-muted">—</span>,
     },
-    // {
-    //   title: "Referred By",
-    //   dataIndex: "refered_by",
-    //   key: "refered_by",
-    //   responsive: ["lg"],
-    //   render: (text) => <span>{text || "N/A"}</span>,
-    // },
     {
-      title: "Actions",
+      title: "",
       key: "actions",
-      align: "center",
-      width: 250,
+      width: 230,
+      align: "right",
       render: (_, record) => (
-        <div
-          style={{
-            display: "flex",
-            gap: "8px",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            onClick={() => openDrawer(record)}
-            style={{
-              color: "#226a36",
-              borderRadius: "6px",
-              transition: "all 0.3s",
-            }}
-          />
-          <Button
-            type="text"
-            icon={<FilePdfOutlined />}
-            onClick={() => exportToPDF(record)}
-            style={{
-              color: "#e74c3c",
-              borderRadius: "6px",
-              transition: "all 0.3s",
-            }}
-            title="Export to PDF"
-          />
-          <Button
-            type="text"
-            icon={<FileWordOutlined />}
-            onClick={() => exportToWord(record)}
-            style={{
-              color: "#40854e",
-              borderRadius: "6px",
-              transition: "all 0.3s",
-            }}
-            title="Export to Word"
-          />
-          <Button
-            type="primary"
-            size="small"
-            icon={<EditOutlined />}
+        <div className="vm-actions">
+          <button type="button" className="vm-btn" onClick={() => openDrawer(record)}>
+            <EyeOutlined /> View
+          </button>
+          <button
+            type="button"
+            className="vm-btn is-solid"
             onClick={() => handleEdit(record._id || record.id)}
-            className="vendor-btn-primary"
-            style={{ height: "32px" }}
           >
-            Edit
-          </Button>
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => {
-              Modal.confirm({
-                title: "Delete Vendor",
-                content:
-                  "Are you sure you want to delete this vendor? Once deleted, it cannot be retrieved.",
-                okText: "Delete",
-                okType: "danger",
-                cancelText: "Cancel",
-                onOk: () =>
-                  handleDeleteVendor(record._id || record.id),
-              });
-            }}
-            style={{ height: "32px" }}
-          />
+            <EditOutlined /> Edit
+          </button>
+          <Dropdown menu={moreMenu(record)} trigger={["click"]} placement="bottomRight">
+            <button type="button" className="vm-btn is-icon" aria-label="More actions">
+              <EllipsisOutlined />
+            </button>
+          </Dropdown>
         </div>
       ),
     },
   ];
 
   const renderMobileCards = () => (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-      {filteredVendors.map((vendor, index) => (
-        <motion.div
-          key={vendor._id || vendor.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-        >
-          <Card className="vendor-mobile-card" styles={{ padding: "20px" }}>
-            <div style={{ marginBottom: "16px" }}>
-              <div
-                style={{
-                  fontSize: "20px",
-                  fontWeight: 700,
-                  color: "#305337",
-                  marginBottom: "8px",
-                }}
-              >
-                {vendor.name}
-              </div>
-              <div style={{ color: "#586a5b", fontSize: "13px", marginTop: 4 }}>
-                <span style={{ fontWeight: 700, color: "#305337" }}>
-                  Code:{" "}
-                </span>
-                {vendor.vendor_code.toUpperCase() || "N/A"}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                  fontSize: "14px",
-                }}
-              >
-                <div style={{ color: "#586a5b" }}>
-                  <span style={{ fontWeight: 600, color: "#305337" }}>
-                    Company:{" "}
-                  </span>
-                  {vendor.company_name || "N/A"}
-                </div>
-                <div style={{ color: "#586a5b" }}>
-                  <span style={{ fontWeight: 600, color: "#305337" }}>
-                    GST:{" "}
-                  </span>
-                  {vendor.gst_no || "N/A"}
-                </div>
-                <div>
-                  <span
-                    style={{
-                      padding: "3px 10px",
-                      background:
-                        "linear-gradient(135deg, #226a3615 0%, #0f422015 100%)",
-                      borderRadius: "6px",
-                      color: "#226a36",
-                      fontWeight: 500,
-                      fontSize: "13px",
-                    }}
-                  >
-                    {vendor.vendor_type || "N/A"}
-                  </span>
-                  {vendor.refered_by && (
-                    <>
-                      <span style={{ margin: "0 8px", color: "#cddcd0" }}>
-                        •
-                      </span>
-                      <span style={{ color: "#586a5b" }}>
-                        Ref: {vendor.refered_by}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </div>
+    <div className="vm-cards">
+      {filteredVendors.map((vendor) => (
+        <div className="vm-card" key={vendor._id || vendor.id}>
+          <div className="vm-who">
+            <span className="vm-avatar" aria-hidden="true">
+              {initialOf(vendor.name)}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <strong>{vendor.name}</strong>
+              <span>{vendor.company_name || "No company"}</span>
             </div>
-            <div
-              style={{
-                display: "flex",
-                gap: "10px",
-                justifyContent: "flex-end",
-                flexWrap: "wrap",
-              }}
+          </div>
+          <div className="vm-card-meta">
+            <span>
+              Code <strong>{vendor.vendor_code ? String(vendor.vendor_code).toUpperCase() : "—"}</strong>
+            </span>
+            <span>
+              GST <strong>{vendor.gst_no || "—"}</strong>
+            </span>
+            <span>
+              {vendor.vendor_type ? <span className="vm-pill">{vendor.vendor_type}</span> : null}
+              {vendor.refered_by ? <> &nbsp;Ref: {vendor.refered_by}</> : null}
+            </span>
+          </div>
+          <div className="vm-actions">
+            <button type="button" className="vm-btn" onClick={() => openDrawer(vendor)}>
+              <EyeOutlined /> View
+            </button>
+            <button
+              type="button"
+              className="vm-btn is-solid"
+              onClick={() => handleEdit(vendor._id || vendor.id)}
             >
-              <Button
-                icon={<EyeOutlined />}
-                onClick={() => openDrawer(vendor)}
-                style={{
-                  borderRadius: "8px",
-                  border: "1.5px solid #226a3630",
-                  color: "#226a36",
-                }}
-              >
-                View
-              </Button>
-              <Button
-                icon={<FilePdfOutlined />}
-                onClick={() => exportToPDF(vendor)}
-                style={{
-                  borderRadius: "8px",
-                  border: "1.5px solid #e74c3c30",
-                  color: "#e74c3c",
-                }}
-              >
-                PDF
-              </Button>
-              <Button
-                icon={<FileWordOutlined />}
-                onClick={() => exportToWord(vendor)}
-                style={{
-                  borderRadius: "8px",
-                  border: "1.5px solid #2b579a30",
-                  color: "#40854e",
-                }}
-              >
-                Word
-              </Button>
-              <Button
-                type="primary"
-                icon={<EditOutlined />}
-                onClick={() => handleEdit(vendor._id || vendor.id)}
-                className="vendor-btn-primary"
-              >
-                Edit
-              </Button>
-            </div>
-          </Card>
-        </motion.div>
+              <EditOutlined /> Edit
+            </button>
+            <Dropdown menu={moreMenu(vendor)} trigger={["click"]} placement="bottomRight">
+              <button type="button" className="vm-btn is-icon" aria-label="More actions">
+                <EllipsisOutlined />
+              </button>
+            </Dropdown>
+          </div>
+        </div>
       ))}
     </div>
   );
 
   return (
-    <div
-      className=""
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #f4f8f4 0%, #e6efe7 100%)",
-        padding: isMobile ? "16px" : "32px",
-      }}
-    >
-      <style>{customStyles}</style>
-
-      {/* Gradient Background Overlay */}
-      <div
-        style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background:
-            "radial-gradient(circle at 20% 80%, rgba(34, 106, 54,0.08) 0%, transparent 50%), radial-gradient(circle at 80% 20%, rgba(118,75,162,0.08) 0%, transparent 50%)",
-          pointerEvents: "none",
-          zIndex: 0,
-        }}
-      />
-
-      <div style={{ position: "relative", zIndex: 1 }}>
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{ marginBottom: "24px" }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              marginBottom: "8px",
-            }}
-          >
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate("/user")}
-              style={{
-                color: "#226a36",
-                fontSize: "16px",
-                fontWeight: 600,
-                height: "40px",
-              }}
-            >
-              Back
-            </Button>
+    <div className="vm-page">
+      <div className="vm-wrap">
+        <header className="vm-hero">
+          <div>
+            <button type="button" className="vm-back" onClick={() => navigate("/user")}>
+              <ArrowLeftOutlined /> Back to home
+            </button>
+            <p className="vm-eyebrow">Directory</p>
+            <h1 className="vm-title">Vendor Management</h1>
+            <p className="vm-sub">Find, review and manage every vendor in one place.</p>
           </div>
-          <h1
-            style={{
-              fontSize: isMobile ? "32px" : "42px",
-              fontWeight: "bold",
-              color: "#305337",
-              margin: 0,
-              letterSpacing: "-1px",
-            }}
-          >
-            Vendor Management
-          </h1>
-          <p style={{ color: "#819d87", fontSize: "16px", marginTop: "4px" }}>
-            Manage and track all your vendors
-          </p>
-        </motion.div>
+          <button type="button" className="vm-add" onClick={() => navigate(getAddVendorPath())}>
+            <PlusOutlined /> Add vendor
+          </button>
+        </header>
 
-        {/* Stats Card */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="vendor-stats-card" style={{ marginBottom: "24px" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-              <div
-                style={{
-                  width: "64px",
-                  height: "64px",
-                  borderRadius: "16px",
-                  background: "rgba(255,255,255,0.25)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backdropFilter: "blur(10px)",
-                }}
-              >
-                <UserOutlined style={{ fontSize: "32px", color: "white" }} />
-              </div>
-              <div>
-                <div
-                  style={{
-                    fontSize: "15px",
-                    color: "rgba(255,255,255,0.85)",
-                    marginBottom: "4px",
-                    fontWeight: 500,
-                  }}
-                >
-                  Total Vendors
-                </div>
-                <div
-                  style={{
-                    fontSize: "36px",
-                    fontWeight: 700,
-                    color: "#fff",
-                    lineHeight: 1,
-                  }}
-                >
-                  {vendors.length}
-                </div>
-              </div>
+        <section className="vm-stats" aria-label="Summary">
+          <div className="vm-stat">
+            <span className="vm-stat-icon">
+              <TeamOutlined style={{ fontSize: 20 }} />
+            </span>
+            <div>
+              <p className="vm-stat-label">Total vendors</p>
+              <p className="vm-stat-value">{vendors.length}</p>
             </div>
-          </Card>
-        </motion.div>
+          </div>
+          <div className="vm-stat">
+            <span className="vm-stat-icon">
+              <SearchOutlined style={{ fontSize: 20 }} />
+            </span>
+            <div>
+              <p className="vm-stat-label">Showing</p>
+              <p className="vm-stat-value">{filteredVendors.length}</p>
+            </div>
+          </div>
+          <div className="vm-stat">
+            <span className="vm-stat-icon">
+              <AppstoreOutlined style={{ fontSize: 20 }} />
+            </span>
+            <div>
+              <p className="vm-stat-label">Vendor types</p>
+              <p className="vm-stat-value">{typeCount}</p>
+            </div>
+          </div>
+        </section>
 
-        {/* Main Content Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card
-            className="vendor-glass-card"
-            styles={{ padding: isMobile ? "16px" : "28px" }}
-          >
-            {/* Search and Add Button */}
-            <div
-              style={{
-                display: "flex",
-                flexDirection: isMobile ? "column" : "row",
-                alignItems: isMobile ? "stretch" : "center",
-                justifyContent: "space-between",
-                gap: "16px",
-                marginBottom: "24px",
-              }}
-            >
-              <h2
-                style={{
-                  color: "#305337",
-                  fontWeight: 700,
-                  fontSize: "24px",
-                  margin: 0,
-                }}
-              >
-                All Vendors
-              </h2>
-              <div
-                style={{
-                  display: "flex",
-                  gap: "12px",
-                  flexDirection: isMobile ? "column" : "row",
-                }}
-              >
-                <Select
-                  placeholder="Filter by Category"
-                  allowClear
-                  value={categoryFilter}
-                  onChange={(value) => setCategoryFilter(value)}
-                  className="vendor-search-input"
-                  style={{
-                    width: isMobile ? "100%" : 180,
-                    height: "42px",
-                  }}
-                >
-                  <Option value="cash">Cash</Option>
-                  <Option value="account">Account</Option>
-                  <Option value="cash_and_account">Cash&Account</Option>
-                </Select>
-                <Input
-                  prefix={<SearchOutlined style={{ color: "#819d87" }} />}
-                  allowClear
+        <section className="vm-panel">
+          <div className="vm-toolbar">
+            <div className="vm-toolbar-left">
+              <label className="vm-search">
+                <SearchOutlined aria-hidden="true" />
+                <input
+                  type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search vendors..."
-                  className="vendor-search-input"
-                  style={{
-                    width: isMobile ? "100%" : 280,
-                    height: "42px",
-                    fontSize: "15px",
-                  }}
+                  placeholder="Search name, company, GST or type"
+                  aria-label="Search vendors"
                 />
-                <ExcelDownloadButton
-                  onDownload={handleDownloadExcel}
-                  style={{ height: "42px", fontSize: "15px", paddingInline: "20px" }}
-                />
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => navigate(getAddVendorPath())}
-                  className="vendor-btn-primary"
-                  style={{
-                    height: "42px",
-                    fontSize: "15px",
-                    paddingLeft: "24px",
-                    paddingRight: "24px",
-                  }}
-                >
-                  Add Vendor
-                </Button>
+              </label>
+              <div className="vm-seg" role="group" aria-label="Category">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c.label}
+                    type="button"
+                    aria-pressed={categoryFilter === c.value}
+                    onClick={() => setCategoryFilter(c.value)}
+                  >
+                    {c.label}
+                  </button>
+                ))}
               </div>
             </div>
+            <ExcelDownloadButton onDownload={handleDownloadExcel} />
+          </div>
 
-            {/* Content */}
-            {loading ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "80px 20px",
-                  color: "#819d87",
-                }}
-              >
-                <div style={{ fontSize: "18px", fontWeight: 500 }}>
-                  Loading vendors...
-                </div>
-              </div>
-            ) : filteredVendors.length === 0 ? (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "80px 20px",
-                  color: "#819d87",
-                }}
-              >
-                <UserOutlined
-                  style={{
-                    fontSize: "48px",
-                    marginBottom: "16px",
-                    opacity: 0.3,
-                  }}
-                />
-                <div style={{ fontSize: "18px", fontWeight: 500 }}>
-                  No vendors found
-                </div>
-                <div style={{ fontSize: "14px", marginTop: "8px" }}>
-                  {search
-                    ? "Try adjusting your search"
-                    : "Add your first vendor to get started"}
-                </div>
-              </div>
-            ) : isMobile ? (
-              renderMobileCards()
-            ) : (
-              <div className="vendor-table">
-                <Table
-                  columns={columns}
-                  dataSource={filteredVendors}
-                  loading={loading}
-                  rowKey={(record) => record._id || record.id}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (total) => `Total ${total} vendors`,
-                  }}
-                  scroll={{ x: 1200 }}
-                />
-              </div>
-            )}
-          </Card>
-        </motion.div>
+          {loading ? (
+            <div className="vm-empty">
+              <Spin />
+              <span>Loading vendors…</span>
+            </div>
+          ) : filteredVendors.length === 0 ? (
+            <div className="vm-empty">
+              <span className="ring">
+                <TeamOutlined style={{ fontSize: 26 }} />
+              </span>
+              <strong>No vendors found</strong>
+              <span>
+                {search || categoryFilter
+                  ? "Try a different search or category."
+                  : "Add your first vendor to get started."}
+              </span>
+            </div>
+          ) : isMobile ? (
+            renderMobileCards()
+          ) : (
+            <Table
+              className="vm-table"
+              columns={columns}
+              dataSource={filteredVendors}
+              rowKey={(record) => record._id || record.id}
+              pagination={{
+                pageSize: 10,
+                showSizeChanger: true,
+                showTotal: (total) => `Total ${total} vendors`,
+              }}
+              scroll={{ x: 900 }}
+            />
+          )}
+        </section>
       </div>
 
       <VendorViewDrawer

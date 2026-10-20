@@ -1,28 +1,20 @@
 import axiosClient from "@/api/axiosClient";
-import React, { useEffect, useState } from "react";
-import {
-  message,
-  Table,
-  Button,
-  Card,
-  Modal,
-  Input,
-  Popconfirm,
-  Space,
-  Typography,
-  Spin,
-} from "antd";
+import React, { useEffect, useMemo, useState } from "react";
+import { message, Table, Popconfirm } from "antd";
+import { Layers, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { Dialog, FormActions, TextField } from "@/Components/FormKit";
+import { EmptyState, PageHero, SearchBox, StatCard, StatRow } from "@/Components/PageKit";
 
-const { Title } = Typography;
-
+/** `compact` renders only the panel (for use inside another screen); otherwise a full page. */
 const ViewSubEvents = ({ compact }) => {
   const user = useSelector((state) => state.user.value);
   const navigate = useNavigate();
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -59,17 +51,12 @@ const ViewSubEvents = ({ compact }) => {
         }
 
         if (!list.length) {
-          const vals = Object.values(payload).filter(
-            (v) => v && (v.name || v.eventName)
-          );
+          const vals = Object.values(payload).filter((v) => v && (v.name || v.eventName));
           if (vals.length) list = vals;
         }
       }
 
       if (!Array.isArray(list)) list = [];
-      if (list.length === 0)
-        console.debug("event-types payload shape:", payload);
-
       setItems(list);
     } catch (err) {
       console.error(err);
@@ -81,6 +68,7 @@ const ViewSubEvents = ({ compact }) => {
 
   useEffect(() => {
     fetchItems();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const openEditModal = (record) => {
@@ -90,15 +78,10 @@ const ViewSubEvents = ({ compact }) => {
   };
 
   const handleEditSave = async () => {
-    if (!editingName || !editingName.trim())
-      return message.error("Name cannot be empty");
+    if (!editingName || !editingName.trim()) return message.error("Name cannot be empty");
     setEditLoading(true);
     try {
-      await axiosClient.patch(
-        `event-types/${editingId}`,
-        { name: editingName.trim() },
-        config
-      );
+      await axiosClient.patch(`event-types/${editingId}`, { name: editingName.trim() }, config);
       message.success("Sub event updated");
       setEditModalVisible(false);
       fetchItems();
@@ -121,96 +104,158 @@ const ViewSubEvents = ({ compact }) => {
     }
   };
 
+  const eventOf = (record) => record.event?.name || record.eventName || record.eventId || "";
+
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter(
+      (i) =>
+        String(i.name || "").toLowerCase().includes(q) ||
+        String(i.event?.name || i.eventName || "").toLowerCase().includes(q),
+    );
+  }, [items, search]);
+
   const columns = [
+    { title: "#", key: "sl", width: 70, render: (_, __, index) => index + 1 },
     {
-      title: "Sl. No",
-      dataIndex: "sl",
-      key: "sl",
-      width: 80,
-      render: (_, __, index) => index + 1,
-    },
-    {
-      title: "Name",
+      title: "Sub event",
       dataIndex: "name",
       key: "name",
-      render: (text) => (
-        <span className="font-medium text-gray-800">{text}</span>
+      render: (text, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            <Layers size={18} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{text}</strong>
+            <span>{eventOf(record) || "No event"}</span>
+          </div>
+        </div>
       ),
     },
     {
       title: "Event",
       dataIndex: "event",
       key: "event",
-      render: (_, record) => (
-        <span className="text-sm text-gray-600">
-          {record.event?.name || record.eventName || record.eventId || "-"}
-        </span>
-      ),
+      render: (_, record) =>
+        eventOf(record) ? <span className="pk-pill">{eventOf(record)}</span> : <span className="pk-muted">-</span>,
     },
     {
-      title: "Actions",
+      title: "",
       key: "actions",
-      width: 200,
+      width: 190,
+      align: "right",
       render: (_, record) => (
-        <Space>
-          <Button type="default" onClick={() => openEditModal(record)}>
-            Edit
-          </Button>
+        <div className="pk-actions">
+          <button type="button" className="pk-btn is-solid" onClick={() => openEditModal(record)}>
+            <Pencil size={13} aria-hidden="true" /> Edit
+          </button>
           <Popconfirm
             title="Are you sure you want to delete this sub event?"
             onConfirm={() => handleDelete(record.id || record._id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button danger>Delete</Button>
+            <button type="button" className="pk-btn is-danger is-icon" aria-label="Delete sub event">
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ];
 
-  return (
-    <div className={compact ? undefined : "min-h-[60vh]"}>
-      <Card
-        className="rounded-2xl shadow-md"
-        bodyStyle={{ padding: 20 }}
-        title={
-          <Title level={4} className="!mb-0">
-            Sub Events
-          </Title>
-        }
-        extra={
-          <Button type="primary" onClick={() => navigate("/user/addsubevent")}>
-            Add Sub Events
-          </Button>
-        }
-      >
-        {loading ? (
-          <div className="text-center py-12">
-            <Spin />
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={items.map((i) => ({ ...i, key: i.id || i._id }))}
-            pagination={{ pageSize: 8 }}
+  const panel = (
+    <section className="pk-panel">
+      <div className="pk-toolbar">
+        <div className="pk-toolbar-left">
+          <SearchBox
+            icon={<Search size={16} aria-hidden="true" />}
+            value={search}
+            onChange={setSearch}
+            placeholder="Search sub event or event"
+            label="Search sub events"
           />
-        )}
-      </Card>
+        </div>
+        {compact ? (
+          <button type="button" className="pk-btn is-solid" onClick={() => navigate("/user/addsubevent")}>
+            <Plus size={14} aria-hidden="true" /> Add sub event
+          </button>
+        ) : null}
+      </div>
+      <Table
+        className="pk-table"
+        columns={columns}
+        dataSource={visible.map((i) => ({ ...i, key: i.id || i._id }))}
+        loading={loading}
+        pagination={{ pageSize: 8, showTotal: (t) => `${t} sub events` }}
+        locale={{
+          emptyText: loading ? null : (
+            <EmptyState
+              icon={<Layers size={26} aria-hidden="true" />}
+              title={search ? "No sub events match your search" : "No sub events yet"}
+              hint={search ? undefined : "Use “Add sub event” to create the first one."}
+            />
+          ),
+        }}
+      />
+    </section>
+  );
 
-      <Modal
-        title="Edit Sub Event"
-        open={editModalVisible}
-        onOk={handleEditSave}
-        onCancel={() => setEditModalVisible(false)}
-        okButtonProps={{ loading: editLoading }}
-      >
-        <Input
-          value={editingName}
-          onChange={(e) => setEditingName(e.target.value)}
-          placeholder="Sub event name"
-        />
-      </Modal>
+  const modal = (
+    <Dialog open={editModalVisible} onClose={() => setEditModalVisible(false)} title="Edit sub event" width={440}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleEditSave();
+          }}
+          noValidate
+        >
+          <TextField
+            label="Sub event name"
+            required
+            autoFocus
+            value={editingName}
+            onChange={setEditingName}
+            placeholder="Sub event name"
+          />
+          <FormActions onCancel={() => setEditModalVisible(false)} submitLabel="Save" busy={editLoading} />
+        </form>
+      </Dialog>
+  );
+
+  if (compact) {
+    return (
+      <div>
+        {panel}
+        {modal}
+      </div>
+    );
+  }
+
+  return (
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Masterdata"
+          title="Sub events"
+          subtitle="The ceremonies that belong to each event, such as Muhurtham or Reception."
+          onBack={() => navigate("/user/viewevents")}
+          backLabel="Back to event names"
+        >
+          <button type="button" className="pk-cta" onClick={() => navigate("/user/addsubevent")}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add sub event
+          </button>
+        </PageHero>
+
+        <StatRow>
+          <StatCard icon={<Layers size={21} aria-hidden="true" />} label="Total sub events" value={items.length} />
+        </StatRow>
+
+        {panel}
+      </div>
+      {modal}
     </div>
   );
 };

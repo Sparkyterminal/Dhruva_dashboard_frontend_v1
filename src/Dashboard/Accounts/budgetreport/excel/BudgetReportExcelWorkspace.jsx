@@ -1,15 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Button, Spin, Tag, Typography, message } from "antd";
-import {
-  ArrowLeftOutlined,
-  SaveOutlined,
-  ReloadOutlined,
-  EyeOutlined,
-  EditOutlined,
-} from "@ant-design/icons";
+import { Spin, message } from "antd";
+import { ArrowLeft, Eye, Pencil, RefreshCw, Save } from "lucide-react";
 import dayjs from "dayjs";
+import "@/Components/PageKit/PageKit.css";
 import UniverSheets from "../../../../Components/UniverSheets";
 import {
   cloneWorkbookData,
@@ -21,8 +16,6 @@ import {
   saveBudgetReportWorkbook,
 } from "./budgetReportExcelApi";
 import { getEventDisplayLabel } from "./budgetReportExcelUtils";
-
-const { Title, Text } = Typography;
 
 /**
  * Shared Excel editor/viewer for a budget report mapped to an event
@@ -217,40 +210,23 @@ const BudgetReportExcelWorkspace = ({ mode = "edit" }) => {
     mode === "view" ? "View" : mode === "create" ? "Create" : "Edit";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#f9fbf9",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 16px",
-          borderBottom: "1px solid #e5ede6",
-          background: "#ffffff",
-          flexShrink: 0,
-          flexWrap: "wrap",
-        }}
-      >
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
+    <div className="pk-ws">
+      <div className="pk-ws-bar">
+        <button
+          type="button"
+          className="pk-ws-back"
           onClick={() => navigate("/user/budgetreport/eventwise")}
-          style={{ padding: "4px 8px" }}
+          aria-label="Back to budget reports"
         >
-          Back
-        </Button>
-        <div style={{ flex: 1, minWidth: 180 }}>
-          <Title level={4} style={{ margin: 0 }}>
-            Budget Report Excel — {modeLabel}
-          </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+          <ArrowLeft size={18} aria-hidden="true" />
+        </button>
+
+        <div className="pk-ws-heading">
+          <h1>
+            Budget Report
+            <span className={`pk-ws-mode${readOnly ? " is-readonly" : ""}`}>{modeLabel}</span>
+          </h1>
+          <p className="pk-ws-meta">
             {titleLabel}
             {updatedAt
               ? ` · Last saved ${dayjs(updatedAt).format("DD MMM YYYY, hh:mm A")}`
@@ -259,89 +235,64 @@ const BudgetReportExcelWorkspace = ({ mode = "edit" }) => {
             {sheetStats?.sheetCount
               ? ` · ${sheetStats.sheetCount} sheet${sheetStats.sheetCount === 1 ? "" : "s"}`
               : ""}
-          </Text>
+          </p>
         </div>
 
-        <Tag color={readOnly ? "blue" : "green"}>
-          {readOnly ? "Read only" : "Editable"}
-        </Tag>
-
-        {readOnly ? (
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() =>
-              navigate(`/user/budgetreport/edit/${eventId}`, {
-                state: {
-                  eventLabel: titleLabel,
-                  eventName: event
-                    ? undefined
-                    : location.state?.eventName,
-                  clientName: location.state?.clientName,
-                },
-              })
-            }
-          >
-            Edit
-          </Button>
-        ) : (
-          <>
-            <Button
-              icon={<EyeOutlined />}
+        <div className="pk-ws-actions">
+          {readOnly ? (
+            <button
+              type="button"
+              className="pk-btn is-solid"
               onClick={() =>
-                navigate(`/user/budgetreport/view/${eventId}`, {
+                navigate(`/user/budgetreport/edit/${eventId}`, {
                   state: {
                     eventLabel: titleLabel,
-                    eventName: location.state?.eventName,
+                    eventName: event ? undefined : location.state?.eventName,
                     clientName: location.state?.clientName,
                   },
                 })
               }
-              disabled={!eventId}
             >
-              View
-            </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={load}
-              disabled={loading || saving}
-            >
-              Reload
-            </Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              loading={saving}
-              disabled={loading || !sheetReady || !eventId}
-            >
-              Save
-            </Button>
-          </>
-        )}
+              <Pencil size={14} aria-hidden="true" /> Edit
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="pk-btn"
+                onClick={() =>
+                  navigate(`/user/budgetreport/view/${eventId}`, {
+                    state: {
+                      eventLabel: titleLabel,
+                      eventName: location.state?.eventName,
+                      clientName: location.state?.clientName,
+                    },
+                  })
+                }
+                disabled={!eventId}
+              >
+                <Eye size={14} aria-hidden="true" /> View
+              </button>
+              <button type="button" className="pk-btn" onClick={load} disabled={loading || saving}>
+                <RefreshCw size={14} aria-hidden="true" /> Reload
+              </button>
+              <button
+                type="button"
+                className="pk-btn is-solid"
+                onClick={handleSave}
+                disabled={loading || saving || !sheetReady || !eventId}
+              >
+                <Save size={14} aria-hidden="true" /> {saving ? "Saving…" : "Save"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, padding: 8 }}>
-        <div
-          style={{
-            height: "100%",
-            borderRadius: 12,
-            overflow: "hidden",
-            border: "1px solid #e5ede6",
-            background: "#fff",
-            position: "relative",
-          }}
-        >
+      <div className="pk-ws-sheetwrap">
+        <div className="pk-ws-sheet">
           {loading ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                minHeight: 320,
-              }}
-            >
+            <div className="pk-ws-loading">
               <Spin size="large" tip="Loading spreadsheet…" />
             </div>
           ) : (

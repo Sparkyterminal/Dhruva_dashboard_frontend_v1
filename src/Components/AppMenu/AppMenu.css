@@ -1,0 +1,189 @@
+/* Site-wide menu: a big floating hamburger, and a drawer that floats over the page. */
+
+:root {
+  --am-rail: 72px;
+  --am-panel: 288px;
+}
+
+/* ---- Leave a gutter so the hamburger never covers page content ---- */
+html.am-has-menu #root {
+  padding-left: var(--am-rail);
+  transition: padding-left 0.22s ease;
+}
+
+html.am-docked #root {
+  padding-left: var(--am-panel);
+}
+
+@media (max-width: 767px) {
+  html.am-has-menu #root,
+  html.am-docked #root {
+    padding-left: 0;
+    padding-top: 64px;
+  }
+}
+
+/* ---- Hamburger: top-left, large and obvious ---- */
+.am-burger {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 910;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(224, 208, 133, 0.55);
+  border-radius: 14px;
+  background: var(--gold);
+  color: var(--brand);
+  cursor: pointer;
+  box-shadow: 0 8px 18px -8px rgba(0, 0, 0, 0.55);
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.am-burger:hover {
+  background: #ecdf9c;
+  transform: scale(1.05);
+}
+
+/* ---- Drawer ---- */
+.am-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  background: rgba(7, 41, 7, 0.4);
+  animation: am-fade 0.2s ease both;
+}
+
+.am-panel {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--am-panel), 88vw);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 18px 0 40px -18px rgba(0, 0, 0, 0.5);
+  transform: translateX(-102%);
+  visibility: hidden;
+  transition: transform 0.22s ease, visibility 0s linear 0.22s;
+  outline: none;
+}
+
+.am-panel.is-open {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.22s ease;
+}
+
+/* docked on the home page: sits beside the content instead of over it */
+.am-panel.is-docked {
+  z-index: 900;
+  box-shadow: 1px 0 0 rgba(224, 208, 133, 0.25);
+}
+
+.am-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 72px;
+  padding: 0 14px 0 22px;
+  border-bottom: 1px solid rgba(224, 208, 133, 0.2);
+}
+
+.am-panel-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.am-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid rgba(224, 208, 133, 0.4);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.am-close:hover {
+  background: rgba(224, 208, 133, 0.14);
+}
+
+.am-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-top: 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
+}
+
+.am-panel-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.am-panel-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.am-panel-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+}
+
+.am-panel-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+@keyframes am-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Section headings in the menu ---- */
+.am-section {
+  margin-top: 18px;
+}
+
+.am-heading {
+  margin: 0 0 6px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(224, 208, 133, 0.75);
+}
+
+.am-section .rh-nav {
+  margin-top: 0;
+}
+
+.am-panel .rh-user .am-heading {
+  margin-bottom: 8px;
+}
+
+/* ---- Sign out: red ---- */
+.am-panel .rh-user .am-signout {
+  margin-top: 8px;
+  background: #c0392b;
+  color: #fff;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.am-panel .rh-user .am-signout:hover {
+  background: #a93226;
+  color: #fff;
+}

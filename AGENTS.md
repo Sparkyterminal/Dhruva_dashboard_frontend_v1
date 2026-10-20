@@ -53,12 +53,12 @@ src/
   utils/                    dataCutoff.js, captureElementAsImage.js
   reducers/users.js         The single Redux slice (current user session)
   verifyToken.js            Decodes/validates the JWT locally (no signature check)
-  Components/               Shared components (BrandMark, RoleHome, ExcelDownloadButton, calendars, checklists, UniverSheets, userwisecalendar)
-  Layout/AdminLayout.jsx    Sidebar layout used by the ADMIN role only
+  Components/               Shared components. Own-code UI kits (no antd): PageKit, FormKit, AdminKit, CalendarKit; plus AppMenu (site-wide hamburger drawer), RoleHome, RequestsDashboard, ExcelDownloadButton, calendars, checklists, UniverSheets
+  Layout/AdminLayout.jsx    Layout used by the ADMIN role only (People / Organisation menu)
   Login/                    Login.jsx, ChangePassword.jsx, AuthLayout.jsx (shared split screen)
   Pages/                    LoadingPage, calendar pages
   Dashboard/                One folder per area:
-    Accounts/   bookings (clientBookings/), daybook (DayBook/), bills (Bills/), budget reports (budgetreport/), expenses, daily expenses, requirement tables
+    Accounts/   bookings (clientBookings/), daybook (DayBook/), bills (Bills/), budget reports (budgetreport/excel/ — the only implementation), expenses, daily expenses, requirement tables
     Admin/      users, departments, project coordinators
     Approver/ CA/ Owner/ User/   role homes and their screens
     Marketting/ inflow (bookings forms), leads tracker, venues, sub-venues, event names, sub-events, MarketHome
@@ -66,7 +66,7 @@ src/
   main.jsx                  Providers: Redux + redux-persist + antd ConfigProvider + Router
 public/                     Static assets (logo PNGs, `_redirects` for Netlify SPA routing)
 dist/                       Committed build output (see §12)
-docs/                       Plans and notes; docs/backup/ and docs/*.docx|pdf are gitignored (client data)
+docs/                       docs/api/<area>/ backend contracts, docs/reference/ reference files; docs/backup/ and docs/*.docx|pdf are gitignored (client data)
 ```
 
 **Folder-name caveat (Windows):** the repo has `src/Components` (capital C) from history. Windows treats `Components` and `components` as the same folder but git and Linux do not. **Always use the exact existing casing** (`@/Components/...`) and never create a differently-cased twin. New top-level folders (`api`, `config`, `lib`, `styles`) are lowercase.
@@ -104,7 +104,7 @@ Roles come from the login response (`role`, plus `departments[0].name`). `src/Ap
 
 ### Data cutoff (important business rule)
 
-The client only wants data **from a floor date onward** (currently `2026-04-01`). It lives in the backend settings document `dataVisibilityCutoffDate` and arrives at login as `user.dataCutoffDate`. The frontend never hardcodes it: use `getEffectiveCutoffDate(user)` from `src/utils/dataCutoff.js` and send it as `startDate` on list queries. The backend is supposed to enforce it too (see `src/Dashboard/DATA_CUTOFF_GLOBAL_BACKEND.md`).
+The client only wants data **from a floor date onward** (currently `2026-04-01`). It lives in the backend settings document `dataVisibilityCutoffDate` and arrives at login as `user.dataCutoffDate`. The frontend never hardcodes it: use `getEffectiveCutoffDate(user)` from `src/utils/dataCutoff.js` and send it as `startDate` on list queries. The backend is supposed to enforce it too (see `docs/api/global/DATA_CUTOFF_GLOBAL_BACKEND.md`).
 **Never mention the cutoff inside generated documents/exports** (owner requirement). Date pickers already disable dates before it.
 
 ---
@@ -123,7 +123,8 @@ Brand: **forest green** with the logo's **gold** as the single accent; sage-whit
 | `--line` | `#E1E6DF` | Hairline borders |
 | `--ink` / `--ink-soft` | `#1D261D` / `#5B665A` | Text |
 
-- **Fonts:** Cormorant Garamond (page titles, greetings; class `font-display`, auto-applied to `h1`, `h2`, `h1.ant-typography`, `h2.ant-typography`) and Inter (everything else). Both load from Google Fonts in `index.html`.
+- **Fonts:** **Montserrat everywhere** (loaded from Google Fonts in `index.html`); do not add other fonts.
+- **Branding (owner rule):** no logo and no "Dhruva" text anywhere in the UI (tab title is "Dashboard").
 - **Tailwind palette remap:** in `src/styles/theme.css`, the Tailwind palettes `indigo`, `violet`, `purple`, `blue`, `emerald`, `green` are re-pointed to the brand green scale, `fuchsia` and `pink` to gold, and `slate`/`gray` to green-tinted greys. So `bg-indigo-600` is **green** in this app — this is intentional and re-colours old screens without per-file edits. Prefer the explicit `forest-*` and `gold-*` utilities in new code.
 - **Ant Design:** themed once via `src/config/theme.js` (`ConfigProvider` in `main.jsx`). Change colours there, not per component. Keep `theme.js` and `theme.css` in sync.
 - **Do not** introduce purple/blue/pink hex colours, neon greens, gradient washes, glassmorphism, or Lottie/animated mascots. No Lottie anywhere — `lottie-react` and its JSON files were removed on purpose. Use lucide icons.
@@ -132,13 +133,13 @@ Brand: **forest green** with the logo's **gold** as the single accent; sage-whit
 
 ### Shared UI building blocks
 
-- `Components/RoleHome` — the shared home for every role: navigation rail (drawer on mobile), serif greeting, live clock (isolated so it never re-renders children), garland, and a tabbed workspace. A role home is now ~30 lines: define `NAV_ITEMS` (`{ label, route, icon }`, lucide icons) and `TABS` (`{ key, label, content, framed? }`), render `<RoleHome navItems tabs defaultTab />`. Set `framed: false` for content that already renders its own card (calendars).
-- `Components/BrandMark` — logo + wordmark (use on green surfaces).
-- `Login/AuthLayout` — split brand/form screen for sign-in and change-password.
-- `Layout/AdminLayout` — admin sidebar (current route highlighted).
+- `Components/AppMenu` + `config/roleNav.js` — the site-wide hamburger menu/drawer. Per-role navigation (with `section` headings) is defined only in `roleNav.js`; add new pages there.
+- `Components/RoleHome` — shared role home: greeting, live clock and a tabbed workspace. A role home defines `TABS` (`{ key, label, content, framed? }`) and renders `<RoleHome tabs defaultTab />`. `framed: false` for content that renders its own card (calendars).
+- `Components/PageKit` (PageHero, StatCard/StatRow, SearchBox, Segmented, EmptyState), `FormKit` (fields, Dialog, Drawer, FormCard…), `AdminKit` (Toaster/`toast`, ConfirmDialog, DataTable), `CalendarKit` — own-code building blocks with `pk-`, `fk-` prefixed CSS. Use these for new screens instead of raw antd; the admin dashboard and small master-data forms use no antd.
+- `Login/AuthLayout` — shared sign-in / change-password screen.
 - `Components/ExcelDownloadButton` — "Download Excel" button with loading/error handling.
 
-Inner screens are still individual full pages with a "Back" button (no shared shell yet); they inherit the look through tokens.
+Some large legacy forms (booking forms, vendor forms) and tables still use antd; they inherit the look through tokens.
 
 ---
 
@@ -163,7 +164,7 @@ All exports run **in the browser** from data already available via the API — n
 
 ## 9. Backend and data notes
 
-- Backend contract documents (markdown) sit beside the code they describe — find them with `find src -name "*.md"`, plus `FRONTEND_ALL_APIS_FINAL.md` and `PAYLOAD_EXAMPLES.md` at the repo root. Read the relevant one before changing an API call.
+- Backend contract documents (markdown) all live under `docs/api/` (overview, daybook, expenses, budget-report, client-bookings, marketing, requests, global). Read the relevant one before changing an API call.
 - MongoDB (database `test`) collections seen: `events` (bookings; `eventTypes[]` each with `advances[]`), `clientleads`, `vendors`, `bills` (`emiStatus[]`), `daybookinflows`, `daybookaccountopenclosebalances`, `spreadsheetworkbooks` (module `budget-report` keyed by event id, also `client-leads`, `daybook-*`, `daily-expenses`), `appsettings`, plus reference collections (`users`, `departments`, `venues`, `eventnames`, `eventtypes`, `coordinators`…). The API returns populated objects (`eventName: { name }`) where raw documents only hold ids.
 - Data quirks to expect, not "fix" in the UI: advances can have `receivedAmount > 0` while `status` still says `Pending` (treat **received amount** as truth); some bookings have `totalPayable = 0` with money received; event dates are stored in UTC (IST evening shows as the same date, midnight IST = 18:30 UTC the day before).
 - Database credentials are **not** in this repo and must never be committed or written into docs. If you need data access, ask the owner for a connection string at the time, read-only first.
@@ -227,7 +228,9 @@ Not done (from `docs/superpowers/plans/2026-10-17-dashboard-production-refactor.
 - Splitting the 1000–3800 line files (`EditInflow`, `AddInflow`, `ViewInflow`, `ViewClientsBookings`, `ViewBill`, requirement tables…).
 - A shared inner-page shell/`PageHeader`; inner screens still carry their own headers and many inline styles.
 - Error boundaries; replacing remaining `message.error(err)` boilerplate with a shared helper.
-- Moving root-level docs (`FRONTEND_ALL_APIS_FINAL.md`, `PAYLOAD_EXAMPLES.md`, `budget report reference.xlsx`) and in-`src` contract `.md` files under `docs/`.
+- `App.jsx` repeats near-identical route blocks per role; generate them from a shared route list.
+- `npm audit` reports vulnerabilities that only clear with major upgrades (Univer 1.x, exceljs); major bumps pending: antd 6, vite 8, eslint 10, react-hooks plugin 7, ag-grid 36, @fullcalendar/react 7, lucide 1.x, jspdf 4. Upgrade deliberately, one at a time.
+- 26 `react-hooks/exhaustive-deps` lint warnings (data-fetch effects); fix with care to avoid refetch loops.
 - Stopping tracking of `dist/` (only if the owner changes the deploy workflow).
 
 ---

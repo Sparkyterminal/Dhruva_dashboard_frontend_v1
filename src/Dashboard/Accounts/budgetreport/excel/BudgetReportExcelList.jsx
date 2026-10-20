@@ -1,22 +1,21 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Button, Card, Input, Table, Tag, Typography, message } from "antd";
+import { Table, message } from "antd";
+import { Eye, FileSpreadsheet, Layers, Pencil, Plus, Search, Table2 } from "lucide-react";
 import {
-  ArrowLeftOutlined,
-  EyeOutlined,
-  EditOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
+  EmptyState,
+  PageHero,
+  SearchBox,
+  StatCard,
+  StatRow,
+} from "@/Components/PageKit";
 import { fetchBudgetReportExcelList } from "./budgetReportExcelApi";
 import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import {
   downloadAllBudgetReportsExcel,
   downloadBudgetReportExcel,
 } from "./budgetReportExcelExport";
-
-const { Search } = Input;
-const { Title, Text } = Typography;
 
 /**
  * Event-wise budget report Excel list.
@@ -94,188 +93,145 @@ const BudgetReportExcelList = () => {
     setSearchParams(value ? { search: value } : {});
   };
 
+  const submitSearch = (e) => {
+    e.preventDefault();
+    handleSearch(searchQuery.trim());
+  };
+
+  const eventState = (record) => ({
+    eventName: record.eventName,
+    clientName: record.clientName,
+    eventLabel: [record.eventName, record.clientName].filter(Boolean).join(" - "),
+  });
+
+  const withReport = rows.filter((r) => r.hasWorkbook).length;
+  const totalSheets = rows.reduce((sum, r) => sum + (Number(r.sheetCount) || 0), 0);
+
   const columns = [
     {
       title: "Event",
-      dataIndex: "eventName",
-      key: "eventName",
-      width: 220,
-      render: (val) => val || "—",
+      key: "event",
+      render: (_, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar" aria-hidden="true">
+            {(record.eventName || "?").trim().charAt(0).toUpperCase()}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{record.eventName || "—"}</strong>
+            <span>{record.clientName || "No client"}</span>
+          </div>
+        </div>
+      ),
     },
     {
-      title: "Client",
-      dataIndex: "clientName",
-      key: "clientName",
-      width: 180,
-      render: (val) => val || "—",
-    },
-    {
-      title: "Sheets",
-      dataIndex: "sheetCount",
+      title: "Workbook",
       key: "sheetCount",
-      width: 100,
-      render: (val, record) =>
+      width: 170,
+      render: (_, record) =>
         record.hasWorkbook ? (
-          <Tag color="blue">{val || "—"}</Tag>
+          <span className="pk-pill">
+            {record.sheetCount || 0} {Number(record.sheetCount) === 1 ? "sheet" : "sheets"}
+          </span>
         ) : (
-          <Tag>Not created</Tag>
+          <span className="pk-pill is-grey">Not created</span>
         ),
     },
     {
       title: "Last updated",
       dataIndex: "updatedAt",
       key: "updatedAt",
-      width: 160,
+      width: 170,
       render: (val) =>
-        val
-          ? new Date(val).toLocaleDateString("en-IN", { dateStyle: "medium" })
-          : "—",
+        val ? (
+          new Date(val).toLocaleDateString("en-IN", { dateStyle: "medium" })
+        ) : (
+          <span className="pk-muted">—</span>
+        ),
     },
     {
-      title: "Actions",
+      title: "",
       key: "actions",
-      width: 290,
-      fixed: "right",
+      width: 330,
+      align: "right",
       render: (_, record) => (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <div className="pk-actions">
           <ExcelDownloadButton
-            size="small"
+            size="middle"
             label="Excel"
             disabled={!record.hasWorkbook}
-            onDownload={() =>
-              downloadBudgetReportExcel({ row: record, authHeaders })
-            }
-            style={{ borderRadius: 6 }}
+            onDownload={() => downloadBudgetReportExcel({ row: record, authHeaders })}
+            style={{ borderRadius: 9, fontWeight: 600, fontSize: 12.5 }}
           />
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
+          <button
+            type="button"
+            className="pk-btn"
             onClick={() =>
-              navigate(`/user/budgetreport/view/${record.eventId}`, {
-                state: {
-                  eventName: record.eventName,
-                  clientName: record.clientName,
-                  eventLabel: [record.eventName, record.clientName]
-                    .filter(Boolean)
-                    .join(" - "),
-                },
-              })
+              navigate(`/user/budgetreport/view/${record.eventId}`, { state: eventState(record) })
             }
           >
-            View
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
+            <Eye size={14} aria-hidden="true" /> View
+          </button>
+          <button
+            type="button"
+            className="pk-btn is-solid"
             onClick={() =>
-              navigate(`/user/budgetreport/edit/${record.eventId}`, {
-                state: {
-                  eventName: record.eventName,
-                  clientName: record.clientName,
-                  eventLabel: [record.eventName, record.clientName]
-                    .filter(Boolean)
-                    .join(" - "),
-                },
-              })
+              navigate(`/user/budgetreport/edit/${record.eventId}`, { state: eventState(record) })
             }
           >
-            Edit
-          </Button>
+            <Pencil size={13} aria-hidden="true" /> Edit
+          </button>
         </div>
       ),
     },
   ];
 
   return (
-    <div className="budget-report-container budget-report-eventwise">
-      <div className="budget-report-shell space-y-6">
-        <Card
-          className="border-0 shadow-md"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.92)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "20px 24px" }}
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Accounts"
+          title="Budget Reports"
+          subtitle="One Excel workbook per confirmed or in-progress event. Open it to view, or edit the figures."
+          onBack={() => navigate("/user")}
         >
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate("/user")}
-                size="large"
-                className="rounded-xl"
-              >
-                Back to Home
-              </Button>
-              <div>
-                <Title level={3} className="!mb-0 !text-slate-800">
-                  Budget reports (Excel)
-                </Title>
-                <Text type="secondary" className="text-sm">
-                  Each workbook is mapped to a confirmed or in-progress event —
-                  View (read-only) or Edit.
-                </Text>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-3">
-            <ExcelDownloadButton
-              label="Download all (Excel)"
-              onDownload={handleDownloadAll}
-            />
-            <Button
-              type="primary"
-              size="large"
-              icon={<PlusOutlined />}
-              className="rounded-xl shadow-md border-0"
-              style={{
-                background:
-                  "linear-gradient(135deg, #17542a 0%, #338147 50%, #0f4220 100%)",
-                boxShadow: "0 4px 14px -4px rgba(23, 84, 42, 0.45)",
-              }}
-              onClick={() => navigate("/user/budgetreport")}
-            >
-              Add budget report
-            </Button>
-            </div>
-          </div>
-        </Card>
+          <button type="button" className="pk-cta" onClick={() => navigate("/user/budgetreport")}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add budget report
+          </button>
+        </PageHero>
 
-        <Card
-          className="border-0 shadow-md budget-report-ant-table"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.95)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "20px 24px" }}
-        >
-          <div className="mb-5 max-w-xl">
-            <Text strong className="text-slate-700 block mb-2">
-              Search
-            </Text>
-            <Search
-              placeholder="Event name, client, or event ID"
-              allowClear
-              enterButton="Search"
-              size="large"
-              value={searchQuery}
-              onChange={(e) => {
-                const val = e.target.value;
-                setSearchQuery(val);
-                if (!val) {
-                  setSearchParams({});
-                  fetchList("");
-                }
-              }}
-              onSearch={handleSearch}
-              className="rounded-xl"
-            />
+        <StatRow>
+          <StatCard icon={<FileSpreadsheet size={21} aria-hidden="true" />} label="Events listed" value={rows.length} />
+          <StatCard tone="gold" icon={<Layers size={21} aria-hidden="true" />} label="With a workbook" value={withReport} />
+          <StatCard tone="blue" icon={<Table2 size={21} aria-hidden="true" />} label="Total sheets" value={totalSheets} />
+        </StatRow>
+
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <form className="pk-toolbar-left" onSubmit={submitSearch} role="search">
+              <SearchBox
+                icon={<Search size={16} aria-hidden="true" />}
+                value={searchQuery}
+                onChange={(val) => {
+                  setSearchQuery(val);
+                  if (!val) {
+                    setSearchParams({});
+                    fetchList("");
+                  }
+                }}
+                placeholder="Search event name, client or event ID — press Enter"
+                label="Search budget reports"
+              />
+              <button type="submit" className="pk-btn is-solid" style={{ height: 42 }}>
+                Search
+              </button>
+            </form>
+            <div className="pk-toolbar-right">
+              <ExcelDownloadButton label="Download all (Excel)" onDownload={handleDownloadAll} />
+            </div>
           </div>
 
           <Table
+            className="pk-table"
             rowKey="eventId"
             columns={columns}
             dataSource={rows}
@@ -285,16 +241,18 @@ const BudgetReportExcelList = () => {
               showSizeChanger: true,
               showTotal: (total) => `Total ${total} reports`,
             }}
-            scroll={{ x: 700 }}
+            scroll={{ x: 760 }}
             locale={{
-              emptyText: loading
-                ? null
-                : searchQuery
-                  ? `No reports found matching "${searchQuery}"`
-                  : "No budget reports yet. Add one from the button above.",
+              emptyText: loading ? null : (
+                <EmptyState
+                  icon={<FileSpreadsheet size={26} aria-hidden="true" />}
+                  title={searchQuery ? `No reports match “${searchQuery}”` : "No budget reports yet"}
+                  hint={searchQuery ? "Try a different search." : "Use “Add budget report” to create the first one."}
+                />
+              ),
             }}
           />
-        </Card>
+        </section>
       </div>
     </div>
   );

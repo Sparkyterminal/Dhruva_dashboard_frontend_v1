@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Button, Empty, Modal, Table, Typography } from "antd";
+import { Button, Modal, Table, Typography } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { formatAmountINR, formatDate } from "./daybookUtils";
 
@@ -128,7 +128,7 @@ const DaybookAccountsBalanceTable = ({
   );
 
   if (!dataSource.length) {
-    return <Empty description="No account balance records found." />;
+    return <div className="db-empty"><strong>No account balance records found.</strong><span>Nothing recorded for this period.</span></div>;
   }
 
   return (

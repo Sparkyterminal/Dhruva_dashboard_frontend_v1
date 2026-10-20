@@ -1,32 +1,24 @@
 import React from "react";
-import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import ProgressCalenderClients from "../Components/ProgressCalenderClients";
+import { PageHero } from "@/Components/PageKit";
 
 const InprogressCalendarPage = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="min-h-screen bg-linear-to-tr from-indigo-50 via-white to-purple-50 px-4 sm:px-6 py-8">
-      <div className="max-w-6xl mx-auto flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex cursor-pointer items-center gap-2 text-gray-600 hover:text-indigo-700 transition-all duration-200 font-medium group"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="hidden sm:inline">Back</span>
-          </button>
-
-          <div className="w-16 hidden sm:block" />
-        </div>
-
-        {/* Inprogress / Cancelled Events Calendar */}
-        <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-lg border border-gray-100 p-4 sm:p-6">
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Events"
+          title="In progress, Almost booked & Cancelled Calendar"
+          subtitle="Track pending, almost booked and cancelled events, and their meeting dates."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        />
+        <section className="pk-panel" style={{ padding: 20 }}>
           <ProgressCalenderClients />
-        </div>
+        </section>
       </div>
     </div>
   );

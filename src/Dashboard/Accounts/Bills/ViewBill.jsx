@@ -1,218 +1,36 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
 import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import { downloadBillsExcel } from "./billsExcel";
-import {
-  Button,
-  Card,
-  Table,
-  message,
-  Modal,
-  Input,
-  Tabs,
-  Drawer,
-  Select,
-} from "antd";
+import { Table, message, Modal, Input, Drawer, Select } from "antd";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  CalendarDays,
+  CircleCheck,
+  Eye,
+  IndianRupee,
+  Pencil,
+  Plus,
+  ReceiptText,
+  Search,
+  Trash2,
+  TriangleAlert,
+  Wallet,
+} from "lucide-react";
+import {
+  EmptyState,
+  PageHero,
+  SearchBox,
+  Segmented,
+  StatCard,
+  StatRow,
+} from "@/Components/PageKit";
+import "./Bills.css";
 import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 
-const customStyles = `
-  .glass-card {
-    background: rgba(255, 255, 255, 0.75);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-  }
-
-  .gradient-card {
-    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
-    border-radius: 1.5rem;
-    box-shadow: 0 10px 40px rgba(34, 106, 54, 0.3);
-  }
-
-  .table-wrapper .ant-table {
-    background: transparent;
-    font-family: inherit;
-  }
-
-  .table-wrapper .ant-table-thead > tr > th {
-    background: linear-gradient(135deg, #226a36 0%, #0f4220 100%);
-    color: white;
-    font-weight: 600;
-    border: none;
-    font-size: 16px;
-    padding: 16px;
-  }
-
-  .table-wrapper .ant-table-tbody > tr > td {
-    border-bottom: 1px solid rgba(43, 122, 65, 0.1);
-    padding: 16px;
-    font-size: 15px;
-  }
-
-  .table-wrapper .ant-table-tbody > tr:hover > td {
-    background: rgba(34, 106, 54, 0.05);
-  }
-
-  .table-wrapper .ant-table-container {
-    border-radius: 1rem;
-    overflow: hidden;
-  }
-
-  .table-wrapper .ant-pagination-item-active {
-    border-color: #226a36;
-    background: #226a36;
-  }
-
-  .table-wrapper .ant-pagination-item-active a {
-    color: white;
-  }
-
-  .overdue-row {
-    background-color: rgba(239, 68, 68, 0.1) !important;
-  }
-
-  .paid-row {
-    background-color: rgba(34, 197, 94, 0.1) !important;
-  }
-
-  .slide-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100vh;
-    background: white;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    overflow-y: auto;
-  }
-
-  .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
-  }
-
-  .float-animation {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .fc {
-    font-family: inherit;
-  }
-  
-  .fc .fc-toolbar-title {
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #243227;
-  }
-  
-  .fc-theme-standard td, .fc-theme-standard th {
-    border-color: #e6eae7;
-  }
-  
-  .fc-theme-standard .fc-scrollgrid {
-    border-color: #e6eae7;
-  }
-  
-  .fc .fc-daygrid-day-number {
-    padding: 8px;
-    font-weight: 600;
-    color: #3c4c3f;
-  }
-  
-  .fc .fc-daygrid-day.fc-day-today {
-    background-color: #e0eee1 !important;
-  }
-  
-  .fc .fc-col-header-cell {
-    background-color: #f9fbfa;
-    font-weight: 600;
-    color: #505e53;
-    padding: 12px 0;
-  }
-  
-  .fc-event {
-    cursor: pointer;
-    margin: 2px 0;
-    border-radius: 6px;
-    border-width: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    opacity: 1 !important;
-  }
-  
-  .fc-event:hover {
-    opacity: 0.95 !important;
-    transform: translateY(-1px);
-    transition: all 0.2s;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-  }
-  
-  .fc-event-main {
-    opacity: 1 !important;
-  }
-  
-  .fc-daygrid-event {
-    opacity: 1 !important;
-  }
-  
-  .fc .fc-button {
-    background-color: #226a36;
-    border-color: #226a36;
-    text-transform: capitalize;
-    font-weight: 500;
-    padding: 8px 16px;
-    border-radius: 8px;
-  }
-  
-  .fc .fc-button:hover {
-    background-color: #1d6531;
-    border-color: #1d6531;
-  }
-  
-  .fc .fc-button-primary:disabled {
-    background-color: #9ca3af;
-    border-color: #9ca3af;
-  }
-  
-  .fc-daygrid-event {
-    white-space: normal !important;
-    overflow: visible !important;
-  }
-  
-  .fc-daygrid-day-frame {
-    min-height: 120px !important;
-  }
-  
-  .fc-daygrid-day-events {
-    margin-bottom: 0 !important;
-  }
-  
-  .fc-event-main {
-    overflow: visible !important;
-  }
-  
-  .fc-daygrid-event-harness {
-    margin-bottom: 3px !important;
-  }
-`;
 
 const getDueDaysInfo = (emiDate) => {
   const now = new Date();
@@ -281,7 +99,7 @@ const ViewBill = () => {
         new Set((res.data || []).map((b) => b.belongs_to || "Other")),
       );
       setBelongsToList(belongsTo);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch bills");
     }
   };
@@ -484,116 +302,87 @@ const ViewBill = () => {
     })),
   ];
 
+  const fmtDate = (date) =>
+    new Date(date).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
   const mainColumns = [
     {
-      title: "Bill Name",
+      title: "Bill",
       dataIndex: "name",
       key: "name",
-      render: (text) => (
-        <span className="font-semibold text-gray-800">{text}</span>
+      render: (text, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            {String(text || "?").trim().charAt(0).toUpperCase()}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{text}</strong>
+            <span>{record.belongs_to || "Other"}</span>
+          </div>
+        </div>
       ),
     },
     {
-      title: "Belongs To",
-      dataIndex: "belongs_to",
-      key: "belongs_to",
-      render: (text) => (
-        <span className="text-indigo-700 font-semibold">{text}</span>
-      ),
-    },
-    {
-      title: "EMI Date",
+      title: "EMI date",
       dataIndex: "emiDate",
       key: "emiDate",
-      render: (date) => (
-        <span className="text-gray-700">
-          {new Date(date).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </span>
-      ),
+      width: 140,
+      render: (date) => <span>{fmtDate(date)}</span>,
     },
     {
       title: "Amount",
       dataIndex: "defaultAmount",
       key: "defaultAmount",
-      render: (amt) => (
-        <span className="font-semibold text-indigo-600 text-lg">
-          ₹{amt?.toLocaleString()}
-        </span>
-      ),
+      width: 130,
+      render: (amt) => <span className="pk-money">₹{amt?.toLocaleString("en-IN")}</span>,
     },
     {
       title: "Status",
       key: "status",
+      width: 230,
       render: (_, record) => {
         if (isEmiClosed(record)) {
-          return (
-            <div>
-              <span className="px-3 py-1 rounded-full text-sm font-semibold bg-gray-200 text-gray-700">
-                Closed
-              </span>
-            </div>
-          );
+          return <span className="pk-pill is-grey">Closed</span>;
         }
-
         const paid = isPaid(record);
         const overdue = isOverdue(record);
-        const dueDaysInfo = paid
-          ? { label: "Paid", type: "paid" }
-          : getDueDaysInfo(record.emiDate);
-
         return (
-          <div>
-            <span
-              className={`mr-2 px-3 py-1 rounded-full text-sm font-semibold ${
-                paid
-                  ? "bg-green-100 text-green-700"
-                  : overdue
-                    ? "bg-red-100 text-red-700"
-                    : "bg-yellow-100 text-yellow-700"
-              }`}
-            >
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+            <span className={`pk-pill ${paid ? "" : overdue ? "is-red" : "is-gold"}`}>
               {paid ? "Paid" : overdue ? "Overdue" : "Pending"}
             </span>
-            <span className="ml-2 text-gray-600 italic">
-              {paid ? "" : dueDaysInfo.label}
-            </span>
+            {!paid && <span className="pk-muted">{getDueDaysInfo(record.emiDate).label}</span>}
           </div>
         );
       },
     },
     {
-      title: "Actions",
+      title: "",
       key: "actions",
+      width: 300,
+      align: "right",
       render: (_, record) => {
-        const { month: currentMonth, year: currentYear } =
-          getCurrentMonthYear();
+        const { month: currentMonth, year: currentYear } = getCurrentMonthYear();
         const currentStatus = record.emiStatus?.find(
           (s) => s.month === currentMonth && s.year === currentYear,
         );
         const isCurrentMonthPaid = currentStatus?.paid || false;
 
         return (
-          <div className="flex gap-2 items-center">
-            <motion.button
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.9 }}
-              onClick={() => openEmiStatusModal(record)}
-              className="px-3 py-1 rounded-lg bg-blue-500 text-white font-semibold shadow-md hover:bg-blue-600 transition-colors"
-              title="View EMI Status"
-            >
-              👁️
-            </motion.button>
+          <div className="pk-actions">
+            <button type="button" className="pk-btn" onClick={() => openEmiStatusModal(record)}>
+              <Eye size={14} aria-hidden="true" /> Schedule
+            </button>
             {!isEmiClosed(record) && !isCurrentMonthPaid ? (
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
+                type="button"
+                className="pk-btn is-solid"
                 onClick={() => {
-                  const emiAmount =
-                    currentStatus?.emiAmount || record.defaultAmount;
+                  const emiAmount = currentStatus?.emiAmount || record.defaultAmount;
                   openPayModal(
                     record._id,
                     record.name,
@@ -603,18 +392,13 @@ const ViewBill = () => {
                     record.emiDate,
                   );
                 }}
-                className="px-4 py-2 rounded-lg font-semibold shadow-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg transition-all"
               >
-                Pay EMI ({currentMonth}/{currentYear})
-              </motion.button>
+                <Wallet size={14} aria-hidden="true" /> Pay {currentMonth}/{currentYear}
+              </button>
             ) : !isEmiClosed(record) ? (
-              <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 font-semibold">
-                Paid
-              </span>
+              <span className="pk-pill">Paid</span>
             ) : (
-              <span className="px-3 py-1 rounded-full bg-gray-200 text-gray-700 font-semibold">
-                Closed
-              </span>
+              <span className="pk-pill is-grey">Closed</span>
             )}
           </div>
         );
@@ -622,73 +406,13 @@ const ViewBill = () => {
     },
   ];
 
+  const paidCount = bills.filter((b) => !isEmiClosed(b) && isPaid(b)).length;
+  const overdueCount = bills.filter((b) => !isEmiClosed(b) && isOverdue(b)).length;
+
   const totalAmount = bills.reduce(
     (sum, bill) => sum + (bill.defaultAmount || 0),
     0,
   );
-
-  // Organize bills by month for calendar view
-  const organizeBillsByMonth = () => {
-    const monthMap = new Map();
-    const now = new Date();
-
-    // Use filteredBills to respect search and tab filters
-    filteredBills.forEach((bill) => {
-      if (!bill.createdAt && (!bill.emiStatus || bill.emiStatus.length === 0)) {
-        return;
-      }
-
-      const startDate = bill.createdAt
-        ? new Date(bill.createdAt)
-        : new Date(bill.emiStatus[0].year, bill.emiStatus[0].month - 1, 1);
-
-      const currentDate = new Date(
-        startDate.getFullYear(),
-        startDate.getMonth(),
-        1,
-      );
-      const endDate = new Date(now.getFullYear(), now.getMonth() + 12, 1);
-
-      while (currentDate <= endDate) {
-        const month = currentDate.getMonth() + 1;
-        const year = currentDate.getFullYear();
-        const monthKey = `${year}-${month}`;
-
-        if (!monthMap.has(monthKey)) {
-          monthMap.set(monthKey, {
-            month,
-            year,
-            bills: [],
-          });
-        }
-
-        const existingStatus = bill.emiStatus?.find(
-          (s) => s.month === month && s.year === year,
-        );
-
-        const emiData = {
-          billId: bill._id,
-          billName: bill.name,
-          emiType: bill.emiType,
-          amount: existingStatus?.amount || bill.amount,
-          paid: existingStatus?.paid || false,
-          emiDate: bill.emiDate,
-          dueDaysInfo: getDueDaysInfoForMonth(bill, month, year),
-        };
-
-        monthMap.get(monthKey).bills.push(emiData);
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
-    });
-
-    // Convert to array and sort by year, month, filter out empty months
-    return Array.from(monthMap.values())
-      .filter((monthData) => monthData.bills.length > 0)
-      .sort((a, b) => {
-        if (a.year !== b.year) return a.year - b.year;
-        return a.month - b.month;
-      });
-  };
 
   const getDueDaysInfoForMonth = (bill, month, year) => {
     const now = new Date();
@@ -859,543 +583,259 @@ const ViewBill = () => {
     );
   };
 
+  const { month: nowMonth, year: nowYear } = getCurrentMonthYear();
+
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative">
-      <style>{customStyles}</style>
-
-      <div
-        className="absolute inset-0 z-0 pointer-events-none opacity-40"
-        style={{
-          backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
-        }}
-      />
-
-      <div className="relative z-10 px-4 md:px-8 py-6 md:py-8 max-w-7xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex items-center justify-between mb-8"
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Accounts"
+          title="Bills & EMI's"
+          subtitle="Track every EMI and bill, see what is due, and record payments."
+          onBack={() => navigate("/user")}
         >
-          <motion.button
-            whileHover={{ scale: 1.05, x: -5 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate("/user")}
-            className="flex items-center gap-2 px-6 py-3 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 font-semibold text-indigo-600"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 19l-7-7 7-7"
+          <button type="button" className="pk-cta is-ghost" onClick={() => setShowEditModal(true)}>
+            <Pencil size={16} aria-hidden="true" /> Edit bills
+          </button>
+          <button type="button" className="pk-cta" onClick={handleAddBillClick}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add bill
+          </button>
+        </PageHero>
+
+        <StatRow>
+          <StatCard icon={<ReceiptText size={21} aria-hidden="true" />} label="Total EMI's / bills" value={bills.length} />
+          <StatCard tone="gold" icon={<IndianRupee size={21} aria-hidden="true" />} label="Total amount" value={`₹${totalAmount.toLocaleString("en-IN")}`} />
+          <StatCard icon={<CircleCheck size={21} aria-hidden="true" />} label={`Paid (${nowMonth}/${nowYear})`} value={paidCount} />
+          <StatCard tone="red" icon={<TriangleAlert size={21} aria-hidden="true" />} label="Overdue" value={overdueCount} />
+        </StatRow>
+
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <div className="pk-toolbar-left">
+              <Segmented
+                label="View"
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  { value: "list", label: "List" },
+                  { value: "calendar", label: "Calendar" },
+                ]}
               />
-            </svg>
-            Back
-          </motion.button>
-
-          <motion.h1
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent"
-          >
-            Bills & EMI's
-          </motion.h1>
-
-          <div className="w-24" />
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            className="gradient-card p-6 text-white"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-white/80 text-sm font-medium mb-1">
-                  Total EMI's / Bills
-                </p>
-                <p className="text-4xl font-bold">{bills.length}</p>
-              </div>
-              <div className="float-animation">
-                <svg
-                  className="w-16 h-16 text-white/30"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-              </div>
+              <SearchBox
+                icon={<Search size={16} aria-hidden="true" />}
+                value={searchText}
+                onChange={setSearchText}
+                placeholder="Search bills by name"
+                label="Search bills"
+              />
             </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-            className="glass-card p-6"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm font-medium mb-1">
-                  Total Amount
-                </p>
-                <p className="text-4xl font-bold bg-linear-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  ₹{totalAmount.toLocaleString()}
-                </p>
-              </div>
-              <div className="float-animation">
-                <svg
-                  className="w-16 h-16 text-indigo-200"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.31-8.86c-1.77-.45-2.34-.94-2.34-1.67 0-.84.79-1.43 2.1-1.43 1.38 0 1.9.66 1.94 1.64h1.71c-.05-1.34-.87-2.57-2.49-2.97V5H10.9v1.69c-1.51.32-2.72 1.3-2.72 2.81 0 1.79 1.49 2.69 3.66 3.21 1.95.46 2.34 1.15 2.34 1.87 0 .53-.39 1.39-2.1 1.39-1.6 0-2.23-.72-2.32-1.64H8.04c.1 1.7 1.36 2.66 2.86 2.97V19h2.34v-1.67c1.52-.29 2.72-1.16 2.73-2.77-.01-2.2-1.9-2.96-3.66-3.42z" />
-                </svg>
-              </div>
+            <div className="pk-toolbar-right">
+              <ExcelDownloadButton onDownload={handleDownloadExcel} />
             </div>
-          </motion.div>
-        </div>
+          </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.5 }}
-          className="flex justify-end gap-4 mb-6"
-        >
-          <ExcelDownloadButton
-            onDownload={handleDownloadExcel}
-            style={{ height: 48, paddingInline: 24, fontWeight: 600 }}
-          />
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowEditModal(true)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              />
-            </svg>
-            Edit Bills
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05, y: -2 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleAddBillClick}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Add Bills
-          </motion.button>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5 }}
-          className="glass-card p-6"
-        >
-          <Tabs
-            activeKey={viewMode}
-            onChange={setViewMode}
-            type="line"
-            items={[
-              {
-                key: "calendar",
-                label: (
-                  <span className="flex items-center gap-2 font-semibold">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
-                    Calendar View
-                  </span>
-                ),
-                children: (
-                  <div className="mt-6">
-                    {filteredBills.length === 0 ? (
-                      <div className="text-center py-12 text-gray-500">
-                        <p>No EMI records found</p>
-                      </div>
-                    ) : (
-                      <div className="bg-white rounded-xl overflow-hidden">
-                        <FullCalendar
-                          ref={calendarRef}
-                          plugins={[dayGridPlugin, interactionPlugin]}
-                          initialView="dayGridMonth"
-                          headerToolbar={{
-                            left: "prev,next today",
-                            center: "title",
-                            right: "dayGridMonth",
-                          }}
-                          events={getCalendarEvents()}
-                          eventContent={renderEventContent}
-                          height="auto"
-                          dayMaxEvents={false}
-                          eventMaxStack={10}
-                          eventDidMount={(info) => {
-                            try {
-                              const {
-                                billId,
-                                billName,
-                                emiType,
-                                amount,
-                                paid,
-                                month,
-                                year,
-                              } = info.event.extendedProps;
-
-                              const bill = bills.find((b) => b._id === billId);
-                              if (!bill) return;
-
-                              let tooltip = `${billName}\nType: ${emiType}\nAmount: ₹${amount.toLocaleString()}\nStatus: ${paid ? "Paid" : "Pending"}`;
-
-                              if (!paid) {
-                                const dueDaysInfo = getDueDaysInfoForMonth(
-                                  bill,
-                                  month,
-                                  year,
-                                );
-                                tooltip += `\n${dueDaysInfo.label}`;
-                              }
-
-                              info.el.setAttribute("title", tooltip);
-                              info.el.style.cursor = "pointer";
-
-                              info.el.addEventListener("click", () => {
-                                openEmiStatusModal(bill);
-                              });
-                            } catch (error) {
-                              console.error("Error mounting event:", error);
-                            }
-                          }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                ),
-              },
-              {
-                key: "list",
-                label: (
-                  <span className="flex items-center gap-2 font-semibold">
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 10h16M4 14h16M4 18h16"
-                      />
-                    </svg>
-                    List View
-                  </span>
-                ),
-                children: (
-                  <div className="table-wrapper mt-6">
-                    <Tabs
-                      activeKey={activeTab}
-                      onChange={setActiveTab}
-                      type="card"
-                      items={belongsToTabs.map((tab) => ({
-                        key: tab.key,
-                        label: (
-                          <span
-                            className={
-                              tab.key === activeTab
-                                ? "font-bold text-indigo-700"
-                                : "font-semibold text-gray-800"
-                            }
-                          >
-                            {tab.label}
-                          </span>
-                        ),
-                      }))}
+          {viewMode === "list" ? (
+            <>
+              <div className="bl-subbar">
+                <Segmented
+                  label="Belongs to"
+                  value={activeTab}
+                  onChange={setActiveTab}
+                  options={belongsToTabs.map((t) => ({ value: t.key, label: t.label }))}
+                />
+              </div>
+              <Table
+                className="pk-table"
+                columns={mainColumns}
+                dataSource={filteredBills.map((bill) => ({ ...bill, key: bill._id }))}
+                rowClassName={(record) =>
+                  isPaid(record) ? "bl-row-paid" : isOverdue(record) ? "bl-row-overdue" : ""
+                }
+                pagination={{
+                  pageSize: 10,
+                  showSizeChanger: false,
+                  showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} bills`,
+                }}
+                scroll={{ x: 900 }}
+                locale={{
+                  emptyText: (
+                    <EmptyState
+                      icon={<ReceiptText size={26} aria-hidden="true" />}
+                      title="No bills found"
+                      hint={searchText ? "Try a different search." : "Use “Add bill” to create the first one."}
                     />
-                    <Table
-                      columns={mainColumns}
-                      dataSource={filteredBills.map((bill) => ({
-                        ...bill,
-                        key: bill._id,
-                      }))}
-                      rowClassName={(record) =>
-                        isPaid(record)
-                          ? "paid-row"
-                          : isOverdue(record)
-                            ? "overdue-row"
-                            : ""
-                      }
-                      pagination={{
-                        pageSize: 10,
-                        showSizeChanger: false,
-                        showTotal: (total, range) =>
-                          `${range[0]}-${range[1]} of ${total} bills`,
-                      }}
-                      bordered={false}
-                      size="middle"
-                      style={{ marginTop: 20 }}
-                    />
-                  </div>
-                ),
-              },
-            ]}
-          />
-        </motion.div>
+                  ),
+                }}
+              />
+            </>
+          ) : filteredBills.length === 0 ? (
+            <EmptyState
+              icon={<CalendarDays size={26} aria-hidden="true" />}
+              title="No EMI records found"
+              hint={searchText ? "Try a different search." : undefined}
+            />
+          ) : (
+            <div className="bl-calendar">
+              <div className="bl-legend">
+                <span><i style={{ background: "#2f8a4b" }} /> Paid</span>
+                <span><i style={{ background: "#f59e0b" }} /> Pending</span>
+                <span><i style={{ background: "#ef4444" }} /> Overdue</span>
+              </div>
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth",
+                }}
+                events={getCalendarEvents()}
+                eventContent={renderEventContent}
+                height="auto"
+                dayMaxEvents={false}
+                eventMaxStack={10}
+                eventDidMount={(info) => {
+                  try {
+                    const { billId, billName, emiType, amount, paid, month, year } =
+                      info.event.extendedProps;
+
+                    const bill = bills.find((b) => b._id === billId);
+                    if (!bill) return;
+
+                    let tooltip = `${billName}\nType: ${emiType}\nAmount: ₹${amount.toLocaleString()}\nStatus: ${paid ? "Paid" : "Pending"}`;
+
+                    if (!paid) {
+                      const dueDaysInfo = getDueDaysInfoForMonth(bill, month, year);
+                      tooltip += `\n${dueDaysInfo.label}`;
+                    }
+
+                    info.el.setAttribute("title", tooltip);
+                    info.el.style.cursor = "pointer";
+
+                    info.el.addEventListener("click", () => {
+                      openEmiStatusModal(bill);
+                    });
+                  } catch (error) {
+                    console.error("Error mounting event:", error);
+                  }
+                }}
+              />
+            </div>
+          )}
+        </section>
       </div>
 
       <Drawer
         title={
-          <div className="flex items-center gap-3">
-            <div className="w-1 h-8 bg-gradient-to-b from-indigo-500 to-purple-500 rounded-full" />
-            <div>
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent m-0">
-                EMI Status
-              </h2>
-              <p className="text-gray-500 text-sm mt-1">{selectedBillName}</p>
-            </div>
+          <div>
+            <div style={{ fontWeight: 700, color: "var(--brand)" }}>EMI schedule</div>
+            <div style={{ fontSize: 13, fontWeight: 400, color: "var(--ink-soft)" }}>{selectedBillName}</div>
           </div>
         }
         placement="right"
         onClose={() => setShowStatusModal(false)}
         open={showStatusModal}
-        width={600}
-        styles={{
-          body: {
-            padding: "24px",
-            background: "linear-gradient(to bottom, #f9fbf9, #f3f7f4)",
-          },
-        }}
+        width={560}
+        styles={{ body: { padding: 20, background: "var(--bg-page)" } }}
       >
-        <div className="space-y-4">
-          {selectedEmiStatus.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <p>No EMI records found</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {selectedEmiStatus.map((status, idx) => {
-                const monthName = getMonthName(status.month);
-                const isCurrentMonth =
-                  status.month === getCurrentMonthYear().month &&
-                  status.year === getCurrentMonthYear().year;
+        {selectedEmiStatus.length === 0 ? (
+          <EmptyState icon={<CalendarDays size={26} aria-hidden="true" />} title="No EMI records found" />
+        ) : (
+          <div className="bl-months">
+            {selectedEmiStatus.map((status, idx) => {
+              const isCurrentMonth =
+                status.month === getCurrentMonthYear().month &&
+                status.year === getCurrentMonthYear().year;
 
-                return (
-                  <motion.div
-                    key={idx}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      status.paid
-                        ? "bg-green-50 border-green-200"
-                        : isCurrentMonth
-                          ? "bg-yellow-50 border-yellow-300 shadow-md"
-                          : "bg-white border-gray-200"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-bold text-gray-800">
-                            {monthName} {status.year}
-                          </h3>
-                          {isCurrentMonth && (
-                            <span className="px-2 py-1 text-xs font-semibold bg-indigo-100 text-indigo-700 rounded-full">
-                              Current Month
-                            </span>
-                          )}
-                        </div>
-
-                        <p className="text-2xl font-bold text-indigo-600">
-                          ₹{status.emiAmount?.toLocaleString() || 0}
-                        </p>
-
-                        {/* Payment details */}
-                        <div className="mt-3 space-y-2">
-                          {status.paid && (
-                            <div className="text-sm">
-                              <strong className="text-gray-800">
-                                Amount Paid:
-                              </strong>
-                              <p className="text-green-600 font-semibold">
-                                ₹{status.amountPaid?.toLocaleString() || 0}
-                              </p>
-                            </div>
-                          )}
-
-                          {status.paymentMode && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <strong className="text-gray-800">Mode:</strong>
-                              <span className="px-2 py-0.5 bg-gray-100 rounded text-xs font-medium">
-                                {status.paymentMode}
-                              </span>
-                            </div>
-                          )}
-
-                          {status.paymentDate && status.paid && (
-                            <div className="text-xs text-gray-500">
-                              <strong>Paid on:</strong>{" "}
-                              {new Date(status.paymentDate).toLocaleDateString(
-                                "en-IN",
-                                {
-                                  day: "numeric",
-                                  month: "short",
-                                  year: "numeric",
-                                },
-                              )}
-                            </div>
-                          )}
-
-                          {status.remarks && (
-                            <div className="text-sm">
-                              <strong className="text-gray-800">
-                                Remarks:
-                              </strong>
-                              <p className="mt-1 text-gray-600 text-sm whitespace-pre-wrap">
-                                {status.remarks}
-                              </p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="ml-4 flex flex-col items-end gap-2">
-                        <span
-                          className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 ${
-                            status.paid
-                              ? "bg-green-100 text-green-700"
-                              : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {status.paid ? (
-                            <>
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Paid
-                            </>
-                          ) : (
-                            <>
-                              <svg
-                                className="w-5 h-5"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                              >
-                                <path
-                                  fillRule="evenodd"
-                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"
-                                  clipRule="evenodd"
-                                />
-                              </svg>
-                              Pending
-                            </>
-                          )}
-                        </span>
-
-                        {!status.paid && (
-                          <motion.button
-                            whileHover={{ scale: 1.03 }}
-                            whileTap={{ scale: 0.97 }}
-                            onClick={() =>
-                              openPayModal(
-                                selectedBillId,
-                                selectedBillName,
-                                status.emiAmount,
-                                status.month,
-                                status.year,
-                                selectedBillEmiDate,
-                              )
-                            }
-                            className="px-3 py-1 rounded-lg font-semibold shadow-md text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:shadow-lg transition-all text-sm"
-                          >
-                            Pay
-                          </motion.button>
-                        )}
-                      </div>
+              return (
+                <article
+                  key={idx}
+                  className={`bl-month${status.paid ? " is-paid" : isCurrentMonth ? " is-current" : ""}`}
+                >
+                  <div className="bl-month-top">
+                    <div>
+                      <h3>
+                        {getMonthName(status.month)} {status.year}
+                      </h3>
+                      <p className="bl-month-amount">₹{status.emiAmount?.toLocaleString("en-IN") || 0}</p>
                     </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          )}
+                    <div className="bl-month-side">
+                      <span className={`pk-pill ${status.paid ? "" : "is-gold"}`}>
+                        {status.paid ? "Paid" : "Pending"}
+                      </span>
+                      {isCurrentMonth && <span className="pk-pill is-blue">This month</span>}
+                    </div>
+                  </div>
 
-          {selectedEmiStatus.length > 0 && (
-            <div className="mt-6 p-4 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl text-white">
-              <div className="flex items-center justify-between">
-                <span className="font-semibold">Total Paid:</span>
-                <span className="text-xl font-bold">
-                  {selectedEmiStatus.filter((s) => s.paid).length} /{" "}
-                  {selectedEmiStatus.length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between mt-2">
-                <span className="font-semibold">Total Amount Paid:</span>
-                <span className="text-xl font-bold">
+                  {(status.paid || status.paymentMode || status.remarks) && (
+                    <dl className="bl-month-meta">
+                      {status.paid && (
+                        <div>
+                          <dt>Amount paid</dt>
+                          <dd>₹{status.amountPaid?.toLocaleString("en-IN") || 0}</dd>
+                        </div>
+                      )}
+                      {status.paymentMode && (
+                        <div>
+                          <dt>Mode</dt>
+                          <dd>{status.paymentMode}</dd>
+                        </div>
+                      )}
+                      {status.paymentDate && status.paid && (
+                        <div>
+                          <dt>Paid on</dt>
+                          <dd>{fmtDate(status.paymentDate)}</dd>
+                        </div>
+                      )}
+                      {status.remarks && (
+                        <div style={{ gridColumn: "1 / -1" }}>
+                          <dt>Remarks</dt>
+                          <dd style={{ whiteSpace: "pre-wrap" }}>{status.remarks}</dd>
+                        </div>
+                      )}
+                    </dl>
+                  )}
+
+                  {!status.paid && (
+                    <button
+                      type="button"
+                      className="pk-btn is-solid"
+                      onClick={() =>
+                        openPayModal(
+                          selectedBillId,
+                          selectedBillName,
+                          status.emiAmount,
+                          status.month,
+                          status.year,
+                          selectedBillEmiDate,
+                        )
+                      }
+                    >
+                      <Wallet size={14} aria-hidden="true" /> Pay now
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+
+            <div className="bl-total">
+              <span>
+                Paid <strong>{selectedEmiStatus.filter((s) => s.paid).length} / {selectedEmiStatus.length}</strong>
+              </span>
+              <span>
+                Total paid{" "}
+                <strong>
                   ₹
                   {selectedEmiStatus
                     .filter((s) => s.paid)
                     .reduce((sum, s) => sum + (s.amountPaid || 0), 0)
-                    .toLocaleString()}
-                </span>
-              </div>
+                    .toLocaleString("en-IN")}
+                </strong>
+              </span>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </Drawer>
 
       <Modal
@@ -1415,7 +855,7 @@ const ViewBill = () => {
           <div className="space-y-4">
             <p className="text-gray-700">
               Please confirm payment for <strong>{payTarget.billName}</strong> —{" "}
-              <strong>₹{(payTarget.emiAmount || 0).toLocaleString()}</strong> (
+              <strong>₹{(payTarget.emiAmount || 0).toLocaleString("en-IN")}</strong> (
               {getMonthName(payTarget.month)} {payTarget.year}).
             </p>
             <div>
@@ -1450,187 +890,108 @@ const ViewBill = () => {
         )}
       </Modal>
 
-      <AnimatePresence>
-        {showEditModal && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="modal-overlay"
-              onClick={() => setShowEditModal(false)}
+      <Drawer
+        title="Edit bills"
+        placement="right"
+        open={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        width={760}
+        styles={{ body: { padding: 0 } }}
+      >
+        <div className="pk-toolbar">
+          <div className="pk-toolbar-left">
+            <SearchBox
+              icon={<Search size={16} aria-hidden="true" />}
+              value={searchText}
+              onChange={setSearchText}
+              placeholder="Search bills by name"
+              label="Search bills to edit"
             />
-            <motion.div
-              initial={{ x: "-100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "-100%" }}
-              transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="slide-modal"
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                    Edit Bills
-                  </h2>
+          </div>
+        </div>
+        <Table
+          className="pk-table"
+          columns={[
+            {
+              title: "Bill",
+              dataIndex: "name",
+              key: "name",
+              render: (text, record) => (
+                <div className="pk-who">
+                  <span className="pk-avatar is-soft" aria-hidden="true">
+                    {String(text || "?").trim().charAt(0).toUpperCase()}
+                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <strong>{text}</strong>
+                    <span>{record.emiType || "—"}</span>
+                  </div>
+                </div>
+              ),
+            },
+            {
+              title: "EMI date",
+              dataIndex: "emiDate",
+              key: "emiDate",
+              width: 130,
+              render: (date) => fmtDate(date),
+            },
+            {
+              title: "Amount",
+              dataIndex: "defaultAmount",
+              key: "defaultAmount",
+              width: 120,
+              render: (amt) => <span className="pk-money">₹{amt?.toLocaleString("en-IN") || 0}</span>,
+            },
+            {
+              title: "",
+              key: "actions",
+              width: 170,
+              align: "right",
+              render: (_, record) => (
+                <div className="pk-actions">
                   <button
-                    onClick={() => setShowEditModal(false)}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                    type="button"
+                    className="pk-btn is-solid"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      navigate(`${getBasePath()}/editbill/${record._id}`);
+                    }}
                   >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <Pencil size={13} aria-hidden="true" /> Edit
+                  </button>
+                  <button
+                    type="button"
+                    className="pk-btn is-danger is-icon"
+                    aria-label="Delete bill"
+                    onClick={() => {
+                      Modal.confirm({
+                        title: "Delete bill",
+                        content: "Are you sure you want to delete this bill?",
+                        okText: "Delete",
+                        okType: "danger",
+                        cancelText: "Cancel",
+                        onOk: async () => {
+                          try {
+                            await axiosClient.delete(`bills/${record._id}`);
+                            message.success("Bill deleted successfully");
+                            fetchBills();
+                          } catch {
+                            message.error("Failed to delete bill");
+                          }
+                        },
+                      });
+                    }}
+                  >
+                    <Trash2 size={14} aria-hidden="true" />
                   </button>
                 </div>
-
-                <Input
-                  placeholder="Search bills..."
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  prefix={
-                    <svg
-                      className="w-5 h-5 text-gray-400"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                      />
-                    </svg>
-                  }
-                  className="mb-4"
-                  size="large"
-                />
-
-                <div className="table-wrapper">
-                  <Table
-                    columns={[
-                      {
-                        title: "Bill Name",
-                        dataIndex: "name",
-                        key: "name",
-                        render: (text) => (
-                          <span className="font-semibold text-gray-800">
-                            {text}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "EMI Type",
-                        dataIndex: "emiType",
-                        key: "emiType",
-                        render: (text) => (
-                          <span className="text-indigo-700 font-semibold">
-                            {text}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "EMI Date",
-                        dataIndex: "emiDate",
-                        key: "emiDate",
-                        render: (date) => (
-                          <span className="text-gray-700">
-                            {new Date(date).toLocaleDateString("en-IN", {
-                              day: "numeric",
-                              month: "short",
-                              year: "numeric",
-                            })}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "Amount",
-                        dataIndex: "defaultAmount",
-                        key: "defaultAmount",
-                        render: (amt) => (
-                          <span className="font-semibold text-indigo-600 text-lg">
-                            ₹{amt?.toLocaleString() || 0}
-                          </span>
-                        ),
-                      },
-                      {
-                        title: "Actions",
-                        key: "actions",
-                        render: (_, record) => (
-                          <div className="flex gap-2">
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                setShowEditModal(false);
-                                navigate(
-                                  `${getBasePath()}/editbill/${record._id}`,
-                                );
-                              }}
-                              className="px-4 py-2 bg-linear-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-                            >
-                              Edit
-                            </motion.button>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                Modal.confirm({
-                                  title: "Delete Bill",
-                                  content:
-                                    "Are you sure you want to delete this bill?",
-                                  okText: "Delete",
-                                  okType: "danger",
-                                  cancelText: "Cancel",
-                                  onOk: async () => {
-                                    try {
-                                      await axiosClient.delete(
-                                        `bills/${record._id}`,
-                                      );
-                                      message.success(
-                                        "Bill deleted successfully",
-                                      );
-                                      fetchBills();
-                                    } catch (err) {
-                                      message.error("Failed to delete bill");
-                                    }
-                                  },
-                                });
-                              }}
-                              className="px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 text-white rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-300"
-                            >
-                              Delete
-                            </motion.button>
-                          </div>
-                        ),
-                      },
-                    ]}
-                    dataSource={filteredBills.map((bill) => ({
-                      ...bill,
-                      key: bill._id,
-                    }))}
-                    pagination={{
-                      pageSize: 8,
-                      showSizeChanger: false,
-                    }}
-                    bordered={false}
-                    size="middle"
-                  />
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+              ),
+            },
+          ]}
+          dataSource={filteredBills.map((bill) => ({ ...bill, key: bill._id }))}
+          pagination={{ pageSize: 8, showSizeChanger: false }}
+        />
+      </Drawer>
     </div>
   );
 };

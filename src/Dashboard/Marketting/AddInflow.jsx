@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -8,37 +7,21 @@ import {
   InputNumber,
   message,
   Select,
-  Space,
   Tag,
   Radio,
-  Table,
   Modal,
 } from "antd";
-import {
-  ArrowLeftOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
+import { PlusOutlined, DeleteOutlined } from "@ant-design/icons";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs";
+import { PageHero } from "@/Components/PageKit";
+import "./BookingForm.css";
 import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import AddEvent from "./EventsNames/AddEvent";
 import AddVenue from "./AddVenue/AddVenue";
 
 const { Option } = Select;
-
-// Minimal styles for a clean, compact UI
-const customStyles = `
-  .glass-card { background: #ffffff; border-radius: 8px; padding: 20px; box-shadow: 0 6px 18px rgba(3, 16, 33, 0.06); }
-  .glass-advance-card { background: #ffffff; border: 1px solid #ecf9ee; border-radius: 8px; padding: 12px; }
-  .glass-event-type-card { background: #ffffff; border: 1px solid #d7f3dd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
-  .event-type-tag { background: #ecf9ee; color: #257f37; border-radius: 6px; padding: 4px 8px; font-weight: 600; }
-  .gradient-text { color: #257f37; font-weight: 700; }
-  .ant-form-item-label > label { font-weight: 600 !important; color: #257f37 !important; }
-`;
 
 const AddInflow = () => {
   const [form] = Form.useForm();
@@ -51,11 +34,6 @@ const AddInflow = () => {
   const [eventTypesLoading, setEventTypesLoading] = useState(false);
   const [selectedEventTypes, setSelectedEventTypes] = useState([]);
   const [advanceMode, setAdvanceMode] = useState("separate"); // 'separate' (per-event) or 'complete' (single package)
-  const [gstOptions] = useState([
-    { label: "No GST", value: 0 },
-    { label: "18% GST", value: 0.18 },
-    { label: "22% GST", value: 0.22 },
-  ]);
   const [coordinators, setCoordinators] = useState([]);
   const [coordinatorsLoading, setCoordinatorsLoading] = useState(false);
   const [venues, setVenues] = useState([]);
@@ -104,13 +82,6 @@ const AddInflow = () => {
       return undefined;
     const numeric = Number(parsed);
     return Number.isNaN(numeric) ? undefined : numeric;
-  };
-
-  const calculateGstTotal = (amount, rate) => {
-    const amt = normalizeAmount(amount);
-    if (amt == null) return 0;
-    const r = rate || 0;
-    return amt + amt * r;
   };
 
   const timeFormat = "DD MMM YYYY, hh:mm A";
@@ -290,9 +261,6 @@ const AddInflow = () => {
 
       const perTypePayload = hasEventTypes
         ? (values.eventTypes || []).map((typeId) => {
-            const typeMeta = (eventTypes || []).find(
-              (t) => t.id === typeId || t._id === typeId,
-            );
             const typeKey = typeId;
             const startDate = values.eventTypeDates?.[typeKey]?.startDate
               ? values.eventTypeDates[typeKey].startDate.toISOString()
@@ -568,123 +536,19 @@ const AddInflow = () => {
   const hasEventTypes = (eventTypes || []).length > 0;
 
   return (
-    <div
-      className=""
-      style={{
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, #f2f8f2 0%, #e0eee1 50%, #e0eee1 100%)",
-        padding: "24px",
-        position: "relative",
-      }}
-    >
-      <style>{customStyles}</style>
+    <div className="pk-page">
+      <div className="pk-wrap bf-wrap">
+        <PageHero
+          eyebrow="Bookings"
+          title="New Event Booking"
+          subtitle="Fill in the details to create a new event booking."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        />
 
-      {/* Animated Background */}
-      <div
-        style={{
-          position: "fixed",
-          inset: 0,
-          zIndex: 0,
-          pointerEvents: "none",
-          opacity: 0.4,
-          backgroundImage:
-            `radial-gradient(circle at 15% 85%, rgba(51, 129, 71, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 85% 15%, rgba(43, 122, 65, 0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 50% 50%, rgba(51, 129, 71, 0.1) 0%, transparent 50%)`,
-        }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          zIndex: 10,
-          maxWidth: "1100px",
-          margin: "0 auto",
-        }}
-      >
-        {/* Back Button */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          style={{ marginBottom: "24px" }}
-        >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(-1)}
-              size="large"
-              style={{
-                borderRadius: 12,
-                background:
-                  "linear-gradient(135deg, rgba(23, 84, 42, 0.1), rgba(15, 66, 32, 0.1))",
-                border: "1px solid rgba(23, 84, 42, 0.3)",
-                color: "#17542a",
-                fontWeight: 600,
-                height: 48,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-                paddingLeft: 20,
-                paddingRight: 24,
-              }}
-            >
-              Back
-            </Button>
-          </motion.div>
-        </motion.div>
-
-        {/* Main Form Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut" }}
-        >
-          <div className="glass-card slide-in-top" style={{ padding: "40px" }}>
-            {/* Header Section */}
-            <div style={{ marginBottom: "32px", textAlign: "center" }}>
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              >
-                <div
-                  style={{
-                    width: "80px",
-                    height: "80px",
-                    margin: "0 auto 20px",
-                    borderRadius: "20px",
-                    background: "linear-gradient(135deg, #17542a, #0f4220)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "40px",
-                    boxShadow: "0 8px 24px rgba(23, 84, 42, 0.3)",
-                  }}
-                  className="form-glow"
-                >
-                  🎉
-                </div>
-              </motion.div>
-
-              <h1
-                className="gradient-text"
-                style={{
-                  fontSize: "clamp(28px, 5vw, 40px)",
-                  fontWeight: 700,
-                  margin: "0 0 12px 0",
-                }}
-              >
-                New Event Booking
-              </h1>
-              <p style={{ color: "#6b8470", fontSize: "16px", margin: 0 }}>
-                Fill in the details to create a new event booking
-              </p>
-            </div>
-
-            {/* Form */}
+        <div className="pk-panel bf-panel">
             <Form
+              className="bf-form"
               form={form}
               layout="vertical"
               onFinish={handleSubmit}
@@ -716,6 +580,7 @@ const AddInflow = () => {
                     placeholder="Select event confirmation status"
                   >
                     <Option value="InProgress">InProgress</Option>
+                    <Option value="Almost Booked">Almost Booked</Option>
                     <Option value="Confirmed Event">Confirmed Event</Option>
                     <Option value="Cancelled">Cancelled</Option>
                   </Select>
@@ -970,11 +835,11 @@ const AddInflow = () => {
                 </Form.Item>
               </motion.div>
 
-              {/* Meeting Date - Only for InProgress */}
+              {/* Meeting Date - InProgress and Almost Booked */}
               <Form.Item noStyle dependencies={["eventConfirmation"]}>
                 {({ getFieldValue }) => {
                   const eventConfirmation = getFieldValue("eventConfirmation");
-                  return eventConfirmation === "InProgress" ? (
+                  return ["InProgress", "Almost Booked"].includes(eventConfirmation) ? (
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -3220,7 +3085,7 @@ const AddInflow = () => {
                             const eventConfirmation =
                               getFieldValue("eventConfirmation");
                             const isMandatory =
-                              eventConfirmation !== "InProgress";
+                              !["InProgress", "Almost Booked"].includes(eventConfirmation);
 
                             return (
                               <>
@@ -3373,14 +3238,13 @@ const AddInflow = () => {
                         boxShadow: "0 8px 24px rgba(23, 84, 42, 0.3)",
                       }}
                     >
-                      ✨ Create Booking
+                      Create booking
                     </Button>
                   </motion.div>
                 </Form.Item>
               </motion.div>
             </Form>
-          </div>
-        </motion.div>
+        </div>
       </div>
     </div>
   );

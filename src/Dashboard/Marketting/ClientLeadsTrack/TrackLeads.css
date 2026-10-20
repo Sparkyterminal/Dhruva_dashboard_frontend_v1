@@ -1,0 +1,111 @@
+/* Track Leads: filter row, calendar frame and lead detail drawer (layout comes from the page kit). */
+
+.tl-embedded {
+  background: transparent;
+}
+
+.tl-filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 14px 20px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfa;
+}
+
+.tl-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  flex: 1 1 200px;
+  max-width: 260px;
+}
+
+.tl-field.tl-field-wide {
+  flex: 1 1 280px;
+  max-width: 340px;
+}
+
+.tl-field label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.tl-clear {
+  height: 40px;
+}
+
+.tl-calendar {
+  padding: 18px 20px 22px;
+}
+
+/* ---- Lead detail drawer ---- */
+.tl-view-head {
+  padding: 18px 20px;
+  margin-bottom: 18px;
+  border-radius: var(--radius-panel);
+  border: 1px solid #c0ddc3;
+  background: linear-gradient(135deg, #f2f8f2 0%, #e6f3e8 100%);
+}
+
+.tl-view-budget {
+  margin: 12px 0 0;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-view-sub {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.tl-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px 20px;
+  margin: 0;
+}
+
+.tl-detail.is-wide {
+  grid-column: 1 / -1;
+}
+
+.tl-detail dt {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.tl-detail dd {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+@media (max-width: 520px) {
+  .tl-details {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Table cells wrap long text instead of overflowing or being cut off. */
+.tl-wrap {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.tl-table .ant-table-tbody > tr > td {
+  vertical-align: top;
+}

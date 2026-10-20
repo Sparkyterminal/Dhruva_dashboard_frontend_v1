@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-vars */
+import "@/Components/PageKit/PageKit.css";
 import React, { useEffect, useState, useMemo } from "react";
 import { useSelector } from "react-redux";
 import axiosClient from "@/api/axiosClient";
@@ -134,7 +134,7 @@ const EditBill = () => {
         // show/hide Other EMI Type input
         if (data.emiType === "Others") setShowOtherEmiType(true);
         else setShowOtherEmiType(false);
-      } catch (err) {
+      } catch {
         message.error("Failed to fetch bill details");
       }
     };
@@ -170,43 +170,33 @@ const EditBill = () => {
       } else {
         message.error("Failed to update bill");
       }
-    } catch (error) {
+    } catch {
       message.error("Error updating the bill");
     }
   };
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-br from-purple-50 via-blue-50 to-indigo-100 relative">
+    <div className="pk-page">
       <style>{customStyles}</style>
-      <div
-        className="absolute inset-0 z-0 pointer-events-none"
-        style={{
-          backgroundImage:
-            `radial-gradient(circle at 20% 80%, rgba(43, 122, 65,0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 80% 20%, rgba(51, 129, 71,0.15) 0%, transparent 50%),` +
-            `radial-gradient(circle at 40% 40%, rgba(167,139,250,0.1) 0%, transparent 50%)`,
-        }}
-      />
-
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="relative z-10 flex justify-center">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
           className="w-full max-w-lg"
         >
-          <div className="glass-card-bill p-8 md:p-10">
+          <div className="pk-panel p-8 md:p-10">
             {/* Header with Icon */}
             <div className="flex flex-col items-center mb-8">
               <button
                 onClick={() => navigate(-1)}
-                className="self-start mb-4 px-4 py-2 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:shadow-md transition-all duration-200"
+                className="pk-btn self-start mb-4"
               >
                 Back
               </button>
-              <div className="w-20 h-20 bg-linear-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+              <div className="w-20 h-20 bg-forest-900 rounded-full flex items-center justify-center mb-4 shadow-lg">
                 <FileTextOutlined
-                  style={{ fontSize: "2.5rem", color: "white" }}
+                  style={{ fontSize: "2.5rem", color: "#E0D085" }}
                 />
               </div>
               <h2 className="text-3xl md:text-4xl font-bold text-gray-800 text-center">

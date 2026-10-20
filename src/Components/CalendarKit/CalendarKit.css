@@ -1,0 +1,526 @@
+/* Shared calendar look: used by the Confirmed, In-progress/Cancelled and Advance calendars.
+   Everything is scoped under .ck so it never leaks into other FullCalendar screens. */
+
+.ck {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* ---- Heading strip ---- */
+.ck-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ck-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ck-title-icon {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: var(--gold);
+}
+
+.ck-title h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.ck-title p {
+  margin: 1px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ck-chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ck-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.ck-chip b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ck-chip i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot, #8f9a8e);
+}
+
+.ck-chip.is-gold {
+  --dot: #c4a747;
+}
+.ck-chip.is-red {
+  --dot: #c0392b;
+}
+.ck-chip.is-blue {
+  --dot: #2f5d8c;
+}
+.ck-chip.is-green {
+  --dot: #338147;
+}
+.ck-chip.is-grey {
+  --dot: #8f9a8e;
+}
+
+/* ---- Cards ---- */
+.ck-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  padding: 16px 18px 20px;
+}
+
+.ck-card-title {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.ck-card-title span {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.ck-refresh {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 3;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #fbf3d2;
+  color: #82682a;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+/* ---- Skeleton while the very first load runs ---- */
+.ck-skeleton {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.ck-skeleton i {
+  display: block;
+  height: 84px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #f1f4f0 25%, #e8eee7 37%, #f1f4f0 63%);
+  background-size: 400% 100%;
+  animation: ck-shimmer 1.4s ease infinite;
+}
+
+@keyframes ck-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+/* ---- FullCalendar skin ---- */
+.ck .fc {
+  font-family: inherit;
+  --fc-border-color: #e4e9e3;
+  --fc-today-bg-color: rgba(224, 208, 133, 0.2);
+  --fc-neutral-bg-color: #f7f9f6;
+  --fc-page-bg-color: #fff;
+}
+
+.ck .fc .fc-toolbar {
+  margin-bottom: 14px;
+  gap: 8px;
+}
+
+.ck .fc .fc-toolbar-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.ck .fc .fc-button {
+  padding: 6px 13px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: #fff;
+  color: var(--brand);
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: capitalize;
+  box-shadow: none;
+}
+
+.ck .fc .fc-button:hover:not(:disabled) {
+  background: #f2f8f2;
+  border-color: var(--brand-action);
+  color: var(--brand);
+}
+
+.ck .fc .fc-button-primary:not(:disabled).fc-button-active,
+.ck .fc .fc-button-primary:not(:disabled):active {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.ck .fc .fc-button:disabled {
+  opacity: 0.45;
+}
+
+.ck .fc .fc-button:focus {
+  box-shadow: 0 0 0 3px rgba(34, 106, 54, 0.18);
+}
+
+.ck .fc .fc-col-header-cell {
+  background: #f7f9f6;
+  padding: 9px 0;
+}
+
+.ck .fc .fc-col-header-cell-cushion {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ck .fc .fc-daygrid-day-number {
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ck .fc .fc-day-other .fc-daygrid-day-number {
+  color: #a7b1a6;
+}
+
+.ck .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  margin: 4px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+}
+
+.ck .fc .fc-daygrid-day-frame {
+  min-height: 118px;
+}
+
+/* soft event chips: tinted fill, coloured left edge, dark text */
+.ck .fc-event {
+  cursor: pointer;
+  margin: 2px 4px;
+  border: 0;
+  border-left: 3px solid var(--fc-event-border-color);
+  border-radius: 6px;
+  box-shadow: none;
+  opacity: 1 !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.ck .fc-event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -6px rgba(11, 61, 11, 0.5);
+}
+
+.ck .fc-daygrid-event {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.ck .fc-event-main {
+  color: var(--ink) !important;
+  overflow: visible !important;
+}
+
+.ck .fc-daygrid-event-harness {
+  margin-bottom: 3px !important;
+}
+
+.ck .fc-daygrid-day-events {
+  margin-bottom: 0 !important;
+}
+
+.ck .fc-event-body {
+  padding: 4px 6px;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+}
+
+.ck .fc-event-body .t {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ck .fc-event-body .s {
+  margin-top: 1px;
+  font-size: 10.5px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Month list ---- */
+.ck-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ck-item {
+  --accent: #338147;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 12px;
+  background: #fff;
+  transition: box-shadow 0.15s ease;
+}
+
+.ck-item:hover {
+  box-shadow: 0 10px 22px -18px rgba(11, 61, 11, 0.5);
+}
+
+.ck-item-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ck-item h4 {
+  margin: 8px 0 2px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ck-item-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ck-item-meta b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ck-sub {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1ec;
+}
+
+.ck-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f8faf7;
+}
+
+.ck-row.is-meeting {
+  background: #fcf8e8;
+}
+
+.ck-date {
+  flex: none;
+  min-width: 62px;
+  padding: 5px 9px;
+  border-radius: 8px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.ck-date.is-gold {
+  background: #a88a33;
+}
+.ck-date.is-grey {
+  background: #667365;
+}
+
+.ck-row-body strong {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.ck-row-body span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 3px 14px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ck-row-body svg {
+  flex: none;
+  color: var(--brand-action);
+}
+
+.ck-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 36px 16px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.ck-empty .ring {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: #f5edc4;
+  color: #82682a;
+}
+
+.ck-empty strong {
+  color: var(--ink);
+  font-size: 14.5px;
+}
+
+.ck-legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ck-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ck-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background: var(--c);
+}
+
+/* ---- Print: keep the calendar only ---- */
+@media print {
+  .ck .no-print {
+    display: none !important;
+  }
+}
+
+/* ---- Advance cards: amounts + progress ---- */
+.ck-amounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1ec;
+}
+
+.ck-amounts span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.ck-amounts strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ck-amounts .is-green {
+  color: #226a36;
+}
+.ck-amounts .is-gold {
+  color: #82682a;
+}
+.ck-amounts .is-muted {
+  color: #a7b1a6;
+}
+
+.ck-bar {
+  height: 6px;
+  margin-top: 12px;
+  border-radius: 999px;
+  background: #e9eee8;
+  overflow: hidden;
+}
+
+.ck-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5da06a, #226a36);
+}
+
+@media (max-width: 520px) {
+  .ck-amounts {
+    grid-template-columns: 1fr;
+  }
+}

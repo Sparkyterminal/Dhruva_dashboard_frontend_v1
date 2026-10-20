@@ -1,13 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Button, Spin, Typography, message } from "antd";
-import {
-  ArrowLeftOutlined,
-  SaveOutlined,
-  ReloadOutlined,
-} from "@ant-design/icons";
+import { Spin, message } from "antd";
+import { ArrowLeft, RefreshCw, Save } from "lucide-react";
 import dayjs from "dayjs";
+import "@/Components/PageKit/PageKit.css";
 import UniverSheets from "../../../Components/UniverSheets";
 import {
   SPREADSHEET_KEY_DEFAULT,
@@ -19,8 +16,6 @@ import {
   cloneWorkbookData,
   getWorkbookStats,
 } from "../../../Components/UniverSheets/workbookSnapshot";
-
-const { Title, Text } = Typography;
 
 const TITLE = "Leads Tracker Excel";
 
@@ -144,40 +139,14 @@ const LeadsTrackerExcel = () => {
   };
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#f9fbf9",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 16px",
-          borderBottom: "1px solid #e5ede6",
-          background: "#ffffff",
-          flexShrink: 0,
-          flexWrap: "wrap",
-        }}
-      >
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
-          onClick={() => navigate(-1)}
-          style={{ padding: "4px 8px" }}
-        >
-          Back
-        </Button>
-        <div style={{ flex: 1, minWidth: 160 }}>
-          <Title level={4} style={{ margin: 0 }}>
-            {TITLE}
-          </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+    <div className="pk-ws">
+      <div className="pk-ws-bar">
+        <button type="button" className="pk-ws-back" onClick={() => navigate(-1)} aria-label="Back">
+          <ArrowLeft size={18} aria-hidden="true" />
+        </button>
+        <div className="pk-ws-heading">
+          <h1>{TITLE}</h1>
+          <p className="pk-ws-meta">
             {updatedAt
               ? `Last saved ${dayjs(updatedAt).format("DD MMM YYYY, hh:mm A")}`
               : "Not saved yet"}
@@ -185,47 +154,27 @@ const LeadsTrackerExcel = () => {
             {sheetStats?.sheetCount
               ? ` · ${sheetStats.sheetCount} sheet${sheetStats.sheetCount === 1 ? "" : "s"}`
               : ""}
-          </Text>
+          </p>
         </div>
-        <Button
-          icon={<ReloadOutlined />}
-          onClick={loadWorkbook}
-          disabled={loading || saving}
-        >
-          Reload
-        </Button>
-        <Button
-          type="primary"
-          icon={<SaveOutlined />}
-          onClick={handleSave}
-          loading={saving}
-          disabled={loading || !sheetReady}
-        >
-          Save
-        </Button>
+        <div className="pk-ws-actions">
+          <button type="button" className="pk-btn" onClick={loadWorkbook} disabled={loading || saving}>
+            <RefreshCw size={14} aria-hidden="true" /> Reload
+          </button>
+          <button
+            type="button"
+            className="pk-btn is-solid"
+            onClick={handleSave}
+            disabled={loading || saving || !sheetReady}
+          >
+            <Save size={14} aria-hidden="true" /> {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, padding: 8 }}>
-        <div
-          style={{
-            height: "100%",
-            borderRadius: 12,
-            overflow: "hidden",
-            border: "1px solid #e5ede6",
-            background: "#fff",
-            position: "relative",
-          }}
-        >
+      <div className="pk-ws-sheetwrap">
+        <div className="pk-ws-sheet">
           {loading ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                minHeight: 320,
-              }}
-            >
+            <div className="pk-ws-loading">
               <Spin size="large" tip="Loading spreadsheet…" />
             </div>
           ) : (

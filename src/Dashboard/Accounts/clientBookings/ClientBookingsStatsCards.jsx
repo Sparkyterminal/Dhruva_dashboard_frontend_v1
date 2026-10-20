@@ -1,70 +1,21 @@
 import React from "react";
-import { Card, Row, Col, Statistic, Typography } from "antd";
 import { getEventsListTotalsBucket } from "./clientBookingsUtils";
+import "./Bookings.css";
 
-const { Text } = Typography;
-
-const cardStyle = (leftColor) => ({
-  borderRadius: "14px",
-  background: "white",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-  borderLeft: `4px solid ${leftColor}`,
-});
-
-const colThree = { xs: 24, sm: 12, lg: 8 };
-
-const SectionLabel = ({ children }) => (
-  <Col span={24} className="mb-2">
-    <Text className="text-slate-600 text-sm font-semibold uppercase tracking-wide">
-      {children}
-    </Text>
-  </Col>
+/** tone: "" (green) | "gold" | "red" | "grey" */
+const Stat = ({ title, subtitle, value, tone = "" }) => (
+  <div className={`bk-stat${tone ? ` is-${tone}` : ""}`}>
+    <p className="bk-stat-title">{title}</p>
+    <p className="bk-stat-value">{value}</p>
+    {subtitle && String(subtitle).trim() ? <p className="bk-stat-sub">{subtitle}</p> : null}
+  </div>
 );
 
-const MoneyCard = ({ title, subtitle, value, color, formatAmount }) => (
-  <Col {...colThree}>
-    <Card
-      className="border-0 h-full"
-      style={cardStyle(color)}
-      bodyStyle={{ padding: "20px" }}
-    >
-      <Text className="text-slate-500 text-sm font-medium block">{title}</Text>
-      {subtitle ? (
-        <Text type="secondary" className="text-xs block mt-1 leading-snug">
-          {subtitle}
-        </Text>
-      ) : null}
-      <div
-        className="text-slate-800 tabular-nums"
-        style={{ fontSize: "26px", fontWeight: 700, marginTop: "10px" }}
-      >
-        {formatAmount(value)}
-      </div>
-    </Card>
-  </Col>
-);
-
-const CountCard = ({ title, subtitle, value, color }) => (
-  <Col {...colThree}>
-    <Card
-      className="border-0 h-full"
-      style={cardStyle(color)}
-      bodyStyle={{ padding: "20px" }}
-    >
-      <Text className="text-slate-500 text-sm font-medium block">{title}</Text>
-      {subtitle ? (
-        <Text type="secondary" className="text-xs block mt-1 leading-snug">
-          {subtitle}
-        </Text>
-      ) : null}
-      <div
-        className="text-slate-800 tabular-nums"
-        style={{ fontSize: "28px", fontWeight: 700, marginTop: "10px" }}
-      >
-        {value ?? 0}
-      </div>
-    </Card>
-  </Col>
+const Group = ({ label, children }) => (
+  <div className="bk-stat-group">
+    <h3>{label}</h3>
+    <div className="bk-stat-grid">{children}</div>
+  </div>
 );
 
 /**
@@ -91,254 +42,132 @@ const ClientBookingsStatsCards = ({
   const bucket = getEventsListTotalsBucket(totalsByStatus, statusKey);
   const allRollup = totalsByStatus?.all;
 
-  // Backend adds `grandTotalExpectedAmount` (bookings + leads pipeline) to
-  // `totalsByStatus.all` — see CLIENT_BOOKINGS_ALL_TAB_ESTIMATED_BUDGET_BACKEND.md.
-  // Until then, fall back to summing the two raw fields, then to just bookings.
-  const allTotalExpected = allRollup
-    ? allRollup.grandTotalExpectedAmount ??
-      (allRollup.totalExpectedAmount ?? 0) + (allRollup.totalEstimatedBudget ?? 0)
-    : 0;
-
   if (!hasApiTotals) {
     return (
-      <div className="mb-6">
-        <Row gutter={[16, 8]}>
-          <SectionLabel>Amounts (this page only)</SectionLabel>
-        </Row>
-        <Row gutter={[16, 16]} align="stretch">
-          <MoneyCard
-            title="Total expected"
-            value={totalPayableRevenue ?? 0}
-            color="#2f8a4b"
-            formatAmount={fmt}
-          />
-          <MoneyCard
-            title="Total received"
-            value={totalReceivedRevenue ?? 0}
-            color="#338147"
-            formatAmount={fmt}
-          />
-          <MoneyCard
+      <div className="bk-stats">
+        <Group label="Amounts (this page only)">
+          <Stat title="Total expected" value={fmt(totalPayableRevenue ?? 0)} />
+          <Stat title="Total received" value={fmt(totalReceivedRevenue ?? 0)} />
+          <Stat
             title="Difference (expected − received)"
-            value={totalPendingRevenue ?? 0}
-            color="#f59e0b"
-            formatAmount={fmt}
+            value={fmt(totalPendingRevenue ?? 0)}
+            tone="gold"
           />
-        </Row>
+        </Group>
       </div>
     );
   }
 
   if (statusKey === "all" && allRollup) {
     return (
-      <div className="mb-6 space-y-5">
-        <Row gutter={[16, 8]}>
-          <SectionLabel>Amounts (₹)</SectionLabel>
-        </Row>
-        <Row gutter={[16, 16]} align="stretch">
-          <MoneyCard
+      <div className="bk-stats">
+        <Group label="Amounts (₹)">
+          <Stat
             title="Total expected"
-            value={allTotalExpected}
-            color="#2f8a4b"
-            formatAmount={fmt}
+            subtitle="Confirmed + In progress + Almost booked, total business (expected)"
+            value={fmt(
+              (allRollup.confirmedTotalExpectedAmount ?? 0) +
+                (allRollup.pendingTotalExpectedAmount ?? 0) +
+                (allRollup.almostBookedTotalExpectedAmount ?? 0),
+            )}
           />
-          <MoneyCard
+          <Stat
             title="Confirmed — total business"
-            value={allRollup.confirmedTotalExpectedAmount ?? 0}
-            color="#338147"
-            formatAmount={fmt}
+            value={fmt(allRollup.confirmedTotalExpectedAmount ?? 0)}
           />
-          <MoneyCard
+          <Stat
             title="In progress — total business (expected)"
-            value={allRollup.pendingTotalExpectedAmount ?? 0}
-            color="#f59e0b"
-            formatAmount={fmt}
+            value={fmt(allRollup.pendingTotalExpectedAmount ?? 0)}
+            tone="gold"
           />
-        </Row>
-
-        <Row gutter={[16, 8]}>
-          <SectionLabel>Booking counts</SectionLabel>
-        </Row>
-        <Row gutter={[16, 16]} align="stretch">
-          <CountCard
-            title="Total bookings"
-            subtitle=" "
-            value={allRollup.totalBookingsNumber ?? 0}
-            color="#338147"
+          <Stat
+            title="Almost booked — total business (expected)"
+            value={fmt(allRollup.almostBookedTotalExpectedAmount ?? 0)}
           />
-          <CountCard
+        </Group>
+        <Group label="Booking counts">
+          <Stat title="Total bookings" value={allRollup.totalBookingsNumber ?? 0} />
+          <Stat
             title="Confirmed bookings"
             subtitle="Events marked as confirmed"
             value={allRollup.confirmedTotalBookingsNumber ?? 0}
-            color="#338147"
           />
-          <CountCard
+          <Stat
             title="In progress bookings"
             subtitle="Events still in the pipeline (not cancelled)"
             value={allRollup.pendingTotalBookingsNumber ?? 0}
-            color="#f59e0b"
+            tone="gold"
           />
-        </Row>
+          <Stat
+            title="Almost booked bookings"
+            subtitle="Events that are nearly confirmed"
+            value={allRollup.almostBookedTotalBookingsNumber ?? 0}
+          />
+        </Group>
       </div>
     );
   }
 
   if (statusKey === "confirmed" && bucket) {
     return (
-      <div className="mb-6 space-y-5">
-        <Row gutter={[16, 8]}>
-          <SectionLabel>Amounts (₹)</SectionLabel>
-        </Row>
-        <Row gutter={[16, 16]} align="stretch">
-          <MoneyCard
-            title="Total expected"
-            value={bucket.totalExpectedAmount ?? 0}
-            color="#2f8a4b"
-            formatAmount={fmt}
-          />
-          <MoneyCard
-            title="Total received"
-            value={bucket.totalReceivedAmount ?? 0}
-            color="#338147"
-            formatAmount={fmt}
-          />
-          <MoneyCard
-            title="Total balance"
-            subtitle=" "
-            value={bucket.totalBalanceAmount ?? 0}
-            color="#f59e0b"
-            formatAmount={fmt}
-          />
-        </Row>
-
-        <Row gutter={[16, 8]}>
-          <SectionLabel>Booking counts</SectionLabel>
-        </Row>
-        <Row gutter={[16, 16]} align="stretch">
-          <CountCard
+      <div className="bk-stats">
+        <Group label="Amounts (₹)">
+          <Stat title="Total expected" value={fmt(bucket.totalExpectedAmount ?? 0)} />
+          <Stat title="Total Booked" value={fmt(bucket.totalReceivedAmount ?? 0)} />
+          <Stat title="Total balance" value={fmt(bucket.totalBalanceAmount ?? 0)} tone="gold" />
+        </Group>
+        <Group label="Booking counts">
+          <Stat
             title="Confirmed bookings"
             subtitle="Total confirmed events in this view"
             value={bucket.totalBookingsNumber ?? 0}
-            color="#338147"
           />
-          <CountCard
+          <Stat
             title="Where payment has started"
             subtitle="Bookings where the client has already paid something (even a small part). Does not mean fully paid."
             value={bucket.bookingsWithAnyReceiptCount ?? 0}
-            color="#338147"
           />
-          <CountCard
+          <Stat
             title="Where full amount is not yet settled"
             subtitle="Bookings where money received still does not match the full agreed total (includes not started, partly paid, or rounding differences)."
             value={bucket.bookingsWithOutstandingBalanceCount ?? 0}
-            color="#f59e0b"
+            tone="gold"
           />
-        </Row>
+        </Group>
       </div>
     );
   }
 
   if (statusKey === "inprogress" && bucket) {
     return (
-      <Row gutter={[16, 16]} className="mb-6" align="stretch">
-        <Col {...colThree}>
-          <Card
-            className="border-0 h-full"
-            style={cardStyle("#f59e0b")}
-            bodyStyle={{ padding: "20px" }}
-          >
-            <Statistic
-              title={
-                <Text className="text-slate-500 text-sm font-medium">
-                  In progress bookings
-                </Text>
-              }
-              value={bucket.totalBookingsNumber ?? 0}
-              valueStyle={{
-                color: "#243527",
-                fontSize: "26px",
-                fontWeight: 700,
-                marginTop: "8px",
-              }}
-            />
-          </Card>
-        </Col>
-        <Col {...colThree}>
-          <Card
-            className="border-0 h-full"
-            style={cardStyle("#2f8a4b")}
-            bodyStyle={{ padding: "20px" }}
-          >
-            <Statistic
-              title={
-                <Text className="text-slate-500 text-sm font-medium">
-                  Total expected
-                </Text>
-              }
-              value={bucket.totalExpectedAmount ?? 0}
-              valueStyle={{
-                color: "#243527",
-                fontSize: "26px",
-                fontWeight: 700,
-                marginTop: "8px",
-              }}
-              formatter={(v) => fmt(v)}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="bk-stats">
+        <div className="bk-stat-grid">
+          <Stat title="In progress bookings" value={bucket.totalBookingsNumber ?? 0} tone="gold" />
+          <Stat title="Total expected" value={fmt(bucket.totalExpectedAmount ?? 0)} />
+        </div>
+      </div>
+    );
+  }
+
+  if (statusKey === "almostbooked" && bucket) {
+    return (
+      <div className="bk-stats">
+        <div className="bk-stat-grid">
+          <Stat title="Almost booked bookings" value={bucket.totalBookingsNumber ?? 0} />
+          <Stat title="Total expected" value={fmt(bucket.totalExpectedAmount ?? 0)} />
+        </div>
+      </div>
     );
   }
 
   if (statusKey === "cancelled" && bucket) {
     return (
-      <Row gutter={[16, 16]} className="mb-6" align="stretch">
-        <Col {...colThree}>
-          <Card
-            className="border-0 h-full"
-            style={cardStyle("#ef4444")}
-            bodyStyle={{ padding: "20px" }}
-          >
-            <Statistic
-              title={
-                <Text className="text-slate-500 text-sm font-medium">
-                  Cancelled bookings
-                </Text>
-              }
-              value={bucket.totalBookingsNumber ?? 0}
-              valueStyle={{
-                color: "#243527",
-                fontSize: "26px",
-                fontWeight: 700,
-                marginTop: "8px",
-              }}
-            />
-          </Card>
-        </Col>
-        <Col {...colThree}>
-          <Card
-            className="border-0 h-full"
-            style={cardStyle("#9bb19f")}
-            bodyStyle={{ padding: "20px" }}
-          >
-            <Statistic
-              title={
-                <Text className="text-slate-500 text-sm font-medium">
-                  Total expected
-                </Text>
-              }
-              value={bucket.totalExpectedAmount ?? 0}
-              valueStyle={{
-                color: "#243527",
-                fontSize: "26px",
-                fontWeight: 700,
-                marginTop: "8px",
-              }}
-              formatter={(v) => fmt(v)}
-            />
-          </Card>
-        </Col>
-      </Row>
+      <div className="bk-stats">
+        <div className="bk-stat-grid">
+          <Stat title="Cancelled bookings" value={bucket.totalBookingsNumber ?? 0} tone="red" />
+          <Stat title="Total expected" value={fmt(bucket.totalExpectedAmount ?? 0)} tone="grey" />
+        </div>
+      </div>
     );
   }
 

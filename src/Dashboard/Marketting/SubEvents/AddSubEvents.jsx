@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { Typography, Select, Input, Button, message } from "antd";
+import { message } from "antd";
 import { useSelector } from "react-redux";
 import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
-
-const { Title, Text } = Typography;
+import { FormActions, FormCard, SelectField, TextField } from "@/Components/FormKit";
+import { PageHero } from "@/Components/PageKit";
 
 const AddSubEvents = () => {
   const [events, setEvents] = useState([]);
   const [loadingEvents, setLoadingEvents] = useState(false);
-  const [event, setevent] = useState("");
+  const [event, setEvent] = useState("");
   const [subEventName, setSubEventName] = useState("");
+  const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const user = useSelector((state) => state.user.value);
@@ -32,23 +33,22 @@ const AddSubEvents = () => {
 
   useEffect(() => {
     fetchEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!event) return message.error("Please select an event");
-    if (!subEventName || !subEventName.trim())
-      return message.error("Please enter sub event name");
+    const next = {};
+    if (!event) next.event = "Please select an event";
+    if (!subEventName || !subEventName.trim()) next.name = "Please enter a sub event name";
+    setErrors(next);
+    if (Object.keys(next).length) return;
 
     setSubmitting(true);
     try {
-      await axiosClient.post(
-        `event-types`,
-        { event, name: subEventName.trim() },
-        config
-      );
+      await axiosClient.post(`event-types`, { event, name: subEventName.trim() }, config);
       message.success("Sub event created successfully");
-      // navigate(-1);
+      setSubEventName("");
     } catch (err) {
       console.error(err);
       message.error("Failed to create sub event");
@@ -58,91 +58,53 @@ const AddSubEvents = () => {
   };
 
   const handleCancel = () => {
-    setevent("");
+    setEvent("");
     setSubEventName("");
-  };
-
-  const handleBack = () => {
-    navigate(-1);
+    setErrors({});
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Top bar with Back button */}
-      <div className="flex items-center gap-3 px-6 pt-4">
-        <button
-          type="button"
-          onClick={handleBack}
-          className="text-sm text-gray-600 hover:text-gray-900"
-        >
-          ← Back
-        </button>
-        <Title level={3} className="!mb-0">
-          Add Sub Event
-        </Title>
-      </div>
-
-      {/* Card-like container */}
-      <div className="flex-1 flex items-start justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Event dropdown */}
-            <div className="space-y-2">
-              <Text strong>Select event</Text>
-              <Select
-                showSearch
-                optionFilterProp="label"
-                filterOption={(input, option) =>
-                  String(option?.label || "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-                options={events.map((ev) => ({
-                  label: ev.name,
-                  value: ev.id || ev._id,
-                }))}
-                value={event || undefined}
-                onChange={(val) => setevent(val)}
-                placeholder={
-                  loadingEvents ? "Loading events..." : "Select an event"
-                }
-                loading={loadingEvents}
-                allowClear
-                className="w-full"
-              />
-            </div>
-
-            {/* Sub event name input */}
-            <div className="space-y-2">
-              <Text strong>Sub event name</Text>
-              <Input
-                value={subEventName}
-                onChange={(e) => setSubEventName(e.target.value)}
-                placeholder="Enter sub event name"
-                size="large"
-                className="w-full"
-              />
-            </div>
-
-            {/* Actions */}
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={handleCancel}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={submitting}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                {submitting ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Masterdata"
+          title="Add sub event"
+          subtitle="A ceremony that belongs to an event, such as Muhurtham or Reception."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        />
+        <FormCard onSubmit={handleSubmit} width={520}>
+          <SelectField
+            label="Event"
+            required
+            value={event}
+            onChange={(v) => {
+              setEvent(v);
+              setErrors((p) => ({ ...p, event: "" }));
+            }}
+            options={events.map((ev) => ({ label: ev.name, value: ev.id || ev._id }))}
+            placeholder="Select an event"
+            loading={loadingEvents}
+            error={errors.event}
+          />
+          <TextField
+            label="Sub event name"
+            required
+            value={subEventName}
+            onChange={(v) => {
+              setSubEventName(v);
+              setErrors((p) => ({ ...p, name: "" }));
+            }}
+            placeholder="e.g. Muhurtham"
+            error={errors.name}
+          />
+          <FormActions
+            onCancel={handleCancel}
+            cancelLabel="Clear"
+            submitLabel="Add sub event"
+            busy={submitting}
+          />
+        </FormCard>
       </div>
     </div>
   );

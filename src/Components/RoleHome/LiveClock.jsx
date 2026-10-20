@@ -16,12 +16,12 @@ const greetingFor = (date) => {
   return "Good evening";
 };
 
-/** "Good morning, Archana". Re-checks the hour once a minute. */
-export const Greeting = ({ name }) => {
+/** "Good morning". Re-checks the hour once a minute. */
+export const Greeting = () => {
   const now = useNow(60000);
   return (
     <h1 className="rh-greeting">
-      {greetingFor(now)}, {name}
+      {greetingFor(now)}
     </h1>
   );
 };

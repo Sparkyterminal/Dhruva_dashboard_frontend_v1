@@ -1,38 +1,39 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { DatePicker, Table, message } from "antd";
 import {
-  Button,
-  Card,
-  Col,
-  DatePicker,
-  Row,
-  Table,
-  Tabs,
-  Tag,
-  Typography,
-  message,
-} from "antd";
-import {
-  ArrowLeftOutlined,
-  EyeOutlined,
-  EditOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
+  ArrowLeft,
+  CalendarDays,
+  CircleCheck,
+  Clock,
+  Eye,
+  FileSpreadsheet,
+  Layers,
+  Pencil,
+  Plus,
+  ReceiptText,
+} from "lucide-react";
 import dayjs from "dayjs";
 import { fetchDailyExpenseList } from "./dailyExpensesApi";
-import {
-  formatDisplayDate,
-  todayBusinessDate,
-} from "./dailyExpensesUtils";
+import { formatDisplayDate, todayBusinessDate } from "./dailyExpensesUtils";
+import "./DailyExpenses.css";
 
-const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
+const Empty = ({ text, hint }) => (
+  <div className="de-empty">
+    <span className="ring">
+      <ReceiptText size={28} strokeWidth={1.6} aria-hidden="true" />
+    </span>
+    <strong>{text}</strong>
+    {hint ? <span>{hint}</span> : null}
+  </div>
+);
+
 /**
- * Daily Expenses list/view page.
- * Header + Add Expense (right). Tabs: Today | All (with start/end date filter).
- * View + Edit actions.
+ * Daily Expenses list page.
+ * Hero + Add Expense, summary stats, Today | All (date range) switch, View + Edit actions.
  */
 const DailyExpensesHome = () => {
   const navigate = useNavigate();
@@ -46,6 +47,8 @@ const DailyExpensesHome = () => {
     dayjs().subtract(30, "day"),
     dayjs().subtract(1, "day"),
   ]);
+
+  const todayKey = todayBusinessDate();
 
   const loadList = useCallback(async () => {
     if (!user?.access_token) {
@@ -87,21 +90,53 @@ const DailyExpensesHome = () => {
     loadList();
   }, [loadList]);
 
+  const stats = useMemo(() => {
+    const sheets = rows.reduce(
+      (sum, r) => sum + (Number(r.sheetCount) || r.sheetNames?.length || 0),
+      0,
+    );
+    const latest = rows.reduce(
+      (max, r) =>
+        r.updatedAt && (!max || dayjs(r.updatedAt).isAfter(max)) ? r.updatedAt : max,
+      null,
+    );
+    return { days: rows.length, sheets, latest };
+  }, [rows]);
+
   const columns = [
     {
       title: "Date",
       dataIndex: "date",
       key: "date",
-      width: 140,
-      render: (val) => formatDisplayDate(val),
+      width: 210,
+      render: (val) => {
+        const d = dayjs(val);
+        const isToday = val === todayKey;
+        return (
+          <div className="de-date">
+            <div className={`de-date-chip${isToday ? " is-today" : ""}`}>
+              <span className="mon">{d.format("MMM")}</span>
+              <span className="day">{d.format("DD")}</span>
+            </div>
+            <div className="de-date-meta">
+              <strong>{isToday ? "Today" : d.format("dddd")}</strong>
+              <span>{formatDisplayDate(val)}</span>
+            </div>
+          </div>
+        );
+      },
     },
     {
-      title: "Excel name",
+      title: "Workbook",
       dataIndex: "title",
       key: "title",
-      width: 220,
-      ellipsis: true,
-      render: (val) => val || "—",
+      width: 260,
+      render: (val) => (
+        <div className="de-name">
+          <FileSpreadsheet size={18} strokeWidth={1.75} aria-hidden="true" />
+          <span>{val || "—"}</span>
+        </div>
+      ),
     },
     {
       title: "Sheets",
@@ -110,14 +145,14 @@ const DailyExpensesHome = () => {
       render: (_, record) => {
         const names = Array.isArray(record.sheetNames) ? record.sheetNames : [];
         if (names.length === 0) {
-          return <Tag color="blue">{record.sheetCount || 0}</Tag>;
+          return <span className="de-pill">{record.sheetCount || 0} sheets</span>;
         }
         return (
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+          <div className="de-pills">
             {names.map((n) => (
-              <Tag key={n} color="blue">
+              <span key={n} className="de-pill">
                 {n}
-              </Tag>
+              </span>
             ))}
           </div>
         );
@@ -127,192 +162,187 @@ const DailyExpensesHome = () => {
       title: "Last updated",
       dataIndex: "updatedAt",
       key: "updatedAt",
-      width: 180,
+      width: 190,
       render: (val) =>
-        val
-          ? dayjs(val).format("DD MMM YYYY, hh:mm A")
-          : "—",
+        val ? (
+          <span>{dayjs(val).format("DD MMM YYYY, hh:mm A")}</span>
+        ) : (
+          <span className="de-muted">—</span>
+        ),
     },
     {
       title: "Version",
       dataIndex: "version",
       key: "version",
-      width: 90,
-      render: (val) => (val > 0 ? `v${val}` : "—"),
+      width: 100,
+      render: (val) =>
+        val > 0 ? (
+          <span className="de-version">v{val}</span>
+        ) : (
+          <span className="de-muted">—</span>
+        ),
     },
     {
       title: "Actions",
       key: "actions",
-      width: 200,
+      width: 190,
       fixed: "right",
       render: (_, record) => (
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button
-            type="link"
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() =>
-              navigate(`/user/daily-expenses/view/${record.date}`)
-            }
+        <div className="de-actions">
+          <button
+            type="button"
+            className="de-icon-btn"
+            onClick={() => navigate(`/user/daily-expenses/view/${record.date}`)}
           >
-            View
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() =>
-              navigate(`/user/daily-expenses/edit/${record.date}`)
-            }
+            <Eye size={15} aria-hidden="true" /> View
+          </button>
+          <button
+            type="button"
+            className="de-icon-btn is-solid"
+            onClick={() => navigate(`/user/daily-expenses/edit/${record.date}`)}
           >
-            Edit
-          </Button>
+            <Pencil size={14} aria-hidden="true" /> Edit
+          </button>
         </div>
       ),
     },
   ];
 
-  const todayLabel = formatDisplayDate(todayBusinessDate());
+  const statCards = [
+    {
+      icon: CalendarDays,
+      label: activeTab === "today" ? "Workbooks today" : "Days in range",
+      value: stats.days,
+    },
+    { icon: Layers, label: "Total sheets", value: stats.sheets },
+    {
+      icon: Clock,
+      label: "Last updated",
+      value: stats.latest ? dayjs(stats.latest).format("DD MMM, hh:mm A") : "—",
+      small: true,
+    },
+    {
+      icon: CircleCheck,
+      label: "Today's workbook",
+      value:
+        activeTab === "today" ? (rows.length ? "Created" : "Not yet") : "See Today tab",
+      small: true,
+    },
+  ];
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.92)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "20px 24px" }}
-        >
-          <Row justify="space-between" align="middle" gutter={[16, 16]}>
-            <Col xs={24} md={14}>
-              <div className="flex flex-wrap items-center gap-3">
-                <Button
-                  icon={<ArrowLeftOutlined />}
-                  onClick={() => navigate("/user")}
-                  size="large"
-                  className="rounded-xl"
-                >
-                  Back to Home
-                </Button>
+    <div className="de-page">
+      <div className="de-wrap">
+        <header className="de-hero">
+          <div style={{ position: "relative", zIndex: 1 }}>
+            <button type="button" className="de-back" onClick={() => navigate("/user")}>
+              <ArrowLeft size={14} aria-hidden="true" /> Back to home
+            </button>
+            <p className="de-eyebrow">Accounts</p>
+            <h1 className="de-title">Daily Expenses</h1>
+            <p className="de-sub">
+              One Excel workbook for every business day. Open a day to view it, or edit and
+              save your entries.
+            </p>
+          </div>
+          <button
+            type="button"
+            className="de-add"
+            onClick={() => navigate(`/user/daily-expenses/add?date=${todayKey}`)}
+          >
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add expense
+          </button>
+        </header>
+
+        <section className="de-stats" aria-label="Summary">
+          {statCards.map(({ icon, label, value, small }) => {
+            const Icon = icon;
+            return (
+              <div className="de-stat" key={label}>
+                <span className="de-stat-icon">
+                  <Icon size={21} strokeWidth={1.8} aria-hidden="true" />
+                </span>
                 <div>
-                  <Title level={3} className="!mb-0 !text-slate-800">
-                    Daily Expenses
-                  </Title>
-                  <Text type="secondary" className="text-sm">
-                    Excel workbooks mapped by date — View or Edit.
-                  </Text>
+                  <p className="de-stat-label">{label}</p>
+                  <p className={`de-stat-value${small ? " is-small" : ""}`}>{value}</p>
                 </div>
               </div>
-            </Col>
-            <Col xs={24} md={10} className="text-right">
-              <Button
-                type="primary"
-                size="large"
-                icon={<PlusOutlined />}
-                className="rounded-xl border-0"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #17542a 0%, #338147 50%, #0f4220 100%)",
-                }}
-                onClick={() =>
-                  navigate(
-                    `/user/daily-expenses/add?date=${todayBusinessDate()}`,
-                  )
-                }
-              >
-                Add Expense
-              </Button>
-            </Col>
-          </Row>
-        </Card>
+            );
+          })}
+        </section>
 
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: 16,
-            background: "rgba(255,255,255,0.95)",
-            border: "1px solid rgba(226,232,240,0.9)",
-          }}
-          bodyStyle={{ padding: "16px 24px 24px" }}
-        >
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={[
-              {
-                key: "today",
-                label: `Today (${todayLabel})`,
-                children: (
-                  <Table
-                    rowKey="date"
-                    columns={columns}
-                    dataSource={rows}
-                    loading={loading}
-                    pagination={false}
-                    locale={{
-                      emptyText: loading
-                        ? null
-                        : "No expense sheet for today yet. Click Add Expense to create one.",
-                    }}
-                    scroll={{ x: 1100 }}
-                  />
-                ),
-              },
-              {
-                key: "all",
-                label: "All",
-                children: (
-                  <div className="space-y-4">
-                    <div className="flex flex-wrap items-end gap-3">
-                      <div>
-                        <Text strong className="block mb-2 text-slate-700">
-                          Start & end date
-                        </Text>
-                        <RangePicker
-                          value={range}
-                          onChange={(vals) =>
-                            setRange(vals || [null, null])
-                          }
-                          disabledDate={(current) =>
-                            user?.dataCutoffDate
-                              ? current && current.isBefore(dayjs(user.dataCutoffDate), "day")
-                              : false
-                          }
-                          format="DD-MM-YYYY"
-                          allowClear
-                          size="large"
-                        />
-                      </div>
-                      <Button size="large" onClick={loadList}>
-                        Apply filter
-                      </Button>
-                    </div>
-                    <Table
-                      rowKey="date"
-                      columns={columns}
-                      dataSource={rows}
-                      loading={loading}
-                      pagination={{
-                        pageSize: 10,
-                        showSizeChanger: true,
-                        showTotal: (total) => `Total ${total} days`,
-                      }}
-                      locale={{
-                        emptyText: loading
-                          ? null
-                          : "No expense sheets in this date range.",
-                      }}
-                      scroll={{ x: 1100 }}
-                    />
-                  </div>
-                ),
-              },
-            ]}
+        <section className="de-panel">
+          <div className="de-toolbar">
+            <div className="de-seg" role="group" aria-label="View">
+              <button
+                type="button"
+                aria-pressed={activeTab === "today"}
+                onClick={() => setActiveTab("today")}
+              >
+                Today
+              </button>
+              <button
+                type="button"
+                aria-pressed={activeTab === "all"}
+                onClick={() => setActiveTab("all")}
+              >
+                All days
+              </button>
+            </div>
+
+            {activeTab === "today" ? (
+              <span className="de-today-chip">
+                <CalendarDays size={15} aria-hidden="true" /> {formatDisplayDate(todayKey)}
+              </span>
+            ) : (
+              <div className="de-filters">
+                <RangePicker
+                  value={range}
+                  onChange={(vals) => setRange(vals || [null, null])}
+                  disabledDate={(current) =>
+                    user?.dataCutoffDate
+                      ? current && current.isBefore(dayjs(user.dataCutoffDate), "day")
+                      : false
+                  }
+                  format="DD-MM-YYYY"
+                  allowClear
+                  size="large"
+                />
+                <button type="button" className="de-btn is-primary" onClick={loadList}>
+                  Apply filter
+                </button>
+              </div>
+            )}
+          </div>
+
+          <Table
+            className="de-table"
+            rowKey="date"
+            columns={columns}
+            dataSource={rows}
+            loading={loading}
+            pagination={
+              activeTab === "all"
+                ? {
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Total ${total} days`,
+                  }
+                : false
+            }
+            locale={{
+              emptyText: loading ? null : activeTab === "today" ? (
+                <Empty
+                  text="No expense sheet for today yet"
+                  hint="Click “Add expense” to start today's workbook."
+                />
+              ) : (
+                <Empty text="No expense sheets in this date range" hint="Try a wider range." />
+              ),
+            }}
+            scroll={{ x: 1100 }}
           />
-        </Card>
+        </section>
       </div>
     </div>
   );

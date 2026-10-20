@@ -1,26 +1,7 @@
 import React from "react";
-import {
-  Card,
-  Row,
-  Tabs,
-  Table,
-  Button,
-  Tag,
-  Typography,
-} from "antd";
-import {
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CalendarOutlined,
-  UserOutlined,
-  PhoneOutlined,
-  HeartOutlined,
-  TeamOutlined,
-  EyeOutlined,
-  AppstoreOutlined,
-  CloseCircleOutlined,
-} from "@ant-design/icons";
-import { motion } from "framer-motion";
+import { Table } from "antd";
+import { CalendarDays, Eye, Heart, Phone, Users } from "lucide-react";
+import { Segmented } from "@/Components/PageKit";
 import {
   getEventName,
   formatDate,
@@ -35,8 +16,16 @@ import ClientBookingsFilters from "./ClientBookingsFilters";
 import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
 import BudgetReportListCell from "../budgetreport/BudgetReportListCell";
 import ExportBookingsButtons from "./export/ExportBookingsButtons";
+import "@/Components/PageKit/PageKit.css";
+import "./Bookings.css";
 
-const { Text } = Typography;
+const CONFIRMATION_TONE = {
+  "Confirmed Event": "",
+  InProgress: "is-gold",
+  "Almost Booked": "is-blue",
+  Cancelled: "is-red",
+  Pending: "is-blue",
+};
 
 const buildColumns = (
   listStatusTab,
@@ -52,188 +41,125 @@ const buildColumns = (
   onAfterBudgetMutation,
 ) => [
   {
-    title: "Booked By",
+    title: "Booked by",
     key: "bookedBy",
-    width: 160,
+    width: 130,
     render: (_, record) => {
       const bookedByFirst =
-        record?.bookedBy?.first_name ??
-        record?.bookedBy?.firstName ??
-        null;
+        record?.bookedBy?.first_name ?? record?.bookedBy?.firstName ?? null;
       const createdByFirst =
-        record?.createdBy?.first_name ??
-        record?.createdBy?.firstName ??
-        null;
+        record?.createdBy?.first_name ?? record?.createdBy?.firstName ?? null;
 
       const raw = bookedByFirst ?? createdByFirst;
       const firstName =
         typeof raw === "string" ? raw.trim().split(/\s+/)[0] : null;
 
-      return (
-        <Text strong className="text-slate-800">
-          {firstName ? capitalizeFirstLetter(firstName) : "-"}
-        </Text>
-      );
+      return <strong style={{ fontWeight: 600 }}>{firstName ? capitalizeFirstLetter(firstName) : "-"}</strong>;
     },
   },
   {
-    title: "Event Confirmation",
+    title: "Status",
     dataIndex: "eventConfirmation",
     key: "eventConfirmation",
-    width: 140,
-    render: (status) => {
-      const colorMap = {
-        "Confirmed Event": "green",
-        InProgress: "orange",
-        Cancelled: "red",
-        Pending: "blue",
-      };
-      return (
-        <Tag
-          color={colorMap[status] || "default"}
-          className="text-sm font-semibold px-3 py-1"
-        >
-          {status || "N/A"}
-        </Tag>
-      );
-    },
+    width: 150,
+    render: (status) => (
+      <span className={`pk-pill ${CONFIRMATION_TONE[status] ?? "is-grey"}`}>{status || "N/A"}</span>
+    ),
   },
   {
-    title: "Event Name",
+    title: "Event",
     dataIndex: "eventName",
     key: "eventName",
     width: 140,
-    render: (text) => {
-      const eventNameStr = getEventNameFn(text);
-      return (
-        <Tag color="purple" className="text-sm font-semibold px-3 py-1">
-          {eventNameStr}
-        </Tag>
-      );
-    },
+    render: (text) => <span className="bk-event">{getEventNameFn(text)}</span>,
   },
-  // {
-  //   title: "Note",
-  //   key: "note",
-  //   width: 120,
-  //   align: "right",
-  //   render: (_, record) => (
-  //     <Text strong className="text-black text-wrap">
-  //       {record.note ? record.note : "N/A"}
-  //     </Text>
-  //   ),
-  // },
-  ...(listStatusTab === "inprogress" || listStatusTab === "cancelled"
+  ...(["inprogress", "almostbooked", "cancelled"].includes(listStatusTab)
     ? [
         {
-          title: "Next Meeting Date",
+          title: "Next meeting",
           key: "meetingDate",
-          width: 140,
+          width: 150,
           render: (_, record) => (
-            <div className="flex items-center gap-1">
-              <CalendarOutlined className="text-blue-500 text-xs" />
-              <Text className="text-sm">
-                {record.meetingDate
-                  ? formatDateFn(record.meetingDate)
-                  : "Not Set"}
-              </Text>
-            </div>
+            <span className="bk-line">
+              <CalendarDays size={14} aria-hidden="true" />
+              {record.meetingDate ? formatDateFn(record.meetingDate) : <em>Not set</em>}
+            </span>
           ),
         },
       ]
     : []),
   {
-    title: "Client Details",
+    title: "Client",
     key: "clientDetails",
-    width: 180,
+    width: 220,
     render: (_, record) => (
-      <div className="space-y-1">
-        <div className="flex items-center gap-2">
-          <UserOutlined className="text-blue-500" />
-          <Text strong className="text-base">
-            {record.clientName}
-          </Text>
+      <div className="pk-who bk-client">
+        <span className="pk-avatar is-soft" aria-hidden="true">
+          {String(record.clientName || "?").trim().charAt(0).toUpperCase()}
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <strong className="bk-wrap">{record.clientName}</strong>
+          {record.brideName && record.groomName && (
+            <span className="bk-wrap bk-heart">
+              <Heart size={12} aria-hidden="true" /> {record.brideName} &amp; {record.groomName}
+            </span>
+          )}
         </div>
-        {record.brideName && record.groomName && (
-          <div className="flex items-center gap-2">
-            <HeartOutlined className="text-pink-500" />
-            <Text className="text-sm text-gray-600">
-              {record.brideName} & {record.groomName}
-            </Text>
-          </div>
-        )}
       </div>
     ),
   },
   {
     title: "Contact",
     key: "contact",
-    width: 130,
+    width: 150,
     render: (_, record) => (
-      <div className="space-y-1">
-        <div className="flex items-center gap-1">
-          <PhoneOutlined className="text-green-500 text-xs" />
-          <Text className="text-sm">{record.contactNumber}</Text>
-        </div>
-        {record.altContactNumber &&
-          record.altContactNumber !== record.contactNumber && (
-            <div className="flex items-center gap-1">
-              <PhoneOutlined className="text-orange-500 text-xs" />
-              <Text className="text-sm text-gray-500">
-                {record.altContactNumber}
-              </Text>
-            </div>
-          )}
+      <div className="bk-stack">
+        <span className="bk-line">
+          <Phone size={13} aria-hidden="true" /> {record.contactNumber}
+        </span>
+        {record.altContactNumber && record.altContactNumber !== record.contactNumber && (
+          <span className="bk-line is-muted">
+            <Phone size={13} aria-hidden="true" /> {record.altContactNumber}
+          </span>
+        )}
       </div>
     ),
   },
   {
     title: "Leads",
     key: "leads",
-    width: 120,
+    width: 150,
     render: (_, record) => (
-      <div className="space-y-1">
+      <div className="bk-stack">
         {record.lead1 && (
-          <div className="flex items-center gap-1">
-            <TeamOutlined className="text-blue-500 text-xs" />
-            <Text className="text-sm">
-              {typeof record.lead1 === "string"
-                ? record.lead1
-                : record.lead1?.name || "N/A"}
-            </Text>
-          </div>
+          <span className="bk-line">
+            <Users size={13} aria-hidden="true" />
+            {typeof record.lead1 === "string" ? record.lead1 : record.lead1?.name || "N/A"}
+          </span>
         )}
         {record.lead2 && (
-          <div className="flex items-center gap-1">
-            <TeamOutlined className="text-purple-500 text-xs" />
-            <Text className="text-sm">
-              {typeof record.lead2 === "string"
-                ? record.lead2
-                : record.lead2?.name || "N/A"}
-            </Text>
-          </div>
+          <span className="bk-line">
+            <Users size={13} aria-hidden="true" />
+            {typeof record.lead2 === "string" ? record.lead2 : record.lead2?.name || "N/A"}
+          </span>
         )}
-        {!record.lead1 && !record.lead2 && (
-          <Text className="text-xs text-gray-400">No leads</Text>
-        )}
+        {!record.lead1 && !record.lead2 && <span className="pk-muted">No leads</span>}
       </div>
     ),
   },
   {
-    title: "Booked Amount",
+    title: "Booked amount",
     key: "bookedAmount",
-    width: 130,
+    width: 140,
     align: "right",
     render: (_, record) => (
-      <Text strong className="text-slate-800">
-        {formatAmountFn(getTotalBookedFn(record))}
-      </Text>
+      <span className="pk-money">{formatAmountFn(getTotalBookedFn(record))}</span>
     ),
   },
   {
-    title: "Payment Status",
+    title: "Payment",
     key: "paymentStatus",
-    width: 150,
+    width: 200,
     render: (_, record) => {
       const booked = getTotalBookedFn(record);
       // Always use local received helper (complete weddings must not trust
@@ -243,34 +169,27 @@ const buildColumns = (
       const percentage =
         booked > 0 ? Math.min(Math.round((received / booked) * 100), 100) : 0;
       return (
-        <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <Text className="text-xs text-gray-500">Received:</Text>
-            <Text strong className="text-sm text-green-600">
-              {formatAmountFn(received)}
-            </Text>
+        <div className="bk-pay">
+          <div className="bk-pay-row">
+            <span>Received</span>
+            <strong className="is-green">{formatAmountFn(received)}</strong>
           </div>
-          <div className="flex justify-between items-center">
-            <Text className="text-xs text-gray-500">Balance:</Text>
-            <Text strong className="text-sm text-red-500">
-              {formatAmountFn(balance)}
-            </Text>
+          <div className="bk-pay-row">
+            <span>Balance</span>
+            <strong className="is-red">{formatAmountFn(balance)}</strong>
           </div>
-          <Tag
-            color={
-              percentage === 100 ? "success" : percentage > 0 ? "warning" : "default"
-            }
-          >
-            {percentage}% Collected
-          </Tag>
+          <div className="bk-bar" aria-hidden="true">
+            <i style={{ width: `${percentage}%` }} />
+          </div>
+          <span className="bk-pay-pct">{percentage}% collected</span>
         </div>
       );
     },
   },
   {
-    title: "Budget Report",
+    title: "Budget report",
     key: "budgetReport",
-    width: 140,
+    width: 150,
     align: "center",
     render: (_, record) => (
       <BudgetReportListCell
@@ -283,19 +202,15 @@ const buildColumns = (
     ),
   },
   {
-    title: "Event Types",
+    title: "",
     key: "eventTypes",
-    width: 110,
-    align: "center",
+    width: 120,
+    align: "right",
+    fixed: "right",
     render: (_, record) => (
-      <Button
-        type="primary"
-        icon={<EyeOutlined />}
-        onClick={() => onViewDetails(record)}
-        className="bg-gradient-to-r from-blue-500 to-purple-500 border-none"
-      >
-        View ({record.eventTypes?.length || 0})
-      </Button>
+      <button type="button" className="pk-btn is-solid" onClick={() => onViewDetails(record)}>
+        <Eye size={14} aria-hidden="true" /> View ({record.eventTypes?.length || 0})
+      </button>
     ),
   },
 ];
@@ -323,7 +238,7 @@ const ClientBookingsListTab = ({
   cutoffDate,
 }) => {
   const totalsByStatus = bookingsSummary?.totalsByStatus;
-  const tabCount = (key) => getTabLabelBookingCount(totalsByStatus, key);
+  const tabCount = (key) => getTabLabelBookingCount(totalsByStatus, key) ?? undefined;
 
   const totalPayableRevenue = bookings.reduce(
     (acc, curr) => acc + getTotalPayable(curr),
@@ -354,7 +269,31 @@ const ClientBookingsListTab = ({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="bk-list">
+      <div className="bk-list-head">
+        <Segmented
+          label="Booking status"
+          value={listStatusTab}
+          onChange={onListStatusTabChange}
+          options={[
+            { value: "all", label: "All", count: tabCount("all") },
+            { value: "confirmed", label: "Confirmed", count: tabCount("confirmed") },
+            { value: "inprogress", label: "In progress", count: tabCount("inprogress") },
+            { value: "almostbooked", label: "Almost booked", count: tabCount("almostbooked") },
+            { value: "cancelled", label: "Cancelled", count: tabCount("cancelled") },
+          ]}
+        />
+        <ExportBookingsButtons
+          listStatusTab={listStatusTab}
+          filterEventName={filterEventName}
+          filterVenueId={filterVenueId}
+          filterDateRange={filterDateRange}
+          venueOptions={venueOptions}
+          accessToken={accessToken}
+          cutoffDate={cutoffDate}
+        />
+      </div>
+
       <ClientBookingsFilters
         filterEventName={filterEventName}
         filterDateRange={filterDateRange}
@@ -372,69 +311,6 @@ const ClientBookingsListTab = ({
         }}
       />
 
-      <Tabs
-        activeKey={listStatusTab}
-        onChange={onListStatusTabChange}
-        items={[
-          {
-            key: "all",
-            label: (
-              <span>
-                <AppstoreOutlined /> All
-                {tabCount("all") != null && (
-                  <span className="ml-1">({tabCount("all")})</span>
-                )}
-              </span>
-            ),
-          },
-          {
-            key: "confirmed",
-            label: (
-              <span>
-                <CheckCircleOutlined /> Confirmed
-                {tabCount("confirmed") != null && (
-                  <span className="ml-1">({tabCount("confirmed")})</span>
-                )}
-              </span>
-            ),
-          },
-          {
-            key: "inprogress",
-            label: (
-              <span>
-                <ClockCircleOutlined /> In progress
-                {tabCount("inprogress") != null && (
-                  <span className="ml-1">({tabCount("inprogress")})</span>
-                )}
-              </span>
-            ),
-          },
-          {
-            key: "cancelled",
-            label: (
-              <span>
-                <CloseCircleOutlined /> Cancelled
-                {tabCount("cancelled") != null && (
-                  <span className="ml-1">({tabCount("cancelled")})</span>
-                )}
-              </span>
-            ),
-          },
-        ]}
-      />
-
-      <div className="flex justify-end">
-        <ExportBookingsButtons
-          listStatusTab={listStatusTab}
-          filterEventName={filterEventName}
-          filterVenueId={filterVenueId}
-          filterDateRange={filterDateRange}
-          venueOptions={venueOptions}
-          accessToken={accessToken}
-          cutoffDate={cutoffDate}
-        />
-      </div>
-
       <ClientBookingsStatsCards
         summary={bookingsSummary}
         statusKey={listStatusTab}
@@ -444,43 +320,23 @@ const ClientBookingsListTab = ({
         formatAmount={formatAmount}
       />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, delay: 0.3 }}
-      >
-        <Card
-          className="border-0"
-          style={{
-            borderRadius: "14px",
-            background: "white",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-          }}
-          bodyStyle={{ padding: "24px" }}
-        >
-          <Table
-            columns={columns}
-            dataSource={bookings}
-            loading={loading}
-            rowKey="_id"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total, range) => (
-                <span className="text-slate-600 text-sm">
-                  Showing {range[0]}-{range[1]} of {total} bookings
-                </span>
-              ),
-              pageSizeOptions: ["10", "20", "50"],
-            }}
-            onChange={handleTableChange}
-            scroll={{ x: 1320 }}
-            className="custom-table"
-          />
-        </Card>
-      </motion.div>
+      <Table
+        columns={columns}
+        dataSource={bookings}
+        loading={loading}
+        rowKey="_id"
+        pagination={{
+          current: pagination.current,
+          pageSize: pagination.pageSize,
+          total: pagination.total,
+          showSizeChanger: true,
+          showTotal: (total, range) => `Showing ${range[0]}-${range[1]} of ${total} bookings`,
+          pageSizeOptions: ["10", "20", "50"],
+        }}
+        onChange={handleTableChange}
+        scroll={{ x: 1500 }}
+        className="pk-table bk-table"
+      />
     </div>
   );
 };

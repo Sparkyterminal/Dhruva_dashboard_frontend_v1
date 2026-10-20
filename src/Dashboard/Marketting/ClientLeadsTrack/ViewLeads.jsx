@@ -4,29 +4,34 @@ import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
   Table,
-  Button,
   Drawer,
-  Card,
-  Typography,
   Popconfirm,
   message,
   Spin,
-  Tabs,
   Select,
-  Row,
-  Col,
   DatePicker,
-  Tag,
-  Statistic,
 } from "antd";
 import {
-  PlusOutlined,
-  ArrowLeftOutlined,
-  CalendarOutlined,
-  FileExcelOutlined,
-  CheckCircleOutlined,
-  FundOutlined,
-} from "@ant-design/icons";
+  BadgeCheck,
+  Eye,
+  FileSpreadsheet,
+  Pencil,
+  Percent,
+  Plus,
+  Target,
+  Trash2,
+  TrendingUp,
+  Users,
+  X,
+} from "lucide-react";
+import {
+  EmptyState,
+  PageHero,
+  Segmented,
+  StatCard,
+  StatRow,
+} from "@/Components/PageKit";
+import "./TrackLeads.css";
 import dayjs from "dayjs";
 import AddLeads from "./AddLeads";
 import LeadForm, { STATUS_OPTIONS } from "./LeadForm";
@@ -35,7 +40,6 @@ import { getEffectiveCutoffDate } from "../../../utils/dataCutoff";
 import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import { downloadLeadsExcel } from "./leadsExcel";
 
-const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 
 /** Display name for a coordinator / assignedTo object */
@@ -52,12 +56,6 @@ function getPersonDisplayName(person) {
   return (
     person.name || full || person.email || String(person._id ?? person.id ?? "")
   );
-}
-
-/** Get notes display */
-function getNotesDisplay(notes) {
-  if (!notes) return "—";
-  return notes.length > 100 ? `${notes.substring(0, 100)}...` : notes;
 }
 
 /** Format date for display (YYYY-MM-DD or ISO string to DD MMM YYYY) */
@@ -315,7 +313,7 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       })
       .catch(() => message.error("Failed to load lead."))
       .finally(() => setViewFetching(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- config from closure
+     
   };
 
   const handleDelete = async (record) => {
@@ -364,27 +362,47 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
     Boolean(filterMonth) ||
     Boolean(filterDateRange?.[0] && filterDateRange?.[1]);
 
+  const statusTone = (status) =>
+    status === "Confirmed" ? "" : status === "Cancelled" ? "is-red" : "is-gold";
+
+  const initialOf = (text) => (String(text || "?").trim()[0] || "?").toUpperCase();
+  const firstLine = (text) => String(text || "").split("\n")[0].trim();
+
+  const statusFilterOptions = [
+    { value: undefined, label: "All" },
+    ...STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+  ];
+
   const columns = [
     {
-      title: "Sl no",
-      key: "slNo",
-      width: 70,
-      align: "center",
-      render: (_, __, index) => index + 1,
+      title: "Client",
+      key: "client",
+      width: 260,
+      render: (_, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar" aria-hidden="true">
+            {initialOf(firstLine(record.clientDetails))}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong className="tl-wrap">{firstLine(record.clientDetails) || "—"}</strong>
+            <span className="tl-wrap">{firstLine(record.eventTypeDetails) || "No event type"}</span>
+          </div>
+        </div>
+      ),
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
-      width: 120,
+      width: 150,
       render: (status, record) => (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          <span>{status || "—"}</span>
-          {record?.convertedByMarketing ? (
-            <Tag color="success" style={{ marginInlineEnd: 0, width: "fit-content" }}>
-              Converted
-            </Tag>
-          ) : null}
+        <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-start" }}>
+          {status ? (
+            <span className={`pk-pill ${statusTone(status)}`}>{status}</span>
+          ) : (
+            <span className="pk-muted">—</span>
+          )}
+          {record?.convertedByMarketing ? <span className="pk-pill is-blue">Converted</span> : null}
         </div>
       ),
     },
@@ -392,89 +410,67 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
       title: "Estimated budget",
       dataIndex: "estimatedBudget",
       key: "estimatedBudget",
-      width: 140,
+      width: 150,
       align: "right",
-      render: (v) => (
-        <Text strong style={{ color: "#142517" }}>
-          {formatAmountINR(v)}
-        </Text>
+      render: (v) => <span className="pk-money">{formatAmountINR(v)}</span>,
+    },
+    {
+      title: "Dates",
+      key: "dates",
+      width: 200,
+      render: (_, record) => (
+        <div>
+          <div>{formatDateDisplay(record.startDate)}</div>
+          <div className="pk-muted" style={{ fontSize: 12 }}>
+            to {formatDateDisplay(record.endDate)}
+          </div>
+        </div>
       ),
     },
     {
-      title: "Client details",
-      dataIndex: "clientDetails",
-      key: "clientDetails",
-      ellipsis: true,
-      render: (t) => t || "—",
-    },
-    {
-      title: "Event type details",
-      dataIndex: "eventTypeDetails",
-      key: "eventTypeDetails",
-      ellipsis: true,
-      render: (t) => t || "—",
-    },
-    {
-      title: "Start date",
-      dataIndex: "startDate",
-      key: "startDate",
-      width: 120,
-      render: (_, record) => formatDateDisplay(record.startDate),
-    },
-    {
-      title: "End date",
-      dataIndex: "endDate",
-      key: "endDate",
-      width: 120,
-      render: (_, record) => formatDateDisplay(record.endDate),
-    },
-    {
-      title: "Assign to",
-      dataIndex: ["assignedTo", "name"],
+      title: "Assigned to",
       key: "assignedTo",
-      width: 140,
-      ellipsis: true,
+      width: 180,
       render: (_, record) => {
-        const a = record.assignedTo;
-        if (!a) return "—";
-        return getPersonDisplayName(a) || "—";
+        const name = getPersonDisplayName(record.assignedTo);
+        return name ? (
+          <div className="pk-who">
+            <span className="pk-avatar is-soft" style={{ width: 30, height: 30, fontSize: 12, borderRadius: 9 }} aria-hidden="true">
+              {initialOf(name)}
+            </span>
+            <span className="tl-wrap" style={{ fontSize: 13.5, color: "var(--ink)" }}>{name}</span>
+          </div>
+        ) : (
+          <span className="pk-muted">Unassigned</span>
+        );
       },
     },
     {
       title: "Notes",
       key: "notes",
-      width: 220,
-      ellipsis: true,
+      width: 300,
       render: (_, record) => (
-        <span style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-          {getNotesDisplay(record.notes)}
-        </span>
+        <span className="pk-muted tl-wrap">{record.notes || "—"}</span>
       ),
     },
     {
-      title: "Action",
+      title: "",
       key: "action",
-      width: readOnly ? 90 : 180,
+      width: readOnly ? 110 : 270,
+      align: "right",
+      fixed: "right",
       render: (_, record) => {
         const id = record._id ?? record.id;
         return (
-          <>
-            <Button
-              type="link"
-              size="small"
-              onClick={() => openViewDrawer(record._id ?? record.id)}
-            >
-              View
-            </Button>
+          <div className="pk-actions">
+            <button type="button" className="pk-btn" onClick={() => openViewDrawer(id)}>
+              <Eye size={14} aria-hidden="true" /> View
+            </button>
             {!readOnly ? (
               <>
-                <Button
-                  type="link"
-                  size="small"
-                  onClick={() => openEditDrawer(id)}
-                >
-                  Edit
-                </Button>
+                <button type="button" className="pk-btn is-solid" onClick={() => openEditDrawer(id)}>
+                  <Pencil size={13} aria-hidden="true" /> Edit
+                </button>
                 <Popconfirm
                   title="Delete this lead?"
                   description="This action cannot be undone."
@@ -483,318 +479,200 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
                   okButtonProps={{ danger: true }}
                   cancelText="Cancel"
                 >
-                  <Button type="link" size="small" danger>
-                    Delete
-                  </Button>
+                  <button type="button" className="pk-btn is-danger is-icon" aria-label="Delete lead">
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
                 </Popconfirm>
               </>
             ) : null}
-          </>
+          </div>
         );
       },
     },
   ];
 
-  const shellStyle = embedded
-    ? {
-        padding: 0,
-        maxWidth: "none",
-        margin: 0,
-        minHeight: 0,
-        background: "transparent",
-      }
-    : {
-        padding: 24,
-        maxWidth: 1280,
-        margin: "0 auto",
-        minHeight: "100vh",
-        background:
-          "linear-gradient(135deg, rgba(239,246,255,0.65) 0%, rgba(245,243,255,0.7) 45%, rgba(253,242,248,0.65) 100%)",
-      };
+  const totalLeadsInBudget = budgetCards.estimatedLeadsCount + budgetCards.convertedLeadsCount;
+  const conversionRate = totalLeadsInBudget
+    ? Math.round((budgetCards.convertedLeadsCount / totalLeadsInBudget) * 100)
+    : 0;
+
+  const stats = (
+    <StatRow>
+      <StatCard
+        tone="gold"
+        icon={<TrendingUp size={21} aria-hidden="true" />}
+        label={`Pipeline budget · ${budgetCards.estimatedLeadsCount} leads`}
+        value={formatAmountINR(budgetCards.totalEstimatedBudget)}
+      />
+      <StatCard
+        icon={<BadgeCheck size={21} aria-hidden="true" />}
+        label={`Converted budget · ${budgetCards.convertedLeadsCount} leads`}
+        value={formatAmountINR(budgetCards.totalConvertedBudget)}
+      />
+      <StatCard
+        tone="blue"
+        icon={<Users size={21} aria-hidden="true" />}
+        label="Leads shown"
+        value={leads.length}
+      />
+      <StatCard
+        icon={<Percent size={21} aria-hidden="true" />}
+        label="Conversion rate"
+        value={`${conversionRate}%`}
+      />
+    </StatRow>
+  );
+
+  const panel = (
+    <section className="pk-panel">
+      <div className="pk-toolbar">
+        <div className="pk-toolbar-left">
+          <Segmented
+            label="Status"
+            options={statusFilterOptions}
+            value={filterStatus}
+            onChange={setFilterStatus}
+          />
+        </div>
+        <div className="pk-toolbar-right">
+          <Segmented
+            label="View"
+            value={activeViewTab}
+            onChange={setActiveViewTab}
+            options={[
+              { value: "list", label: "List", count: leads.length },
+              { value: "calendar", label: "Calendar" },
+            ]}
+          />
+          <ExcelDownloadButton onDownload={handleDownloadExcel} />
+        </div>
+      </div>
+
+      <div className="tl-filters">
+        <div className="tl-field">
+          <label>Coordinator</label>
+          <Select
+            allowClear
+            showSearch
+            placeholder="All coordinators"
+            value={filterAssignedTo}
+            onChange={setFilterAssignedTo}
+            loading={coordinatorsLoading}
+            optionFilterProp="label"
+            options={coordinators.map((c) => ({
+              value: c._id ?? c.id,
+              label: getPersonDisplayName(c) || String(c._id ?? c.id),
+            }))}
+            style={{ width: "100%" }}
+            size="large"
+          />
+        </div>
+        <div className="tl-field">
+          <label>Month (by start date)</label>
+          <DatePicker
+            picker="month"
+            value={filterMonth}
+            onChange={(m) => {
+              setFilterMonth(m);
+              if (m) setFilterDateRange(null);
+            }}
+            disabledDate={disabledBeforeCutoff}
+            style={{ width: "100%" }}
+            size="large"
+            allowClear
+            placeholder="Select month"
+          />
+        </div>
+        <div className="tl-field tl-field-wide">
+          <label>Start date range</label>
+          <RangePicker
+            value={filterDateRange}
+            onChange={(r) => {
+              setFilterDateRange(r);
+              if (r?.[0] && r?.[1]) setFilterMonth(null);
+            }}
+            disabledDate={disabledBeforeCutoff}
+            format="DD MMM YYYY"
+            style={{ width: "100%" }}
+            size="large"
+            allowClear
+          />
+        </div>
+        <button type="button" className="pk-btn tl-clear" disabled={!hasAnyFilter} onClick={clearFilters}>
+          <X size={14} aria-hidden="true" /> Clear filters
+        </button>
+      </div>
+
+      {activeViewTab === "list" ? (
+        <Table
+          className="pk-table tl-table"
+          rowKey={(r) => r._id ?? r.id}
+          columns={columns}
+          dataSource={leads}
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showTotal: (t) => `${t} leads`,
+          }}
+          scroll={{ x: 1450 }}
+          locale={{
+            emptyText: loading ? null : (
+              <EmptyState
+                icon={<Target size={26} aria-hidden="true" />}
+                title={hasAnyFilter ? "No leads match these filters" : "No leads yet"}
+                hint={
+                  hasAnyFilter
+                    ? "Try clearing a filter."
+                    : readOnly
+                      ? undefined
+                      : "Use “Add leads” to create the first one."
+                }
+              />
+            ),
+          }}
+        />
+      ) : (
+        <div className="tl-calendar">
+          <LeadsCalendar leads={leads} loading={loading} />
+        </div>
+      )}
+    </section>
+  );
+
+  const detail = (label, value, wide) => (
+    <div className={`tl-detail${wide ? " is-wide" : ""}`}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
 
   return (
-    <div style={shellStyle}>
-      <Card
-        variant="borderless"
-        style={{
-          borderRadius: embedded ? 0 : 20,
-          boxShadow: embedded ? "none" : "0 10px 30px rgba(15, 23, 42, 0.08)",
-          background: embedded ? "transparent" : "rgba(255, 255, 255, 0.9)",
-          backdropFilter: embedded ? "none" : "blur(8px)",
-        }}
-        styles={{ body: { padding: embedded ? "0 0 8px 0" : "24px 28px" } }}
-      >
+    <div className={embedded ? "tl-embedded" : "pk-page"}>
+      <div className="pk-wrap" style={embedded ? { maxWidth: "none" } : undefined}>
         {!embedded ? (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: 24,
-              flexWrap: "wrap",
-              gap: 16,
-            }}
+          <PageHero
+            eyebrow="Marketing"
+            title="Track Leads"
+            subtitle="Follow every enquiry from first contact to confirmed booking."
+            onBack={() => navigate("/user")}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate("/user")}
-                style={{ padding: "4px 0" }}
-              >
-                Back
-              </Button>
-              <Title level={4} style={{ margin: 0 }}>
-                Track Leads
-              </Title>
-            </div>
             {!readOnly ? (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                  flexWrap: "wrap",
-                }}
-              >
-                <Button
-                  icon={<FileExcelOutlined />}
-                  onClick={() => navigate("/user/client-leads/excel")}
-                  style={{ borderRadius: 10 }}
-                >
-                  Excel
-                </Button>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={() => setDrawerOpen(true)}
-                  style={{ borderRadius: 10 }}
-                >
-                  Add leads
-                </Button>
-              </div>
+              <>
+                <button type="button" className="pk-cta is-ghost" onClick={() => navigate("/user/client-leads/excel")}>
+                  <FileSpreadsheet size={16} aria-hidden="true" /> Excel
+                </button>
+                <button type="button" className="pk-cta" onClick={() => setDrawerOpen(true)}>
+                  <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add leads
+                </button>
+              </>
             ) : null}
-          </div>
+          </PageHero>
         ) : null}
 
-        <Row gutter={[16, 16]} style={{ marginBottom: 20 }}>
-          <Col xs={24} md={12}>
-            <Card
-              size="small"
-              style={{
-                borderRadius: 14,
-                background: "linear-gradient(135deg,#f2f8f2 0%,#f2f8f2 100%)",
-                border: "1px solid #e0eee1",
-              }}
-            >
-              <Statistic
-                title={
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <FundOutlined /> Estimated Budget (pipeline)
-                  </span>
-                }
-                value={budgetCards.totalEstimatedBudget}
-                formatter={(v) => formatAmountINR(v)}
-                suffix={
-                  <Text type="secondary" style={{ fontSize: 13 }}>
-                    · {budgetCards.estimatedLeadsCount} leads
-                  </Text>
-                }
-              />
-            </Card>
-          </Col>
-          <Col xs={24} md={12}>
-            <Card
-              size="small"
-              style={{
-                borderRadius: 14,
-                background: "linear-gradient(135deg,#ecfdf5 0%,#f0fdf4 100%)",
-                border: "1px solid #bbf7d0",
-              }}
-            >
-              <Statistic
-                title={
-                  <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <CheckCircleOutlined /> Successfully Converted Leads
-                  </span>
-                }
-                value={budgetCards.totalConvertedBudget}
-                formatter={(v) => formatAmountINR(v)}
-                valueStyle={{ color: "#15803d" }}
-                suffix={
-                  <Text type="secondary" style={{ fontSize: 13 }}>
-                    · {budgetCards.convertedLeadsCount} leads
-                  </Text>
-                }
-              />
-            </Card>
-          </Col>
-        </Row>
-
-        <Row gutter={[16, 12]} style={{ marginBottom: 20 }} align="bottom">
-          <Col xs={24} sm={12} md={8} lg={5}>
-            <Text
-              strong
-              style={{
-                display: "block",
-                marginBottom: 6,
-                color: "#4d6352",
-                fontSize: 13,
-              }}
-            >
-              Status
-            </Text>
-            <Select
-              allowClear
-              placeholder="All statuses"
-              value={filterStatus}
-              onChange={setFilterStatus}
-              options={STATUS_OPTIONS}
-              style={{ width: "100%" }}
-              size="large"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={5}>
-            <Text
-              strong
-              style={{
-                display: "block",
-                marginBottom: 6,
-                color: "#4d6352",
-                fontSize: 13,
-              }}
-            >
-              Coordinator
-            </Text>
-            <Select
-              allowClear
-              showSearch
-              placeholder="All coordinators"
-              value={filterAssignedTo}
-              onChange={setFilterAssignedTo}
-              loading={coordinatorsLoading}
-              optionFilterProp="label"
-              options={coordinators.map((c) => ({
-                value: c._id ?? c.id,
-                label: getPersonDisplayName(c) || String(c._id ?? c.id),
-              }))}
-              style={{ width: "100%" }}
-              size="large"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={8} lg={4}>
-            <Text
-              strong
-              style={{
-                display: "block",
-                marginBottom: 6,
-                color: "#4d6352",
-                fontSize: 13,
-              }}
-            >
-              Month (by start date)
-            </Text>
-            <DatePicker
-              picker="month"
-              value={filterMonth}
-              onChange={(m) => {
-                setFilterMonth(m);
-                if (m) setFilterDateRange(null);
-              }}
-              disabledDate={disabledBeforeCutoff}
-              style={{ width: "100%" }}
-              size="large"
-              allowClear
-              placeholder="Select month"
-            />
-          </Col>
-          <Col xs={24} sm={12} md={10} lg={6}>
-            <Text
-              strong
-              style={{
-                display: "block",
-                marginBottom: 6,
-                color: "#4d6352",
-                fontSize: 13,
-              }}
-            >
-              Start date range
-            </Text>
-            <RangePicker
-              value={filterDateRange}
-              onChange={(r) => {
-                setFilterDateRange(r);
-                if (r?.[0] && r?.[1]) setFilterMonth(null);
-              }}
-              disabledDate={disabledBeforeCutoff}
-              format="DD MMM YYYY"
-              style={{ width: "100%" }}
-              size="large"
-              allowClear
-            />
-          </Col>
-          <Col xs={24} sm={12} md={4} lg={4}>
-            <Button size="large" disabled={!hasAnyFilter} onClick={clearFilters}>
-              Clear filters
-            </Button>
-          </Col>
-          <Col xs={24} sm={12} md={4} lg={4}>
-            <ExcelDownloadButton
-              onDownload={handleDownloadExcel}
-              style={{ width: "100%" }}
-            />
-          </Col>
-        </Row>
-
-        <Tabs
-          activeKey={activeViewTab}
-          onChange={setActiveViewTab}
-          size="large"
-          items={[
-            {
-              key: "list",
-              label: `List View (${leads.length})`,
-              children: (
-                <Table
-                  rowKey={(r) => r._id ?? r.id}
-                  columns={columns}
-                  dataSource={leads}
-                  loading={loading}
-                  pagination={{
-                    pageSize: 10,
-                    showSizeChanger: true,
-                    showTotal: (t) => `${t} leads`,
-                  }}
-                  scroll={{ x: 1400 }}
-                  locale={{
-                    emptyText:
-                      "No leads yet. Click “Add leads” to create one.",
-                  }}
-                />
-              ),
-            },
-            {
-              key: "calendar",
-              label: (
-                <span>
-                  <CalendarOutlined /> Calendar View
-                </span>
-              ),
-              children: (
-                <div
-                  style={{
-                    border: "1px solid #e5ede6",
-                    borderRadius: 14,
-                    padding: 14,
-                    background: "#ffffff",
-                  }}
-                >
-                  <LeadsCalendar leads={leads} loading={loading} />
-                </div>
-              ),
-            },
-          ]}
-        />
-      </Card>
+        {stats}
+        {panel}
+      </div>
 
       {!readOnly ? (
         <>
@@ -854,153 +732,27 @@ const ViewLeads = ({ readOnly = false, embedded = false }) => {
             <Spin size="large" tip="Loading…" />
           </div>
         ) : viewingLead ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Status
-              </div>
-              <div style={{ fontSize: 15, color: "#142517" }}>
-                {viewingLead.status || "—"}
+          <div>
+            <div className="tl-view-head">
+              <div className="pk-pills">
+                {viewingLead.status ? (
+                  <span className={`pk-pill ${statusTone(viewingLead.status)}`}>{viewingLead.status}</span>
+                ) : null}
                 {viewingLead.convertedByMarketing ? (
-                  <Tag color="success" style={{ marginLeft: 8 }}>
-                    Converted by Marketing
-                  </Tag>
+                  <span className="pk-pill is-blue">Converted by Marketing</span>
                 ) : null}
               </div>
+              <p className="tl-view-budget">{formatAmountINR(viewingLead.estimatedBudget)}</p>
+              <p className="tl-view-sub">Estimated budget</p>
             </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Estimated budget
-              </div>
-              <div style={{ fontSize: 15, color: "#142517" }}>
-                {formatAmountINR(viewingLead.estimatedBudget)}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Assign to
-              </div>
-              <div style={{ fontSize: 15, color: "#142517" }}>
-                {getPersonDisplayName(viewingLead.assignedTo) || "—"}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Client details
-              </div>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: "#142517",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {viewingLead.clientDetails || "—"}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Event type details
-              </div>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: "#142517",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {viewingLead.eventTypeDetails || "—"}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Start date
-              </div>
-              <div style={{ fontSize: 15, color: "#142517" }}>
-                {formatDateDisplay(viewingLead.startDate)}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                End date
-              </div>
-              <div style={{ fontSize: 15, color: "#142517" }}>
-                {formatDateDisplay(viewingLead.endDate)}
-              </div>
-            </div>
-            <div>
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#6b8470",
-                  fontWeight: 600,
-                  marginBottom: 4,
-                }}
-              >
-                Notes
-              </div>
-              <div
-                style={{
-                  fontSize: 15,
-                  color: "#142517",
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                }}
-              >
-                {viewingLead.notes || "—"}
-              </div>
-            </div>
+
+            <dl className="tl-details">
+              {detail("Assigned to", getPersonDisplayName(viewingLead.assignedTo) || "—")}
+              {detail("Dates", `${formatDateDisplay(viewingLead.startDate)} to ${formatDateDisplay(viewingLead.endDate)}`)}
+              {detail("Client details", viewingLead.clientDetails || "—", true)}
+              {detail("Event type details", viewingLead.eventTypeDetails || "—", true)}
+              {detail("Notes", viewingLead.notes || "—", true)}
+            </dl>
           </div>
         ) : null}
       </Drawer>

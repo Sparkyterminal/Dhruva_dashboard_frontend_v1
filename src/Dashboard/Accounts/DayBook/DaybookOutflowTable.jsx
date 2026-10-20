@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Empty, Table, Tag, Typography } from "antd";
+import { Table, Tag, Typography } from "antd";
 import {
   formatAmountINR,
   formatDateTime,
@@ -139,7 +139,7 @@ const DaybookOutflowTable = ({ rows }) => {
   );
 
   if (!dataSource.length) {
-    return <Empty description="No outflow transactions found." />;
+    return <div className="db-empty"><strong>No outflow transactions found.</strong><span>Nothing recorded for this period.</span></div>;
   }
 
   return (

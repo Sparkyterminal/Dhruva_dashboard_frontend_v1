@@ -5,28 +5,7 @@
   background: var(--bg-page);
 }
 
-/* ---------- navigation rail (desktop) ---------- */
-.rh-rail {
-  display: none;
-}
-
-@media (min-width: 1024px) {
-  .rh-shell {
-    display: grid;
-    grid-template-columns: 276px minmax(0, 1fr);
-  }
-
-  .rh-rail {
-    display: flex;
-    flex-direction: column;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow-y: auto;
-    background: var(--brand);
-    color: #fff;
-  }
-}
+/* ---------- menu content (rendered by src/Components/AppMenu) ---------- */
 
 .rh-rail-inner {
   display: flex;
@@ -35,29 +14,6 @@
   padding: 28px 16px 20px;
   background: var(--brand);
   color: #fff;
-}
-
-.rh-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 10px 22px;
-  border-bottom: 1px solid rgba(224, 208, 133, 0.2);
-}
-
-.rh-brand img {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-}
-
-.rh-wordmark {
-  font-family: var(--font-display);
-  font-size: 30px;
-  font-weight: 600;
-  line-height: 1;
-  letter-spacing: 0.01em;
-  color: var(--gold);
 }
 
 .rh-nav {
@@ -170,57 +126,6 @@
 .rh-link-quiet {
   font-size: 13.5px;
   padding: 8px 12px;
-}
-
-/* ---------- top bar (mobile / tablet) ---------- */
-.rh-topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 60px;
-  padding: 0 16px;
-  background: var(--brand);
-}
-
-.rh-topbar .rh-brand {
-  padding: 0;
-  border: 0;
-  gap: 10px;
-}
-
-.rh-topbar .rh-brand img {
-  width: 34px;
-  height: 34px;
-}
-
-.rh-topbar .rh-wordmark {
-  font-size: 25px;
-}
-
-.rh-menu-btn {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  border: 1px solid rgba(224, 208, 133, 0.35);
-  border-radius: 10px;
-  background: transparent;
-  color: var(--gold);
-  cursor: pointer;
-}
-
-.rh-menu-btn:hover {
-  background: rgba(224, 208, 133, 0.12);
-}
-
-/* Declared after the base rule above so it actually wins. */
-@media (min-width: 1024px) {
-  .rh-topbar {
-    display: none;
-  }
 }
 
 /* ---------- main column ---------- */

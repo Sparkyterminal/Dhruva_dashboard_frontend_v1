@@ -11,6 +11,7 @@ export const STATUS_TAB_LABELS = {
   all: "All Bookings",
   confirmed: "Confirmed Bookings",
   inprogress: "In Progress Bookings",
+  almostbooked: "Almost Booked Bookings",
   cancelled: "Cancelled Bookings",
 };
 
@@ -47,6 +48,7 @@ export const nameOf = (v) => {
 
 export const statusLabel = (value) => {
   const s = String(value || "").toLowerCase();
+  if (s.includes("almost")) return "Almost booked";
   if (s.includes("confirm")) return "Confirmed";
   if (s.includes("progress") || s.includes("pending")) return "In progress";
   if (s.includes("cancel")) return "Cancelled";

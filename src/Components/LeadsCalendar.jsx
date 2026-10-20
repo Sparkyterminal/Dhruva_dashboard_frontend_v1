@@ -1,11 +1,10 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { AlertCircle } from "lucide-react";
 import axiosClient from "@/api/axiosClient";
-import { Modal, message, Tooltip } from "antd";
+import { Modal, message } from "antd";
 import { useSelector } from "react-redux";
 
 const STATUS_COLORS = {
@@ -139,7 +138,7 @@ const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
     return (
       <div
         className="p-2 text-xs overflow-hidden leading-snug cursor-pointer"
-        style={{ fontFamily: "system-ui, -apple-system, sans-serif" }}
+        style={{ fontFamily: "Montserrat, sans-serif" }}
         title="Click for details"
       >
         <div
@@ -187,7 +186,7 @@ const LeadsCalendar = ({ leads: leadsProp, loading: loadingProp } = {}) => {
   return (
     <div className="min-h-screen p-6">
       <style>{`
-        .fc { font-family: system-ui, -apple-system, sans-serif; }
+        .fc { font-family: Montserrat, sans-serif; }
         .fc .fc-toolbar-title { font-size: 1.5rem; font-weight: 600; color: #243227; }
         .fc-theme-standard td, .fc-theme-standard th { border-color: #e6eae7; }
         .fc-theme-standard .fc-scrollgrid { border-color: #e6eae7; }

@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { Button, Empty, Modal, Table, Tag, Typography } from "antd";
+import { Button, Modal, Table, Tag, Typography } from "antd";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import {
   formatAmountINR,
@@ -269,7 +269,7 @@ const DaybookInflowTable = ({
   );
 
   if (!dataSource.length) {
-    return <Empty description="No inflow transactions found." />;
+    return <div className="db-empty"><strong>No inflow transactions found.</strong><span>Nothing recorded for this period.</span></div>;
   }
 
   return (

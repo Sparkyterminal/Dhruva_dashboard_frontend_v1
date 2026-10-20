@@ -109,7 +109,7 @@ const DaybookAccountsBalanceModal = ({
       Modal.destroyAll();
       onSuccess?.();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       message.error("Failed to save balance record");
     } finally {

@@ -1,0 +1,171 @@
+/* Events leaderboard: rank badges, top-3 podium, totals and the detail drawer summary. */
+
+.lb-embedded {
+  background: transparent;
+}
+
+.lb-hint {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.lb-rank {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: #eef1ec;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.lb-rank.is-1 {
+  background: #f5e9b0;
+  color: #82682a;
+}
+
+.lb-rank.is-2 {
+  background: #e4e8e3;
+  color: #4e5a4d;
+}
+
+.lb-rank.is-3 {
+  background: #f3dccb;
+  color: #9a5b2f;
+}
+
+.lb-total {
+  display: inline-block;
+  min-width: 44px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #e0eee1;
+  color: var(--brand);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-total.is-money {
+  background: #fbf3d2;
+  color: #82682a;
+}
+
+/* ---- Top three ---- */
+.lb-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfa;
+}
+
+.lb-top {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.lb-top.is-1 {
+  border-color: #ede09c;
+  background: #fffcf0;
+}
+
+.lb-top-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.lb-top-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand-action);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .lb-podium {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Drawer summaries ---- */
+.lb-mini {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.lb-mini-card {
+  --accent: #226a36;
+  --tint: #e6f3e8;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--tint);
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.lb-mini-card.is-gold {
+  --accent: #82682a;
+  --tint: #fbf3d2;
+}
+.lb-mini-card.is-blue {
+  --accent: #2f5d8c;
+  --tint: #e3ecf6;
+}
+.lb-mini-card.is-red {
+  --accent: #b03a2e;
+  --tint: #fbe4e1;
+}
+
+.lb-mini-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.lb-mini-card strong {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.lb-sum {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 18px;
+  padding: 18px 20px;
+  border-radius: var(--radius-panel);
+  border: 1px solid #c0ddc3;
+  background: linear-gradient(135deg, #f2f8f2 0%, #e6f3e8 100%);
+}
+
+.lb-sum span {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.lb-sum strong {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.lb-sum em {
+  font-size: 12px;
+  font-style: normal;
+  color: var(--ink-soft);
+}

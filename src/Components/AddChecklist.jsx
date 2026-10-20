@@ -1,38 +1,8 @@
 import React, { useState } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
+import { PageHero } from "@/Components/PageKit";
 import { useSelector } from "react-redux";
 import axiosClient from "@/api/axiosClient";
-
-// Custom styles for glassmorphism and animations
-const customStyles = `
-  .glass-card {
-    background: rgba(255, 255, 255, 0.75);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.35);
-  }
-  .slide-in-top {
-    animation: slide-in-top 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-  }
-  @keyframes slide-in-top {
-    0% {
-      transform: translateY(-50px);
-      opacity: 0;
-    }
-    100% {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-  .gradient-text {
-    background: linear-gradient(135deg, #17542a, #0f4220);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-`;
 
 const emptyChecklist = {
   checklistName: "",
@@ -186,25 +156,20 @@ const AddChecklist = () => {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-indigo-50 via-white to-purple-50 p-6">
-      <style>{customStyles}</style>
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6 flex items-center gap-4 slide-in-top">
-          <button
-            onClick={() => window.history.back()}
-            className="flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-sm border border-indigo-100 rounded-xl hover:bg-indigo-50/80 transition-all duration-300 shadow-sm"
-          >
-            <ArrowLeft size={20} className="text-indigo-600" />
-            <span className="text-indigo-600 font-medium">Back</span>
-          </button>
-          <h1 className="text-3xl font-bold gradient-text">Add Checklist</h1>
-        </div>
+    <div className="pk-page">
+      <div className="pk-wrap" style={{ maxWidth: 900 }}>
+        <PageHero
+          eyebrow="Checklists"
+          title="Add checklist"
+          subtitle="Create a checklist with sub-headings and items."
+          onBack={() => window.history.back()}
+          backLabel="Back"
+        />
 
         {/* Form Card */}
         <div
-          className="glass-card p-8 slide-in-top"
-          style={{ animationDelay: "0.1s" }}
+          className="pk-panel"
+          style={{ padding: 28 }}
         >
           {/* Heading Field */}
           <div className="mb-6">
@@ -243,7 +208,7 @@ const AddChecklist = () => {
             {subHeadings.map((subHeading, subHeadingIndex) => (
               <div
                 key={subHeadingIndex}
-                className="mb-6 p-5 bg-white/80 border-2 border-indigo-200 rounded-xl shadow-md slide-in-top"
+                className="mb-6 p-5 bg-white/80 border-2 border-indigo-200 rounded-xl shadow-md"
                 style={{ animationDelay: `${0.1 + subHeadingIndex * 0.05}s` }}
               >
                 {/* Sub Heading Header */}
@@ -281,7 +246,7 @@ const AddChecklist = () => {
                   {subHeading.checklists.map((checklist, checklistIndex) => (
                     <div
                       key={checklistIndex}
-                      className="mb-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl shadow-sm slide-in-top"
+                      className="mb-4 p-4 bg-indigo-50/50 border border-indigo-100 rounded-xl shadow-sm"
                       style={{
                         animationDelay: `${0.1 + checklistIndex * 0.03}s`,
                       }}
@@ -459,7 +424,7 @@ const AddChecklist = () => {
 
                   <button
                     onClick={() => addChecklist(subHeadingIndex)}
-                    className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-300 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2 slide-in-top"
+                    className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-300 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2"
                     style={{
                       animationDelay: `${
                         0.1 + subHeading.checklists.length * 0.03
@@ -475,7 +440,7 @@ const AddChecklist = () => {
 
             <button
               onClick={addSubHeading}
-              className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2 slide-in-top"
+              className="w-full mt-3 px-4 py-3 border-2 border-dashed border-indigo-200 rounded-xl text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50/50 transition-all duration-300 flex items-center justify-center gap-2"
               style={{
                 animationDelay: `${0.1 + subHeadings.length * 0.05}s`,
               }}
@@ -489,10 +454,8 @@ const AddChecklist = () => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full px-6 py-4 bg-linear-to-r from-indigo-600 to-purple-600 text-white text-lg font-semibold rounded-xl hover:from-indigo-700 hover:to-purple-700 disabled:from-indigo-300 disabled:to-purple-300 disabled:cursor-not-allowed transition-all duration-300 shadow-lg hover:shadow-xl slide-in-top"
-            style={{
-              animationDelay: `${0.1 + (subHeadings.length + 1) * 0.05}s`,
-            }}
+            className="w-full px-6 py-4 text-white text-lg font-semibold rounded-xl disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            style={{ background: "var(--brand-action)" }}
           >
             {loading ? "Submitting..." : "Submit Checklist"}
           </button>

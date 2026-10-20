@@ -1,0 +1,230 @@
+/* Bills & EMI's: calendar skin, schedule drawer and row tints (layout comes from the page kit). */
+
+.bl-subbar {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--line);
+  overflow-x: auto;
+}
+
+.pk-table .bl-row-paid > td {
+  background: #f6fbf6 !important;
+}
+
+.pk-table .bl-row-overdue > td {
+  background: #fdf6f5 !important;
+}
+
+.pk-table .bl-row-overdue > td:first-child {
+  box-shadow: inset 3px 0 0 #c0392b;
+}
+
+/* ---- Calendar ---- */
+.bl-calendar {
+  padding: 18px 20px 22px;
+}
+
+.bl-legend {
+  display: flex;
+  gap: 18px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.bl-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.bl-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.bl-calendar .fc {
+  font-family: inherit;
+}
+
+.bl-calendar .fc .fc-toolbar-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.bl-calendar .fc-theme-standard td,
+.bl-calendar .fc-theme-standard th,
+.bl-calendar .fc-theme-standard .fc-scrollgrid {
+  border-color: var(--line);
+}
+
+.bl-calendar .fc .fc-daygrid-day-number {
+  padding: 8px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bl-calendar .fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(224, 208, 133, 0.22) !important;
+}
+
+.bl-calendar .fc .fc-col-header-cell {
+  background-color: #f7f9f6;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 10px 0;
+}
+
+.bl-calendar .fc .fc-button {
+  background-color: var(--brand-action);
+  border-color: var(--brand-action);
+  text-transform: capitalize;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.bl-calendar .fc .fc-button:hover {
+  background-color: var(--brand);
+  border-color: var(--brand);
+}
+
+.bl-calendar .fc .fc-button-primary:disabled {
+  background-color: #9aa59a;
+  border-color: #9aa59a;
+}
+
+.bl-calendar .fc-event {
+  cursor: pointer;
+  margin: 2px 0;
+  border-radius: 6px;
+  border-width: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  opacity: 1 !important;
+}
+
+.bl-calendar .fc-event:hover {
+  transform: translateY(-1px);
+  transition: transform 0.15s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.bl-calendar .fc-daygrid-event {
+  white-space: normal !important;
+  overflow: visible !important;
+}
+
+.bl-calendar .fc-event-main {
+  overflow: visible !important;
+}
+
+.bl-calendar .fc-daygrid-day-frame {
+  min-height: 120px !important;
+}
+
+.bl-calendar .fc-daygrid-event-harness {
+  margin-bottom: 3px !important;
+}
+
+/* ---- Schedule drawer ---- */
+.bl-months {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bl-month {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+
+.bl-month.is-paid {
+  border-color: #c0ddc3;
+  background: #f6fbf6;
+}
+
+.bl-month.is-current {
+  border-color: #ede09c;
+  background: #fffcf0;
+}
+
+.bl-month-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.bl-month h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bl-month-amount {
+  margin: 4px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.bl-month-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.bl-month-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px 16px;
+  width: 100%;
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid #eef1ec;
+}
+
+.bl-month-meta dt {
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.bl-month-meta dd {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.bl-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 18px;
+  border-radius: var(--radius-panel);
+  background: var(--brand);
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+}
+
+.bl-total strong {
+  margin-left: 6px;
+  font-size: 16px;
+  color: var(--gold);
+}

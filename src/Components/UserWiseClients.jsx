@@ -1,22 +1,11 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  Trophy,
-  Users,
-  Award,
-  Medal,
-  X,
-  Calendar,
-  User as UserIcon,
-  DollarSign,
-  TrendingUp,
-} from "lucide-react";
+import { Trophy, Users, Award, Medal, X, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import axiosClient from "@/api/axiosClient";
-import { message, Drawer, Tabs, Card, Tag, Typography, Table, DatePicker, Button } from "antd";
+import { message, Drawer, Typography, Table, DatePicker } from "antd";
 import { useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import dayjs from "dayjs";
+import { PageHero, Segmented } from "@/Components/PageKit";
+import "./UserWiseClients.css";
 
 const { Text, Title } = Typography;
 
@@ -196,133 +185,6 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
     return eventName?.name || "N/A";
   };
 
-  // Same logic as ViewClientsBookings: complete = first event type only, separate = sum all
-  const isCompletePaymentEvent = (event) => {
-    const eventNameStr = getEventName(event.eventName);
-    return (
-      eventNameStr === "Wedding" && event.advancePaymentType === "complete"
-    );
-  };
-
-  // Calculate total agreed amount for an event (matches List View drawer breakdown)
-  const getTotalAgreedAmount = (event) => {
-    if (!event.eventTypes || event.eventTypes.length === 0) return 0;
-
-    if (isCompletePaymentEvent(event)) {
-      // Complete: use only first event type (represents whole package)
-      return event.eventTypes[0]?.agreedAmount || 0;
-    }
-    // Separate: sum all event types
-    return event.eventTypes.reduce((sum, et) => {
-      return sum + (et.agreedAmount || 0);
-    }, 0);
-  };
-
-  // Event date for month filter: first event type startDate or createdAt
-  const getEventDate = (event) => {
-    const firstEt = event?.eventTypes?.[0];
-    const dateStr = firstEt?.startDate || event?.createdAt;
-    if (!dateStr) return null;
-    const d = dayjs(dateStr);
-    return d.isValid() ? d : null;
-  };
-
-  // Filter events to those in the given month (1-based month)
-  const getEventsForMonth = (eventsList, year, month) => {
-    if (!year || !month) return eventsList;
-    return eventsList.filter((event) => {
-      const d = getEventDate(event);
-      if (!d) return false;
-      return d.year() === year && d.month() + 1 === month;
-    });
-  };
-
-  // Get user stats for Most Booked tab (accepts events list for month filtering)
-  const getUserStatsMostBooked = (eventsList) => {
-    const userMap = new Map();
-
-    (eventsList || []).forEach((event) => {
-      if (event.createdBy) {
-        const userId = event.createdBy.id;
-        const firstName = formatText(event.createdBy.first_name) || "Unknown";
-        const lastName = formatText(event.createdBy.last_name) || "";
-
-        if (!userMap.has(userId)) {
-          userMap.set(userId, {
-            id: userId,
-            firstName,
-            lastName,
-            fullName: `${firstName} ${lastName}`.trim(),
-            events: [],
-            inProgress: 0,
-            confirmed: 0,
-            cancelled: 0,
-            total: 0,
-          });
-        }
-
-        const userStats = userMap.get(userId);
-        userStats.events.push(event);
-        userStats.total = userStats.events.length;
-
-        // Count by status
-        const status = event.eventConfirmation;
-        if (status === "InProgress") {
-          userStats.inProgress++;
-        } else if (status === "Confirmed Event") {
-          userStats.confirmed++;
-        } else if (status === "Cancelled") {
-          userStats.cancelled++;
-        }
-      }
-    });
-
-    const sortedUsers = Array.from(userMap.values()).sort(
-      (a, b) => b.total - a.total,
-    );
-
-    return sortedUsers;
-  };
-
-  // Get user stats for Most Amount Booked tab (only confirmed events; accepts events list for month filtering)
-  const getUserStatsMostAmount = (eventsList) => {
-    const userMap = new Map();
-
-    (eventsList || []).forEach((event) => {
-      // Only include confirmed events
-      if (event.eventConfirmation === "Confirmed Event" && event.createdBy) {
-        const userId = event.createdBy.id;
-        const firstName = formatText(event.createdBy.first_name) || "Unknown";
-        const lastName = formatText(event.createdBy.last_name) || "";
-
-        if (!userMap.has(userId)) {
-          userMap.set(userId, {
-            id: userId,
-            firstName,
-            lastName,
-            fullName: `${firstName} ${lastName}`.trim(),
-            events: [],
-            totalAmount: 0,
-          });
-        }
-
-        const userStats = userMap.get(userId);
-        const agreedAmount = getTotalAgreedAmount(event);
-        userStats.events.push({
-          ...event,
-          agreedAmount,
-        });
-        userStats.totalAmount += agreedAmount;
-      }
-    });
-
-    const sortedUsers = Array.from(userMap.values()).sort(
-      (a, b) => b.totalAmount - a.totalAmount,
-    );
-
-    return sortedUsers;
-  };
-
   const handleUserClick = (row) => {
     // API returns different shapes per mode; normalize what the drawer expects.
     if (activeTab === "mostBooked") {
@@ -333,6 +195,7 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
         fullName: `${capitalizeFirstLetter(first)} ${capitalizeFirstLetter(last)}`.trim(),
         inProgress: row?.inProgress ?? 0,
         confirmed: row?.confirmed ?? 0,
+        almostBooked: row?.almostBooked ?? 0,
         cancelled: row?.cancelled ?? 0,
         total: row?.total ?? 0,
       });
@@ -356,141 +219,94 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
     setSelectedUserEvents([]);
   };
 
-  const getRankIcon = (index) => {
-    switch (index) {
-      case 0:
-        return <Trophy className="w-6 h-6 text-yellow-500" />;
-      case 1:
-        return <Medal className="w-6 h-6 text-gray-400" />;
-      case 2:
-        return <Award className="w-6 h-6 text-amber-600" />;
-      default:
-        return (
-          <div className="w-6 h-6 flex items-center justify-center">
-            <span className="text-sm font-bold text-gray-500">{index + 1}</span>
-          </div>
-        );
-    }
-  };
-
   const userStatsMostBooked = mostBookedRows;
   const userStatsMostAmount = mostAmountRows;
 
-  if (loading) {
+  const personName = (record) => {
+    const first = capitalizeFirstLetter(record?.user?.first_name || record?.user?.firstName || "");
+    const last = capitalizeFirstLetter(record?.user?.last_name || record?.user?.lastName || "");
+    return { first: first || "-", last, full: `${first} ${last}`.trim() || "-" };
+  };
+
+  const rankBadge = (index) =>
+    index < 3 ? (
+      <span className={`lb-rank is-${index + 1}`} title={`Top ${index + 1}`}>
+        {index === 0 ? <Trophy size={16} /> : index === 1 ? <Medal size={16} /> : <Award size={16} />}
+      </span>
+    ) : (
+      <span className="lb-rank">{index + 1}</span>
+    );
+
+  const personCell = (record) => {
+    const n = personName(record);
     return (
-      <div className="flex items-center justify-center h-screen bg-white">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-purple-600 mx-auto mb-4"></div>
-          <div className="text-lg text-gray-700">Loading leaderboard...</div>
+      <div className="pk-who">
+        <span className="pk-avatar" aria-hidden="true">
+          {n.first.charAt(0).toUpperCase()}
+        </span>
+        <div style={{ minWidth: 0 }}>
+          <strong>{n.first}</strong>
+          {n.last ? <span>{n.last}</span> : null}
         </div>
       </div>
     );
-  }
+  };
 
   const mostBookedColumns = [
     {
       title: "Rank",
       key: "rank",
-      width: 100,
-      render: (_, __, index) => (
-        <div className="flex items-center gap-3">
-          {getRankIcon(index)}
-          {index < 3 && (
-            <Tag
-              color={
-                index === 0
-                  ? "gold"
-                  : index === 1
-                    ? "default"
-                    : "orange"
-              }
-              className="text-xs font-bold"
-            >
-              TOP {index + 1}
-            </Tag>
-          )}
-        </div>
-      ),
+      width: 90,
+      render: (_, __, index) => rankBadge(index),
     },
     {
-      title: "User Name",
+      title: "User",
       key: "userName",
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center shadow">
-            <UserIcon className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">
-              {capitalizeFirstLetter(
-                record?.user?.first_name || record?.user?.firstName || "",
-              ) || "-"}
-            </div>
-            <div className="text-sm text-gray-500">
-              {capitalizeFirstLetter(
-                record?.user?.last_name || record?.user?.lastName || "",
-              )}
-            </div>
-          </div>
-        </div>
-      ),
+      render: (_, record) => personCell(record),
     },
     {
-      title: "InProgress",
+      title: "In progress",
       key: "inProgress",
       align: "center",
       width: 120,
-      render: (_, record) => (
-        <Tag color="orange" className="text-sm font-semibold">
-          {record.inProgress}
-        </Tag>
-      ),
+      render: (_, record) => <span className="pk-pill is-gold">{record.inProgress}</span>,
+    },
+    {
+      title: "Almost booked",
+      key: "almostBooked",
+      align: "center",
+      width: 130,
+      render: (_, record) => <span className="pk-pill is-blue">{record.almostBooked ?? 0}</span>,
     },
     {
       title: "Confirmed",
       key: "confirmed",
       align: "center",
       width: 120,
-      render: (_, record) => (
-        <Tag color="green" className="text-sm font-semibold">
-          {record.confirmed}
-        </Tag>
-      ),
+      render: (_, record) => <span className="pk-pill">{record.confirmed}</span>,
     },
     {
       title: "Cancelled",
       key: "cancelled",
       align: "center",
       width: 120,
-      render: (_, record) => (
-        <Tag color="red" className="text-sm font-semibold">
-          {record.cancelled}
-        </Tag>
-      ),
+      render: (_, record) => <span className="pk-pill is-red">{record.cancelled}</span>,
     },
     {
-      title: "Total Booked",
+      title: "Total booked",
       key: "total",
       align: "center",
       width: 130,
-      render: (_, record) => (
-        <span className="inline-flex items-center justify-center px-4 py-2 rounded-full text-lg font-bold bg-gradient-to-r from-purple-100 to-pink-100 text-purple-700">
-          {record.total}
-        </span>
-      ),
+      render: (_, record) => <span className="lb-total">{record.total}</span>,
     },
     {
-      title: "Action",
+      title: "",
       key: "action",
-      align: "center",
+      align: "right",
       width: 150,
       render: (_, record) => (
-        <button
-          onClick={() => handleUserClick(record)}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
-        >
-          <Calendar className="w-4 h-4" />
-          View Details
+        <button type="button" className="pk-btn is-solid" onClick={() => handleUserClick(record)}>
+          <Calendar size={14} aria-hidden="true" /> View details
         </button>
       ),
     },
@@ -500,315 +316,184 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
     {
       title: "Rank",
       key: "rank",
-      width: 100,
-      render: (_, __, index) => (
-        <div className="flex items-center gap-3">
-          {getRankIcon(index)}
-          {index < 3 && (
-            <Tag
-              color={
-                index === 0
-                  ? "gold"
-                  : index === 1
-                    ? "default"
-                    : "orange"
-              }
-              className="text-xs font-bold"
-            >
-              TOP {index + 1}
-            </Tag>
-          )}
-        </div>
-      ),
+      width: 90,
+      render: (_, __, index) => rankBadge(index),
     },
     {
-      title: "User Name",
+      title: "User",
       key: "userName",
-      render: (_, record) => (
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-emerald-400 flex items-center justify-center shadow">
-            <DollarSign className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <div className="text-sm font-bold text-gray-900">
-              {capitalizeFirstLetter(
-                record?.user?.first_name || record?.user?.firstName || "",
-              ) || "-"}
-            </div>
-            <div className="text-sm text-gray-500">
-              {capitalizeFirstLetter(
-                record?.user?.last_name || record?.user?.lastName || "",
-              )}
-            </div>
-          </div>
-        </div>
-      ),
+      render: (_, record) => personCell(record),
     },
     {
-      title: "Total Amount",
+      title: "Total amount",
       key: "totalAmount",
       align: "right",
-      width: 180,
+      width: 190,
       render: (_, record) => (
-        <span className="inline-flex items-center justify-center px-4 py-2 rounded-full text-lg font-bold bg-gradient-to-r from-green-100 to-emerald-100 text-green-700">
+        <span className="lb-total is-money">
           {formatAmount(record.totalAmountBooked ?? record.totalAmount ?? 0)}
         </span>
       ),
     },
     {
-      title: "Events Count",
+      title: "Events",
       key: "eventsCount",
       align: "center",
-      width: 130,
+      width: 110,
       render: (_, record) => (
-        <Tag color="blue" className="text-sm font-semibold">
-          {record?.eventsCount ?? record?.events?.length ?? 0}
-        </Tag>
+        <span className="pk-pill is-blue">{record?.eventsCount ?? record?.events?.length ?? 0}</span>
       ),
     },
     {
-      title: "Action",
+      title: "",
       key: "action",
-      align: "center",
+      align: "right",
       width: 150,
       render: (_, record) => (
-        <button
-          onClick={() => handleUserClick(record)}
-          className="inline-flex items-center gap-2 bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md"
-        >
-          <TrendingUp className="w-4 h-4" />
-          View Details
+        <button type="button" className="pk-btn is-solid" onClick={() => handleUserClick(record)}>
+          <TrendingUp size={14} aria-hidden="true" /> View details
         </button>
       ),
     },
   ];
 
-  return (
-    <div className="min-h-screen p-6 bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/20">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <Card
-            className="border-0 shadow-sm mb-6"
-            style={{
-              borderRadius: "16px",
-              background: "rgba(255, 255, 255, 0.8)",
-              backdropFilter: "blur(10px)",
-            }}
-            bodyStyle={{ padding: "24px" }}
-          >
-            <div className="flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-4">
-                {showBackToHome && (
-                  <Button
-                    onClick={() => navigate("/user")}
-                    size="large"
-                    className="rounded-xl"
-                  >
-                    Back to Home
-                  </Button>
-                )}
-                <div
-                  className="p-4 rounded-xl shadow-lg"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
-                  }}
-                >
-                  <Trophy className="w-10 h-10 text-white" />
-                </div>
-                <div>
-                  <Title level={2} className="!mb-0 !text-2xl md:!text-3xl">
-                    Events Leaderboard
-                  </Title>
-                  <Text className="text-gray-600 mt-2 text-base block">
-                    Top performers ranked by bookings and revenue
-                  </Text>
-                </div>
+  const onBoardChange = (mode, setMeta) => (paginationConfig) => {
+    const month = selectedMonthYear ? selectedMonthYear.format("YYYY-MM") : null;
+    const page = paginationConfig.current ?? 1;
+    const limit = paginationConfig.pageSize ?? 20;
+    setMeta((prev) => ({ ...prev, page, limit }));
+    fetchLeaderboard({ mode, page, limit, month });
+  };
+
+  const isBooked = mostBookedOnly || activeTab === "mostBooked";
+  const boardRows = isBooked ? userStatsMostBooked : userStatsMostAmount;
+  const boardMeta = isBooked ? mostBookedMeta : mostAmountMeta;
+  const podium = boardMeta.page === 1 ? boardRows.slice(0, 3) : [];
+
+  const board = (
+    <section className="pk-panel">
+      <div className="pk-toolbar">
+        <div className="pk-toolbar-left">
+          {!mostBookedOnly && (
+            <Segmented
+              label="Leaderboard"
+              value={activeTab}
+              onChange={setActiveTab}
+              options={[
+                { value: "mostBooked", label: "Most booked" },
+                { value: "mostAmount", label: "Most amount booked" },
+              ]}
+            />
+          )}
+        </div>
+        <div className="pk-toolbar-right">
+          <span className="lb-hint">
+            {mostBookedOnly ? "Filter by month" : "Month filter applies to both boards"}
+          </span>
+          <DatePicker
+            picker="month"
+            value={selectedMonthYear}
+            onChange={(date) => setSelectedMonthYear(date || null)}
+            allowClear
+            placeholder="All time"
+            format="MMM YYYY"
+            size="large"
+            style={{ minWidth: 150 }}
+          />
+        </div>
+      </div>
+
+      {podium.length > 0 && (
+        <div className="lb-podium">
+          {podium.map((row, i) => (
+            <div key={row?.user?._id || row?.user?.id || i} className={`lb-top is-${i + 1}`}>
+              {rankBadge(i)}
+              <div className="lb-top-name">{personName(row).full}</div>
+              <div className="lb-top-value">
+                {isBooked
+                  ? `${row.total} bookings`
+                  : formatAmount(row.totalAmountBooked ?? row.totalAmount ?? 0)}
               </div>
             </div>
-          </Card>
-        </motion.div>
+          ))}
+        </div>
+      )}
 
-        {/* Tabs */}
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: "16px",
-            background: "rgba(255, 255, 255, 0.8)",
-            backdropFilter: "blur(10px)",
+      {boardRows.length === 0 && !loading ? (
+        <div className="pk-empty">
+          <span className="ring">
+            {isBooked ? <Users size={26} /> : <DollarSign size={26} />}
+          </span>
+          <strong>{isBooked ? "No bookings found" : "No confirmed events found"}</strong>
+          <span>Try another month or clear the filter.</span>
+        </div>
+      ) : (
+        <Table
+          className="pk-table"
+          columns={isBooked ? mostBookedColumns : mostAmountColumns}
+          dataSource={boardRows}
+          loading={loading}
+          rowKey={(row) => row?.user?._id || row?.user?.id || row?.rank}
+          pagination={{
+            current: boardMeta.page,
+            pageSize: boardMeta.limit,
+            total: boardMeta.totalUsers,
+            showSizeChanger: true,
+            pageSizeOptions: ["10", "20", "50"],
+            showTotal: (total) => `Total ${total} users`,
           }}
-          bodyStyle={{ padding: "24px" }}
-        >
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-            <Text className="text-gray-600 text-base">
-              {mostBookedOnly
-                ? "Filter by month"
-                : "Filter by month (applies to both Most Booked and Most Amount Booked)"}
-            </Text>
-            <DatePicker
-              picker="month"
-              value={selectedMonthYear}
-              onChange={(date) => setSelectedMonthYear(date || null)}
-              allowClear
-              placeholder="All time"
-              format="MMM YYYY"
-              className="min-w-[140px]"
-            />
-          </div>
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            renderTabBar={mostBookedOnly ? () => null : undefined}
-            items={[
-              {
-                key: "mostBooked",
-                label: (
-                  <span className="flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Most Booked
-                  </span>
-                ),
-                children: (
-                  <div>
-                    {userStatsMostBooked.length === 0 ? (
-                      <div className="text-center py-16">
-                        <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <Text className="text-gray-500 text-lg">
-                          No bookings found
-                        </Text>
-                      </div>
-                    ) : (
-                      <Table
-                        columns={mostBookedColumns}
-                        dataSource={userStatsMostBooked}
-                        rowKey={(row) =>
-                          row?.user?._id || row?.user?.id || row?.rank
-                        }
-                        pagination={{
-                          current: mostBookedMeta.page,
-                          pageSize: mostBookedMeta.limit,
-                          total: mostBookedMeta.totalUsers,
-                          showSizeChanger: true,
-                          pageSizeOptions: ["10", "20", "50"],
-                          showTotal: (total) => (
-                            <span className="text-slate-600 text-sm">
-                              Total {total} users
-                            </span>
-                          ),
-                        }}
-                        onChange={(paginationConfig) => {
-                          const month = selectedMonthYear
-                            ? selectedMonthYear.format("YYYY-MM")
-                            : null;
-                          const page = paginationConfig.current ?? 1;
-                          const limit = paginationConfig.pageSize ?? 20;
-                          setMostBookedMeta((prev) => ({
-                            ...prev,
-                            page,
-                            limit,
-                          }));
-                          fetchLeaderboard({
-                            mode: "mostBooked",
-                            page,
-                            limit,
-                            month,
-                          });
-                        }}
-                        className="modern-table"
-                      />
-                    )}
-                  </div>
-                ),
-              },
-              ...(!mostBookedOnly
-                ? [
-                    {
-                      key: "mostAmount",
-                      label: (
-                        <span className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4" />
-                          Most Amount Booked
-                        </span>
-                      ),
-                      children: (
-                        <div>
-                          {userStatsMostAmount.length === 0 ? (
-                            <div className="text-center py-16">
-                              <DollarSign className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                              <Text className="text-gray-500 text-lg">
-                                No confirmed events found
-                              </Text>
-                            </div>
-                          ) : (
-                            <Table
-                              columns={mostAmountColumns}
-                              dataSource={userStatsMostAmount}
-                              rowKey={(row) =>
-                                row?.user?._id || row?.user?.id || row?.rank
-                              }
-                              pagination={{
-                                current: mostAmountMeta.page,
-                                pageSize: mostAmountMeta.limit,
-                                total: mostAmountMeta.totalUsers,
-                                showSizeChanger: true,
-                                pageSizeOptions: ["10", "20", "50"],
-                                showTotal: (total) => (
-                                  <span className="text-slate-600 text-sm">
-                                    Total {total} users
-                                  </span>
-                                ),
-                              }}
-                              onChange={(paginationConfig) => {
-                                const month = selectedMonthYear
-                                  ? selectedMonthYear.format("YYYY-MM")
-                                  : null;
-                                const page = paginationConfig.current ?? 1;
-                                const limit = paginationConfig.pageSize ?? 20;
-                                setMostAmountMeta((prev) => ({
-                                  ...prev,
-                                  page,
-                                  limit,
-                                }));
-                                fetchLeaderboard({
-                                  mode: "mostAmount",
-                                  page,
-                                  limit,
-                                  month,
-                                });
-                              }}
-                              className="modern-table"
-                            />
-                          )}
-                        </div>
-                      ),
-                    },
-                  ]
-                : []),
-            ]}
-            size="large"
+          onChange={
+            isBooked
+              ? onBoardChange("mostBooked", setMostBookedMeta)
+              : onBoardChange("mostAmount", setMostAmountMeta)
+          }
+          scroll={{ x: 800 }}
+        />
+      )}
+    </section>
+  );
+
+  return (
+    <div className={showBackToHome ? "pk-page" : "lb-embedded"}>
+      <div className="pk-wrap" style={showBackToHome ? undefined : { maxWidth: "none" }}>
+        {showBackToHome ? (
+          <PageHero
+            eyebrow="Bookings"
+            title="Events Leaderboard"
+            subtitle="Top performers ranked by bookings and revenue."
+            onBack={() => navigate("/user")}
           />
-        </Card>
+        ) : (
+          <div className="ck-head">
+            <div className="ck-title">
+              <span className="ck-title-icon">
+                <Trophy size={20} aria-hidden="true" />
+              </span>
+              <div>
+                <h2>Events leaderboard</h2>
+                <p>Top performers ranked by bookings and revenue</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {board}
       </div>
 
       {/* Drawer for Event Details */}
       <Drawer
         title={
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-              <UserIcon className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <div className="text-lg font-bold">{selectedUser?.fullName}</div>
-              <div className="text-sm text-gray-500 font-normal">
+          <div className="pk-who">
+            <span className="pk-avatar" aria-hidden="true">
+              {String(selectedUser?.fullName || "?").trim().charAt(0).toUpperCase()}
+            </span>
+            <div style={{ minWidth: 0 }}>
+              <strong>{selectedUser?.fullName}</strong>
+              <span>
                 {activeTab === "mostBooked"
                   ? `${selectedUser?.total || 0} Total Bookings`
                   : `${formatAmount(selectedUser?.totalAmount || 0)} Total`}
-              </div>
+              </span>
             </div>
           </div>
         }
@@ -819,71 +504,44 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
         closeIcon={<X className="w-5 h-5" />}
       >
         {selectedUserEvents.length === 0 && activeTab !== "mostBooked" ? (
-          <div className="text-center py-12">
-            <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <Text className="text-gray-500">No events found</Text>
+          <div className="pk-empty">
+            <span className="ring">
+              <Calendar size={26} />
+            </span>
+            <strong>No events found</strong>
           </div>
         ) : (
           <div className="space-y-4">
             {activeTab === "mostBooked" ? (
               <>
                 {/* Summary Cards */}
-                <div className="grid grid-cols-3 gap-4 mb-6">
-                  <Card
-                    className="border-0 text-center"
-                    style={{
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)",
-                    }}
-                    bodyStyle={{ padding: "16px" }}
-                  >
-                    <Text className="text-xs text-gray-600 block mb-1">
-                      InProgress
-                    </Text>
-                    <Text className="text-2xl font-bold text-orange-700">
-                      {selectedUser?.inProgress || 0}
-                    </Text>
-                  </Card>
-                  <Card
-                    className="border-0 text-center"
-                    style={{
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-                    }}
-                    bodyStyle={{ padding: "16px" }}
-                  >
-                    <Text className="text-xs text-gray-600 block mb-1">
-                      Confirmed
-                    </Text>
-                    <Text className="text-2xl font-bold text-green-700">
-                      {selectedUser?.confirmed || 0}
-                    </Text>
-                  </Card>
-                  <Card
-                    className="border-0 text-center"
-                    style={{
-                      borderRadius: "12px",
-                      background: "linear-gradient(135deg, #fee2e2 0%, #fecaca 100%)",
-                    }}
-                    bodyStyle={{ padding: "16px" }}
-                  >
-                    <Text className="text-xs text-gray-600 block mb-1">
-                      Cancelled
-                    </Text>
-                    <Text className="text-2xl font-bold text-red-700">
-                      {selectedUser?.cancelled || 0}
-                    </Text>
-                  </Card>
+                <div className="lb-mini">
+                  <div className="lb-mini-card is-gold">
+                    <span>InProgress</span>
+                    <strong>{selectedUser?.inProgress || 0}</strong>
+                  </div>
+                  <div className="lb-mini-card is-blue">
+                    <span>Almost booked</span>
+                    <strong>{selectedUser?.almostBooked || 0}</strong>
+                  </div>
+                  <div className="lb-mini-card">
+                    <span>Confirmed</span>
+                    <strong>{selectedUser?.confirmed || 0}</strong>
+                  </div>
+                  <div className="lb-mini-card is-red">
+                    <span>Cancelled</span>
+                    <strong>{selectedUser?.cancelled || 0}</strong>
+                  </div>
                 </div>
 
                 {/* Events List */}
                 {selectedUserEvents.length === 0 ? (
                   <Text type="secondary">
-                    Event list is not included in the API response for{" "}
-                    Most Booked leaderboard.
+                    Event list is not included in the API response for Most Booked leaderboard.
                   </Text>
                 ) : (
                   <Table
+                    className="pk-table"
                     dataSource={selectedUserEvents}
                     rowKey="_id"
                     pagination={false}
@@ -892,40 +550,27 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
                         title: "#",
                         key: "index",
                         width: 60,
-                        render: (_, __, index) => (
-                          <Tag color="blue">{index + 1}</Tag>
-                        ),
+                        render: (_, __, index) => <span className="pk-pill is-grey">{index + 1}</span>,
                       },
                       {
-                        title: "Event Name",
+                        title: "Event",
                         key: "eventName",
-                        render: (_, record) => (
-                          <Text strong>{getEventName(record.eventName)}</Text>
-                        ),
+                        render: (_, record) => <strong>{getEventName(record.eventName)}</strong>,
                       },
                       {
-                        title: "Client Name",
+                        title: "Client",
                         key: "clientName",
-                        render: (_, record) => (
-                          <Text>{formatText(record.clientName) || "N/A"}</Text>
-                        ),
+                        render: (_, record) => <span>{formatText(record.clientName) || "N/A"}</span>,
                       },
                       {
                         title: "Status",
                         key: "status",
-                        width: 120,
+                        width: 130,
                         render: (_, record) => {
                           const status = record.eventConfirmation;
-                          const colorMap = {
-                            "Confirmed Event": "green",
-                            InProgress: "orange",
-                            Cancelled: "red",
-                          };
-                          return (
-                            <Tag color={colorMap[status] || "default"}>
-                              {status}
-                            </Tag>
-                          );
+                          const tone =
+                            status === "Confirmed Event" ? "" : status === "Cancelled" ? "is-red" : status === "Almost Booked" ? "is-blue" : "is-gold";
+                          return <span className={`pk-pill ${tone}`}>{status}</span>;
                         },
                       },
                     ]}
@@ -936,27 +581,15 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
             ) : (
               <>
                 {/* Summary Card */}
-                <Card
-                  className="border-0 text-center mb-6"
-                  style={{
-                    borderRadius: "12px",
-                    background: "linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%)",
-                  }}
-                  bodyStyle={{ padding: "24px" }}
-                >
-                  <Text className="text-sm text-gray-600 block mb-2">
-                    Total Amount Booked
-                  </Text>
-                  <Text className="text-3xl font-bold text-green-700">
-                    {formatAmount(selectedUser?.totalAmount || 0)}
-                  </Text>
-                  <Text className="text-xs text-gray-500 mt-2 block">
-                    {selectedUserEvents.length} Confirmed Events
-                  </Text>
-                </Card>
+                <div className="lb-sum">
+                  <span>Total amount booked</span>
+                  <strong>{formatAmount(selectedUser?.totalAmount || 0)}</strong>
+                  <em>{selectedUserEvents.length} confirmed events</em>
+                </div>
 
                 {/* Events Breakdown */}
                 <Table
+                  className="pk-table"
                   dataSource={selectedUserEvents}
                   rowKey="_id"
                   pagination={false}
@@ -965,33 +598,25 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
                       title: "#",
                       key: "index",
                       width: 60,
-                      render: (_, __, index) => (
-                        <Tag color="green">{index + 1}</Tag>
-                      ),
+                      render: (_, __, index) => <span className="pk-pill is-grey">{index + 1}</span>,
                     },
                     {
-                      title: "Event Name",
+                      title: "Event",
                       key: "eventName",
-                      render: (_, record) => (
-                        <Text strong>{getEventName(record.eventName)}</Text>
-                      ),
+                      render: (_, record) => <strong>{getEventName(record.eventName)}</strong>,
                     },
                     {
-                      title: "Client Name",
+                      title: "Client",
                       key: "clientName",
-                      render: (_, record) => (
-                        <Text>{formatText(record.clientName) || "N/A"}</Text>
-                      ),
+                      render: (_, record) => <span>{formatText(record.clientName) || "N/A"}</span>,
                     },
                     {
-                      title: "Amount Booked",
+                      title: "Amount booked",
                       key: "amountBooked",
                       align: "right",
-                      width: 150,
+                      width: 160,
                       render: (_, record) => (
-                        <Text strong className="text-green-600">
-                          {formatAmount(record.amountBooked || 0)}
-                        </Text>
+                        <span className="pk-money">{formatAmount(record.amountBooked || 0)}</span>
                       ),
                     },
                   ]}
@@ -1002,45 +627,6 @@ const UserWiseClients = ({ mostBookedOnly = false }) => {
           </div>
         )}
       </Drawer>
-
-      <style>{`
-        .modern-table .ant-table-thead > tr > th {
-          background: #f9fbf9;
-          font-weight: 600;
-          color: #4d6352;
-          border-bottom: 1px solid #e5ede6;
-          font-size: 13px;
-          padding: 16px;
-        }
-
-        .modern-table .ant-table-tbody > tr {
-          transition: all 0.2s ease;
-        }
-
-        .modern-table .ant-table-tbody > tr:hover > td {
-          background: #f9fbf9 !important;
-        }
-
-        .modern-table .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #f3f7f4;
-          padding: 16px;
-        }
-
-        .ant-tabs-tab {
-          border-radius: 8px 8px 0 0;
-          padding: 12px 20px;
-          font-weight: 500;
-        }
-
-        .ant-tabs-tab-active {
-          background: #f9fbf9;
-        }
-
-        .ant-tabs-ink-bar {
-          height: 3px;
-          border-radius: 3px 3px 0 0;
-        }
-      `}</style>
     </div>
   );
 };

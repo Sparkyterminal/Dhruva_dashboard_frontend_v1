@@ -1,40 +1,52 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  Card,
-  Table,
-  Tabs,
-  Row,
-  Col,
-  Statistic,
-  Tag,
-  message,
-  Pagination,
-} from "antd";
-import { CircleCheck, ClipboardList, Clock3 } from "lucide-react";
+import { Table, message, Pagination, Spin } from "antd";
+import { CircleCheck, ClipboardList, IndianRupee, Plus, Search, Clock3 } from "lucide-react";
 import axiosClient from "@/api/axiosClient";
 import dayjs from "dayjs";
 import {
-  DollarOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  CalendarOutlined,
-  FlagOutlined,
-  UserOutlined,
-  ShopOutlined,
-} from "@ant-design/icons";
+  EmptyState,
+  PageHero,
+  SearchBox,
+  Segmented,
+  StatCard,
+  StatRow,
+} from "@/Components/PageKit";
+import "./ViewRequirements.css";
 
+const money = (n) => `₹${(n || 0).toLocaleString("en-IN")}`;
+const label = (s) => (s ? s.charAt(0) + s.slice(1).toLowerCase() : "");
 
+const STATUS_TONE = { PENDING: "is-gold", CONFIRMED: "is-blue", COMPLETED: "", REJECTED: "is-red" };
+const PRIORITY_TONE = { HIGH: "is-red", MEDIUM: "is-gold", LOW: "" };
+
+const Pill = ({ value, tones }) =>
+  value ? (
+    <span className={`pk-pill ${tones[String(value).toUpperCase()] ?? "is-grey"}`}>{label(value)}</span>
+  ) : null;
+
+const isOverdue = (req) =>
+  req.status === "PENDING" &&
+  req.due_date &&
+  dayjs(req.due_date).startOf("day").isBefore(dayjs().startOf("day"));
+
+/**
+ * My Requests. Rendered as a tab on the home screen (no header, the menu is already there)
+ * and as its own page at /user/viewrequests (with the green header and a way back).
+ */
 const ViewRequirements = () => {
+  const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const standalone = pathname !== "/user";
   const user = useSelector((state) => state.user.value);
 
   const [requirements, setRequirements] = useState([]);
   const [loading, setLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [activeTab, setActiveTab] = useState("cards");
+  const [search, setSearch] = useState("");
 
   const config = {
     headers: { Authorization: user?.access_token },
@@ -43,15 +55,11 @@ const ViewRequirements = () => {
   const fetchRequirementsData = async (page = 1) => {
     setLoading(true);
     try {
-      const res = await axiosClient.get(
-        `request/my-requests?page=${page}`,
-        config
-      );
+      const res = await axiosClient.get(`request/my-requests?page=${page}`, config);
       setRequirements(res.data.items || []);
       setCurrentPage(res.data.currentPage);
-      setTotalPages(res.data.totalPages);
       setTotalItems(res.data.totalItems);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch requirements");
     } finally {
       setLoading(false);
@@ -60,6 +68,7 @@ const ViewRequirements = () => {
 
   useEffect(() => {
     fetchRequirementsData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handlePageChange = (page) => {
@@ -67,124 +76,100 @@ const ViewRequirements = () => {
     fetchRequirementsData(page);
   };
 
-  // Filter for cards: only show PENDING status requirements
-  const pendingRequirements = requirements.filter(
-    (req) => req.status === "PENDING"
+  // Cards show only pending requests; the list shows everything on the page.
+  const pendingRequirements = requirements.filter((req) => req.status === "PENDING");
+  const pendingAmount = pendingRequirements.reduce((sum, req) => sum + req.amount, 0);
+  const completedCount = requirements.filter((req) => req.status === "COMPLETED").length;
+
+  const matches = (req) => {
+    const q = search.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      String(req.purpose || "").toLowerCase().includes(q) ||
+      String(req.vendor?.name || "").toLowerCase().includes(q) ||
+      String(req.event_reference?.clientName || "").toLowerCase().includes(q)
+    );
+  };
+
+  const shownPending = useMemo(
+    () => pendingRequirements.filter(matches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requirements, search],
   );
-
-  // Calculate stats only for pending requirements (for cards)
-  const totalAmount = pendingRequirements.reduce(
-    (sum, req) => sum + req.amount,
-    0
+  const shownAll = useMemo(
+    () => requirements.filter(matches),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [requirements, search],
   );
-  const totalCount = pendingRequirements.length;
-  const pendingCount = totalCount; // Same as filtered count
-  // confirmedCount is for complete list but cards do not show it
-
-  const confirmedCount = requirements.filter(
-    (req) => req.status === "COMPLETED"
-  ).length;
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case "HIGH":
-        return "red";
-      case "MEDIUM":
-        return "orange";
-      case "LOW":
-        return "green";
-      default:
-        return "default";
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "PENDING":
-        return "orange";
-      case "CONFIRMED":
-        return "blue";
-      case "COMPLETED":
-        return "green";
-      case "REJECTED":
-        return "red";
-      default:
-        return "default";
-    }
-  };
-
-  const getRowClassName = (record) => {
-    const today = dayjs().startOf("day");
-    const dueDate = dayjs(record.due_date).startOf("day");
-    if (dueDate.isBefore(today)) {
-      return "requirement-row-overdue";
-    }
-    if (record.status == "REJECTED") {
-      return "requirement-row-rejected";
-    }
-    if (record.status == "COMPLETED") {
-      return "requirement-row-resolved";
-    }
-    if (record.status === "PENDING") {
-      return "requirement-row-pending";
-    }
-    return "";
-  };
 
   const columns = [
     {
-      title: "Sl. No",
-      dataIndex: "slNo",
+      title: "#",
       key: "slNo",
-      render: (_text, _record, index) => (currentPage - 1) * 10 + index + 1,
-      width: 100,
-      // fixed: "left",
+      width: 60,
+      render: (_t, _r, index) => (currentPage - 1) * 10 + index + 1,
     },
     {
       title: "Purpose",
       dataIndex: "purpose",
       key: "purpose",
-      width: 200,
+      width: 240,
+      render: (text, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            {String(text || "?").trim().charAt(0).toUpperCase()}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong style={{ whiteSpace: "normal" }}>{text}</strong>
+            <span>{record.vendor?.name || "No vendor"}</span>
+          </div>
+        </div>
+      ),
     },
     {
       title: "Amount",
       dataIndex: "amount",
       key: "amount",
+      width: 130,
+      render: (v) => <span className="pk-money">{money(v)}</span>,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
       width: 120,
-      render: (amount) => `₹${amount.toLocaleString()}`,
+      render: (v) => <Pill value={v} tones={STATUS_TONE} />,
     },
     {
       title: "Priority",
       dataIndex: "priority",
       key: "priority",
-      width: 100,
-      render: (priority) => (
-        <Tag color={getPriorityColor(priority)}>{priority}</Tag>
-      ),
+      width: 110,
+      render: (v) => <Pill value={v} tones={PRIORITY_TONE} />,
     },
     {
-      title: "Planned Amount",
+      title: "Planned",
       dataIndex: "planned_amount",
       key: "planned_amount",
-      width: 150,
-      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+      width: 120,
+      render: money,
     },
     {
-      title: "Approved Amount",
+      title: "Approved",
       dataIndex: "approver_amount",
       key: "approver_amount",
-      width: 150,
-      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+      width: 120,
+      render: money,
     },
     {
-      title: "Amount Paid",
+      title: "Paid",
       dataIndex: "amount_paid",
       key: "amount_paid",
-      width: 150,
-      render: (amount) => `₹${(amount || 0).toLocaleString()}`,
+      width: 120,
+      render: money,
     },
     {
-      title: "Transaction In",
+      title: "Transaction in",
       dataIndex: "transation_in",
       key: "transation_in",
       width: 130,
@@ -197,13 +182,13 @@ const ViewRequirements = () => {
       render: (vendor) =>
         vendor ? (
           <div>
-            <div className="font-semibold">{vendor.name}</div>
-            <div className="text-xs text-gray-500">
-              Code: {vendor.vendor_code}
+            <div>{vendor.name}</div>
+            <div className="pk-muted" style={{ fontSize: 12 }}>
+              {vendor.vendor_code}
             </div>
           </div>
         ) : (
-          <span>No Vendor</span>
+          <span className="pk-muted">—</span>
         ),
     },
     {
@@ -214,348 +199,174 @@ const ViewRequirements = () => {
       render: (event) =>
         event ? (
           <div>
-            <div className="font-semibold">
-              {event.eventName?.name || "N/A"}
-            </div>
-            <div className="text-xs text-gray-500">
-              Client: {event.clientName}
+            <div>{event.eventName?.name || "N/A"}</div>
+            <div className="pk-muted" style={{ fontSize: 12 }}>
+              {event.clientName}
             </div>
           </div>
         ) : (
-          <span>No Event</span>
+          <span className="pk-muted">—</span>
         ),
     },
   ];
 
-  const CardView = () => (
-    <div>
-      <Row gutter={[16, 16]}>
-        {pendingRequirements.map((req) => (
-          <Col xs={24} sm={12} lg={8} key={req.id}>
-            <Card
-              hoverable
-              className={`h-full ${getRowClassName(req)} border-l-4 ${
-                req.priority === "HIGH"
-                  ? "border-l-red-500"
-                  : req.priority === "MEDIUM"
-                  ? "border-l-orange-500"
-                  : "border-l-green-500"
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="flex justify-between items-start">
-                  <h3 className="text-xl font-bold text-black line-clamp-2">
-                    {req.purpose}
-                  </h3>
-                  <Tag color={getStatusColor(req.status)}>{req.status}</Tag>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-black flex items-center gap-2">
-                      <DollarOutlined />
-                      <span className="font-semibold text-lg">
-                        Amount:
-                      </span>
-                    </span>
-                    <span className="font-semibold text-black">
-                      ₹{req.amount.toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-black flex items-center gap-2">
-                      <FlagOutlined />
-                      <span className="font-semibold text-lg">
-                        Priority:
-                      </span>
-                    </span>
-                    <Tag color={getPriorityColor(req.priority)}>
-                      {req.priority}
-                    </Tag>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-black flex items-center gap-2">
-                      <CalendarOutlined />
-                      <span className="font-semibold text-lg">
-                        Transaction In:
-                      </span>
-                    </span>
-                    <span className="text-black">{req.transation_in}</span>
-                  </div>
-
-                  {req.vendor && (
-                    <div className="pt-2 border-t">
-                      <div className="flex items-start gap-2">
-                        <ShopOutlined className="mt-1" />
-                        <div>
-                          <div className="font-semibold text-black">
-                            {req.vendor.name}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            Code: {req.vendor.vendor_code}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {req.event_reference && (
-                    <div className="pt-2 border-t">
-                      <div className="flex items-start gap-2">
-                        <UserOutlined className="mt-1" />
-                        <div>
-                          <div className="text-sm text-black">
-                            <span className="font-semibold">Event:</span>{" "}
-                            {req.event_reference.eventName?.name || "N/A"}
-                          </div>
-                          <div className="text-sm text-black">
-                            <span className="font-semibold">Client:</span>{" "}
-                            {req.event_reference.clientName}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {req.department && (
-                  <div className="pt-2 border-t">
-                    <span className="text-xs text-black">
-                      Department: {req.department.name}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </Col>
-        ))}
-      </Row>
-
-      <div className="flex justify-center mt-6">
-        <Pagination
-          current={currentPage}
-          total={totalItems}
-          pageSize={10}
-          onChange={handlePageChange}
-          showSizeChanger={false}
-          showTotal={(total) => `Total ${total} items`}
-        />
-      </div>
+  const pager = (
+    <div className="rq-pager">
+      <Pagination
+        current={currentPage}
+        total={totalItems}
+        pageSize={10}
+        onChange={handlePageChange}
+        showSizeChanger={false}
+        showTotal={(total) => `${total} requests`}
+      />
     </div>
   );
 
-  const ListView = () => (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      <div className="overflow-x-auto">
-        <Table
-          dataSource={requirements}
-          columns={columns}
-          loading={loading}
-          rowKey="id"
-          rowClassName={getRowClassName}
-          pagination={false}
-          scroll={{ x: 1200 }}
-          size="middle"
-          bordered={false}
-        />
-      </div>
-
-      <div className="flex justify-center mt-6 pb-4">
-        <Pagination
-          current={currentPage}
-          total={totalItems}
-          pageSize={10}
-          onChange={handlePageChange}
-          showSizeChanger={false}
-          showTotal={(total) => `Total ${total} items`}
-        />
-      </div>
+  const cards = shownPending.length ? (
+    <div className="pk-grid">
+      {shownPending.map((req) => (
+        <article className="pk-card rq-card" key={req.id}>
+          <div className="rq-card-top">
+            <h3 className="rq-purpose">{req.purpose}</h3>
+            <Pill value={req.priority} tones={PRIORITY_TONE} />
+          </div>
+          <div className="rq-amount">{money(req.amount)}</div>
+          <div className="pk-card-meta">
+            {req.due_date && (
+              <span className={isOverdue(req) ? "rq-overdue" : undefined}>
+                {isOverdue(req) ? "Overdue · " : "Due "}
+                {dayjs(req.due_date).format("DD MMM YYYY")}
+              </span>
+            )}
+            {req.transation_in && (
+              <span>
+                Transaction in <strong>{req.transation_in}</strong>
+              </span>
+            )}
+            {req.vendor && (
+              <span>
+                Vendor <strong>{req.vendor.name}</strong>
+              </span>
+            )}
+            {req.event_reference && (
+              <span>
+                Event{" "}
+                <strong>
+                  {req.event_reference.eventName?.name || "N/A"} · {req.event_reference.clientName}
+                </strong>
+              </span>
+            )}
+            {req.department && <span>{req.department.name}</span>}
+          </div>
+        </article>
+      ))}
     </div>
+  ) : loading ? (
+    <div className="pk-empty">
+      <Spin />
+    </div>
+  ) : (
+    <EmptyState
+      icon={<ClipboardList size={26} aria-hidden="true" />}
+      title={search ? "No pending requests match your search" : "No pending requests"}
+      hint={search ? undefined : "Everything you asked for has been handled."}
+    />
   );
 
-  const tabItems = [
-    {
-      key: "cards",
-      label: (
-        <span className="text-base">
-          <DollarOutlined /> Cards
-        </span>
-      ),
-      children: <CardView />,
-    },
-    {
-      key: "list",
-      label: (
-        <span className="text-base">
-          <ClockCircleOutlined /> List
-        </span>
-      ),
-      children: <ListView />,
-    },
-  ];
+  const body = (
+    <>
+      <StatRow>
+        <StatCard
+          tone="gold"
+          icon={<Clock3 size={21} aria-hidden="true" />}
+          label="Pending requests"
+          value={pendingRequirements.length}
+        />
+        <StatCard
+          icon={<IndianRupee size={21} aria-hidden="true" />}
+          label="Pending amount"
+          value={money(pendingAmount)}
+        />
+        <StatCard
+          tone="blue"
+          icon={<CircleCheck size={21} aria-hidden="true" />}
+          label="Completed"
+          value={completedCount}
+        />
+      </StatRow>
+
+      <section className="pk-panel">
+        <div className="pk-toolbar">
+          <div className="pk-toolbar-left">
+            <Segmented
+              label="View"
+              value={activeTab}
+              onChange={setActiveTab}
+              options={[
+                { value: "cards", label: "Pending", count: pendingRequirements.length },
+                { value: "list", label: "All requests", count: requirements.length },
+              ]}
+            />
+            <SearchBox
+              icon={<Search size={16} aria-hidden="true" />}
+              value={search}
+              onChange={setSearch}
+              placeholder="Search purpose, vendor or client"
+              label="Search requests"
+            />
+          </div>
+          <button type="button" className="pk-btn is-solid" onClick={() => navigate("/user/sendrequest")}>
+            <Plus size={14} aria-hidden="true" /> New request
+          </button>
+        </div>
+
+        {activeTab === "cards" ? (
+          cards
+        ) : (
+          <Table
+            className="pk-table"
+            dataSource={shownAll}
+            columns={columns}
+            loading={loading}
+            rowKey="id"
+            rowClassName={(r) => (isOverdue(r) ? "rq-row-overdue" : "")}
+            pagination={false}
+            scroll={{ x: 1300 }}
+            locale={{
+              emptyText: loading ? null : (
+                <EmptyState
+                  icon={<ClipboardList size={26} aria-hidden="true" />}
+                  title={search ? "No requests match your search" : "No requests yet"}
+                />
+              ),
+            }}
+          />
+        )}
+        {pager}
+      </section>
+    </>
+  );
+
+  if (!standalone) {
+    return <div className="rq-embedded">{body}</div>;
+  }
 
   return (
-    <div className="p-4 md:p-6 min-h-screen font-cormorant">
-      <h1 className="text-3xl md:text-4xl font-bold text-black mb-6">
-        Dashboard
-      </h1>
-
-      <Row gutter={[16, 16]} className="mb-6">
-        <Col xs={24} sm={8}>
-          <Card className="shadow-md">
-            <Statistic
-              title={
-                <span className="text-xl font-medium">
-                  Total Request
-                </span>
-              }
-              value={totalCount}
-              valueStyle={{
-                color: "#17542a",
-                fontFamily: "Cormorant Garamond",
-              }}
-              prefix={<ClipboardList size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Card className="shadow-md">
-            <Statistic
-              title={
-                <span className="text-xl font-medium">
-                  Pending Requests
-                </span>
-              }
-              value={pendingCount}
-              valueStyle={{
-                color: "#a88a33",
-                fontFamily: "Cormorant Garamond",
-              }}
-              prefix={<Clock3 size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
-            />
-          </Card>
-        </Col>
-
-        <Col xs={24} sm={8}>
-          <Card className="shadow-md">
-            <Statistic
-              title={
-                <span className="text-xl font-medium">
-                  Confirmed Requests
-                </span>
-              }
-              value={confirmedCount}
-              valueStyle={{
-                color: "#2e7d32",
-                fontFamily: "Cormorant Garamond",
-              }}
-              prefix={<CircleCheck size={26} strokeWidth={1.75} style={{ marginRight: 8 }} aria-hidden="true" />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      <Card className="shadow-md">
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={tabItems}
-          size="large"
-        />
-      </Card>
-
-      <style>{`
-
-        .{
-          font-family: 'Cormorant Garamond', serif;
-        }
-
-        .requirement-row-overdue {
-          background: #ffe5e8 !important;
-        }
-        .requirement-row-pending {
-          background: #fff9e5 !important;
-        }
-        .requirement-row-resolved {
-          background: #e6ffe6 !important;
-        }
-        .requirement-row-rejected {
-          background: #ffe5e5 !important;
-        }  
-
-        .ant-card-hoverable:hover {
-          transform: translateY(-2px);
-          transition: all 0.3s ease;
-        }
-
-        .ant-statistic-title {
-          font-size: 16px;
-          color: #000000 !important;
-        }
-
-        .ant-statistic-content-value {
-          font-size: 28px;
-          color: #000000 !important;
-        }
-
-        .text-gray-600,
-        .text-gray-500,
-        .text-gray-800 {
-          color: #000000 !important;
-        }
-
-        /* Table Scrolling Styles */
-        .overflow-x-auto {
-          -webkit-overflow-scrolling: touch;
-          scroll-behavior: smooth;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar {
-          height: 8px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: #888;
-          border-radius: 10px;
-        }
-
-        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-          background: #555;
-        }
-
-        .ant-table-wrapper {
-          width: 100%;
-        }
-
-        .ant-table {
-          background: white;
-          border-collapse: collapse;
-        }
-
-        .ant-table-thead > tr > th {
-          background: #fafafa !important;
-          font-weight: 700 !important;
-          border-bottom: 2px solid #f0f0f0 !important;
-          padding: 12px 16px !important;
-        }
-
-        .ant-table-tbody > tr > td {
-          padding: 12px 16px !important;
-          border-bottom: 1px solid #f0f0f0 !important;
-        }
-
-        .ant-table-tbody > tr:hover > td {
-          background: #fafafa !important;
-        }
-      `}</style>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Requests"
+          title="My Requests"
+          subtitle="Track what you have asked for and where each request stands."
+          onBack={() => navigate("/user")}
+        >
+          <button type="button" className="pk-cta" onClick={() => navigate("/user/sendrequest")}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> New request
+          </button>
+        </PageHero>
+        {body}
+      </div>
     </div>
   );
 };

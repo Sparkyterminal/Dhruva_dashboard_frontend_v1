@@ -19,7 +19,7 @@ const isCompletePaymentWedding = (event) => {
 
 /**
  * Read-only agreed amount breakup: Agreed Amount, Account Amount, GST, Account+GST, Cash, Total Payable.
- * No advances. Used in BudgetReportHome and BudgetReportEventWise drawer.
+ * No advances. Used on the Add budget report screen.
  */
 const AgreedAmountBreakupCard = ({ event }) => {
   if (!event?.eventTypes?.length) return null;

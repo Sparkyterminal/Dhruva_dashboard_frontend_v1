@@ -1,10 +1,8 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import { Calendar, MapPin, Clock, Users } from "lucide-react";
-import axiosClient from "@/api/axiosClient";
+import { Calendar, MapPin, Clock } from "lucide-react";
 import { message } from "antd";
 import { useSelector } from "react-redux";
 import { fetchAllMyEventsPages } from "../Dashboard/Accounts/clientBookings/clientBookingsUtils";
@@ -13,6 +11,11 @@ import {
   downloadCanvasAsPng,
 } from "../utils/captureElementAsImage";
 import { getEffectiveCutoffDate } from "../utils/dataCutoff";
+import { CalendarEmpty, CalendarSkeleton } from "./CalendarKit";
+import { sameMonth, softEvent } from "./CalendarKit/calendarHelpers";
+import "@/Components/PageKit/PageKit.css";
+
+const confirmedCache = new Map();
 
 const CalendarClients = () => {
   const [events, setEvents] = useState([]);
@@ -29,10 +32,8 @@ const CalendarClients = () => {
       return;
     }
 
-    const config = {
-      headers: { Authorization: user?.access_token },
-    };
-
+    const cached = confirmedCache.get(`confirmed:${user.access_token}`);
+    if (cached) setEvents(cached);
     setLoading(true);
     try {
       const authHeaders = { Authorization: user.access_token };
@@ -50,11 +51,8 @@ const CalendarClients = () => {
           event.eventTypes.length > 0,
       );
 
+      confirmedCache.set(`confirmed:${user.access_token}`, eventsData);
       setEvents(eventsData);
-
-      if (eventsData.length === 0) {
-        message.info("No confirmed events found");
-      }
     } catch (err) {
       console.error("Error fetching events:", err);
       if (err.response?.status === 401) {
@@ -139,9 +137,7 @@ const CalendarClients = () => {
                 eventConfirmation: event.eventConfirmation || "Pending",
                 priority: getPriority(et.eventType || event.eventName),
               },
-              backgroundColor: getEventColor(`${event._id}-${idx}`),
-              borderColor: getEventColor(`${event._id}-${idx}`),
-              textColor: "#ffffff",
+              ...softEvent(getEventColor(`${event._id}-${idx}`)),
             });
           } catch (error) {
             console.error(`Error processing event ${event._id}-${idx}:`, error);
@@ -214,44 +210,19 @@ const CalendarClients = () => {
         eventInfo.event.extendedProps || {};
 
       const displayVenue = subVenue || venue;
-      const marginTop = priority === 3 ? "10px" : "0px";
 
       return (
-        <div
-          className="p-2 text-xs overflow-hidden leading-snug"
-          style={{
-            fontFamily: "system-ui, -apple-system, sans-serif",
-            marginTop,
-          }}
-        >
-          <div
-            className="font-semibold truncate mb-1"
-            style={{ fontSize: "11px" }}
-          >
-            {formatText(eventName)}
-          </div>
-          {eventType && (
-            <div className="truncate mb-1" style={{ fontSize: "10px" }}>
-              {formatText(eventType)}
-            </div>
-          )}
-          {lead1 && (
-            <div className="truncate mb-0.5" style={{ fontSize: "10px" }}>
-              {formatText(lead1)}
-            </div>
-          )}
-          {lead2 && (
-            <div className="truncate mb-0.5" style={{ fontSize: "10px" }}>
-              {formatText(lead2)}
-            </div>
-          )}
+        <div className="fc-event-body" data-priority={priority}>
+          <div className="t">{formatText(eventName)}</div>
+          {eventType && <div className="s">{formatText(eventType)}</div>}
+          {lead1 && <div className="s">{formatText(lead1)}</div>}
+          {lead2 && <div className="s">{formatText(lead2)}</div>}
           {displayVenue && (
-            <div
-              className="truncate flex items-center gap-1"
-              style={{ fontSize: "10px" }}
-            >
-              <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-              <span className="truncate">{formatText(displayVenue)}</span>
+            <div className="s" style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <MapPin size={10} style={{ flex: "none" }} />
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>
+                {formatText(displayVenue)}
+              </span>
             </div>
           )}
         </div>
@@ -259,8 +230,8 @@ const CalendarClients = () => {
     } catch (error) {
       console.error("Error rendering event content:", error);
       return (
-        <div className="p-1 text-xs">
-          <div className="font-semibold">Event</div>
+        <div className="fc-event-body">
+          <div className="t">Event</div>
         </div>
       );
     }
@@ -416,7 +387,7 @@ const CalendarClients = () => {
         month: "short",
         day: "numeric",
       });
-    } catch (error) {
+    } catch {
       return "";
     }
   };
@@ -436,396 +407,181 @@ const CalendarClients = () => {
     }
   };
 
-  if (loading) {
+  const calendarEvents = useMemo(() => getCalendarEvents(), [events]);
+
+  if (loading && events.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
-          <div className="text-lg text-white">Loading events...</div>
-        </div>
+      <div className="ck">
+        <CalendarSkeleton />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen p-6">
+    <div className={`ck print-full${exportingImage ? " calendar-exporting" : ""}`}>
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          .print-full { 
-            width: 100% !important; 
-            max-width: 100% !important;
-            margin: 0 !important;
-            padding: 20px !important;
-          }
-          body { 
-            print-color-adjust: exact; 
-            -webkit-print-color-adjust: exact;
-            background: white !important;
-          }
+          body { print-color-adjust: exact; -webkit-print-color-adjust: exact; background: white !important; }
         }
-        
-        .fc {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        }
-        
-        .fc .fc-toolbar-title {
-          font-size: 1.5rem;
-          font-weight: 600;
-          color: #243227;
-        }
-        
-        .fc-theme-standard td, .fc-theme-standard th {
-          border-color: #e6eae7;
-        }
-        
-        .fc-theme-standard .fc-scrollgrid {
-          border-color: #e6eae7;
-        }
-        
-        .fc .fc-daygrid-day-number {
-          padding: 8px;
-          font-weight: 500;
-          color: #3c4c3f;
-        }
-        
-        .fc .fc-daygrid-day.fc-day-today {
-          background-color: #e0eee1 !important;
-        }
-        
-        .fc .fc-col-header-cell {
-          background-color: #f9fbfa;
-          font-weight: 500;
-          color: #505e53;
-          padding: 12px 0;
-        }
-        
-        .fc-event {
-          cursor: pointer;
-          margin: 3px 2px;
-          border-radius: 4px;
-          border-width: 0;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-          opacity: 1 !important;
-        }
-        
-        .fc-event:hover {
-          opacity: 0.9 !important;
-          transform: translateY(-1px);
-          transition: all 0.2s;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-        }
-        
-        .fc-event-main {
-          opacity: 1 !important;
-        }
-        
-        .fc-daygrid-event {
-          opacity: 1 !important;
-        }
-        
-        .fc .fc-button {
-          background-color: #226a36;
-          border-color: #226a36;
-          text-transform: capitalize;
-          font-weight: 500;
-          padding: 8px 16px;
-          border-radius: 8px;
-        }
-        
-        .fc .fc-button:hover {
-          background-color: #1d6531;
-          border-color: #1d6531;
-        }
-        
-        .fc .fc-button-primary:disabled {
-          background-color: #9ca3af;
-          border-color: #9ca3af;
-        }
-        
-        .fc-daygrid-event {
-          white-space: normal !important;
-          overflow: visible !important;
-        }
-        
-        .fc-daygrid-day-frame {
-          min-height: 140px !important;
-        }
-        
-        .fc-daygrid-day-events {
-          margin-bottom: 0 !important;
-        }
-        
-        .fc-event-main {
-          overflow: visible !important;
-        }
-        
-        .fc-daygrid-event-harness {
-          margin-bottom: 4px !important;
-        }
-
-        .fc .fc-downloadMonthImage-button {
-          background-color: #1f6f3a !important;
-          border-color: #1f6f3a !important;
-        }
-
-        .fc .fc-downloadMonthImage-button:hover {
-          background-color: #047857 !important;
-          border-color: #047857 !important;
-        }
-
-        .calendar-exporting .fc-downloadMonthImage-button {
-          opacity: 0.6;
-          pointer-events: none;
-        }
+        .fc .fc-downloadMonthImage-button { background: #fff !important; }
+        .calendar-exporting .fc-downloadMonthImage-button { opacity: 0.6; pointer-events: none; }
       `}</style>
 
-      <div
-        className={`max-w-7xl mx-auto print-full${exportingImage ? " calendar-exporting" : ""}`}
-      >
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-xl p-6 mb-6 no-print">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className="p-3 rounded-xl"
-                style={{
-                  background:
-                    "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
-                }}
-              >
-                <Calendar className="w-8 h-8 text-white" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-semibold text-gray-800">
-                  Confirmed Events
-                </h1>
-                <p className="text-gray-600 mt-1">View all confirmed events</p>
-              </div>
-            </div>
-            <div className="text-sm text-gray-600 px-4 py-2 bg-gray-100 rounded-lg">
-              {events.length} confirmed events
-            </div>
+      <div className="ck-head no-print">
+        <div className="ck-title">
+          <span className="ck-title-icon">
+            <Calendar size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h2>Confirmed events</h2>
+            <p>Every confirmed event, by date and venue</p>
           </div>
         </div>
+        <div className="ck-chips">
+          <span className="ck-chip is-green">
+            <i /> <b>{events.length}</b> confirmed events
+          </span>
+        </div>
+      </div>
 
-        {/* Calendar */}
-        <div
-          ref={calendarExportRef}
-          className="bg-white rounded-2xl shadow-xl p-6 mb-6"
-        >
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, interactionPlugin]}
-            initialView="dayGridMonth"
-            customButtons={{
-              downloadMonthImage: {
-                text: "Download Image",
-                click: handleDownloadMonthImage,
-              },
-            }}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "downloadMonthImage",
-            }}
-            events={getCalendarEvents()}
-            eventContent={renderEventContent}
-            height="auto"
-            dayMaxEvents={false}
-            eventMaxStack={15}
-            datesSet={(dateInfo) => {
-              try {
-                if (dateInfo.start) {
-                  const calendarApi = calendarRef.current?.getApi();
-                  if (calendarApi) {
-                    const currentDate = calendarApi.getDate();
-                    setSelectedMonth(currentDate);
-                  }
-                }
-              } catch (error) {
-                console.error("Error setting selected month:", error);
+      <div ref={calendarExportRef} className="ck-card">
+        {loading && <span className="ck-refresh no-print">Refreshing…</span>}
+        <FullCalendar
+          ref={calendarRef}
+          plugins={[dayGridPlugin, interactionPlugin]}
+          initialView="dayGridMonth"
+          customButtons={{
+            downloadMonthImage: {
+              text: "Download image",
+              click: handleDownloadMonthImage,
+            },
+          }}
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "downloadMonthImage",
+          }}
+          events={calendarEvents}
+          eventContent={renderEventContent}
+          height="auto"
+          dayMaxEvents={false}
+          eventMaxStack={15}
+          datesSet={() => {
+            try {
+              const calendarApi = calendarRef.current?.getApi();
+              if (calendarApi) {
+                const currentDate = calendarApi.getDate();
+                setSelectedMonth((prev) =>
+                  sameMonth(prev, currentDate) ? prev : currentDate,
+                );
               }
-            }}
-            eventDidMount={(info) => {
-              try {
-                const {
-                  clientName,
-                  eventName,
-                  eventType,
-                  venue,
-                  subVenue,
-                  lead1,
-                  lead2,
-                  brideName,
-                  groomName,
-                } = info.event.extendedProps;
+            } catch (error) {
+              console.error("Error setting selected month:", error);
+            }
+          }}
+          eventDidMount={(info) => {
+            try {
+              const {
+                clientName,
+                eventName,
+                eventType,
+                venue,
+                subVenue,
+                lead1,
+                lead2,
+                brideName,
+                groomName,
+              } = info.event.extendedProps;
 
-                let tooltip = `${formatText(eventName)}`;
-                if (eventType) {
-                  tooltip += ` - ${formatText(eventType)}`;
-                }
-                tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
-                if (brideName && groomName) {
-                  tooltip += `\n${formatText(brideName)} & ${formatText(
-                    groomName,
-                  )}`;
-                }
-                if (lead1) tooltip += `\nLead 1: ${formatText(lead1)}`;
-                if (lead2) tooltip += `\nLead 2: ${formatText(lead2)}`;
-                tooltip += `\nVenue: ${formatText(subVenue || venue) || "TBD"}`;
-
-                info.el.setAttribute("title", tooltip);
-              } catch (error) {
-                console.error("Error mounting event:", error);
+              let tooltip = `${formatText(eventName)}`;
+              if (eventType) {
+                tooltip += ` - ${formatText(eventType)}`;
               }
-            }}
+              tooltip += `\nClient: ${formatText(clientName) || "Unknown"}`;
+              if (brideName && groomName) {
+                tooltip += `\n${formatText(brideName)} & ${formatText(groomName)}`;
+              }
+              if (lead1) tooltip += `\nLead 1: ${formatText(lead1)}`;
+              if (lead2) tooltip += `\nLead 2: ${formatText(lead2)}`;
+              tooltip += `\nVenue: ${formatText(subVenue || venue) || "TBD"}`;
+
+              info.el.setAttribute("title", tooltip);
+            } catch (error) {
+              console.error("Error mounting event:", error);
+            }
+          }}
+        />
+      </div>
+
+      <div className="ck-card">
+        <h3 className="ck-card-title">
+          Events this month <span>{monthLabel}</span>
+        </h3>
+
+        {monthEvents.length === 0 ? (
+          <CalendarEmpty
+            icon={<Calendar size={24} aria-hidden="true" />}
+            title="No confirmed events this month"
+            hint="Use the arrows above to look at another month."
           />
-        </div>
-
-        {/* Event Details Section */}
-        <div className="bg-white rounded-2xl shadow-xl p-6">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 rounded-lg" style={{ background: "#226a36" }}>
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-semibold text-gray-800">
-                Events This Month
-              </h3>
-              <p className="text-sm text-gray-500">{monthLabel}</p>
-            </div>
-          </div>
-
-          <div className="grid gap-4">
-            {monthEvents.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-gray-100 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
-                  <Calendar className="w-10 h-10 text-gray-400" />
-                </div>
-                <p className="text-gray-500 text-lg">
-                  No confirmed events scheduled for this month
-                </p>
-              </div>
-            ) : (
-              monthEvents.map((event) => (
-                <div
-                  key={event._id}
-                  className="border-l-4 rounded-lg p-6 bg-white hover:shadow-lg transition-shadow"
-                  style={{
-                    borderColor: getEventColor(event._id),
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
-                  }}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2 flex-wrap">
-                        <span
-                          className="px-3 py-1 rounded-full text-sm font-medium text-white"
-                          style={{
-                            backgroundColor: getEventColor(
-                              formatText(event.eventName),
-                            ),
-                          }}
-                        >
-                          {formatText(event.eventName)}
-                        </span>
-                        <span className="px-3 py-1 rounded-full text-sm font-medium text-white bg-green-600">
-                          Confirmed Event
-                        </span>
-                      </div>
-                      <h4 className="text-xl font-semibold text-gray-800 mb-1">
-                        {formatText(event.clientName)}
-                      </h4>
-                      <div className="flex items-center gap-3 text-sm text-indigo-600 mb-2">
-                        <span className="font-medium">
-                          Project Coordinators:
-                        </span>
-                        <span>{formatText(event.lead1) || "-"}</span>
-                        <span>
-                          {formatText(event.lead2)
-                            ? `, ${formatText(event.lead2)}`
-                            : ""}
-                        </span>
-                      </div>
-                      {event.brideName && event.groomName && (
-                        <p className="text-gray-600 flex items-center gap-2">
-                          <Users className="w-4 h-4" />
-                          {formatText(event.brideName)} &{" "}
-                          {formatText(event.groomName)}
-                        </p>
-                      )}
+        ) : (
+          <div className="ck-list">
+            {monthEvents.map((event) => (
+              <article
+                key={event._id}
+                className="ck-item"
+                style={{ "--accent": getEventColor(event._id) }}
+              >
+                <div className="ck-item-top">
+                  <div>
+                    <div className="pk-pills">
+                      <span className="pk-pill">{formatText(event.eventName)}</span>
+                      <span className="pk-pill is-grey">Confirmed</span>
                     </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {event.eventTypes.map((et, idx) => {
-                      const start = et?.startDate;
-                      const end = et?.endDate;
-                      const multiDay = start && end && start !== end;
-                      const displayVenue =
-                        formatText(et.subVenueLocation) ||
-                        formatText(et.venueLocation);
-
-                      return (
-                        <div
-                          key={idx}
-                          className="bg-gray-50 rounded-lg p-4 border border-gray-200 hover:border-purple-300 transition-colors"
-                        >
-                          <div className="flex items-start gap-4">
-                            <div className="flex-shrink-0">
-                              <div className="text-sm font-medium bg-indigo-600 text-white px-3 py-2 rounded">
-                                {formatDateShort(start)}
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-gray-800 mb-1 flex items-center gap-2">
-                                <div
-                                  className="w-2 h-2 rounded-full"
-                                  style={{
-                                    backgroundColor: getEventColor(
-                                      `${event._id}-${idx}`,
-                                    ),
-                                  }}
-                                ></div>
-                                {formatText(et.eventType) ||
-                                  formatText(event.eventName)}
-                              </div>
-
-                              <div className="text-sm text-gray-600 mb-2">
-                                <span className="inline-flex items-center gap-2 mr-4">
-                                  <MapPin
-                                    className="w-4 h-4 mt-0.5"
-                                    style={{ color: "#226a36" }}
-                                  />
-                                  <span>{displayVenue}</span>
-                                </span>
-                                <span className="inline-flex items-center gap-2">
-                                  <Clock
-                                    className="w-4 h-4"
-                                    style={{ color: "#226a36" }}
-                                  />
-                                  <span>
-                                    {formatDate(start)} {formatTime(start)}
-                                    {multiDay && end
-                                      ? ` → ${formatDate(end)} ${formatTime(
-                                          end,
-                                        )}`
-                                      : ""}
-                                  </span>
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                    <h4>{formatText(event.clientName)}</h4>
+                    <p className="ck-item-meta">
+                      <b>Project coordinators:</b> {formatText(event.lead1) || "-"}
+                      {formatText(event.lead2) ? `, ${formatText(event.lead2)}` : ""}
+                    </p>
+                    {event.brideName && event.groomName && (
+                      <p className="ck-item-meta">
+                        {formatText(event.brideName)} &amp; {formatText(event.groomName)}
+                      </p>
+                    )}
                   </div>
                 </div>
-              ))
-            )}
+
+                <div className="ck-sub">
+                  {event.eventTypes.map((et, idx) => {
+                    const start = et?.startDate;
+                    const end = et?.endDate;
+                    const multiDay = start && end && start !== end;
+                    const displayVenue =
+                      formatText(et.subVenueLocation) || formatText(et.venueLocation);
+
+                    return (
+                      <div key={idx} className="ck-row">
+                        <span className="ck-date">{formatDateShort(start)}</span>
+                        <div className="ck-row-body">
+                          <strong>{formatText(et.eventType) || formatText(event.eventName)}</strong>
+                          <span>
+                            <MapPin size={14} aria-hidden="true" />
+                            {displayVenue}
+                          </span>
+                          <span>
+                            <Clock size={14} aria-hidden="true" />
+                            {formatDate(start)} {formatTime(start)}
+                            {multiDay && end ? ` → ${formatDate(end)} ${formatTime(end)}` : ""}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            ))}
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

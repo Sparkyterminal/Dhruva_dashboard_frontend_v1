@@ -1,5 +1,5 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
+import RequestsHeader from "../../Components/RequestsDashboard";
 import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import {
@@ -9,14 +9,10 @@ import {
   Select,
   Space,
   message,
-  Card,
-  Row,
-  Col,
   Tag,
   Collapse,
   DatePicker,
   Tabs,
-  Spin,
 } from "antd";
 import {
   EditOutlined,
@@ -246,7 +242,7 @@ const AllRequirementsTable = () => {
           rejected: data.stats.rejected ?? 0,
         });
       }
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch requirements");
       if (departmentId && append) {
         setDepartmentData((prev) => {
@@ -411,7 +407,7 @@ const AllRequirementsTable = () => {
       message.success("Planned amount updated");
       setEditRowId(null);
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to update planned amount");
     }
   };
@@ -430,7 +426,7 @@ const AllRequirementsTable = () => {
       message.success("Amount paid updated");
       setEditRowId(null);
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to update amount paid");
     }
   };
@@ -449,7 +445,7 @@ const AllRequirementsTable = () => {
       message.success("Approved amount updated");
       setEditRowId(null);
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to update approved amount");
     }
   };
@@ -463,7 +459,7 @@ const AllRequirementsTable = () => {
       );
       message.success("Request approved");
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to approve request");
     }
   };
@@ -477,7 +473,7 @@ const AllRequirementsTable = () => {
       );
       message.success("Request rejected");
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to reject request");
     }
   };
@@ -512,7 +508,7 @@ const AllRequirementsTable = () => {
       message.success("Entity updated");
       setEditRowId(null);
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to update entity");
     }
   };
@@ -531,7 +527,7 @@ const AllRequirementsTable = () => {
       message.success("Paid to updated");
       setEditRowId(null);
       refetchDepartment(row.department?.id);
-    } catch (err) {
+    } catch {
       message.error("Failed to update paid to");
     }
   };
@@ -1166,84 +1162,12 @@ const AllRequirementsTable = () => {
 
   return (
     <div
-      className="min-h-screen w-full relative"
+      className="min-h-screen w-full relative rd-page"
       style={{ background: "transparent" }}
     >
-      <style>{`
-        .completed-row {
-          background: #f0fdf4 !important;
-          opacity: 0.85;
-        }
-        .rejected-row {
-          background: #fef2f2 !important;
-          opacity: 0.75;
-        }
-        .ant-table-thead > tr > th {
-          background: #214228 !important;
-          color: #fff !important;
-          font-size: 18px !important;
-          font-weight: 700 !important;
-          border-bottom: 2px solid #e6eae7 !important;
-        }
-        .ant-table-tbody > tr > td {
-          color: #000 !important;
-          font-size: 18px !important;
-          font-weight: 700 !important;
-        }
-        .ant-collapse-item {
-          border-radius: 12px;
-          margin-bottom: 12px;
-          overflow: hidden;
-          border: none !important;
-        }
-        .ant-collapse-header {
-          background: linear-gradient(135deg, #226a36, #c4a747);
-          color: white !important;
-          font-weight: 700;
-          font-size: 20px;
-          border-radius: 12px;
-          padding: 0 12px !important;
-        }
-        .ant-collapse-content {
-          background: linear-gradient(180deg, #c0ddc3 0%, #f5edc4 100%);
-          border-radius: 0 0 12px 12px;
-          padding: 12px !important;
-        }
-        .ant-collapse-arrow svg {
-          fill: white;
-        }
-        .filter-section {
-          background: #fff;
-          border-radius: 16px;
-          padding: 24px;
-          border: 1px solid #e6eae7;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-          margin-bottom: 24px;
-        }
-        /* Scrolling Styles */
-        .overflow-x-auto {
-          -webkit-overflow-scrolling: touch;
-          scroll-behavior: smooth;
-        }
-        .overflow-x-auto::-webkit-scrollbar {
-          height: 8px;
-        }
-        .overflow-x-auto::-webkit-scrollbar-track {
-          background: #f1f1f1;
-          border-radius: 10px;
-        }
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: #888;
-          border-radius: 10px;
-        }
-        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-          background: #555;
-        }
-      `}</style>
-
       <div
         style={{
-          padding: "32px",
+          padding: "24px clamp(16px, 3vw, 40px) 40px",
           background: "transparent",
           minHeight: "100vh",
           position: "relative",
@@ -1251,88 +1175,7 @@ const AllRequirementsTable = () => {
         }}
       >
         {/* Centered Heading */}
-        <h1
-          style={{
-            textAlign: "center",
-            fontSize: 48,
-            fontWeight: 600,
-            color: "#243227",
-            marginBottom: 24,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          Request's Dashboard
-        </h1>
-
-        {/* Statistics Cards: Total, Pending, Approved, Rejected */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #226a36 0%, #0f4220 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-                Total
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #d3be62 0%, #a88a33 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-                Pending
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.pending}
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #338147 0%, #5da06a 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-                Approved
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.completed}
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #b5483a 0%, #d9894a 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>
-                Rejected
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.rejected}
-              </div>
-            </Card>
-          </Col>
-        </Row>
+        <RequestsHeader title="Request's Dashboard" subtitle="Everything awaiting your decision" stats={stats} />
 
         {/* Filters: Search, Date Range, Event, Vendor */}
         <div

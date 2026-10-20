@@ -1,0 +1,144 @@
+/* New / Edit Event Booking: calm form skin. Everything is scoped under .bf-form or .bf-panel,
+   so only these two screens are affected. */
+
+.bf-wrap {
+  max-width: 1100px;
+}
+
+.bf-panel {
+  padding: 28px clamp(18px, 3vw, 36px) 32px;
+}
+
+.bf-form .ant-form-item {
+  margin-bottom: 20px;
+}
+
+.bf-form .ant-form-item-label > label {
+  font-size: 13px;
+  font-weight: 600 !important;
+  color: var(--ink) !important;
+}
+
+.bf-form .ant-form-item-label > label.ant-form-item-required::before {
+  color: #c0392b !important;
+}
+
+/* inputs: one rounded, quiet look */
+.bf-form .ant-input,
+.bf-form .ant-input-affix-wrapper,
+.bf-form .ant-input-number,
+.bf-form .ant-picker,
+.bf-form .ant-select:not(.ant-select-customize-input) .ant-select-selector,
+.bf-form textarea.ant-input {
+  border-radius: 10px;
+  border-color: var(--line-strong);
+}
+
+.bf-form .ant-input:hover,
+.bf-form .ant-input-affix-wrapper:hover,
+.bf-form .ant-input-number:hover,
+.bf-form .ant-picker:hover,
+.bf-form .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+  border-color: var(--brand-action);
+}
+
+.bf-form .ant-input:focus,
+.bf-form .ant-input-focused,
+.bf-form .ant-input-affix-wrapper-focused,
+.bf-form .ant-input-number-focused,
+.bf-form .ant-picker-focused,
+.bf-form .ant-select-focused .ant-select-selector {
+  border-color: var(--brand-action) !important;
+  box-shadow: 0 0 0 3px rgba(34, 106, 54, 0.14) !important;
+}
+
+.bf-form .ant-input-number {
+  width: 100%;
+}
+
+/* sections: event types and advances */
+.bf-form .glass-event-type-card {
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  background: #fbfcfa;
+  box-shadow: none;
+}
+
+.bf-form .glass-advance-card {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.bf-form .event-type-tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: #e0eee1;
+  color: var(--brand-action);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.bf-form .ant-divider {
+  margin: 22px 0 16px;
+  border-color: var(--line);
+}
+
+.bf-form .ant-divider-inner-text {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.bf-form .ant-radio-button-wrapper {
+  border-color: var(--line-strong);
+}
+
+.bf-form .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+
+.bf-form .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled)::before {
+  background: var(--brand);
+}
+
+.bf-form .ant-btn-dashed {
+  border-radius: 10px;
+  border-color: var(--line-strong);
+  color: var(--brand-action);
+  font-weight: 600;
+}
+
+.bf-form .ant-btn-dashed:hover {
+  border-color: var(--brand-action) !important;
+  color: var(--brand) !important;
+  background: #f2f8f2;
+}
+
+.bf-form .ant-btn-link {
+  font-weight: 600;
+  color: var(--brand-action);
+}
+
+/* the big submit button at the end */
+.bf-form button[type="submit"].ant-btn-primary {
+  height: 52px !important;
+  border-radius: 12px !important;
+  background: var(--brand-action) !important;
+  box-shadow: 0 10px 22px -12px rgba(11, 61, 11, 0.6) !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+}
+
+.bf-form button[type="submit"].ant-btn-primary:hover {
+  background: var(--brand) !important;
+}

@@ -5,11 +5,14 @@
 export const CONFIRMED_EVENT_STATUS = "Confirmed Event";
 /** Canonical in-progress status from GET /events (status=inprogress). */
 export const INPROGRESS_EVENT_STATUS = "InProgress";
+/** Canonical almost-booked status (status=almostbooked). */
+export const ALMOST_BOOKED_EVENT_STATUS = "Almost Booked";
 
 /** Statuses allowed to create / list / edit budget report Excel workbooks. */
 export const BUDGET_REPORT_ELIGIBLE_STATUSES = [
   CONFIRMED_EVENT_STATUS,
   INPROGRESS_EVENT_STATUS,
+  ALMOST_BOOKED_EVENT_STATUS,
 ];
 
 export const getEventId = (event) => {
@@ -36,7 +39,7 @@ export const isConfirmedEvent = (event) =>
 export const isInProgressEvent = (event) =>
   event?.eventConfirmation === INPROGRESS_EVENT_STATUS;
 
-/** Confirmed Event or InProgress — eligible for budget report Excel. */
+/** Confirmed Event, InProgress or Almost Booked — eligible for budget report Excel. */
 export const isBudgetReportEligibleEvent = (event) =>
   BUDGET_REPORT_ELIGIBLE_STATUSES.includes(event?.eventConfirmation);
 

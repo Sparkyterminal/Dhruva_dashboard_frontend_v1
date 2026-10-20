@@ -1,0 +1,84 @@
+/* New requirement: three numbered sections on a single page. */
+
+.rq-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.rq-section {
+  padding: 22px clamp(18px, 3vw, 30px) 8px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(11, 61, 11, 0.04), 0 14px 30px -26px rgba(11, 61, 11, 0.35);
+}
+
+.rq-section > header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.rq-section > header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.rq-section > header p {
+  margin: 3px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.rq-step {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: var(--brand);
+  color: var(--gold);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 22px;
+}
+
+@media (max-width: 640px) {
+  .rq-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rq-submit {
+  padding: 4px 2px 0;
+}
+
+.rq-submit .fk-actions {
+  margin-top: 0;
+}
+
+.rq-submit .fk-btn.is-primary {
+  min-width: 200px;
+  height: 50px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  box-shadow: 0 12px 24px -14px rgba(11, 61, 11, 0.7);
+}
+
+.rq-note {
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}

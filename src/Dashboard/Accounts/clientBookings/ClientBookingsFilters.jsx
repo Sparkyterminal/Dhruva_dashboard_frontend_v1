@@ -1,8 +1,9 @@
 import React from "react";
-import { Card, Row, Col, Button, Select, DatePicker, Typography } from "antd";
+import { Select, DatePicker } from "antd";
+import { X } from "lucide-react";
 import dayjs from "dayjs";
+import "./Bookings.css";
 
-const { Text } = Typography;
 const { RangePicker } = DatePicker;
 
 const ClientBookingsFilters = ({
@@ -16,21 +17,14 @@ const ClientBookingsFilters = ({
   onVenueChange,
   onClear,
   cutoffDate,
-}) => (
-  <Card
-    className="border-0"
-    style={{
-      borderRadius: "14px",
-      background: "white",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-    }}
-    bodyStyle={{ padding: "16px 24px" }}
-  >
-    <Row gutter={[16, 12]} align="middle">
-      <Col xs={24} sm={8} md={6}>
-        <Text strong className="text-slate-600 text-sm block mb-1">
-          Event Name
-        </Text>
+}) => {
+  const hasFilter = Boolean(
+    filterEventName || filterVenueId || (filterDateRange?.[0] && filterDateRange?.[1]),
+  );
+  return (
+    <div className="bk-filters">
+      <div className="bk-field">
+        <label>Event name</label>
         <Select
           allowClear
           placeholder="All events"
@@ -40,11 +34,9 @@ const ClientBookingsFilters = ({
           style={{ width: "100%" }}
           size="large"
         />
-      </Col>
-      <Col xs={24} sm={8} md={6}>
-        <Text strong className="text-slate-600 text-sm block mb-1">
-          Venue
-        </Text>
+      </div>
+      <div className="bk-field">
+        <label>Venue</label>
         <Select
           allowClear
           showSearch
@@ -60,11 +52,9 @@ const ClientBookingsFilters = ({
           style={{ width: "100%" }}
           size="large"
         />
-      </Col>
-      <Col xs={24} sm={12} md={10}>
-        <Text strong className="text-slate-600 text-sm block mb-1">
-          Date Range
-        </Text>
+      </div>
+      <div className="bk-field bk-field-wide">
+        <label>Date range</label>
         <RangePicker
           value={filterDateRange}
           onChange={onDateRangeChange}
@@ -76,14 +66,12 @@ const ClientBookingsFilters = ({
           size="large"
           placeholder={["Start date", "End date"]}
         />
-      </Col>
-      <Col xs={24} sm={4} md={4}>
-        <Button size="large" onClick={onClear} style={{ marginTop: 30 }}>
-          Clear filters
-        </Button>
-      </Col>
-    </Row>
-  </Card>
-);
+      </div>
+      <button type="button" className="pk-btn bk-clear" onClick={onClear} disabled={!hasFilter}>
+        <X size={14} aria-hidden="true" /> Clear filters
+      </button>
+    </div>
+  );
+};
 
 export default ClientBookingsFilters;

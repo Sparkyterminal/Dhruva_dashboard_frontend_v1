@@ -507,7 +507,6 @@
 
 // export default EditVendor;
 
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -523,7 +522,6 @@ const { Option } = Select;
 const { TextArea } = Input;
 import { LeftOutlined } from "@ant-design/icons";
 import axiosClient from "@/api/axiosClient";
-import { API_BASE_URL } from "@/config/config";
 import { useNavigate, useParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 
@@ -547,7 +545,7 @@ const EditVendor = () => {
       const res = await axiosClient.get(`department`, config);
       const items = res.data.items || res.data;
       setDepartments(items || []);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch departments");
     }
   };
@@ -613,7 +611,7 @@ const EditVendor = () => {
 
         if (vendor.vendor_type === "Other") setShowOtherVendorType(true);
       }
-    } catch (error) {
+    } catch {
       message.error("Failed to fetch vendor details");
     }
   };

@@ -1,14 +1,15 @@
 import React, { useState } from "react";
-import { Typography, Input, Button, Card, message } from "antd";
+import { message } from "antd";
 import { useSelector } from "react-redux";
 import axiosClient from "@/api/axiosClient";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "@/config/config";
+import { FormActions, FormCard, TextField } from "@/Components/FormKit";
+import { PageHero } from "@/Components/PageKit";
 
-const { Title, Text } = Typography;
-
+/** Add an event name. `inModal` renders just the form (for use inside a dialog). */
 const AddEvent = ({ inModal = false, onSuccess, onCancel } = {}) => {
   const [name, setName] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const user = useSelector((state) => state.user.value);
   const config = { headers: { Authorization: user?.access_token } };
@@ -16,15 +17,14 @@ const AddEvent = ({ inModal = false, onSuccess, onCancel } = {}) => {
 
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
-    if (!name || !name.trim())
-      return message.error("Please enter an event name");
+    if (!name || !name.trim()) {
+      setError("Please enter an event name");
+      return;
+    }
+    setError("");
     setLoading(true);
     try {
-      const res = await axiosClient.post(
-        `event-names`,
-        { name: name.trim() },
-        config
-      );
+      const res = await axiosClient.post(`event-names`, { name: name.trim() }, config);
       message.success("Event created successfully");
       onSuccess?.(res.data);
       if (inModal) {
@@ -41,63 +41,49 @@ const AddEvent = ({ inModal = false, onSuccess, onCancel } = {}) => {
   };
 
   const handleCancel = () => {
-    setName("");
-  };
-
-  const handleBack = () => {
     if (inModal) onCancel?.();
     else navigate(-1);
   };
 
+  const fields = (
+    <>
+      <TextField
+        label="Event name"
+        required
+        autoFocus
+        value={name}
+        onChange={(v) => {
+          setName(v);
+          if (error) setError("");
+        }}
+        placeholder="e.g. Wedding"
+        error={error}
+      />
+      <FormActions onCancel={handleCancel} submitLabel="Add event name" busy={loading} />
+    </>
+  );
+
+  if (inModal) {
+    return (
+      <form onSubmit={handleSubmit} noValidate>
+        {fields}
+      </form>
+    );
+  }
+
   return (
-    <div className={inModal ? "bg-transparent" : "min-h-screen bg-gray-50 flex flex-col"}>
-      {!inModal && (
-        <div className="flex items-center gap-3 px-6 pt-4">
-          <button
-            type="button"
-            onClick={handleBack}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            ← Back
-          </button>
-          <Title level={3} className="mb-0!">
-            Add Event
-          </Title>
-        </div>
-      )}
-
-      <div className={inModal ? "" : "flex-1 flex items-start justify-center px-4 py-8"}>
-        <div className="w-full max-w-md bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Text strong>Event name</Text>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter event name"
-                size="large"
-                className="w-full rounded-lg border border-gray-300"
-              />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4">
-              <button
-                type="button"
-                onClick={inModal ? onCancel : handleCancel}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-4 py-2 rounded-lg bg-blue-600 text-sm text-white hover:bg-blue-700 disabled:opacity-60"
-              >
-                {loading ? "Submitting..." : "Submit"}
-              </button>
-            </div>
-          </form>
-        </div>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Masterdata"
+          title="Add event name"
+          subtitle="A new kind of event that can be booked."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        />
+        <FormCard onSubmit={handleSubmit} width={520}>
+          {fields}
+        </FormCard>
       </div>
     </div>
   );

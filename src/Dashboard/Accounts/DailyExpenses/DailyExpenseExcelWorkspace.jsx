@@ -1,26 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-  Button,
-  DatePicker,
-  Form,
-  Input,
-  Modal,
-  Spin,
-  Tag,
-  Typography,
-  message,
-} from "antd";
-import {
-  ArrowLeftOutlined,
-  SaveOutlined,
-  ReloadOutlined,
-  EyeOutlined,
-  EditOutlined,
-  FormOutlined,
-} from "@ant-design/icons";
+import { Form, Input, Modal, DatePicker, Spin, Typography, message } from "antd";
+import { ArrowLeft, Eye, FilePen, Pencil, RefreshCw, Save } from "lucide-react";
 import dayjs from "dayjs";
+import "./DailyExpenses.css";
 import UniverSheets from "../../../Components/UniverSheets";
 import {
   applySheetNamesToWorkbook,
@@ -38,7 +22,7 @@ import {
   todayBusinessDate,
 } from "./dailyExpensesUtils";
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 const defaultWorkbookTitle = (dateKey) =>
   `Daily Expenses — ${formatDisplayDate(dateKey)}`;
@@ -339,41 +323,23 @@ const DailyExpenseExcelWorkspace = ({ mode = "edit" }) => {
     mode === "view" ? "View" : mode === "add" ? "Add" : "Edit";
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        height: "100vh",
-        overflow: "hidden",
-        background: "#f9fbf9",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "12px 16px",
-          borderBottom: "1px solid #e5ede6",
-          background: "#ffffff",
-          flexShrink: 0,
-          flexWrap: "wrap",
-        }}
-      >
-        <Button
-          type="text"
-          icon={<ArrowLeftOutlined />}
+    <div className="dew-shell">
+      <div className="dew-bar">
+        <button
+          type="button"
+          className="dew-back"
           onClick={() => navigate("/user/daily-expenses")}
-          style={{ padding: "4px 8px" }}
+          aria-label="Back to Daily Expenses"
         >
-          Back
-        </Button>
+          <ArrowLeft size={18} aria-hidden="true" />
+        </button>
 
-        <div style={{ flex: 1, minWidth: 200 }}>
-          <Title level={4} style={{ margin: 0 }}>
-            Daily Expenses Excel — {modeLabel}
-          </Title>
-          <Text type="secondary" style={{ fontSize: 12 }}>
+        <div className="dew-heading">
+          <h1>
+            Daily Expenses
+            <span className={`dew-mode${readOnly ? " is-readonly" : ""}`}>{modeLabel}</span>
+          </h1>
+          <p className="dew-meta">
             {formatDisplayDate(selectedDate)}
             {updatedAt
               ? ` · Last saved ${dayjs(updatedAt).format("DD MMM YYYY, hh:mm A")}`
@@ -382,23 +348,11 @@ const DailyExpenseExcelWorkspace = ({ mode = "edit" }) => {
             {sheetStats?.sheetCount
               ? ` · ${sheetStats.sheetCount} sheet${sheetStats.sheetCount === 1 ? "" : "s"}`
               : ""}
-          </Text>
-          {Array.isArray(sheetStats?.sheetNames) &&
-          sheetStats.sheetNames.length > 0 ? (
-            <div style={{ marginTop: 4 }}>
-              {sheetStats.sheetNames.map((n) => (
-                <Tag key={n} style={{ marginBottom: 2 }}>
-                  {n}
-                </Tag>
-              ))}
-            </div>
-          ) : null}
+          </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Text strong style={{ fontSize: 13, whiteSpace: "nowrap" }}>
-            Excel name
-          </Text>
+        <label className="dew-field">
+          <span>Excel name</span>
           <Input
             value={workbookTitle}
             onChange={(e) => setWorkbookTitle(e.target.value)}
@@ -407,12 +361,10 @@ const DailyExpenseExcelWorkspace = ({ mode = "edit" }) => {
             style={{ width: 260 }}
             maxLength={120}
           />
-        </div>
+        </label>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Text strong style={{ fontSize: 13, whiteSpace: "nowrap" }}>
-            Date
-          </Text>
+        <label className="dew-field">
+          <span>Date</span>
           <DatePicker
             value={dayjs(selectedDate)}
             onChange={handleDateChange}
@@ -421,81 +373,60 @@ const DailyExpenseExcelWorkspace = ({ mode = "edit" }) => {
             disabled={readOnly}
             style={{ width: 150 }}
           />
+        </label>
+
+        <div className="dew-actions">
+          {readOnly ? (
+            <button
+              type="button"
+              className="de-btn is-primary"
+              onClick={() => navigate(`/user/daily-expenses/edit/${selectedDate}`)}
+            >
+              <Pencil size={14} aria-hidden="true" /> Edit
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="de-btn"
+                onClick={openSheetNamesModal}
+                disabled={loading || !sheetReady}
+              >
+                <FilePen size={14} aria-hidden="true" /> Sheet names
+              </button>
+              <button
+                type="button"
+                className="de-btn"
+                onClick={() => navigate(`/user/daily-expenses/view/${selectedDate}`)}
+                disabled={!selectedDate}
+              >
+                <Eye size={14} aria-hidden="true" /> View
+              </button>
+              <button
+                type="button"
+                className="de-btn"
+                onClick={load}
+                disabled={loading || saving}
+              >
+                <RefreshCw size={14} aria-hidden="true" /> Reload
+              </button>
+              <button
+                type="button"
+                className="de-btn is-primary"
+                onClick={handleSave}
+                disabled={loading || saving || !sheetReady || !selectedDate}
+              >
+                <Save size={14} aria-hidden="true" /> {saving ? "Saving…" : "Save"}
+              </button>
+            </>
+          )}
         </div>
-
-        <Tag color={readOnly ? "blue" : "green"}>
-          {readOnly ? "Read only" : "Editable"}
-        </Tag>
-
-        {readOnly ? (
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() =>
-              navigate(`/user/daily-expenses/edit/${selectedDate}`)
-            }
-          >
-            Edit
-          </Button>
-        ) : (
-          <>
-            <Button
-              icon={<FormOutlined />}
-              onClick={openSheetNamesModal}
-              disabled={loading || !sheetReady}
-            >
-              Sheet names
-            </Button>
-            <Button
-              icon={<EyeOutlined />}
-              onClick={() =>
-                navigate(`/user/daily-expenses/view/${selectedDate}`)
-              }
-              disabled={!selectedDate}
-            >
-              View
-            </Button>
-            <Button
-              icon={<ReloadOutlined />}
-              onClick={load}
-              disabled={loading || saving}
-            >
-              Reload
-            </Button>
-            <Button
-              type="primary"
-              icon={<SaveOutlined />}
-              onClick={handleSave}
-              loading={saving}
-              disabled={loading || !sheetReady || !selectedDate}
-            >
-              Save
-            </Button>
-          </>
-        )}
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, padding: 8 }}>
-        <div
-          style={{
-            height: "100%",
-            borderRadius: 12,
-            overflow: "hidden",
-            border: "1px solid #e5ede6",
-            background: "#fff",
-            position: "relative",
-          }}
-        >
+      <div className="dew-sheetwrap">
+        <div className="dew-sheet">
           {loading ? (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                height: "100%",
-                minHeight: 320,
-              }}
-            >
+            <div className="dew-loading">
               <Spin size="large" tip="Loading spreadsheet…" />
             </div>
           ) : (

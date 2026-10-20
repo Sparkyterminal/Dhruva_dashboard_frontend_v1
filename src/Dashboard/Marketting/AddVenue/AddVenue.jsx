@@ -1,19 +1,25 @@
-/* eslint-disable no-unused-vars */
 import React, { useState } from "react";
 import axiosClient from "@/api/axiosClient";
-import { Form, Input, Button, Space, message } from "antd";
+import { message } from "antd";
 import { useSelector } from "react-redux";
+import { FormActions, TextField } from "@/Components/FormKit";
 
+/** Add-venue form, used inside a dialog. */
 const AddVenue = ({ onSuccess, onCancel }) => {
-  const [form] = Form.useForm();
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const user = useSelector((state) => state.user.value);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    if (!name.trim()) {
+      setError("Please enter a venue name");
+      return;
+    }
+    setError("");
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-      setLoading(true);
-
       const config = {
         headers: {
           "Content-Type": "application/json",
@@ -21,11 +27,11 @@ const AddVenue = ({ onSuccess, onCancel }) => {
         },
       };
 
-      await axiosClient.post(`venue`, values, config);
+      await axiosClient.post(`venue`, { name: name.trim() }, config);
 
       message.success("Venue added");
-      form.resetFields();
-      onSuccess();
+      setName("");
+      onSuccess?.();
     } catch (err) {
       console.error("AddVenue error:", err);
       message.error("Failed to add venue");
@@ -35,17 +41,21 @@ const AddVenue = ({ onSuccess, onCancel }) => {
   };
 
   return (
-    <Form layout="vertical" form={form}>
-      <Form.Item name="name" label="Venue Name" rules={[{ required: true }]}>
-        <Input />
-      </Form.Item>
-      <Space>
-        <Button type="primary" onClick={handleSubmit} loading={loading}>
-          Submit
-        </Button>
-        <Button onClick={onCancel}>Cancel</Button>
-      </Space>
-    </Form>
+    <form onSubmit={handleSubmit} noValidate>
+      <TextField
+        label="Venue name"
+        required
+        autoFocus
+        value={name}
+        onChange={(v) => {
+          setName(v);
+          if (error) setError("");
+        }}
+        placeholder="e.g. Grand Palace"
+        error={error}
+      />
+      <FormActions onCancel={onCancel} submitLabel="Add venue" busy={loading} />
+    </form>
   );
 };
 

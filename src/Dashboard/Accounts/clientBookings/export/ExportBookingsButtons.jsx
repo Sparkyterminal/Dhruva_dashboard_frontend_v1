@@ -5,10 +5,7 @@ import {
   FilePdfOutlined,
   FileWordOutlined,
 } from "@ant-design/icons";
-import {
-  buildBookingsQueryParams,
-  fetchAllMyEventsPages,
-} from "../clientBookingsUtils";
+import { buildBookingsQueryParams, fetchAllMyEventsPages } from "../clientBookingsUtils";
 import { buildBookingsReport } from "./bookingsReport";
 import { exportBookingsPdf } from "./exportBookingsPdf";
 import { exportBookingsWord } from "./exportBookingsWord";

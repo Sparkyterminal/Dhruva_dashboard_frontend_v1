@@ -1,49 +1,159 @@
-.admin-shell {
+/* Admin dashboard shell: green sidebar, slim top bar, calm content area. */
+
+.adm-shell {
+  display: grid;
+  grid-template-columns: 272px minmax(0, 1fr);
   min-height: 100vh;
   background: var(--bg-page);
 }
 
-.admin-sider.ant-layout-sider {
+/* ---- Sidebar ---- */
+.adm-side {
   position: sticky;
   top: 0;
-  height: 100vh;
-  overflow-y: auto;
-  background: var(--brand);
-}
-
-.admin-sider .ant-layout-sider-children {
   display: flex;
   flex-direction: column;
-  min-height: 100%;
-  padding: 0 12px 16px;
+  height: 100vh;
+  padding: 0 14px 16px;
+  background: var(--brand);
+  color: #fff;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.28) transparent;
 }
 
-.admin-brand {
+.adm-side::-webkit-scrollbar {
+  width: 6px;
+}
+
+.adm-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.adm-side::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+}
+
+.adm-side::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.adm-side-head {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 84px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  height: 72px;
+  padding: 0 8px;
   border-bottom: 1px solid rgba(224, 208, 133, 0.2);
 }
 
-.admin-sider .ant-menu {
-  flex: 1;
+.adm-side-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.adm-close {
+  display: none;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(224, 208, 133, 0.4);
+  border-radius: 10px;
   background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+}
+
+.adm-nav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-top: 16px;
+}
+
+.adm-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 12px;
   border: 0;
-}
-
-.admin-sider .ant-menu-item,
-.admin-sider .ant-menu-submenu-title {
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78);
+  font: inherit;
+  font-size: 14.5px;
   font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
-.admin-signout {
+.adm-link:hover {
+  background: rgba(224, 208, 133, 0.1);
+  color: #fff;
+}
+
+.adm-link.active {
+  background: rgba(224, 208, 133, 0.16);
+  color: var(--gold);
+}
+
+.adm-link.active::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gold);
+}
+
+.adm-link:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+.adm-group-btn span {
+  flex: 1;
+}
+
+.adm-caret {
+  transition: transform 0.15s;
+}
+
+.adm-caret.is-open {
+  transform: rotate(180deg);
+}
+
+.adm-sub {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 6px 18px;
+  padding-left: 12px;
+  border-left: 1px solid rgba(224, 208, 133, 0.2);
+}
+
+.adm-sublink {
+  padding: 8px 10px;
+  font-size: 13.5px;
+}
+
+.adm-signout {
   display: flex;
   align-items: center;
   gap: 12px;
   margin-top: 12px;
-  padding: 10px 14px;
+  padding: 11px 12px;
   border: 0;
   border-top: 1px solid rgba(224, 208, 133, 0.2);
   border-radius: 10px;
@@ -55,80 +165,154 @@
   cursor: pointer;
 }
 
-.admin-signout:hover {
+.adm-signout:hover {
   background: rgba(224, 208, 133, 0.1);
   color: #fff;
 }
 
-.admin-header.ant-layout-header {
+/* ---- Main ---- */
+.adm-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adm-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 14px;
   height: 64px;
-  padding: 0 24px;
-  background: #fff;
+  padding: 0 clamp(16px, 3vw, 32px);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
-  line-height: normal;
 }
 
-.admin-toggle {
-  display: grid;
+.adm-burger {
+  display: none;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line-strong);
+  border-radius: 11px;
   background: #fff;
   color: var(--brand);
   cursor: pointer;
 }
 
-.admin-toggle:hover {
-  background: var(--bg-page);
-}
-
-.admin-title {
+.adm-heading {
   flex: 1;
   margin: 0;
-  font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--brand);
 }
 
-.admin-user {
-  color: var(--ink-soft);
+.adm-user {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.adm-avatar {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--gold);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 700;
 }
 
-.admin-content.ant-layout-content {
-  margin: 24px;
-  padding: 28px;
-  min-height: 320px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
+.adm-content {
+  flex: 1;
+  padding: clamp(16px, 3vw, 32px);
 }
 
-@media (max-width: 767px) {
-  .admin-header.ant-layout-header {
-    padding: 0 14px;
+.adm-mask {
+  display: none;
+}
+
+/* ---- Small screens: sidebar becomes a drawer ---- */
+@media (max-width: 1023px) {
+  .adm-shell {
+    grid-template-columns: minmax(0, 1fr);
   }
-  .admin-user {
-    display: none;
+
+  .adm-side {
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: 1100;
+    width: min(288px, 88vw);
+    transform: translateX(-102%);
+    visibility: hidden;
+    transition: transform 0.22s ease, visibility 0s linear 0.22s;
+    box-shadow: 18px 0 40px -18px rgba(0, 0, 0, 0.5);
   }
-  .admin-content.ant-layout-content {
-    margin: 12px;
-    padding: 16px;
+
+  .adm-side.is-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.22s ease;
+  }
+
+  .adm-close,
+  .adm-burger {
+    display: grid;
+  }
+
+  .adm-mask {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1090;
+    background: rgba(7, 41, 7, 0.4);
   }
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+@media (max-width: 640px) {
+  .adm-user {
+    font-size: 0;
+    gap: 0;
+  }
+}
+
+/* ---- Sidebar section headings ---- */
+.adm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.adm-heading-sm {
+  margin: 0 0 4px;
+  padding: 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(224, 208, 133, 0.75);
+}
+
+/* ---- Sign out: red ---- */
+.adm-side .adm-signout {
+  justify-content: center;
+  border: 0;
+  background: #c0392b;
+  color: #fff;
+  font-weight: 600;
+}
+
+.adm-side .adm-signout:hover {
+  background: #a93226;
+  color: #fff;
 }

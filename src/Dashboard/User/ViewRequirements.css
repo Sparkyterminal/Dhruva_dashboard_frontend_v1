@@ -1,0 +1,48 @@
+/* My Requests: card details and table row edge (layout comes from the page kit). */
+
+.rq-embedded {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.rq-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rq-purpose {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.rq-amount {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+
+.rq-overdue {
+  color: #b03a2e;
+  font-weight: 600;
+}
+
+.pk-table .rq-row-overdue > td:first-child {
+  box-shadow: inset 3px 0 0 #c0392b;
+}
+
+.rq-pager {
+  display: flex;
+  justify-content: center;
+  padding: 18px 0 20px;
+}

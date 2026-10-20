@@ -1,4 +1,3 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import {
   Form,
@@ -41,7 +40,7 @@ const AddVendor = ({ inModal = false, onSuccess, onCancel, defaultDepId } = {}) 
         form.setFieldsValue({ depId: defaultDepId });
       }
       // console.log('departments', items);
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch departments");
     } finally {
       // setLoading(false);

@@ -14,14 +14,11 @@ import LoadingPage from "./Pages/LoadingPage";
 import AdminLayout from "./Layout/AdminLayout";
 
 // Admin
-import AddUsers from "./Dashboard/Admin/Users/AddUsers";
-import EditUsers from "./Dashboard/Admin/Users/EditUsers";
 import ViewUsers from "./Dashboard/Admin/Users/ViewUsers";
-import AddDepartment from "./Dashboard/Admin/Departments/AddDepartment";
-import EditDepartments from "./Dashboard/Admin/Departments/EditDepartments";
 import ViewDepartment from "./Dashboard/Admin/Departments/ViewDepartment";
 
 // User / Department
+import AppMenu from "./Components/AppMenu";
 import Home from "./Dashboard/User/Home";
 import ViewRequirements from "./Dashboard/User/ViewRequirements";
 import AddRequirements from "./Dashboard/User/AddRequirements";
@@ -31,7 +28,6 @@ import UserWiseClients from "./Components/UserWiseClients";
 // Owner
 import HomeOwner from "./Dashboard/Owner/Home";
 import Departments from "./Dashboard/Owner/Departments";
-import Meetings from "./Dashboard/Owner/Meetings";
 import AllRequirementsTable from "./Dashboard/Owner/AllRequirementsTable";
 import DepartmentsTable from "./Dashboard/Owner/DepartmentsTable";
 
@@ -74,15 +70,14 @@ import EditSubVenue from "./Dashboard/Marketting/AddSubVenue/EditSubVenue";
 import ViewLeads from "./Dashboard/Marketting/ClientLeadsTrack/ViewLeads";
 import EditLeads from "./Dashboard/Marketting/ClientLeadsTrack/EditLeads";
 import LeadsTrackerExcel from "./Dashboard/Marketting/ClientLeadsTrack/LeadsTrackerExcel";
-import CalendarClients from "./Components/CalendarClients";
 import InprogressCalendarPage from "./Pages/InprogressCalendarPage";
 import CAHomePage from "./Dashboard/CA/CAHomePage";
 import RequirementTableApprover from "./Dashboard/Approver/RequirementTableApprover";
 import RequirementsTableAc from "./Dashboard/Accounts/RequirementsTableAc";
 import CARequirementsTable from "./Dashboard/CA/CARequirementsTable";
-import BudgetReportHome from "./Dashboard/Accounts/budgetreport/BudgetReportHome";
-import BudgetReportEventWise from "./Dashboard/Accounts/budgetreport/BudgetReportEventWise";
-import EditBudgetReport from "./Dashboard/Accounts/budgetreport/EditBudgetReport";
+import BudgetReportExcelCreate from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelCreate";
+import BudgetReportExcelList from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelList";
+import BudgetReportExcelEdit from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelEdit";
 import BudgetReportExcelView from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelView";
 import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
 import ExpensesHome from "./Dashboard/Accounts/Expenses/ExpensesHome";
@@ -170,7 +165,9 @@ const App = () => {
   }
 
   return (
-    <Routes>
+    <>
+      <AppMenu />
+      <Routes>
       {/* 🔒 Not Logged In → Only Login route */}
       {!auth ? (
         <>
@@ -184,14 +181,11 @@ const App = () => {
             <>
               <Route path="/dashboard" element={<AdminLayout />}>
                 <Route index element={<Navigate to="viewuser" replace />} />
-                <Route path="adduser" element={<AddUsers />} />
-                <Route path="edituser/:id" element={<EditUsers />} />
+                <Route path="adduser" element={<ViewUsers />} />
+                <Route path="edituser/:id" element={<ViewUsers />} />
                 <Route path="viewuser" element={<ViewUsers />} />
-                <Route path="adddepartment" element={<AddDepartment />} />
-                <Route
-                  path="editdepartment/:id"
-                  element={<EditDepartments />}
-                />
+                <Route path="adddepartment" element={<ViewDepartment />} />
+                <Route path="editdepartment/:id" element={<ViewDepartment />} />
                 <Route path="viewdepartment" element={<ViewDepartment />} />
                 <Route path="addprojectcoordinator" element={<AddPC />} />
                 <Route path="editprojectcoordinator/:id" element={<EditPC />} />
@@ -246,7 +240,6 @@ const App = () => {
               <Route path="/user/addbill" element={<AddBill />} />
               <Route path="/user/editbill/:id" element={<EditBill />} />
               <Route path="/user/viewbills" element={<ViewBill />} />
-              <Route path="/user/meetings" element={<Meetings />} />
               <Route
                 path="/user/allrequirements"
                 element={<RequirementsTableAc />}
@@ -255,10 +248,10 @@ const App = () => {
                 path="/user/departments/:id"
                 element={<DepartmentsTable />}
               />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -266,7 +259,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
               <Route path="/user/client-leads" element={<ViewLeads />} />
               <Route
@@ -326,10 +319,10 @@ const App = () => {
                 element={<InprogressCalendarPage />}
               />
               <Route path="/user/eventcalender" element={<CalenderPage />} />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -337,7 +330,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -378,10 +371,10 @@ const App = () => {
                 path="/user/editchecklists/:id"
                 element={<EditChecklist />}
               />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -389,7 +382,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -435,15 +428,14 @@ const App = () => {
               <Route path="/user/addbill" element={<AddBill />} />
               <Route path="/user/editbill/:id" element={<EditBill />} />
               <Route path="/user/viewbills" element={<ViewBill />} />
-              <Route path="/user/meetings" element={<Meetings />} />
               <Route
                 path="/user/allrequirements"
                 element={<AllRequirementsTable />}
               />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -451,7 +443,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
               <Route path="/user/client-leads" element={<ViewLeads />} />
               <Route
@@ -510,10 +502,10 @@ const App = () => {
                 path="/user/allrequirements"
                 element={<RequirementTableApprover />}
               />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -521,7 +513,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
               <Route path="/user/client-leads" element={<ViewLeads />} />
               <Route
@@ -579,10 +571,10 @@ const App = () => {
                 path="/user/allrequirements"
                 element={<CARequirementsTable />}
               />
-              <Route path="/user/budgetreport" element={<BudgetReportHome />} />
+              <Route path="/user/budgetreport" element={<BudgetReportExcelCreate />} />
               <Route
                 path="/user/budgetreport/eventwise"
-                element={<BudgetReportEventWise />}
+                element={<BudgetReportExcelList />}
               />
               <Route
                 path="/user/budgetreport/view/:id"
@@ -590,7 +582,7 @@ const App = () => {
               />
               <Route
                 path="/user/budgetreport/edit/:id"
-                element={<EditBudgetReport />}
+                element={<BudgetReportExcelEdit />}
               />
 
               <Route path="*" element={<Navigate to="/user" replace />} />
@@ -602,6 +594,7 @@ const App = () => {
         </>
       )}
     </Routes>
+    </>
   );
 };
 

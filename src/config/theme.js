@@ -1,7 +1,7 @@
 // Ant Design theme: maps the Dhruva design tokens (src/styles/theme.css) onto the
 // component library so every screen that uses antd restyles automatically.
 const FONT_SANS =
-  '"Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  '"Montserrat", sans-serif';
 
 const antdTheme = {
   token: {

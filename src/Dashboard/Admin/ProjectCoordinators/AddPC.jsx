@@ -1,54 +1,82 @@
-/* eslint-disable no-unused-vars */
-import React from "react";
+import React, { useState } from "react";
 import axiosClient from "@/api/axiosClient";
-import { Form, Input, Button, Space, message } from "antd";
-import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { FormActions, FormCard, TextField } from "@/Components/FormKit";
+import { toast } from "@/Components/AdminKit/toast";
+import { PageHero } from "@/Components/PageKit";
 
+/** Add-coordinator form. Inside a dialog (onCancel given) or as its own page. */
 const AddPC = ({ onSuccess, onCancel }) => {
-  const [form] = Form.useForm();
-  const user = useSelector((state) => state.user.value);
+  const navigate = useNavigate();
+  const standalone = !onCancel;
+  const [name, setName] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e?.preventDefault?.();
+    if (!name.trim()) {
+      setError("Please enter coordinator name");
+      return;
+    }
+    setLoading(true);
     try {
-      const values = await form.validateFields();
-
-      const config = {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: user?.access_token ? `Bearer ${user.access_token}` : undefined,
-        },
-      };
-
-      await axiosClient.post(`coordinators`, values, );
-
-      message.success("Coordinator added successfully");
-      form.resetFields();
-      onSuccess();
-    } catch (error) {
-      console.error("AddPC error:", error);
-      message.error("Failed to add coordinator");
+      await axiosClient.post(`coordinators`, { name: name.trim() });
+      toast.success("Coordinator added successfully");
+      setName("");
+      setError("");
+      onSuccess?.();
+    } catch (err) {
+      console.error("AddPC error:", err);
+      toast.error("Failed to add coordinator");
+    } finally {
+      setLoading(false);
     }
   };
 
-  return (
-    <Form layout="vertical" form={form}>
-      <Form.Item
-        label="Coordinator Name"
-        name="name"
-        rules={[
-          { required: true, message: "Please enter coordinator name" },
-        ]}
-      >
-        <Input placeholder="Enter coordinator name" />
-      </Form.Item>
+  const fields = (
+    <>
+      <TextField
+        label="Coordinator name"
+        required
+        autoFocus
+        value={name}
+        onChange={(v) => {
+          setName(v);
+          if (error) setError("");
+        }}
+        placeholder="Enter coordinator name"
+        error={error}
+      />
+      <FormActions
+        onCancel={standalone ? () => navigate("/dashboard/viewprojectcoordinator") : onCancel}
+        submitLabel="Add coordinator"
+        busy={loading}
+      />
+    </>
+  );
 
-      <Space>
-        <Button type="primary" onClick={handleSubmit}>
-          Submit
-        </Button>
-        <Button onClick={onCancel}>Cancel</Button>
-      </Space>
-    </Form>
+  if (!standalone) {
+    return (
+      <form onSubmit={handleSubmit} noValidate>
+        {fields}
+      </form>
+    );
+  }
+
+  return (
+    <div className="pk-wrap" style={{ maxWidth: 620 }}>
+      <PageHero
+        eyebrow="Admin"
+        title="Add project coordinator"
+        subtitle="A coordinator that can be assigned to bookings and leads."
+        onBack={() => navigate("/dashboard/viewprojectcoordinator")}
+        backLabel="Back to coordinators"
+      />
+      <FormCard onSubmit={handleSubmit} width={560}>
+        {fields}
+      </FormCard>
+    </div>
   );
 };
 

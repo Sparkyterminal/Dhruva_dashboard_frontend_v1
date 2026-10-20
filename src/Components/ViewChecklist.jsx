@@ -1,16 +1,25 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { message, Table, Button, Input, Card, Space, Modal, Drawer, Typography, Divider } from "antd";
+import { message, Table, Modal, Drawer } from "antd";
 import {
-  EditOutlined,
-  DeleteOutlined,
-  FilePdfOutlined,
-  ArrowLeftOutlined,
-  PlusOutlined,
-  EyeOutlined,
-  FileWordOutlined,
-} from "@ant-design/icons";
+  Eye,
+  FileDown,
+  FileText,
+  Layers,
+  ListChecks,
+  ListTree,
+  Pencil,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import {
+  EmptyState,
+  PageHero,
+  SearchBox,
+  StatCard,
+  StatRow,
+} from "@/Components/PageKit";
 import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import jsPDF from "jspdf";
@@ -54,7 +63,7 @@ const ViewChecklist = () => {
         current: res.data.currentPage,
         total: res.data.totalItems,
       }));
-    } catch (err) {
+    } catch {
       message.error("Failed to fetch checklists");
     } finally {
       setLoading(false);
@@ -81,7 +90,7 @@ const ViewChecklist = () => {
       await axiosClient.delete(`checklist/${id}`, config);
       message.success("Checklist deleted successfully");
       fetchChecklistData(pagination.current, searchText);
-    } catch (err) {
+    } catch {
       message.error("Failed to delete checklist");
     }
   };
@@ -211,7 +220,7 @@ const ViewChecklist = () => {
         <head>
           <meta charset="utf-8">
           <style>
-            body { font-family: Arial, sans-serif; padding: 20px; }
+            body { font-family: 'Montserrat', sans-serif; padding: 20px; }
             h1 { color: #226a36; margin-bottom: 10px; }
             h2 { color: #226a36; margin-top: 30px; margin-bottom: 15px; font-size: 16px; }
             .metadata { margin-bottom: 20px; font-size: 14px; color: #666; }
@@ -265,199 +274,194 @@ const ViewChecklist = () => {
 
   const columns = [
     {
-      title: "Heading",
+      title: "Checklist",
       dataIndex: "heading",
       key: "heading",
-      render: (text) => <span className="font-bold text-purple-900 text-sm">{text}</span>,
-    },
-    {
-      title: "Event Reference",
-      dataIndex: "eventReference",
-      key: "eventReference",
-      render: (text) => text || "-",
-    },
-    {
-      title: "Actions",
-      key: "actions",
-      width: 180,
-      render: (_, record) => (
-        <Space size="small" wrap>
-          <Button
-            type="text"
-            icon={<EyeOutlined />}
-            onClick={() => handleViewDetails(record)}
-            title="View Details"
-            className="text-purple-500"
-          />
-          <Button
-            type="text"
-            icon={<EditOutlined />}
-            onClick={() => navigate(getEditChecklistPath(record.id))}
-            title="Edit"
-          />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() =>
-              Modal.confirm({
-                title: "Delete Checklist",
-                content: "Are you sure you want to delete this checklist?",
-                onOk: () => handleDelete(record.id),
-              })
-            }
-            title="Delete"
-          />
-        </Space>
+      render: (text, record) => (
+        <div className="pk-who">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            <ListChecks size={19} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{text || "—"}</strong>
+            <span>
+              {Array.isArray(record.subHeadings) ? record.subHeadings.length : 0} sub-heading
+              {Array.isArray(record.subHeadings) && record.subHeadings.length === 1 ? "" : "s"}
+            </span>
+          </div>
+        </div>
       ),
     },
     {
-      title: "Download",
-      key: "download",
-      width: 200,
+      title: "Event reference",
+      dataIndex: "eventReference",
+      key: "eventReference",
+      width: 220,
+      render: (text) =>
+        text ? <span className="pk-pill is-gold">{text}</span> : <span className="pk-muted">—</span>,
+    },
+    {
+      title: "",
+      key: "actions",
+      width: 380,
+      align: "right",
       render: (_, record) => (
-        <Space size="small" wrap>
-          <Button
-            type="primary"
-            icon={<FilePdfOutlined />}
-            onClick={() => exportToPDF(record)}
-            size="small"
-            title="Export to PDF"
+        <div className="pk-actions">
+          <button type="button" className="pk-btn" onClick={() => exportToPDF(record)} title="Export to PDF">
+            <FileDown size={14} aria-hidden="true" /> PDF
+          </button>
+          <button type="button" className="pk-btn" onClick={() => exportToDOCX(record)} title="Export to Word">
+            <FileText size={14} aria-hidden="true" /> Word
+          </button>
+          <button type="button" className="pk-btn" onClick={() => handleViewDetails(record)}>
+            <Eye size={14} aria-hidden="true" /> View
+          </button>
+          <button
+            type="button"
+            className="pk-btn is-solid"
+            onClick={() => navigate(getEditChecklistPath(record.id))}
           >
-            PDF
-          </Button>
-          <Button
-            type="primary"
-            icon={<FileWordOutlined />}
-            onClick={() => exportToDOCX(record)}
-            size="small"
-            title="Export to DOCX"
+            <Pencil size={13} aria-hidden="true" /> Edit
+          </button>
+          <button
+            type="button"
+            className="pk-btn is-danger is-icon"
+            aria-label="Delete checklist"
+            onClick={() =>
+              Modal.confirm({
+                title: "Delete checklist",
+                content: "Are you sure you want to delete this checklist?",
+                okText: "Delete",
+                okType: "danger",
+                onOk: () => handleDelete(record.id),
+              })
+            }
           >
-            DOCX
-          </Button>
-        </Space>
+            <Trash2 size={14} aria-hidden="true" />
+          </button>
+        </div>
       ),
     },
   ];
 
+  const subCount = checklists.reduce(
+    (sum, c) => sum + (Array.isArray(c.subHeadings) ? c.subHeadings.length : 0),
+    0,
+  );
+
   return (
-    <div className="min-h-screen bg-purple-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Card */}
-        <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-purple-100">
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Events"
+          title="Checklist Management"
+          subtitle="Build, review and export the item checklists used for events."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        >
+          <button type="button" className="pk-cta" onClick={() => navigate(getAddChecklistPath())}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add checklist
+          </button>
+        </PageHero>
 
-          {/* Header */}
-          <div className="bg-purple-600 px-6 py-5">
-            <Button
-              icon={<ArrowLeftOutlined />}
-              onClick={() => navigate(-1)}
-              className="bg-white/20 border border-white/30 text-white rounded-lg font-semibold hover:bg-white/30"
-              ghost
-            >
-              Back
-            </Button>
-            <h1 className="text-white text-3xl font-bold text-center mt-4 tracking-wide">
-              Checklist Management
-            </h1>
-          </div>
+        <StatRow>
+          <StatCard icon={<ListChecks size={21} aria-hidden="true" />} label="Total checklists" value={pagination.total} />
+          <StatCard tone="gold" icon={<Layers size={21} aria-hidden="true" />} label="Shown on this page" value={checklists.length} />
+          <StatCard tone="blue" icon={<ListTree size={21} aria-hidden="true" />} label="Sub-headings on this page" value={subCount} />
+        </StatRow>
 
-          {/* Content */}
-          <div className="p-6">
-            {/* Search + Add */}
-            <div className="flex flex-col sm:flex-row gap-4 mb-6">
-              <Input.Search
-                placeholder="Search checklists..."
-                allowClear
-                onChange={(e) => setSearchText(e.target.value)}
-                size="large"
-                className="flex-1"
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <div className="pk-toolbar-left">
+              <SearchBox
+                icon={<Search size={16} aria-hidden="true" />}
+                value={searchText}
+                onChange={setSearchText}
+                placeholder="Search checklists"
+                label="Search checklists"
               />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => navigate(getAddChecklistPath())}
-                size="large"
-              >
-                Add Checklist
-              </Button>
             </div>
-
-            {/* Table */}
-            <Table
-              columns={columns}
-              dataSource={checklists}
-              loading={loading}
-              pagination={pagination}
-              onChange={handleTableChange}
-              rowKey="id"
-              scroll={{ x: "max-content" }}
-            />
           </div>
-        </div>
+
+          <Table
+            className="pk-table"
+            columns={columns}
+            dataSource={checklists}
+            loading={loading}
+            pagination={{ ...pagination, showSizeChanger: false, showTotal: (total) => `Total ${total} checklists` }}
+            onChange={handleTableChange}
+            rowKey="id"
+            scroll={{ x: 820 }}
+            locale={{
+              emptyText: loading ? null : (
+                <EmptyState
+                  icon={<ListChecks size={26} aria-hidden="true" />}
+                  title={searchText ? "No checklists match your search" : "No checklists yet"}
+                  hint={searchText ? "Try a different search." : "Use “Add checklist” to create the first one."}
+                />
+              ),
+            }}
+          />
+        </section>
       </div>
 
-      {/* Drawer */}
       <Drawer
         open={modalVisible}
         onClose={() => setModalVisible(false)}
-        width="90%"
-        destroyOnClose
-        closable
-        zIndex={1000}
+        width="min(960px, 94%)"
+        destroyOnHidden
+        title={selectedRecord?.heading || "Checklist"}
+        extra={
+          selectedRecord ? (
+            <div className="pk-actions">
+              <button type="button" className="pk-btn" onClick={() => exportToPDF(selectedRecord)}>
+                <FileDown size={14} aria-hidden="true" /> PDF
+              </button>
+              <button type="button" className="pk-btn" onClick={() => exportToDOCX(selectedRecord)}>
+                <FileText size={14} aria-hidden="true" /> Word
+              </button>
+            </div>
+          ) : null
+        }
       >
         {selectedRecord && (
           <div>
-            {/* Drawer Header */}
-            <div className="flex justify-between items-start gap-4 mb-4">
-              <div>
-                <Typography.Title level={3} className="mb-0!">
-                  {selectedRecord.heading}
-                </Typography.Title>
-                {selectedRecord.eventReference && (
-                  <Typography.Text type="secondary">
-                    Event Reference: {selectedRecord.eventReference}
-                  </Typography.Text>
-                )}
-              </div>
-              <Button onClick={() => setModalVisible(false)}>Close</Button>
-            </div>
+            {selectedRecord.eventReference && (
+              <p style={{ margin: "0 0 18px" }}>
+                <span className="pk-pill is-gold">Event reference: {selectedRecord.eventReference}</span>
+              </p>
+            )}
 
-            <Divider />
-
-            {/* Sub headings */}
-            {selectedRecord.subHeadings &&
-            Array.isArray(selectedRecord.subHeadings) &&
-            selectedRecord.subHeadings.length > 0 ? (
+            {Array.isArray(selectedRecord.subHeadings) &&
+            selectedRecord.subHeadings.some((s) => Array.isArray(s.checklists) && s.checklists.length) ? (
               selectedRecord.subHeadings.map((subHeading, subIndex) => {
-                if (
-                  !subHeading.checklists ||
-                  !Array.isArray(subHeading.checklists) ||
-                  subHeading.checklists.length === 0
-                ) {
+                if (!Array.isArray(subHeading.checklists) || subHeading.checklists.length === 0) {
                   return null;
                 }
-
                 return (
-                  <div key={subIndex} className="mb-6">
-                    <Typography.Title
-                      level={4}
-                      className="text-purple-500! mb-3!"
-                    >
+                  <div key={subIndex} style={{ marginBottom: 24 }}>
+                    <h3 style={{ margin: "0 0 10px", fontSize: 16, fontWeight: 600, color: "var(--brand)" }}>
                       {subIndex + 1}. {subHeading.subHeadingName}
-                    </Typography.Title>
-                    <Table
-                      columns={getChecklistColumns()}
-                      dataSource={subHeading.checklists}
-                      pagination={false}
-                      rowKey={(_, index) => `sub-${subIndex}-check-${index}`}
-                      scroll={{ x: "max-content" }}
-                      size="small"
-                    />
+                    </h3>
+                    <div className="pk-panel">
+                      <Table
+                        className="pk-table"
+                        columns={getChecklistColumns()}
+                        dataSource={subHeading.checklists}
+                        pagination={false}
+                        rowKey={(_, index) => `sub-${subIndex}-check-${index}`}
+                        scroll={{ x: "max-content" }}
+                        size="small"
+                      />
+                    </div>
                   </div>
                 );
               })
             ) : (
-              <Typography.Paragraph>No checklist items available.</Typography.Paragraph>
+              <EmptyState
+                icon={<ListChecks size={26} aria-hidden="true" />}
+                title="No checklist items available"
+              />
             )}
           </div>
         )}

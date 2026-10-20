@@ -1,28 +1,68 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Button,
-  message,
-  Card,
-  DatePicker,
-  Modal,
-} from "antd";
-import { ArrowLeft } from "lucide-react";
+import { message } from "antd";
+import { Plus } from "lucide-react";
+import dayjs from "dayjs";
 import axiosClient from "@/api/axiosClient";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { PlusOutlined } from "@ant-design/icons";
+import {
+  AmountField,
+  ChoiceField,
+  DateField,
+  Dialog,
+  FormActions,
+  LabelAction,
+  SelectField,
+  TextAreaField,
+  TextField,
+} from "@/Components/FormKit";
+import { PageHero } from "@/Components/PageKit";
 import AddVendor from "./vendors/AddVendor";
+import "./AddRequirements.css";
 
-const { Option } = Select;
+const slugify = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, "-");
+// Keep spaces inside the event name (for display), only lowercase.
+const formatEventName = (s) => String(s || "").trim().toLowerCase();
+
+const statusKeyOf = (ev) => {
+  const statusRaw = ev.eventConfirmation || ev.status || ev.client?.eventConfirmation || "";
+  return statusRaw === "Confirmed Event"
+    ? "confirmed"
+    : statusRaw === "Almost Booked"
+      ? "almostbooked"
+      : statusRaw === "InProgress"
+        ? "inprogress"
+        : statusRaw === "Cancelled" || statusRaw === "Canceled"
+          ? "cancelled"
+          : slugify(statusRaw) || "unknown";
+};
+
+const eventLabel = (ev) => {
+  const eventName =
+    typeof ev.eventName === "string" ? ev.eventName : ev.eventName?.name || ev.name || ev.title || "Untitled";
+  const clientName = ev.client?.clientName || ev.clientName || "";
+  return `${statusKeyOf(ev)}-${formatEventName(eventName)}-${slugify(clientName)}`;
+};
+
+const EMPTY = {
+  purpose: "",
+  remarks: "",
+  groupBy: "",
+  vendor: "",
+  event_reference: "",
+  amount: "",
+  required_date: "",
+  expecting_transaction_in: "",
+  priority: "",
+};
 
 const AddRequirements = () => {
-  const [form] = Form.useForm();
   const user = useSelector((state) => state.user.value);
   const navigate = useNavigate();
+
+  const [values, setValues] = useState(EMPTY);
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -34,6 +74,7 @@ const AddRequirements = () => {
   const [groupByLoading, setGroupByLoading] = useState(false);
   const [groupByModalOpen, setGroupByModalOpen] = useState(false);
   const [newGroupByName, setNewGroupByName] = useState("");
+  const [groupError, setGroupError] = useState("");
   const [creatingGroupBy, setCreatingGroupBy] = useState(false);
 
   const deptId = user?.departments?.length ? user.departments[0].id : null;
@@ -44,6 +85,11 @@ const AddRequirements = () => {
     },
   };
 
+  const set = (key) => (v) => {
+    setValues((p) => ({ ...p, [key]: v }));
+    if (errors[key]) setErrors((p) => ({ ...p, [key]: "" }));
+  };
+
   const fetchGroupByOptions = useCallback(async () => {
     const token = user?.access_token;
     if (!token) return;
@@ -52,8 +98,7 @@ const AddRequirements = () => {
     try {
       const res = await axiosClient.get(`request/group-by`, auth);
       const raw = res?.data?.items ?? res?.data?.data ?? res?.data ?? [];
-      const items = Array.isArray(raw) ? raw : [];
-      setGroupByOptions(items);
+      setGroupByOptions(Array.isArray(raw) ? raw : []);
     } catch (err) {
       console.error(err);
       message.error("Failed to load group-by options");
@@ -85,7 +130,6 @@ const AddRequirements = () => {
         ...config,
         params: query ? { search: query } : {},
       });
-
       // Expected response: { totalEvents, events: [...] }
       setEvents(res.data.events || res.data.data || res.data || []);
     } catch (err) {
@@ -100,13 +144,14 @@ const AddRequirements = () => {
     fetchVendors();
     // load initial events list (empty query)
     fetchEvents("");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptId]);
 
   useEffect(() => {
     fetchGroupByOptions();
   }, [fetchGroupByOptions]);
 
-  // Debounced search handler for Select's onSearch
+  // Debounced search handler for the event picker
   const handleEventSearch = (value) => {
     if (searchTimeout.current) clearTimeout(searchTimeout.current);
     searchTimeout.current = setTimeout(() => {
@@ -120,473 +165,291 @@ const AddRequirements = () => {
     };
   }, []);
 
-  const onFinish = async (values) => {
-    const selectedVendor = Array.isArray(values.vendor)
-      ? values.vendor[0]
-      : values.vendor;
+  const createGroup = async (e) => {
+    e?.preventDefault?.();
+    const name = String(newGroupByName || "").trim();
+    if (!name) {
+      setGroupError("Please enter a group name");
+      return;
+    }
+    if (name.length > 200) {
+      setGroupError("Name must be at most 200 characters");
+      return;
+    }
+    setCreatingGroupBy(true);
+    try {
+      const res = await axiosClient.post(`request/group-by`, { name }, config);
+      const item = res?.data?.item;
+      message.success(res?.data?.message || "Group created");
+      await fetchGroupByOptions();
+      const newId = item?._id || item?.id;
+      if (newId) setValues((p) => ({ ...p, groupBy: newId }));
+      setNewGroupByName("");
+      setGroupError("");
+      setGroupByModalOpen(false);
+    } catch (err) {
+      if (err?.response?.status === 409) {
+        setGroupError("A group with this name already exists");
+      } else {
+        message.error("Could not create group");
+      }
+      console.error(err);
+    } finally {
+      setCreatingGroupBy(false);
+    }
+  };
+
+  const validate = () => {
+    const next = {};
+    if (!values.purpose.trim()) next.purpose = "Please enter the purpose";
+    if (values.amount === "" || Number(values.amount) < 0) next.amount = "Please enter the amount";
+    if (!values.expecting_transaction_in) next.expecting_transaction_in = "Please select account type";
+    if (!values.priority) next.priority = "Please select priority";
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const onSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
     const payload = {
-      purpose: values.purpose,
+      purpose: values.purpose.trim(),
       remarks: values.remarks ? String(values.remarks).trim() : "",
-      vendor: selectedVendor || null,
+      vendor: values.vendor || null,
       event_reference: values.event_reference || null,
-      amount:
-        typeof values.amount === "number"
-          ? values.amount
-          : Number(values.amount) || 0,
-      required_date: values.required_date
-        ? values.required_date.toISOString
-          ? values.required_date.toISOString()
-          : values.required_date.format("YYYY-MM-DD")
-        : null,
+      amount: Number(values.amount) || 0,
+      required_date: values.required_date ? dayjs(values.required_date).toISOString() : null,
       transation_in: values.expecting_transaction_in?.toUpperCase(),
       priority: values.priority,
     };
-    if (values.groupBy) {
-      payload.groupBy = values.groupBy;
-    }
+    if (values.groupBy) payload.groupBy = values.groupBy;
 
+    setSubmitting(true);
     try {
       await axiosClient.post(`request`, payload, config);
       message.success("Requirement submitted successfully!");
       navigate(-1);
-      form.resetFields();
     } catch (error) {
       message.error("Failed to submit requirement");
       console.error(error);
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const vendorOptions = vendors.map((vendor) => ({
+    value: vendor.id || vendor._id,
+    label: `${
+      vendor.vendor_code || vendor.vendor_code === 0 ? vendor.vendor_code.toUpperCase() : ""
+    } — ${vendor.name.toUpperCase()}`,
+  }));
+
+  const eventOptions = events.map((ev) => ({ value: ev._id || ev.id, label: eventLabel(ev) }));
+  const groupOptions = groupByOptions.map((g) => ({ value: g._id || g.id, label: g.name || "—" }));
+
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-6 bg-linear-to-tr from-white to-indigo-50 text-[15px]">
-      <div className="w-full max-w-md">
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-5 flex items-center gap-2 text-gray-600 hover:text-indigo-700 transition-colors duration-200 font-semibold cursor-pointer"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back
-        </button>
+    <div className="pk-page">
+      <div className="pk-wrap" style={{ maxWidth: 860 }}>
+        <PageHero
+          eyebrow="Requests"
+          title="New requirement"
+          subtitle="Tell accounts what you need, how much, and by when."
+          onBack={() => navigate(-1)}
+          backLabel="Back"
+        />
 
-        <Card
-          bordered={false}
-          className="rounded-3xl shadow-md bg-white text-[15px]"
-          style={{ padding: "2rem" }}
-        >
-          <h1 className="text-3xl font-semibold mb-1 text-indigo-700 text-center">
-            New Requirement
-          </h1>
-          <p className="text-center text-gray-500 mb-6 text-[15px]">
-            Please fill all necessary details
-          </p>
-
-          <Form
-            form={form}
-            layout="vertical"
-            onFinish={onFinish}
-            requiredMark={false}
-          >
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Purpose
-                </span>
+        <form className="rq-form" onSubmit={onSubmit} noValidate>
+          <section className="rq-section">
+            <header>
+              <span className="rq-step">1</span>
+              <div>
+                <h2>What do you need?</h2>
+                <p>A short purpose is enough. Add remarks if there is anything to know.</p>
+              </div>
+            </header>
+            <TextField
+              label="Purpose"
+              required
+              autoFocus
+              value={values.purpose}
+              onChange={set("purpose")}
+              placeholder="e.g. Office supplies, Equipment upgrade"
+              error={errors.purpose}
+            />
+            <TextAreaField
+              label="Remarks"
+              value={values.remarks}
+              onChange={set("remarks")}
+              placeholder="Add remarks (optional)"
+              rows={3}
+            />
+            <SelectField
+              label="Group by"
+              value={values.groupBy}
+              onChange={set("groupBy")}
+              options={groupOptions}
+              placeholder={groupByLoading ? "Loading groups…" : "Select a group (optional)"}
+              loading={groupByLoading}
+              allowClear
+              emptyText="No groups yet — use Add to create one"
+              hint="Optional. Tag this requirement under a category (e.g. Catering)."
+              labelAction={
+                <LabelAction
+                  onClick={() => {
+                    setNewGroupByName("");
+                    setGroupError("");
+                    setGroupByModalOpen(true);
+                  }}
+                >
+                  <Plus size={13} aria-hidden="true" /> Add
+                </LabelAction>
               }
-              name="purpose"
-              rules={[{ required: true, message: "Please enter the purpose" }]}
-            >
-              <Input
-                placeholder="e.g., Office supplies, Equipment upgrade"
-                size="large"
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              />
-            </Form.Item>
+            />
+          </section>
 
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Remarks
-                </span>
+          <section className="rq-section">
+            <header>
+              <span className="rq-step">2</span>
+              <div>
+                <h2>Who is it for?</h2>
+                <p>Pick the vendor and the event this is linked to, if any.</p>
+              </div>
+            </header>
+            <SelectField
+              label="Vendor"
+              value={values.vendor}
+              onChange={set("vendor")}
+              options={vendorOptions}
+              placeholder={loading ? "Loading vendors…" : "Search vendor by code or name"}
+              loading={loading}
+              allowClear
+              emptyText="No vendors found"
+              labelAction={
+                <LabelAction onClick={() => setVendorModalOpen(true)}>
+                  <Plus size={13} aria-hidden="true" /> Add vendor
+                </LabelAction>
               }
-              name="remarks"
-            >
-              <Input.TextArea
-                placeholder="Add remarks (optional)"
-                rows={3}
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              />
-            </Form.Item>
+            />
+            <SelectField
+              label="Event reference"
+              value={values.event_reference}
+              onChange={set("event_reference")}
+              options={eventOptions}
+              placeholder={eventsLoading ? "Loading events…" : "Search event or client"}
+              loading={eventsLoading}
+              onSearch={handleEventSearch}
+              onOpen={() => fetchEvents("")}
+              allowClear
+              emptyText="No events found"
+            />
+          </section>
 
-            <Form.Item
-              label={
-                <div className="flex items-center justify-between gap-2 w-full">
-                  <span className="text-gray-700 font-medium text-[15px]">
-                    Group by
-                  </span>
-                  <Button
-                    type="link"
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() => {
-                      setNewGroupByName("");
-                      setGroupByModalOpen(true);
-                    }}
-                    style={{ padding: 0, fontWeight: 700 }}
-                  >
-                    Add
-                  </Button>
-                </div>
-              }
-              name="groupBy"
-              tooltip="Optional. Tag this requirement under a category (e.g. Catering)."
-            >
-              <Select
-                showSearch
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  String(option?.children || "")
-                    .toLowerCase()
-                    .includes(String(input || "").toLowerCase())
-                }
-                placeholder={
-                  groupByLoading ? "Loading groups..." : "Select a group (optional)"
-                }
-                size="large"
-                allowClear
-                loading={groupByLoading}
-                notFoundContent={
-                  groupByLoading ? "Loading..." : "No groups yet — use Add to create one"
-                }
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              >
-                {groupByOptions.map((g) => {
-                  const id = g._id || g.id;
-                  return (
-                    <Option key={id} value={id}>
-                      {g.name || "—"}
-                    </Option>
-                  );
-                })}
-              </Select>
-            </Form.Item>
-
-            <Modal
-              title="New group"
-              open={groupByModalOpen}
-              onCancel={() => {
-                setGroupByModalOpen(false);
-                setNewGroupByName("");
-              }}
-              onOk={async () => {
-                const name = String(newGroupByName || "").trim();
-                if (!name) {
-                  message.warning("Please enter a group name");
-                  return Promise.reject();
-                }
-                if (name.length > 200) {
-                  message.warning("Name must be at most 200 characters");
-                  return Promise.reject();
-                }
-                setCreatingGroupBy(true);
-                try {
-                  const res = await axiosClient.post(
-                    `request/group-by`,
-                    { name },
-                    config,
-                  );
-                  const item = res?.data?.item;
-                  message.success(res?.data?.message || "Group created");
-                  await fetchGroupByOptions();
-                  const newId = item?._id || item?.id;
-                  if (newId) {
-                    form.setFieldsValue({ groupBy: newId });
-                  }
-                  setNewGroupByName("");
-                  setGroupByModalOpen(false);
-                } catch (err) {
-                  if (err?.response?.status === 409) {
-                    message.error("A group with this name already exists");
-                  } else {
-                    message.error("Could not create group");
-                  }
-                  console.error(err);
-                  return Promise.reject(err);
-                } finally {
-                  setCreatingGroupBy(false);
-                }
-              }}
-              confirmLoading={creatingGroupBy}
-              destroyOnClose
-            >
-              <p className="text-gray-600 text-sm mb-3">
-                Group names must be unique. This will appear in the Group by list
-                after saving.
-              </p>
-              <Input
-                placeholder="e.g. Catering, Venue, AV"
-                maxLength={200}
-                value={newGroupByName}
-                onChange={(e) => setNewGroupByName(e.target.value)}
-                size="large"
-              />
-            </Modal>
-
-            <Form.Item
-              label={
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-700 font-medium text-[15px]">
-                    Vendor{" "}
-                  </span>
-                  <Button
-                    type="link"
-                    size="small"
-                    icon={<PlusOutlined />}
-                    onClick={() => setVendorModalOpen(true)}
-                    style={{ padding: 0, fontWeight: 700 }}
-                  >
-                    Add vendor
-                  </Button>
-                </div>
-              }
-              name="vendor"
-            >
-              <Select
-                showSearch
-                optionFilterProp="children"
-                filterOption={(input, option) =>
-                  String(option?.children || "")
-                    .toLowerCase()
-                    .includes(input.toLowerCase())
-                }
-                placeholder={
-                  loading
-                    ? "Loading vendors..."
-                    : "Search vendor by code or name"
-                }
-                size="large"
-                allowClear
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-                loading={loading}
-                notFoundContent={loading ? "Loading..." : "No vendors found"}
-              >
-                {vendors.map((vendor) => (
-                  <Option
-                    key={vendor.id || vendor._id}
-                    value={vendor.id || vendor._id}
-                  >
-                    {`${
-                      vendor.vendor_code || vendor.vendor_code === 0
-                        ? vendor.vendor_code.toUpperCase()
-                        : ""
-                    } — ${vendor.name.toUpperCase()}`}
-                  </Option>
-                ))}
-              </Select>
-            </Form.Item>
-
-            <Modal
-              open={vendorModalOpen}
-              onCancel={() => setVendorModalOpen(false)}
-              footer={null}
-              width={900}
-              destroyOnClose
-              title="Add Vendor"
-            >
-              <AddVendor
-                inModal
-                defaultDepId={deptId}
-                onCancel={() => setVendorModalOpen(false)}
-                onSuccess={async (created) => {
-                  await fetchVendors();
-                  const createdId =
-                    created?.id ||
-                    created?._id ||
-                    created?.vendor?.id ||
-                    created?.vendor?._id;
-                  if (createdId) {
-                    form.setFieldsValue({ vendor: createdId });
-                  }
-                  setVendorModalOpen(false);
-                }}
-              />
-            </Modal>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Event Reference{" "}
-                </span>
-              }
-              name="event_reference"
-            >
-              <Select
-                showSearch
-                filterOption={false}
-                onSearch={handleEventSearch}
-                onFocus={() => fetchEvents("")}
-                placeholder={
-                  eventsLoading ? "Loading events..." : "Search event or client"
-                }
-                size="large"
-                allowClear
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-                loading={eventsLoading}
-                notFoundContent={
-                  eventsLoading ? "Loading..." : "No events found"
-                }
-              >
-                {events.map((ev) => {
-                  const eventName =
-                    typeof ev.eventName === "string"
-                      ? ev.eventName
-                      : ev.eventName?.name || ev.name || ev.title || "Untitled";
-                  const clientName = ev.client?.clientName || ev.clientName || "";
-                  const value = ev._id || ev.id;
-
-                  const slugify = (s) =>
-                    String(s || "")
-                      .trim()
-                      .toLowerCase()
-                      .replace(/\s+/g, "-");
-
-                  // Keep spaces inside event name (for display), only lowercase.
-                  // Example: "Home Decor" -> "home decor"
-                  const formatEventName = (s) =>
-                    String(s || "").trim().toLowerCase();
-
-                  const statusRaw =
-                    ev.eventConfirmation ||
-                    ev.status ||
-                    ev.client?.eventConfirmation ||
-                    "";
-                  const statusKey =
-                    statusRaw === "Confirmed Event"
-                      ? "confirmed"
-                      : statusRaw === "InProgress"
-                        ? "inprogress"
-                        : statusRaw === "Cancelled" || statusRaw === "Canceled"
-                          ? "cancelled"
-                          : slugify(statusRaw) || "unknown";
-
-                  return (
-                    <Option key={value} value={value}>
-                      {`${statusKey}-${formatEventName(
-                        eventName,
-                      )}-${slugify(clientName)}`}
-                    </Option>
-                  );
-                })}
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Amount
-                </span>
-              }
-              name="amount"
-              rules={[{ required: true, message: "Please enter the amount" }]}
-            >
-              <InputNumber
-                size="large"
-                min={0}
+          <section className="rq-section">
+            <header>
+              <span className="rq-step">3</span>
+              <div>
+                <h2>Amount and timing</h2>
+                <p>How much, how it will be paid, and how urgent it is.</p>
+              </div>
+            </header>
+            <div className="rq-grid">
+              <AmountField
+                label="Amount"
+                required
+                value={values.amount}
+                onChange={set("amount")}
                 placeholder="Enter amount"
-                style={{ width: "100%" }}
-                formatter={(value) =>
-                  `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-                }
-                parser={(value) => (value ? value.replace(/[^\d.-]/g, "") : "")}
-                onChange={(value) => form.setFieldsValue({ amount: value })}
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
+                error={errors.amount}
               />
-            </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Required Date
-                </span>
-              }
-              name="required_date"
-            >
-              <DatePicker
-                size="large"
-                style={{ width: "100%" }}
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              />
-            </Form.Item>
-
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Expecting Transactions In
-                </span>
-              }
-              name="expecting_transaction_in"
-              rules={[
-                { required: true, message: "Please select account type" },
+              <DateField label="Required date" value={values.required_date} onChange={set("required_date")} />
+            </div>
+            <ChoiceField
+              label="Expecting transaction in"
+              required
+              value={values.expecting_transaction_in}
+              onChange={set("expecting_transaction_in")}
+              options={[
+                { value: "cash", label: "Cash" },
+                { value: "account", label: "Account" },
               ]}
-            >
-              <Select
-                placeholder="Select account or cash"
-                size="large"
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              >
-                <Option value="cash">Cash</Option>
-                <Option value="account">Account</Option>
-              </Select>
-            </Form.Item>
+              error={errors.expecting_transaction_in}
+            />
+            <ChoiceField
+              label="Priority"
+              required
+              value={values.priority}
+              onChange={set("priority")}
+              options={[
+                { value: "HIGH", label: "High", tone: "red" },
+                { value: "MEDIUM", label: "Medium", tone: "gold" },
+                { value: "LOW", label: "Low", tone: "green" },
+              ]}
+              error={errors.priority}
+            />
+          </section>
 
-            <Form.Item
-              label={
-                <span className="text-gray-700 font-medium text-[15px]">
-                  Priority
-                </span>
-              }
-              name="priority"
-              rules={[{ required: true, message: "Please select priority" }]}
-            >
-              <Select
-                placeholder="Select priority level"
-                size="large"
-                className="rounded-lg border border-gray-300 focus:border-indigo-500 transition"
-              >
-                <Option value="HIGH">
-                  <span className="flex items-center gap-2 text-red-600 font-semibold">
-                    <span className="w-3 h-3 rounded-full bg-red-600"></span>{" "}
-                    High
-                  </span>
-                </Option>
-                <Option value="MEDIUM">
-                  <span className="flex items-center gap-2 text-yellow-600 font-semibold">
-                    <span className="w-3 h-3 rounded-full bg-yellow-600"></span>{" "}
-                    Medium
-                  </span>
-                </Option>
-                <Option value="LOW">
-                  <span className="flex items-center gap-2 text-green-600 font-semibold">
-                    <span className="w-3 h-3 rounded-full bg-green-600"></span>{" "}
-                    Low
-                  </span>
-                </Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item className="mt-8 mb-0">
-              <Button
-                type="primary"
-                htmlType="submit"
-                size="large"
-                block
-                className="bg-indigo-600 hover:bg-indigo-700 font-semibold rounded-lg shadow-md transition-colors duration-200 text-[15px]"
-              >
-                Submit Requirement
-              </Button>
-            </Form.Item>
-          </Form>
-        </Card>
+          <div className="rq-submit">
+            <FormActions
+              onCancel={() => navigate(-1)}
+              submitLabel="Submit requirement"
+              busy={submitting}
+              busyLabel="Submitting…"
+            />
+          </div>
+        </form>
       </div>
+
+      <Dialog
+        open={groupByModalOpen}
+        onClose={() => {
+          setGroupByModalOpen(false);
+          setNewGroupByName("");
+        }}
+        title="New group"
+        width={440}
+      >
+        <form onSubmit={createGroup} noValidate>
+          <p className="rq-note">
+            Group names must be unique. This will appear in the Group by list after saving.
+          </p>
+          <TextField
+            label="Group name"
+            required
+            autoFocus
+            value={newGroupByName}
+            onChange={(v) => {
+              setNewGroupByName(v);
+              if (groupError) setGroupError("");
+            }}
+            placeholder="e.g. Catering, Venue, AV"
+            maxLength={200}
+            error={groupError}
+          />
+          <FormActions
+            onCancel={() => {
+              setGroupByModalOpen(false);
+              setNewGroupByName("");
+            }}
+            submitLabel="Create group"
+            busy={creatingGroupBy}
+          />
+        </form>
+      </Dialog>
+
+      <Dialog open={vendorModalOpen} onClose={() => setVendorModalOpen(false)} title="Add vendor" width={900}>
+        <AddVendor
+          inModal
+          defaultDepId={deptId}
+          onCancel={() => setVendorModalOpen(false)}
+          onSuccess={async (created) => {
+            await fetchVendors();
+            const createdId =
+              created?.id || created?._id || created?.vendor?.id || created?.vendor?._id;
+            if (createdId) setValues((p) => ({ ...p, vendor: createdId }));
+            setVendorModalOpen(false);
+          }}
+        />
+      </Dialog>
     </div>
   );
 };

@@ -6,6 +6,7 @@ export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
   all: undefined,
   confirmed: "confirmed",
   inprogress: "inprogress",
+  almostbooked: "almostbooked",
   cancelled: "cancelled",
 };
 

@@ -1,5 +1,5 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState, useRef } from "react";
+import RequestsHeader from "../../Components/RequestsDashboard";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -12,9 +12,6 @@ import {
   Collapse,
   Select,
   Spin,
-  Card,
-  Row,
-  Col,
   Tabs,
 } from "antd";
 import {
@@ -1096,197 +1093,9 @@ const CARequirementsTable = () => {
   };
 
   return (
-    <div className="ca-requirements-page">
-      <style>{`
-        .ca-requirements-page {
-          min-height: 100vh;
-          background: transparent;
-          position: relative;
-        }
-        .ca-requirements-page .ca-content {
-          padding: 32px;
-          min-height: 100vh;
-          position: relative;
-          z-index: 10;
-        }
-        .ca-requirements-page .ca-title {
-          text-align: center;
-          font-size: 42px;
-          font-weight: 600;
-          color: #243227;
-          margin-bottom: 8px;
-          letter-spacing: -0.02em;
-        }
-        .ca-requirements-page .ca-subtitle {
-          text-align: center;
-          font-size: 16px;
-          color: #6b7280;
-          margin-bottom: 32px;
-        }
-        .ca-requirements-page .ant-table-thead > tr > th {
-          background: #142517 !important;
-          color: #fff !important;
-          font-size: 15px !important;
-          font-weight: 600 !important;
-          border-bottom: 2px solid #e5ede6 !important;
-          padding: 14px 12px !important;
-        }
-        .ca-requirements-page .ant-table-tbody > tr > td {
-          font-size: 15px !important;
-          font-weight: 500 !important;
-          padding: 12px !important;
-        }
-        .ca-requirements-page .ant-table-tbody > tr:hover > td {
-          background: #f9fbf9 !important;
-        }
-        .ca-requirements-page .ca-row-completed {
-          background: #f0fdf4 !important;
-        }
-        .ca-requirements-page .ca-row-rejected {
-          background: #fef2f2 !important;
-        }
-        .ca-requirements-page .ca-row-ca-approved {
-          background: #ecfdf5 !important;
-        }
-        .ca-requirements-page .ant-collapse-item {
-          border-radius: 12px;
-          margin-bottom: 16px;
-          overflow: hidden;
-          border: none !important;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        }
-        .ca-requirements-page .ant-collapse-header {
-          background: linear-gradient(135deg, #338147 0%, #338147 100%);
-          color: #fff !important;
-          font-weight: 600;
-          font-size: 17px;
-          border-radius: 12px;
-          padding: 14px 16px !important;
-          align-items: center !important;
-        }
-        .ca-requirements-page .ant-collapse-arrow {
-          color: #fff !important;
-        }
-        .ca-requirements-page .ant-collapse-arrow svg {
-          fill: #fff;
-        }
-        .ca-requirements-page .ant-collapse-content {
-          background: #fff;
-          border-radius: 0 0 12px 12px;
-          border: 1px solid #e5ede6;
-          border-top: none;
-        }
-        .ca-requirements-page .ant-collapse-content-box {
-          padding: 16px !important;
-        }
-        .ca-requirements-page .ca-panel-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          width: 100%;
-          padding-right: 24px;
-        }
-        .ca-requirements-page .ca-panel-header span:last-child {
-          font-size: 14px;
-          opacity: 0.95;
-          font-weight: 500;
-        }
-        .ca-requirements-page .ca-filter-card {
-          margin-bottom: 24px;
-          padding: 20px 24px;
-          border-radius: 16px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-          border: 1px solid #e6eae7;
-        }
-        .ca-requirements-page .ca-stat-card {
-          border-radius: 16px;
-          border: none;
-          overflow: hidden;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
-          transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .ca-requirements-page .ca-stat-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-        }
-      `}</style>
-
+    <div className="ca-requirements-page rd-page">
       <div className="ca-content">
-        <h1 className="ca-title">CA Dashboard</h1>
-        <p className="ca-subtitle">Review and approve requirements</p>
-
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #338147 0%, #338147 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Total
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>{stats.total}</div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Pending
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.pending}
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #2f8a4b 0%, #1f6f3a 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Approved
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.approved}
-              </div>
-            </Card>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <Card
-              className="ca-stat-card"
-              hoverable
-              style={{
-                background: "linear-gradient(135deg, #b5483a 0%, #d9894a 100%)",
-                borderColor: "transparent",
-                color: "#fff",
-              }}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, marginBottom: 4 }}>
-                Rejected
-              </div>
-              <div style={{ fontSize: 28, fontWeight: 700 }}>
-                {stats.rejected}
-              </div>
-            </Card>
-          </Col>
-        </Row>
+        <RequestsHeader title="CA Dashboard" subtitle="Review and approve requirements" stats={stats} />
 
         <div className="ca-filter-card" style={{ marginBottom: 24 }}>
           <Space size="middle" wrap>

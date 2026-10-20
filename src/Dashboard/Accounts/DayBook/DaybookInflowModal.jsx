@@ -64,7 +64,7 @@ const DaybookInflowModal = ({
       const data = await fetchEventsMinimal({ query, authHeaders });
       setEvents(Array.isArray(data) ? data : []);
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       message.error("Failed to fetch events");
     } finally {
@@ -131,7 +131,7 @@ const DaybookInflowModal = ({
       Modal.destroyAll();
       onSuccess?.();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       message.error("Failed to save inflow");
     } finally {
@@ -277,7 +277,9 @@ const DaybookInflowModal = ({
               const statusKey =
                 statusRaw === "Confirmed Event"
                   ? "confirmed"
-                  : statusRaw === "InProgress"
+                  : statusRaw === "Almost Booked"
+                    ? "almostbooked"
+                    : statusRaw === "InProgress"
                     ? "inprogress"
                     : statusRaw === "Cancelled" || statusRaw === "Canceled"
                       ? "cancelled"

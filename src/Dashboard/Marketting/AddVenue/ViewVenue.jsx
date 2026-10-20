@@ -1,49 +1,30 @@
-/* eslint-disable no-unused-vars */
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import axiosClient from "@/api/axiosClient";
-import {
-  Table,
-  Button,
-  Space,
-  Typography,
-  Drawer,
-  Modal,
-  Form,
-  Input,
-  message,
-  Popconfirm,
-} from "antd";
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
-  LeftOutlined,
-} from "@ant-design/icons";
+import { Table, message, Popconfirm } from "antd";
+import { MapPin, Pencil, Plus, Search, Trash2, Layers } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import ViewSubVenue from "../AddSubVenue/ViewSubVenue";
+import { EmptyState, PageHero, SearchBox, StatCard, StatRow } from "@/Components/PageKit";
+import { Dialog, FormActions, TextField } from "@/Components/FormKit";
 import AddVenue from "./AddVenue";
-
-const { Title } = Typography;
 
 const ViewVenue = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [subDrawerOpen, setSubDrawerOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState(null);
-  const [selectedVenue, setSelectedVenue] = useState(null);
-  const [form] = Form.useForm();
+  const [editName, setEditName] = useState("");
+  const [editError, setEditError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const navigate = useNavigate();
 
   const user = useSelector((state) => state.user.value);
 
   const config = {
     headers: {
-      Authorization: user?.access_token
-        ? `Bearer ${user.access_token}`
-        : undefined,
+      Authorization: user?.access_token ? `Bearer ${user.access_token}` : undefined,
       "Content-Type": "application/json",
     },
   };
@@ -56,12 +37,12 @@ const ViewVenue = () => {
       const list = Array.isArray(raw)
         ? raw
         : Array.isArray(raw.venues)
-        ? raw.venues
-        : Array.isArray(raw.items)
-        ? raw.items
-        : Array.isArray(raw.data)
-        ? raw.data
-        : [];
+          ? raw.venues
+          : Array.isArray(raw.items)
+            ? raw.items
+            : Array.isArray(raw.data)
+              ? raw.data
+              : [];
       setData(list);
     } catch (err) {
       console.error("fetchVenues error:", err);
@@ -73,6 +54,7 @@ const ViewVenue = () => {
 
   useEffect(() => {
     fetchVenues();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleDelete = async (id) => {
@@ -88,18 +70,20 @@ const ViewVenue = () => {
 
   const handleEdit = (record) => {
     setEditingRecord(record);
-    form.setFieldsValue({ name: record.name });
+    setEditName(record.name || "");
+    setEditError("");
     setEditModalOpen(true);
   };
 
-  const handleUpdate = async () => {
+  const handleUpdate = async (e) => {
+    e?.preventDefault?.();
+    if (!editName.trim()) {
+      setEditError("Please enter a venue name");
+      return;
+    }
+    setSaving(true);
     try {
-      const values = await form.validateFields();
-      await axiosClient.patch(
-        `venue/${editingRecord.id}`,
-        values,
-        config
-      );
+      await axiosClient.patch(`venue/${editingRecord.id}`, { name: editName.trim() }, config);
       message.success("Venue updated");
       setEditModalOpen(false);
       setEditingRecord(null);
@@ -107,100 +91,105 @@ const ViewVenue = () => {
     } catch (err) {
       console.error("update venue error:", err);
       message.error("Update failed");
+    } finally {
+      setSaving(false);
     }
   };
 
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return q ? data.filter((v) => String(v.name || "").toLowerCase().includes(q)) : data;
+  }, [data, search]);
+
   const columns = [
+    { title: "#", width: 70, render: (_, __, index) => index + 1 },
     {
-      title: "SL No",
-      render: (_, __, index) => index + 1,
-      width: 80,
-    },
-    {
-      title: "Venue Name",
+      title: "Venue",
       dataIndex: "name",
+      render: (name) => (
+        <div className="pk-who">
+          <span className="pk-avatar is-soft" aria-hidden="true">
+            <MapPin size={18} />
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <strong>{name}</strong>
+          </div>
+        </div>
+      ),
     },
     {
-      title: "Action",
-      width: 220,
+      title: "",
+      width: 190,
+      align: "right",
       render: (_, record) => (
-        <Space>
-          {/* <Button
-            icon={<EyeOutlined />}
-            type="link"
-            onClick={() => {
-              setSelectedVenue(record);
-              setSubDrawerOpen(true);
-            }}
-          >
-            View Sub Venue
-          </Button> */}
-          <Button
-            icon={<EditOutlined />}
-            type="link"
-            onClick={() => handleEdit(record)}
-          />
-          <Popconfirm
-            title="Delete this venue?"
-            onConfirm={() => handleDelete(record.id)}
-          >
-            <Button icon={<DeleteOutlined />} type="link" danger />
+        <div className="pk-actions">
+          <button type="button" className="pk-btn is-solid" onClick={() => handleEdit(record)}>
+            <Pencil size={13} aria-hidden="true" /> Edit
+          </button>
+          <Popconfirm title="Delete this venue?" onConfirm={() => handleDelete(record.id)}>
+            <button type="button" className="pk-btn is-danger is-icon" aria-label="Delete venue">
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
           </Popconfirm>
-        </Space>
+        </div>
       ),
     },
   ];
 
-  const navigate = useNavigate();
-
   return (
-    <>
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-3">
-          <Button
-            type="link"
-            icon={<LeftOutlined />}
-            onClick={() => navigate(`/user`)}
-          >
-            Back
-          </Button>
-          <Title level={3} style={{ margin: 0 }}>
-            View Venues
-          </Title>
-        </div>
+    <div className="pk-page">
+      <div className="pk-wrap">
+        <PageHero
+          eyebrow="Masterdata"
+          title="Venues"
+          subtitle="The venues available when creating a booking."
+          onBack={() => navigate("/user")}
+        >
+          <button type="button" className="pk-cta is-ghost" onClick={() => navigate("/user/viewsubvenue")}>
+            <Layers size={16} aria-hidden="true" /> Sub venues
+          </button>
+          <button type="button" className="pk-cta" onClick={() => setDrawerOpen(true)}>
+            <Plus size={18} strokeWidth={2.4} aria-hidden="true" /> Add venue
+          </button>
+        </PageHero>
 
-        <div className="flex items-center gap-2">
-          <Button
-            icon={<EyeOutlined />}
-            onClick={() => navigate("/user/viewsubvenue")}
-          >
-            View Sub Venue
-          </Button>
-          <Button
-            type="primary"
-            icon={<PlusOutlined />}
-            onClick={() => setDrawerOpen(true)}
-          >
-            Add Venue Name
-          </Button>
-        </div>
+        <StatRow>
+          <StatCard icon={<MapPin size={21} aria-hidden="true" />} label="Total venues" value={data.length} />
+        </StatRow>
+
+        <section className="pk-panel">
+          <div className="pk-toolbar">
+            <div className="pk-toolbar-left">
+              <SearchBox
+                icon={<Search size={16} aria-hidden="true" />}
+                value={search}
+                onChange={setSearch}
+                placeholder="Search venues"
+                label="Search venues"
+              />
+            </div>
+          </div>
+          <Table
+            className="pk-table"
+            rowKey="id"
+            columns={columns}
+            dataSource={visible}
+            loading={loading}
+            pagination={{ pageSize: 10, showSizeChanger: false, showTotal: (t) => `${t} venues` }}
+            locale={{
+              emptyText: loading ? null : (
+                <EmptyState
+                  icon={<MapPin size={26} aria-hidden="true" />}
+                  title={search ? "No venues match your search" : "No venues yet"}
+                  hint={search ? undefined : "Use “Add venue” to create the first one."}
+                />
+              ),
+            }}
+          />
+        </section>
       </div>
 
-      <Table
-        rowKey="id"
-        columns={columns}
-        dataSource={data}
-        loading={loading}
-      />
-
-      {/* Add Venue */}
-      <Drawer
-        title="Add Venue Name"
-        open={drawerOpen}
-        width={420}
-        onClose={() => setDrawerOpen(false)}
-        destroyOnClose
-      >
+      <Dialog open={drawerOpen} onClose={() => setDrawerOpen(false)} title="Add venue" width={440}>
         <AddVenue
           onSuccess={() => {
             setDrawerOpen(false);
@@ -208,37 +197,25 @@ const ViewVenue = () => {
           }}
           onCancel={() => setDrawerOpen(false)}
         />
-      </Drawer>
+      </Dialog>
 
-      {/* Edit Venue */}
-      <Modal
-        title="Edit Venue"
-        open={editModalOpen}
-        onOk={handleUpdate}
-        onCancel={() => setEditModalOpen(false)}
-      >
-        <Form form={form} layout="vertical">
-          <Form.Item
-            label="Venue Name"
-            name="name"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      {/* View Sub Venue */}
-      <Drawer
-        title={`Sub Venues - ${selectedVenue?.name}`}
-        width="80%"
-        open={subDrawerOpen}
-        onClose={() => setSubDrawerOpen(false)}
-        destroyOnClose
-      >
-        <ViewSubVenue venue={selectedVenue} />
-      </Drawer>
-    </>
+      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)} title="Edit venue" width={440}>
+        <form onSubmit={handleUpdate} noValidate>
+          <TextField
+            label="Venue name"
+            required
+            autoFocus
+            value={editName}
+            onChange={(v) => {
+              setEditName(v);
+              if (editError) setEditError("");
+            }}
+            error={editError}
+          />
+          <FormActions onCancel={() => setEditModalOpen(false)} submitLabel="Save" busy={saving} />
+        </form>
+      </Dialog>
+    </div>
   );
 };
 

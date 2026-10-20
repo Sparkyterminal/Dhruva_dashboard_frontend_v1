@@ -1,18 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import {
-  Card,
-  Col,
-  Row,
-  Tabs,
-  Typography,
-  message,
-  Spin,
-  Space,
-  Button,
-  Switch,
-} from "antd";
-import { ArrowLeftOutlined, BookOutlined } from "@ant-design/icons";
+import { message, Spin, Switch } from "antd";
+import { ArrowLeft, CalendarDays, Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import DaybookDateSelector from "./DaybookDateSelector";
@@ -29,10 +18,9 @@ import {
   fetchDaybookRange,
 } from "./daybookApi";
 import { isEventAdvanceDaybookRow } from "./daybookUtils";
+import "./Daybook.css";
 import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import { downloadDaybookExcel } from "./daybookExcel";
-
-const { Title, Text } = Typography;
 
 const DEFAULT_DATA_LIMIT = 200;
 // Start of the overall (till date) download when no data cutoff is configured.
@@ -79,7 +67,7 @@ const Daybookhome = () => {
       setDaybook(resData || null);
     } catch (err) {
       message.error("Failed to fetch daybook data");
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       setDaybook(null);
     } finally {
@@ -176,7 +164,7 @@ const Daybookhome = () => {
       message.success("Inflow deleted successfully");
       await fetchDaybook();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       message.error("Failed to delete inflow");
     } finally {
@@ -215,7 +203,7 @@ const Daybookhome = () => {
       message.success("Balance record deleted successfully");
       await fetchDaybook();
     } catch (err) {
-      // eslint-disable-next-line no-console
+       
       console.error(err);
       message.error("Failed to delete balance record");
     } finally {
@@ -233,192 +221,127 @@ const Daybookhome = () => {
     fetchDaybook();
   };
 
+  const tabs = [
+    { key: "inflow", label: "Inflow", count: daybook?.inflow?.count ?? 0 },
+    { key: "outflow", label: "Outflow", count: daybook?.outflow?.count ?? 0 },
+    { key: "accounts", label: "Accounts", count: accountsCount },
+  ];
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-indigo-50/20 p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: "16px",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(10px)",
-          }}
-          styles={{ body: { padding: "20px 24px" } }}
-        >
-          <Row justify="space-between" align="middle" gutter={[16, 16]}>
-            <Col xs={24} sm={8}>
-              <Button
-                icon={<ArrowLeftOutlined />}
-                onClick={() => navigate("/user")}
-                size="large"
-                className="border-0 shadow-none hover:bg-slate-100 text-slate-600"
-                style={{ borderRadius: "10px" }}
-              >
-                Back
-              </Button>
-            </Col>
+    <div className="db-page">
+      <div className="db-wrap">
+        <header className="db-hero">
+          <div>
+            <button type="button" className="db-back" onClick={() => navigate("/user")}>
+              <ArrowLeft size={14} aria-hidden="true" /> Back to home
+            </button>
+            <p className="db-eyebrow">Accounts</p>
+            <h1 className="db-title">Daybook</h1>
+            <p className="db-sub">Day-to-day money in, money out and balances.</p>
+          </div>
+          <span className="db-period">
+            <CalendarDays size={16} aria-hidden="true" /> {normalizedRangeLabel}
+          </span>
+        </header>
 
-            <Col xs={24} sm={8} className="text-center">
-              <Title
-                level={2}
-                className="mb-0! text-2xl! md:text-3xl! font-semibold text-slate-800"
-              >
-                <span style={{ marginRight: 8 }}>
-                  <BookOutlined />
-                </span>
-                Daybook
-              </Title>
-              <Text className="text-xs md:text-sm text-slate-500">
-                Day to day inflow, outflow & P&L
-              </Text>
-            </Col>
-
-            <Col xs={24} sm={8} className="text-right">
-              <Space size="middle" className="justify-end" wrap>
-                <ExcelDownloadButton
-                  label="Overall Excel (till date)"
-                  onDownload={() => downloadDaybook("overall")}
-                />
-                <ExcelDownloadButton
-                  label="Day-wise Excel"
-                  onDownload={() => downloadDaybook("daywise")}
-                  disabled={!startDateStr || !endDateStr}
-                />
-                <Button
-                  size="large"
-                  onClick={() => setSelectedRange([dayjs(), dayjs()])}
-                  className="border-0 shadow-none hover:bg-slate-100 text-slate-700"
-                >
-                  Today
-                </Button>
-              </Space>
-            </Col>
-          </Row>
-        </Card>
-
-        <DaybookDateSelector
-          value={selectedRange}
-          onChange={setSelectedRange}
-          cutoffDate={user?.dataCutoffDate}
-        />
-
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: "16px",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(10px)",
-          }}
-          styles={{ body: { padding: "14px 20px" } }}
-        >
-          <Space align="center" wrap>
-            <Switch
-              checked={includeEventAdvances}
-              onChange={setIncludeEventAdvances}
+        <section className="db-controls">
+          <DaybookDateSelector
+            value={selectedRange}
+            onChange={setSelectedRange}
+            cutoffDate={user?.dataCutoffDate}
+          />
+          <div className="db-controls-right">
+            <label
+              className="db-toggle"
+              title="Counts booking advances as inflow when their received date falls in the range"
+            >
+              <Switch
+                size="small"
+                checked={includeEventAdvances}
+                onChange={setIncludeEventAdvances}
+              />
+              Include booking advances
+            </label>
+            <ExcelDownloadButton
+              label="Overall Excel"
+              onDownload={() => downloadDaybook("overall")}
             />
-            <Text className="text-slate-700">
-              Include booking advances in inflow (matched by advance received date in range)
-            </Text>
-          </Space>
-        </Card>
+            <ExcelDownloadButton
+              label="Day-wise Excel"
+              onDownload={() => downloadDaybook("daywise")}
+              disabled={!startDateStr || !endDateStr}
+            />
+          </div>
+        </section>
 
         <DaybookSummaryCards
           loading={loading}
           inflow={daybook?.inflow}
           outflow={daybook?.outflow}
           accounts={daybook?.accounts}
-          selectedDateLabel={normalizedRangeLabel}
         />
 
-        <Card
-          className="border-0 shadow-sm"
-          style={{
-            borderRadius: "16px",
-            background: "rgba(255, 255, 255, 0.85)",
-            backdropFilter: "blur(10px)",
-          }}
-          styles={{ body: { padding: "20px 24px" } }}
-        >
-          <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={[
-              {
-                key: "inflow",
-                label: `Inflow (${daybook?.inflow?.count ?? 0})`,
-              },
-              {
-                key: "outflow",
-                label: `Outflow (${daybook?.outflow?.count ?? 0})`,
-              },
-              {
-                key: "accounts",
-                label: `Accounts (${accountsCount})`,
-              },
-            ]}
-            className="modern-tabs"
-          />
+        <section className="db-panel">
+          <div className="db-panel-head">
+            <div className="db-tabs" role="group" aria-label="Entries">
+              {tabs.map((t) => (
+                <button
+                  key={t.key}
+                  type="button"
+                  aria-pressed={activeTab === t.key}
+                  onClick={() => setActiveTab(t.key)}
+                >
+                  {t.label} <span className="count">{t.count}</span>
+                </button>
+              ))}
+            </div>
+            {activeTab === "inflow" && (
+              <button type="button" className="db-add" onClick={handleAddInflow}>
+                <Plus size={16} strokeWidth={2.4} aria-hidden="true" /> Add inflow
+              </button>
+            )}
+            {activeTab === "accounts" && (
+              <button type="button" className="db-add" onClick={handleAddBalance}>
+                <Plus size={16} strokeWidth={2.4} aria-hidden="true" /> Add open/close balance
+              </button>
+            )}
+          </div>
 
-          <div style={{ marginTop: 16 }}>
+          <div className="db-body">
             {loading && (
-              <div style={{ padding: 24 }}>
+              <div className="db-loading">
                 <Spin />
               </div>
             )}
 
             {!loading && activeTab === "inflow" && (
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    marginBottom: 12,
-                  }}
-                >
-                  <Button type="primary" onClick={handleAddInflow}>
-                    Add Inflow
-                  </Button>
-                </div>
-                <DaybookInflowTable
-                  rows={daybook?.inflow?.data}
-                  onEdit={handleEditInflow}
-                  onDelete={handleDeleteInflow}
-                  deletingId={deletingInflowId}
-                />
-              </div>
+              <DaybookInflowTable
+                rows={daybook?.inflow?.data}
+                onEdit={handleEditInflow}
+                onDelete={handleDeleteInflow}
+                deletingId={deletingInflowId}
+              />
             )}
             {!loading && activeTab === "outflow" && (
               <DaybookOutflowTable rows={daybook?.outflow?.data} />
             )}
             {!loading && activeTab === "accounts" && (
-              <div>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    marginBottom: 12,
-                  }}
-                >
-                  <Button type="primary" onClick={handleAddBalance}>
-                    Add Open/Close Balance
-                  </Button>
-                </div>
-                <DaybookAccountsBalanceTable
-                  rows={daybook?.accounts?.openCloseBalances}
-                  onEdit={handleEditBalance}
-                  onDelete={handleDeleteBalance}
-                  deletingId={deletingBalanceId}
-                />
-              </div>
+              <DaybookAccountsBalanceTable
+                rows={daybook?.accounts?.openCloseBalances}
+                onEdit={handleEditBalance}
+                onDelete={handleDeleteBalance}
+                deletingId={deletingBalanceId}
+              />
             )}
 
             {!loading && !daybook && (
-              <div className="py-10 text-center">
-                <Text type="secondary">No daybook data found.</Text>
+              <div className="db-empty">
+                <strong>No daybook data found</strong>
+                <span>Try a different date range.</span>
               </div>
             )}
           </div>
-        </Card>
+        </section>
       </div>
 
       <DaybookInflowModal
@@ -439,21 +362,6 @@ const Daybookhome = () => {
         onCancel={() => setBalanceModalOpen(false)}
         onSuccess={handleBalanceModalSuccess}
       />
-
-      <style>{`
-        .modern-tabs .ant-tabs-tab {
-          border-radius: 8px 8px 0 0;
-          padding: 12px 20px;
-          font-weight: 600;
-        }
-        .modern-tabs .ant-tabs-tab-active {
-          background: rgba(248, 250, 252, 1);
-        }
-        .modern-tabs .ant-tabs-ink-bar {
-          height: 3px;
-          border-radius: 3px 3px 0 0;
-        }
-      `}</style>
     </div>
   );
 };

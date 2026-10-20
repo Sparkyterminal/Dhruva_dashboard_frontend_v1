@@ -36,7 +36,7 @@ export const fetchBudgetReportEligibleEvents = async ({
   };
 
   try {
-    const [confirmedRes, inProgressRes] = await Promise.all([
+    const [confirmedRes, inProgressRes, almostBookedRes] = await Promise.all([
       axiosClient.get(`events`, {
         ...authHeaders,
         params: { page: 1, limit, status: "confirmed" },
@@ -45,9 +45,17 @@ export const fetchBudgetReportEligibleEvents = async ({
         ...authHeaders,
         params: { page: 1, limit, status: "inprogress" },
       }),
+      // Older backends do not know this status yet: treat a failure as "no almost-booked events".
+      axiosClient
+        .get(`events`, {
+          ...authHeaders,
+          params: { page: 1, limit, status: "almostbooked" },
+        })
+        .catch(() => null),
     ]);
     merge(parseEventsPayload(confirmedRes));
     merge(parseEventsPayload(inProgressRes));
+    if (almostBookedRes) merge(parseEventsPayload(almostBookedRes));
     if (byId.size > 0) {
       return Array.from(byId.values());
     }

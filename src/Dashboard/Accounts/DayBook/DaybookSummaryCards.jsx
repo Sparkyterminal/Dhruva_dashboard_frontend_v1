@@ -1,177 +1,102 @@
 import React from "react";
-import { Card, Col, Row, Skeleton, Typography } from "antd";
+import { Skeleton } from "antd";
+import { ArrowDownLeft, ArrowUpRight, Scale } from "lucide-react";
 import { formatAmountINR } from "./daybookUtils";
 
-const { Text } = Typography;
+const FlowCard = ({ tone, icon, title, amount, note }) => (
+  <div className={`db-flow ${tone}`}>
+    <div className="db-flow-head">
+      <span className="db-flow-icon">
+        {icon}
+      </span>
+      {title}
+    </div>
+    <p className="db-flow-amount">{formatAmountINR(amount)}</p>
+    <p className="db-flow-note">{note}</p>
+  </div>
+);
 
-const SummaryCard = ({ title, amount, count, gradient }) => {
-  const safeAmount = Number(amount) || 0;
-  return (
-    <Card
-      style={{
-        background: gradient,
-        borderRadius: 16,
-        border: "none",
-        color: "white",
-        boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-        overflow: "hidden",
-      }}
-      styles={{ body: { padding: "18px 18px" } }}
-    >
-      <Text style={{ color: "rgba(255,255,255,0.92)", fontWeight: 700 }}>
-        {title}
-      </Text>
-      <div style={{ fontSize: 28, fontWeight: 800, marginTop: 6 }}>
-        {formatAmountINR(safeAmount)}
-      </div>
-      <div style={{ marginTop: 6, color: "rgba(255,255,255,0.85)", fontWeight: 600 }}>
-        Count: {count ?? 0}
-      </div>
-    </Card>
-  );
-};
+const Balance = ({ label, amount, kind }) => (
+  <div className={`db-balance ${kind}`}>
+    <span>{label}</span>
+    <strong>{formatAmountINR(amount)}</strong>
+  </div>
+);
 
-const BalanceValueCard = ({ title, amount, valueColor }) => {
-  const safeAmount = Number(amount) || 0;
-  return (
-    <Card
-      style={{
-        borderRadius: 12,
-        border: "1px solid #e5ede6",
-        background: "#ffffff",
-      }}
-      styles={{ body: { padding: "14px 16px" } }}
-    >
-      <Text className="text-slate-500" style={{ fontWeight: 600 }}>
-        {title}
-      </Text>
-      <div
-        style={{
-          marginTop: 4,
-          fontSize: 22,
-          lineHeight: 1.1,
-          fontWeight: 800,
-          color: valueColor || "#142517",
-        }}
-      >
-        {formatAmountINR(safeAmount)}
-      </div>
-    </Card>
-  );
-};
-
-const DaybookSummaryCards = ({
-  loading,
-  inflow,
-  outflow,
-  accounts,
-  selectedDateLabel,
-}) => {
-  const inflowTotal = inflow?.total ?? 0;
+const DaybookSummaryCards = ({ loading, inflow, outflow, accounts }) => {
+  const inflowTotal = Number(inflow?.total) || 0;
   const inflowCount = inflow?.count ?? 0;
-  const outflowTotal = outflow?.total ?? 0;
+  const outflowTotal = Number(outflow?.total) || 0;
   const outflowCount = outflow?.count ?? 0;
+  const net = inflowTotal - outflowTotal;
   const currentBalance = Array.isArray(accounts?.openCloseBalances)
     ? accounts.openCloseBalances[0]
     : null;
 
-  return (
-    <Card
-      className="border-0 shadow-sm"
-      style={{
-        borderRadius: "16px",
-        background: "rgba(255, 255, 255, 0.85)",
-        backdropFilter: "blur(10px)",
-      }}
-      styles={{ body: { padding: "20px 24px" } }}
-    >
-      <div style={{ marginBottom: 14 }}>
-        <Text className="text-slate-700 font-semibold">
-          Summary for {selectedDateLabel || "-"}
-        </Text>
+  if (loading) {
+    return (
+      <div className="db-summary">
+        {[0, 1, 2].map((i) => (
+          <div className="db-flow" key={i} style={{ background: "#fff", borderColor: "var(--line)" }}>
+            <Skeleton active paragraph={{ rows: 2 }} />
+          </div>
+        ))}
       </div>
+    );
+  }
 
-      {loading ? (
-        <>
-          <Row gutter={[16, 16]}>
-            <Col xs={24} md={6}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-            <Col xs={24} md={6}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-            <Col xs={24} md={6}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-            <Col xs={24} md={6}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-          </Row>
-          <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-            <Col xs={24} md={12}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-            <Col xs={24} md={12}>
-              <Skeleton active paragraph={{ rows: 2 }} />
-            </Col>
-          </Row>
-        </>
-      ) : (
-        <>
-          <Row gutter={[16, 16]} align="stretch" style={{ marginBottom: 8 }}>
-            <Col xs={24} sm={12} lg={6}>
-              <BalanceValueCard
-                title="Cash Opening Balance"
-                amount={currentBalance?.cashOpeningBalance}
-                valueColor="#15803d"
-              />
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <BalanceValueCard
-                title="Cash Closing Balance"
-                amount={currentBalance?.cashClosingBalance}
-                valueColor="#dc2626"
-              />
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <BalanceValueCard
-                title="Account Opening Balance"
-                amount={currentBalance?.accountOpeningBalance}
-                valueColor="#15803d"
-              />
-            </Col>
-            <Col xs={24} sm={12} lg={6}>
-              <BalanceValueCard
-                title="Account Closing Balance"
-                amount={currentBalance?.accountClosingBalance}
-                valueColor="#dc2626"
-              />
-            </Col>
-          </Row>
+  const count = (n) => `${n} ${n === 1 ? "entry" : "entries"}`;
 
-          <Row gutter={[16, 16]} align="stretch">
-            <Col xs={24} md={12}>
-              <SummaryCard
-                title="Inflow"
-                amount={inflowTotal}
-                count={inflowCount}
-                gradient="linear-gradient(135deg,#338147 0%,#2b7a41 100%)"
-              />
-            </Col>
-            <Col xs={24} md={12}>
-              <SummaryCard
-                title="Outflow"
-                amount={outflowTotal}
-                count={outflowCount}
-                gradient="linear-gradient(135deg,#ef4444 0%,#dc2626 100%)"
-              />
-            </Col>
-          </Row>
-        </>
-      )}
-    </Card>
+  return (
+    <>
+      <section className="db-summary" aria-label="Summary">
+        <FlowCard
+          tone="is-in"
+          icon={<ArrowDownLeft size={17} strokeWidth={2} aria-hidden="true" />}
+          title="Money in"
+          amount={inflowTotal}
+          note={count(inflowCount)}
+        />
+        <FlowCard
+          tone="is-out"
+          icon={<ArrowUpRight size={17} strokeWidth={2} aria-hidden="true" />}
+          title="Money out"
+          amount={outflowTotal}
+          note={count(outflowCount)}
+        />
+        <FlowCard
+          tone={net >= 0 ? "is-net" : "is-net is-loss"}
+          icon={<Scale size={17} strokeWidth={2} aria-hidden="true" />}
+          title={net >= 0 ? "Net (profit)" : "Net (loss)"}
+          amount={Math.abs(net)}
+          note="Inflow minus outflow"
+        />
+      </section>
+
+      <section className="db-balances" aria-label="Balances">
+        <Balance
+          label="Cash opening"
+          amount={currentBalance?.cashOpeningBalance}
+          kind="is-cash"
+        />
+        <Balance
+          label="Cash closing"
+          amount={currentBalance?.cashClosingBalance}
+          kind="is-cash"
+        />
+        <Balance
+          label="Account opening"
+          amount={currentBalance?.accountOpeningBalance}
+          kind="is-acct"
+        />
+        <Balance
+          label="Account closing"
+          amount={currentBalance?.accountClosingBalance}
+          kind="is-acct"
+        />
+      </section>
+    </>
   );
 };
 
 export default DaybookSummaryCards;
-

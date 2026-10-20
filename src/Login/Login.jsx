@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import axiosClient from "@/api/axiosClient";
@@ -47,7 +47,7 @@ export default function Login() {
         }
       }
     } catch (err) {
-      setError(err.response?.message || "Invalid credentials");
+      setError(err.response?.data?.message || "Invalid credentials");
     } finally {
       setLoading(false);
     }
@@ -55,11 +55,12 @@ export default function Login() {
 
   return (
     <AuthLayout
+      icon={LogIn}
       title="Welcome back"
       subtitle="Sign in to your account"
       footer="Protected by advanced security measures"
     >
-      <form onSubmit={handleSubmit} noValidate={false}>
+      <form onSubmit={handleSubmit}>
         <div className="auth-field">
           <label htmlFor="email_id" className="auth-label">
             Email address

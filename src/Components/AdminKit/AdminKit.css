@@ -1,0 +1,213 @@
+/* Admin dashboard kit: toasts, confirm text, data table + pager. */
+
+.ak-toasts {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 1300;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(380px, calc(100vw - 40px));
+}
+
+.ak-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--tone, #338147);
+  box-shadow: 0 18px 36px -18px rgba(11, 61, 11, 0.45);
+  font-size: 13.5px;
+  color: var(--ink);
+  animation: fk-pop 0.18s ease both;
+}
+
+.ak-toast svg {
+  flex: none;
+  color: var(--tone, #338147);
+}
+
+.ak-toast span {
+  flex: 1;
+}
+
+.ak-toast.is-error {
+  --tone: #c0392b;
+}
+.ak-toast.is-info {
+  --tone: #2f5d8c;
+}
+
+.ak-toast button {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.ak-toast button:hover {
+  background: #eef1ec;
+}
+
+.ak-confirm-text {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+.fk-btn.is-danger {
+  background: #b03a2e;
+  border-color: #b03a2e;
+  color: #fff;
+}
+
+.fk-btn.is-danger:hover:not(:disabled) {
+  background: #8f2f25;
+  border-color: #8f2f25;
+}
+
+/* ---- Table ---- */
+.ak-table-wrap {
+  background: #fff;
+}
+
+.ak-scroll {
+  overflow-x: auto;
+}
+
+.ak-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ak-table th {
+  padding: 13px 16px;
+  background: #f7f9f6;
+  border-bottom: 1px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.ak-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid #eef1ec;
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.ak-table tbody tr:hover td {
+  background: #f8fbf7;
+}
+
+.ak-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.ak-dash {
+  color: var(--ink-soft);
+}
+
+.ak-table tr.is-skeleton td i {
+  display: block;
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f4f0 25%, #e8eee7 37%, #f1f4f0 63%);
+  background-size: 400% 100%;
+  animation: ck-shimmer 1.4s ease infinite;
+}
+
+.ak-empty {
+  border-top: 1px solid var(--line);
+}
+
+/* ---- Pager ---- */
+.ak-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 18px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.ak-pager-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ak-pager-size {
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.ak-page-btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line-strong);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--brand);
+  cursor: pointer;
+}
+
+.ak-page-btn:hover:not(:disabled) {
+  background: #f2f8f2;
+  border-color: var(--brand-action);
+}
+
+.ak-page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ak-page-now {
+  min-width: 56px;
+  text-align: center;
+  font-weight: 600;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Two-column form grid (Add / Edit user) ---- */
+.adm-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 22px;
+}
+
+.adm-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .adm-grid {
+    grid-template-columns: 1fr;
+  }
+}
