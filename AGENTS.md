@@ -164,7 +164,7 @@ All exports run **in the browser** from data already available via the API — n
 
 ## 9. Backend and data notes
 
-- Backend contract documents (markdown) all live under `docs/api/` (overview, daybook, expenses, budget-report, client-bookings, marketing, requests, global). Read the relevant one before changing an API call.
+- Backend contract documents (markdown) all live under `docs/api/` (overview, daybook, expenses, budget-report, client-bookings, advance-calendar, marketing, requests, global). **Any backend change a feature needs or will need goes in `docs/api/<area>/` and its path must be reported to the owner.** Read the relevant one before changing an API call.
 - MongoDB (database `test`) collections seen: `events` (bookings; `eventTypes[]` each with `advances[]`), `clientleads`, `vendors`, `bills` (`emiStatus[]`), `daybookinflows`, `daybookaccountopenclosebalances`, `spreadsheetworkbooks` (module `budget-report` keyed by event id, also `client-leads`, `daybook-*`, `daily-expenses`), `appsettings`, plus reference collections (`users`, `departments`, `venues`, `eventnames`, `eventtypes`, `coordinators`…). The API returns populated objects (`eventName: { name }`) where raw documents only hold ids.
 - Data quirks to expect, not "fix" in the UI: advances can have `receivedAmount > 0` while `status` still says `Pending` (treat **received amount** as truth); some bookings have `totalPayable = 0` with money received; event dates are stored in UTC (IST evening shows as the same date, midnight IST = 18:30 UTC the day before).
 - Database credentials are **not** in this repo and must never be committed or written into docs. If you need data access, ask the owner for a connection string at the time, read-only first.

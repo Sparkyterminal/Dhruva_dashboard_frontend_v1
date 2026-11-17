@@ -524,3 +524,16 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Advance calendar on phones: day cells are too narrow for text, so each advance shows as a
+   status-coloured bar and the full details are in the "Advances this month" list below. */
+@media (max-width: 640px) {
+  .ck-advance .fc-event-body {
+    display: none;
+  }
+
+  .ck-advance .fc-event {
+    min-height: 14px;
+    margin: 2px 2px;
+  }
+}
