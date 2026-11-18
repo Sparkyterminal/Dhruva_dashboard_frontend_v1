@@ -89,6 +89,7 @@ Roles come from the login response (`role`, plus `departments[0].name`). `src/Ap
 
 - Not logged in → only `/login` exists.
 - The same screen component (e.g. `ViewClientsBookings` at `/user/viewclientbookings`) is mounted in several role trees. A change to a shared screen affects every role that routes to it — check `App.jsx` for all occurrences before assuming a screen is single-role.
+- **CA approvals are bulk:** on the CA Dashboard the CA ticks pending requirements (or "Select all pending"), presses Approve/Reject in the floating bar and confirms in a dialog (`Dashboard/CA/bulk/`). It sends one `PATCH request/:id` per row; optional bulk endpoint in `docs/api/requests/CA_BULK_APPROVE_BACKEND.md`.
 - A session expires when the JWT `exp` passes (timer in `App.jsx`); the user is logged out with a toast.
 - **Adding a page:** create the component, add `<Route>` entries in every role tree that should see it, and add a nav link in that role's home (§7).
 

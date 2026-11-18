@@ -1,0 +1,196 @@
+/* CA bulk approve / reject: floating action bar and confirmation dialog. */
+
+.ba-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  z-index: 40;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  width: min(720px, calc(100vw - 32px));
+  padding: 12px 14px 12px 20px;
+  border-radius: 16px;
+  color: #fff;
+  background: var(--brand);
+  box-shadow: 0 18px 40px -16px rgba(7, 41, 7, 0.7);
+}
+
+.ba-bar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ba-bar-info strong {
+  font-size: 15px;
+}
+
+.ba-bar-info span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.ba-bar-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ba-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+}
+
+.ba-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.ba-btn.is-approve {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--brand);
+}
+
+.ba-btn.is-approve:hover {
+  background: #ebdd9d;
+}
+
+.ba-btn.is-reject {
+  border-color: #f1b0a6;
+  color: #ffd9d3;
+}
+
+.ba-select-all {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ba-select-all span {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ---- Confirmation dialog ---- */
+.ba-lead {
+  margin: 0 0 12px;
+  color: var(--ink);
+}
+
+.ba-warn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #fbf6e3;
+  color: #82682a;
+  font-size: 13px;
+}
+
+.ba-list {
+  max-height: 280px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.ba-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+}
+
+.ba-item + .ba-item {
+  border-top: 1px solid var(--line);
+}
+
+.ba-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ba-item-main strong,
+.ba-item-amt strong {
+  color: var(--ink);
+}
+
+.ba-item-main span,
+.ba-item-amt span {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.ba-item-main em {
+  font-size: 12px;
+  font-style: normal;
+  color: #b42318;
+}
+
+.ba-item-amt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
+.ba-totals {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 12px 2px 4px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.ba-totals strong {
+  color: var(--ink);
+}
+
+.ba-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0 2px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.ba-progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.ba-progress-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--brand-action);
+  transition: width 0.2s ease;
+}

@@ -13,10 +13,9 @@ import {
   Select,
   Spin,
   Tabs,
+  Checkbox,
 } from "antd";
 import {
-  CheckCircleOutlined,
-  CloseCircleOutlined,
   EditOutlined,
   CheckOutlined,
   SearchOutlined,
@@ -26,6 +25,9 @@ import dayjs from "dayjs";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import BulkActionBar from "./bulk/BulkActionBar";
+import BulkConfirmDialog from "./bulk/BulkConfirmDialog";
+import { getRowId, isCaPending, runBulkCaCheck } from "./bulk/bulkCaCheck";
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -64,7 +66,9 @@ const CARequirementsTable = () => {
   const [editApproverAmount, setEditApproverAmount] = useState(null);
   const [editEntityAccount, setEditEntityAccount] = useState(null);
   const [editAmountPaidTo, setEditAmountPaidTo] = useState(null);
-  const [approvingId, setApprovingId] = useState(null);
+  // CA bulk decision: ids of selected pending rows, and which decision the dialog is confirming.
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [bulkAction, setBulkAction] = useState(null); // null | "APPROVED" | "REJECTED"
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [deleteTargetRow, setDeleteTargetRow] = useState(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -474,42 +478,65 @@ const CARequirementsTable = () => {
     }
   };
 
-  const handleComplete = async (row) => {
-    const id = row._id || row.id;
-    setApprovingId(id);
-    try {
-      await axiosClient.patch(
-        `request/${id}`,
-        { ca_check: "APPROVED", ca_approved: true },
-        config,
-      );
-      message.success("CA Approved ✅");
-      await refetchDepartment(row.department?._id || row.department?.id);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to approve ❌");
-    } finally {
-      setApprovingId(null);
-    }
-  };
+  // ---- CA bulk approve / reject ----
+  const pendingRows = allItems.filter(isCaPending);
+  const selectedRows = pendingRows.filter((r) => selectedIds.has(getRowId(r)));
+  const selectedRequestedTotal = selectedRows.reduce((t, r) => t + (Number(r.amount) || 0), 0);
 
-  const handleReject = async (row) => {
-    const id = row._id || row.id;
-    setApprovingId(id);
-    try {
-      await axiosClient.patch(
-        `request/${id}`,
-        { ca_check: "REJECTED", ca_approved: false },
-        config,
+  // Selection only ever holds rows that are still pending and still on screen.
+  useEffect(() => {
+    setSelectedIds((prev) => {
+      const live = new Set(
+        Object.values(departmentData)
+          .flatMap((d) => d.items || [])
+          .filter(isCaPending)
+          .map(getRowId),
       );
-      message.success("CA Rejected ❌");
-      await refetchDepartment(row.department?._id || row.department?.id);
-    } catch (err) {
-      console.error(err);
-      message.error("Failed to reject ❌");
-    } finally {
-      setApprovingId(null);
+      const next = new Set([...prev].filter((id) => live.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [departmentData]);
+
+  const setSelectionFor = (rows, checked) =>
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      rows.forEach((r) => (checked ? next.add(getRowId(r)) : next.delete(getRowId(r))));
+      return next;
+    });
+
+  const allPendingSelected = pendingRows.length > 0 && selectedRows.length === pendingRows.length;
+
+  const refetchAll = () =>
+    fetchRequirementsData(
+      search,
+      createdDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      createdDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[0]?.format("YYYY-MM-DD") ?? null,
+      requiredDateRange?.[1]?.format("YYYY-MM-DD") ?? null,
+      selectedEventId || null,
+      selectedVendorId || null,
+      1,
+      null,
+      false,
+    );
+
+  const runBulk = (rows, onProgress) =>
+    runBulkCaCheck({ rows, action: bulkAction, config, onProgress });
+
+  const handleBulkFinished = ({ succeeded, failed }) => {
+    setSelectionFor(succeeded, false);
+    if (failed.length === 0) {
+      message.success(
+        `${succeeded.length} requirement${succeeded.length === 1 ? "" : "s"} ${
+          bulkAction === "APPROVED" ? "approved" : "rejected"
+        }`,
+      );
+    } else if (succeeded.length > 0) {
+      message.warning(`${succeeded.length} done, ${failed.length} failed`);
+    } else {
+      message.error("Could not update the selected requirements");
     }
+    if (succeeded.length > 0) refetchAll();
   };
 
   const handleDelete = async () => {
@@ -883,32 +910,14 @@ const CARequirementsTable = () => {
       key: "ca_check",
       width: 200,
       render: (_, row) => {
-        const isApproving = approvingId === (row._id || row.id);
         if (row.ca_check === "PENDING") {
           return (
-            <Space>
-              <Button
-                type="primary"
-                size="small"
-                loading={isApproving}
-                disabled={isApproving}
-                onClick={() => handleComplete(row)}
-                icon={<CheckCircleOutlined />}
-                style={{ background: "#2f8a4b", borderColor: "#2f8a4b" }}
-              >
-                Approve
-              </Button>
-              <Button
-                danger
-                size="small"
-                loading={isApproving}
-                disabled={isApproving}
-                onClick={() => handleReject(row)}
-                icon={<CloseCircleOutlined />}
-              >
-                Reject
-              </Button>
-            </Space>
+            <Tag
+              color="#fbbf24"
+              style={{ fontWeight: 700, fontSize: 16, borderRadius: 6 }}
+            >
+              Pending
+            </Tag>
           );
         } else if (row.ca_check === "APPROVED") {
           return (
@@ -1184,6 +1193,23 @@ const CARequirementsTable = () => {
           ]}
         />
 
+        {pendingRows.length > 0 ? (
+          <div className="ba-select-all">
+            <Checkbox
+              checked={allPendingSelected}
+              indeterminate={selectedRows.length > 0 && !allPendingSelected}
+              onChange={(e) => setSelectionFor(pendingRows, e.target.checked)}
+            >
+              Select all pending ({pendingRows.length})
+            </Checkbox>
+            <span>
+              {selectedRows.length > 0
+                ? `${selectedRows.length} selected`
+                : "Tick requirements, then approve or reject them together."}
+            </span>
+          </div>
+        ) : null}
+
         {loading && !Object.keys(departmentData).length ? (
           <div style={{ textAlign: "center", padding: 60 }}>
             <Spin size="large" />
@@ -1202,7 +1228,21 @@ const CARequirementsTable = () => {
                   dataSource={sortedRequirements(
                     deptObj.items ? [...deptObj.items] : [],
                   )}
-                  rowKey="id"
+                  rowKey={getRowId}
+                  rowSelection={{
+                    columnWidth: 48,
+                    fixed: true,
+                    selectedRowKeys: (deptObj.items || [])
+                      .map(getRowId)
+                      .filter((id) => selectedIds.has(id)),
+                    onSelectAll: (checked, _selected, changedRows) =>
+                      setSelectionFor(changedRows.filter(isCaPending), checked),
+                    onSelect: (row, checked) => setSelectionFor([row], checked),
+                    getCheckboxProps: (row) => ({
+                      disabled: !isCaPending(row),
+                      "aria-label": `Select ${row.purpose || "requirement"}`,
+                    }),
+                  }}
                   loading={loading && !Object.keys(departmentData).length}
                   pagination={false}
                   scroll={{ x: 2940 }}
@@ -1227,6 +1267,21 @@ const CARequirementsTable = () => {
           </Collapse>
         )}
       </div>
+      <BulkActionBar
+        count={selectedRows.length}
+        requestedTotal={selectedRequestedTotal}
+        onApprove={() => setBulkAction("APPROVED")}
+        onReject={() => setBulkAction("REJECTED")}
+        onClear={() => setSelectedIds(new Set())}
+      />
+      <BulkConfirmDialog
+        open={Boolean(bulkAction)}
+        action={bulkAction}
+        rows={selectedRows}
+        run={runBulk}
+        onClose={() => setBulkAction(null)}
+        onFinished={handleBulkFinished}
+      />
       <Modal
         title={
           <span style={{ fontWeight: 700, fontSize: 20 }}>Confirm Delete</span>
