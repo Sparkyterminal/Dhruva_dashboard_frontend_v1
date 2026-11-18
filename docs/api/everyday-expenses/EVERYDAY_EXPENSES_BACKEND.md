@@ -23,6 +23,8 @@ Every logged-in user **except ADMIN** (Admin has no access to Everyday Expenses:
 | Reject, mark repaid | – | yes, **but never on their own expenses** (`403` for that id) |
 | Open a bill | own bills | any bill |
 
+**Finding the HR users.** A user document stores departments as references (`department.department: [ObjectId, ...]`) into the `departments` collection. Resolve those ids to department names and compare the name. In production the HR department is `name: "HR DEPARTMENT"` (`department_id: 9`, `_id: 69007c4a3f65a8a483094d6e`); the HR login is an ordinary user with `role: "DEPARTMENT"`, so **nothing about its role changes**. Prefer comparing the name (a re-created department keeps working); the `_id` is an acceptable alternative. The login response already returns the user's departments with their `name`, which is what the screen uses.
+
 The screen hides what a user cannot use, but **the server must enforce this table**. Never decide "reviewer" from an email address.
 
 ---
