@@ -1,6 +1,6 @@
 # Everyday Expenses — Design
 
-**Status:** approved by the owner on 2026-11-18 (HR department is named "HR"; both old Excel screens are removed).
+**Status:** approved by the owner on 2026-11-18 (the HR department is named "HR DEPARTMENT", `HR` also accepted; both old Excel screens are removed).
 **Source:** owner's brief + "Travel, Night Shift, Food Allowance & Expense Reimbursement Policy" (Skyblue Event Management India Pvt Ltd).
 
 ## 1. Intent

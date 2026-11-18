@@ -11,7 +11,7 @@ Everyday Expenses is **new**. It replaces the old Excel-style Daily Expenses, wh
 
 Every logged-in user **except ADMIN** (Admin has no access to Everyday Expenses: return `403` on every endpoint) can **add, see, edit (until the lock) and delete (until the lock) their own expenses**, and read the categories/rate card.
 
-**Expense reviewers** are users whose **role is `CA`, `APPROVER` or `OWNER`, or whose department is named `HR`** (match trimmed, case-insensitive; the user may have several departments, any one counts). Reviewers can additionally: see everyone's expenses, manage categories/grades/settings, reject, and mark repaid.
+**Expense reviewers** are users whose **role is `CA`, `APPROVER` or `OWNER`, or who belongs to the HR department, named `HR DEPARTMENT`** (`HR` is accepted too; compare trimmed, case-insensitive, repeated spaces collapsed; the user may have several departments, any one counts). Reviewers can additionally: see everyone's expenses, manage categories/grades/settings, reject, and mark repaid.
 
 | Action | Everyone except Admin (own data) | Reviewer |
 |---|:-:|:-:|
@@ -256,7 +256,7 @@ Group · name · calcType · values. All `requiresBill: true` unless noted. `sor
 
 ## 8. Backend checklist
 
-- [ ] Reviewer rule exactly as section 1 (role CA/APPROVER/OWNER or department `HR`), enforced on every endpoint.
+- [ ] Reviewer rule exactly as section 1 (role CA/APPROVER/OWNER or department `HR DEPARTMENT` / `HR`), enforced on every endpoint.
 - [ ] Rules engine in one shared function used by create, edit and any recalculation; snapshot stored on each entry.
 - [ ] Lock rule with the **server** clock and `409 LOCKED`; `serverTime` on every list/save response.
 - [ ] S3: private bucket, presign PUT/GET, key-prefix and HeadObject checks on save.

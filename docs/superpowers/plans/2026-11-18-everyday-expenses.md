@@ -7,7 +7,7 @@
 **Tech:** React 19, PageKit/FormKit/AdminKit, dayjs, exceljs (existing Excel layer), axiosClient.
 
 ## Owner decisions (approved 2026-11-18)
-- HR = a user whose department is named **HR**; HR is an expense reviewer like CA, Approver, Owner.
+- HR = a user whose department is named **HR DEPARTMENT** (`HR` also accepted); HR is an expense reviewer like CA, Approver, Owner.
 - Remove **both** old Excel screens (`/user/daily-expenses*` and `/user/expenses`) and, on the owner's go-ahead, their database data.
 - Plan calls approved as written (lock by day added, 7-day claim window, reject-with-reason, grades, v1 non-goals).
 

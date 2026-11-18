@@ -1,7 +1,9 @@
 import { ROLES } from "@/config/config";
 
-/** The department whose members are expense reviewers (matched by name, never by e-mail). */
-export const HR_DEPARTMENT = "HR";
+/** Department names whose members are expense reviewers (matched by name, never by e-mail). */
+export const HR_DEPARTMENT_NAMES = ["HR", "HR DEPARTMENT"];
+
+const normalise = (name) => String(name || "").trim().replace(/\s+/g, " ").toUpperCase();
 
 /**
  * CA, Approver, Owner and anyone in the HR department can see everyone's Everyday Expenses,
@@ -10,4 +12,4 @@ export const HR_DEPARTMENT = "HR";
  */
 export const isExpenseReviewer = (user) =>
   [ROLES.CA, ROLES.APPROVER, ROLES.OWNER].includes(user?.role) ||
-  (user?.departments || []).some((d) => String(d?.name || "").trim().toUpperCase() === HR_DEPARTMENT);
+  (user?.departments || []).some((d) => HR_DEPARTMENT_NAMES.includes(normalise(d?.name)));

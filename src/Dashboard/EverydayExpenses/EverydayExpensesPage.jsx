@@ -28,7 +28,8 @@ const EverydayExpensesPage = () => {
   const [tab, setTab] = useState("mine");
 
   const guessReviewer = isExpenseReviewer(user);
-  const reviewer = me ? Boolean(me.isReviewer) : guessReviewer;
+  // The server decides what is allowed. If it does not say (older backend), fall back to the app's own role rule.
+  const reviewer = typeof me?.isReviewer === "boolean" ? me.isReviewer : guessReviewer;
 
   const load = useCallback(async () => {
     try {
