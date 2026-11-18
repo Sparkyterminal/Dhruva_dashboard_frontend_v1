@@ -1,3 +1,5 @@
+> **REMOVED SCREEN — do not implement.** The Excel-style Daily Expenses screens were removed from the app. This file is kept only so the backend team can find the old collection names for the data cleanup in `docs/api/everyday-expenses/EVERYDAY_EXPENSES_BACKEND.md` section 9. Delete this folder once that cleanup is done.
+
 # Daily Expenses Excel — Backend Schema & API Contract
 
 Share this document with the backend team. It describes how to **store and serve Univer Sheets workbook data** for **date-mapped Daily Expenses** in the Dhruva dashboard.

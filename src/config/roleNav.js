@@ -21,7 +21,6 @@ import {
 import { ROLES } from "./config";
 
 const ACCOUNTS_NAV = [
-  { label: "Daily Expenses", route: "/user/daily-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Add Requirement", route: "/user/sendrequest", icon: FilePlus2, section: "Requests" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
@@ -58,7 +57,6 @@ const DEPARTMENT_NAV = [
 ];
 
 const OWNER_NAV = [
-  { label: "Daily Expense", route: "/user/daily-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Requirements", route: "/user/allrequirements", icon: ClipboardList, section: "Requests" },
   { label: "Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },
   { label: "Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
@@ -71,7 +69,6 @@ const OWNER_NAV = [
 ];
 
 const APPROVER_NAV = [
-  { label: "Daily Expense", route: "/user/daily-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
   { label: "View Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },
@@ -82,7 +79,6 @@ const APPROVER_NAV = [
 ];
 
 const CA_NAV = [
-  { label: "Daily Expenses", route: "/user/daily-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
   { label: "View Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },

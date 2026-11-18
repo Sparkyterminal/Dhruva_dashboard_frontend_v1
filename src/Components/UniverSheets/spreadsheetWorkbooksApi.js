@@ -8,7 +8,6 @@ import {
 
 export const SPREADSHEET_MODULE_CLIENT_LEADS = "client-leads";
 export const SPREADSHEET_MODULE_BUDGET_REPORT = "budget-report";
-export const SPREADSHEET_MODULE_DAILY_EXPENSES = "daily-expenses";
 export const SPREADSHEET_MODULE_DAYBOOK_INFLOW = "daybook-inflow";
 export const SPREADSHEET_MODULE_DAYBOOK_OUTFLOW = "daybook-outflow";
 export const SPREADSHEET_KEY_DEFAULT = "default";

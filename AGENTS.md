@@ -58,7 +58,7 @@ src/
   Login/                    Login.jsx, ChangePassword.jsx, AuthLayout.jsx (shared split screen)
   Pages/                    LoadingPage, calendar pages
   Dashboard/                One folder per area:
-    Accounts/   bookings (clientBookings/), daybook (DayBook/), bills (Bills/), budget reports (budgetreport/excel/ — the only implementation), expenses, daily expenses, requirement tables
+    Accounts/   bookings (clientBookings/), daybook (DayBook/), bills (Bills/), budget reports (budgetreport/excel/ — the only implementation), requirement tables
     Admin/      users, departments, project coordinators
     Approver/ CA/ Owner/ User/   role homes and their screens
     Marketting/ inflow (bookings forms), leads tracker, venues, sub-venues, event names, sub-events, MarketHome
@@ -166,9 +166,9 @@ All exports run **in the browser** from data already available via the API — n
 
 ## 9. Backend and data notes
 
-- Backend contract documents (markdown) all live under `docs/api/` (overview, daybook, expenses, budget-report, client-bookings, advance-calendar, marketing, requests, global). **Any backend change a feature needs or will need goes in `docs/api/<area>/` and its path must be reported to the owner.** Read the relevant one before changing an API call.
+- Backend contract documents (markdown) all live under `docs/api/` (overview, daybook, expenses (legacy-removed only), budget-report, client-bookings, advance-calendar, marketing, requests, global). **Any backend change a feature needs or will need goes in `docs/api/<area>/` and its path must be reported to the owner.** Read the relevant one before changing an API call.
 - **Daybook (V2, manual ledger):** `Dashboard/Accounts/DayBook/` is no longer linked to expenses/requirements or booking advances. Inflow = client, event date, received-on date, amount, cash/account, GST+TDS (account only) → **net received = amount − GST − TDS**. Outflow = vendor (from `vendor/all`), amount paid, TDS, GST → **actual paid = amount paid − TDS + GST**. Balances are **never typed**: one starting balance is saved once (`daybook/opening-balance`), the backend computes every day (closing = next day's opening, per Cash and per bank account). Money rules live in `daybookMath.js`, the fixed account list in `daybookConfig.js`. Stat card is "Surplus/deficit". Contract, worked example and old-data cleanup plan: `docs/api/daybook/DAYBOOK_V2_BACKEND.md` (old docs in `docs/api/daybook/legacy/`, obsolete).
-- MongoDB (database `test`) collections seen: `events` (bookings; `eventTypes[]` each with `advances[]`), `clientleads`, `vendors`, `bills` (`emiStatus[]`), `daybookinflows`, `daybookaccountopenclosebalances`, `spreadsheetworkbooks` (module `budget-report` keyed by event id, also `client-leads`, `daybook-*`, `daily-expenses`), `appsettings`, plus reference collections (`users`, `departments`, `venues`, `eventnames`, `eventtypes`, `coordinators`…). The API returns populated objects (`eventName: { name }`) where raw documents only hold ids.
+- MongoDB (database `test`) collections seen: `events` (bookings; `eventTypes[]` each with `advances[]`), `clientleads`, `vendors`, `bills` (`emiStatus[]`), `daybookinflows`, `daybookaccountopenclosebalances`, `spreadsheetworkbooks` (module `budget-report` keyed by event id, also `client-leads`, `daybook-*`; the old `daily-expenses` module is being removed), `appsettings`, plus reference collections (`users`, `departments`, `venues`, `eventnames`, `eventtypes`, `coordinators`…). The API returns populated objects (`eventName: { name }`) where raw documents only hold ids.
 - Data quirks to expect, not "fix" in the UI: advances can have `receivedAmount > 0` while `status` still says `Pending` (treat **received amount** as truth); some bookings have `totalPayable = 0` with money received; event dates are stored in UTC (IST evening shows as the same date, midnight IST = 18:30 UTC the day before).
 - Database credentials are **not** in this repo and must never be committed or written into docs. If you need data access, ask the owner for a connection string at the time, read-only first.
 

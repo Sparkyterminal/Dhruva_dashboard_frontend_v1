@@ -80,11 +80,6 @@ import BudgetReportExcelList from "./Dashboard/Accounts/budgetreport/excel/Budge
 import BudgetReportExcelEdit from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelEdit";
 import BudgetReportExcelView from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelView";
 import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
-import ExpensesHome from "./Dashboard/Accounts/Expenses/ExpensesHome";
-import DailyExpense from "./Dashboard/Owner/DailyExpense";
-import DailyExpenseExcelAdd from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelAdd";
-import DailyExpenseExcelEdit from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelEdit";
-import DailyExpenseExcelView from "./Dashboard/Accounts/DailyExpenses/DailyExpenseExcelView";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -210,20 +205,6 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
-              <Route path="/user/expenses" element={<ExpensesHome />} />
-              <Route path="/user/daily-expenses" element={<DailyExpense />} />
-              <Route
-                path="/user/daily-expenses/add"
-                element={<DailyExpenseExcelAdd />}
-              />
-              <Route
-                path="/user/daily-expenses/view/:date"
-                element={<DailyExpenseExcelView />}
-              />
-              <Route
-                path="/user/daily-expenses/edit/:date"
-                element={<DailyExpenseExcelEdit />}
-              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -398,20 +379,6 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
-              <Route path="/user/expenses" element={<ExpensesHome />} />
-              <Route path="/user/daily-expenses" element={<DailyExpense />} />
-              <Route
-                path="/user/daily-expenses/add"
-                element={<DailyExpenseExcelAdd />}
-              />
-              <Route
-                path="/user/daily-expenses/view/:date"
-                element={<DailyExpenseExcelView />}
-              />
-              <Route
-                path="/user/daily-expenses/edit/:date"
-                element={<DailyExpenseExcelEdit />}
-              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/editvendor/:id" element={<EditVendor />} />
@@ -468,20 +435,6 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
-              <Route path="/user/expenses" element={<ExpensesHome />} />
-              <Route path="/user/daily-expenses" element={<DailyExpense />} />
-              <Route
-                path="/user/daily-expenses/add"
-                element={<DailyExpenseExcelAdd />}
-              />
-              <Route
-                path="/user/daily-expenses/view/:date"
-                element={<DailyExpenseExcelView />}
-              />
-              <Route
-                path="/user/daily-expenses/edit/:date"
-                element={<DailyExpenseExcelEdit />}
-              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />
@@ -537,20 +490,6 @@ const App = () => {
               />
               <Route path="/user/changepassword" element={<ChangePassword />} />
               <Route path="/user/daybook" element={<Daybookhome />} />
-              <Route path="/user/expenses" element={<ExpensesHome />} />
-              <Route path="/user/daily-expenses" element={<DailyExpense />} />
-              <Route
-                path="/user/daily-expenses/add"
-                element={<DailyExpenseExcelAdd />}
-              />
-              <Route
-                path="/user/daily-expenses/view/:date"
-                element={<DailyExpenseExcelView />}
-              />
-              <Route
-                path="/user/daily-expenses/edit/:date"
-                element={<DailyExpenseExcelEdit />}
-              />
               <Route path="/user/addvendor" element={<AddVendor />} />
               <Route path="/user/viewvendors" element={<ViewVendor />} />
               <Route path="/user/checklists" element={<ViewChecklist />} />

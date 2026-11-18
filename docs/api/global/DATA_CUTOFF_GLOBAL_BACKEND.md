@@ -146,7 +146,7 @@ list-fetching call in the frontend.
 | `GET /client-leads` | lead `startDate` | Also feeds the embeddable Leads calendar |
 | `GET /daybook` | daybook entry date | |
 | `GET /expenses` | expense date | |
-| `GET /spreadsheet-workbooks` (daily-expenses module) | business date (`date`/`from`/`to`) | |
+| ~~`GET /spreadsheet-workbooks` (daily-expenses module)~~ | removed (the Excel Daily Expenses screens no longer exist) | |
 | `GET /bills` | **open decision — see below** | Frontend currently sends no date param here at all |
 | `GET /request/all` | `required_date` (see rationale below) | Same endpoint/rule for `RequirementsTableAc`, `AllRequirementsTable`, `RequirementTableApprover`, `CARequirementsTable` — no role branching |
 | `GET /request/my-requests` | `required_date` | Same rule, single-user view |
@@ -298,7 +298,7 @@ return res.status(200).json({
 - [ ] `GET /client-leads` filters on lead `startDate`
 - [ ] `GET /daybook` filters on daybook entry date
 - [ ] `GET /expenses` filters on expense date
-- [ ] `GET /spreadsheet-workbooks` (daily-expenses) filters on business date
+- [x] ~~`GET /spreadsheet-workbooks` (daily-expenses)~~ no longer needed (screens removed)
 - [ ] `GET /bills` date field confirmed with product/frontend, then filtered
 - [ ] `GET /request/all` and `GET /request/my-requests` filter on `required_date` (not `createdAt`), identically across all four requirements screens
 - [ ] `GET /personal-calendar` filters on `startAt`
