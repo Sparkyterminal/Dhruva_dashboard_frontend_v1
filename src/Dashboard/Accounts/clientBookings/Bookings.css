@@ -353,3 +353,19 @@
 .bk-stat .bk-bar {
   margin-top: 10px;
 }
+
+/* The page panel normally clips its children (overflow: hidden), which stops the table's header
+   and horizontal scrollbar from sticking to the screen. `clip` keeps the rounded corners but is
+   not a scroll container, so the list can scroll sideways from wherever you are on the page. */
+.bk-panel {
+  overflow: clip;
+}
+
+.bk-table .ant-table-sticky-scroll {
+  background: var(--bg-panel);
+  border-top: 1px solid var(--line);
+}
+
+.bk-table .ant-table-sticky-scroll-bar {
+  background-color: var(--brand-action);
+}

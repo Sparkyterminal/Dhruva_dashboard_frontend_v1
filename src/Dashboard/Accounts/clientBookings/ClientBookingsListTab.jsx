@@ -11,6 +11,7 @@ import {
   getTotalExpectedAdvances,
   getBookingReceivedAmount,
   getTabLabelBookingCount,
+  getBookingEventDateInfo,
 } from "./clientBookingsUtils";
 import ClientBookingsFilters from "./ClientBookingsFilters";
 import ClientBookingsStatsCards from "./ClientBookingsStatsCards";
@@ -65,6 +66,27 @@ const buildColumns = (
     render: (status) => (
       <span className={`pk-pill ${CONFIRMATION_TONE[status] ?? "is-grey"}`}>{status || "N/A"}</span>
     ),
+  },
+  {
+    title: "Event date",
+    key: "eventDate",
+    width: 160,
+    render: (_, record) => {
+      const { primary, isUpcoming, others } = getBookingEventDateInfo(record);
+      if (!primary) return <span className="pk-muted">Not set</span>;
+      return (
+        <div className="bk-stack">
+          <span className="bk-line">
+            <CalendarDays size={14} aria-hidden="true" />
+            <strong style={{ fontWeight: 600 }}>{formatDateFn(primary)}</strong>
+          </span>
+          <span className={`bk-line ${isUpcoming ? "" : "is-muted"}`}>
+            {isUpcoming ? "Upcoming" : "Completed"}
+            {others > 0 ? ` · +${others} more ${others === 1 ? "date" : "dates"}` : ""}
+          </span>
+        </div>
+      );
+    },
   },
   {
     title: "Event",
@@ -334,7 +356,8 @@ const ClientBookingsListTab = ({
           pageSizeOptions: ["10", "20", "50"],
         }}
         onChange={handleTableChange}
-        scroll={{ x: 1500 }}
+        scroll={{ x: 1660 }}
+        sticky
         className="pk-table bk-table"
       />
     </div>

@@ -159,6 +159,7 @@ All exports run **in the browser** from data already available via the API — n
 - Daybook has two Excel downloads: *Overall (till date)* and *Day-wise*. The daybook API returns at most 1000 rows per request, so `fetchDaybookAll` fetches month by month and joins results.
 - Vendors export **excludes Aadhaar numbers** on purpose.
 - Exports respect the active list filters/tab, and must show an info message instead of an empty file.
+- **Bookings list ordering:** the List View loads every page of the filtered bookings (`fetchAllEventsWithSummary`), sorts upcoming first / completed below by event date (`sortBookingsByEventDate`, rules in `docs/api/client-bookings/BOOKINGS_LIST_EVENT_DATE_SORT_BACKEND.md`) and pages in the browser. Do not switch it back to server paging without a backend sort option.
 
 ---
 

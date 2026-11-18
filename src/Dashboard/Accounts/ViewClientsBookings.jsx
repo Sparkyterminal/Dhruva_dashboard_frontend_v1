@@ -9,8 +9,10 @@ import AdvanceCalendarClients from "../../Components/AdvanceCalenderClients";
 import UserWiseClients from "../../Components/UserWiseClients";
 import {
   buildBookingsQueryParams,
+  fetchAllEventsWithSummary,
   getEventName,
   isCompletePaymentWedding,
+  sortBookingsByEventDate,
 } from "./clientBookings/clientBookingsUtils";
 import ClientBookingsListTab from "./clientBookings/ClientBookingsListTab";
 import BalanceSheets from "./clientBookings/BalanceSheets";
@@ -95,34 +97,24 @@ const ViewClientsBookings = () => {
   const fetchBookingsList = useCallback(async () => {
     setLoading(true);
     try {
-      const params = {
-        page: pagination.current,
-        limit: pagination.pageSize,
-        ...buildBookingsQueryParams({
+      // The whole filtered set is loaded and ordered by event date (upcoming first, completed
+      // below), then paged in the browser; the server cannot sort by event date across pages.
+      const { events: all, summary } = await fetchAllEventsWithSummary(
+        config.headers,
+        buildBookingsQueryParams({
           listStatusTab,
           filterEventName,
           filterVenueId,
           filterDateRange,
           cutoffDate: getEffectiveCutoffDate(user),
         }),
-      };
-
-      const res = await axiosClient.get(`events`, {
-        ...config,
-        params,
-      });
-      const data = res.data || {};
-      const events = Array.isArray(data.events) ? data.events : [];
+      );
+      const events = sortBookingsByEventDate(all);
       setBookings(events);
       // Keep the whole response shape so downstream UI can read `totalsByStatus`
       // (backend sends it at the top-level, not inside `summary`)
-      setBookingsSummary(data && typeof data === "object" ? data : null);
-      setPagination((prev) => ({
-        ...prev,
-        current: data.page ?? prev.current,
-        pageSize: data.limit ?? prev.pageSize,
-        total: data.totalEvents ?? data.total ?? events.length,
-      }));
+      setBookingsSummary(summary && typeof summary === "object" ? summary : null);
+      setPagination((prev) => ({ ...prev, total: events.length }));
       setEventNameOptions((prev) => {
         const names = new Set(prev.map((o) => o.value));
         events.forEach((b) => {
@@ -142,8 +134,6 @@ const ViewClientsBookings = () => {
       setLoading(false);
     }
   }, [
-    pagination.current,
-    pagination.pageSize,
     listStatusTab,
     filterEventName,
     filterVenueId,
@@ -415,7 +405,7 @@ const ViewClientsBookings = () => {
           onBack={() => navigate("/user")}
         />
 
-        <section className="pk-panel">
+        <section className="pk-panel bk-panel">
           <Tabs
             activeKey={activeTab}
             onChange={setActiveTab}

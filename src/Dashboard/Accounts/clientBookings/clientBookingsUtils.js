@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import axiosClient from "@/api/axiosClient";
+import { mapLimit } from "@/lib/async";
 
 /** Maps list-view tab keys to API `status` query (omit for all). */
 export const CLIENT_BOOKINGS_LIST_TAB_API_STATUS = {
@@ -87,6 +88,87 @@ export async function fetchAllMyEventsPages(authHeaders, extraParams = {}) {
   }
   return all;
 }
+
+/**
+ * Loads every page of `GET /events` for the query (pages 2..N in parallel) and keeps the
+ * first response as `summary`, because it carries `totalsByStatus` for the stats cards.
+ * The list view needs the whole set so it can be ordered by event date across pages.
+ */
+export async function fetchAllEventsWithSummary(authHeaders, params = {}, { limit = 100, concurrency = 4 } = {}) {
+  const getPage = async (page) => {
+    const res = await axiosClient.get(`events`, {
+      headers: authHeaders,
+      params: { ...params, page, limit },
+    });
+    return res.data || {};
+  };
+
+  const first = await getPage(1);
+  const events = Array.isArray(first.events) ? [...first.events] : [];
+  const total = Number(first.totalEvents ?? first.total);
+  const totalPages =
+    Number(first.totalPages) || (Number.isFinite(total) && total > 0 ? Math.ceil(total / limit) : 1);
+
+  if (totalPages > 1) {
+    const pages = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+    const rest = await mapLimit(pages, concurrency, getPage);
+    rest.forEach((d) => {
+      if (Array.isArray(d.events)) events.push(...d.events);
+    });
+  }
+  return { events, summary: first };
+}
+
+/**
+ * Event dates of a booking. A booking can have several ceremonies (eventTypes), each with
+ * a start (and optional end) date. Dates are compared as local calendar days.
+ *   primary    = the next ceremony that is today or later; if all are over, the last one
+ *   isUpcoming = the primary date is today or later
+ *   others     = how many other distinct ceremony days the booking has
+ */
+export const getBookingEventDateInfo = (record, today = dayjs()) => {
+  const todayStart = today.startOf("day");
+  const ceremonies = (record?.eventTypes || [])
+    .map((et) => {
+      const start = et?.startDate ? dayjs(et.startDate).startOf("day") : null;
+      if (!start || !start.isValid()) return null;
+      const endRaw = et?.endDate ? dayjs(et.endDate).startOf("day") : start;
+      const end = endRaw.isValid() && !endRaw.isBefore(start) ? endRaw : start;
+      return { start, end };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.start.valueOf() - b.start.valueOf());
+
+  if (ceremonies.length === 0) return { primary: null, isUpcoming: false, others: 0 };
+
+  const next = ceremonies.find((c) => !c.end.isBefore(todayStart));
+  const chosen = next || ceremonies[ceremonies.length - 1];
+  const primary = chosen.start;
+  const distinctDays = new Set(ceremonies.map((c) => c.start.format("YYYY-MM-DD")));
+  distinctDays.delete(primary.format("YYYY-MM-DD"));
+  return { primary, isUpcoming: Boolean(next), others: distinctDays.size };
+};
+
+/**
+ * Upcoming bookings first (nearest date at the top), then completed ones below (most recent
+ * first), then bookings with no event date. Ties are broken by client name.
+ */
+export const sortBookingsByEventDate = (bookings, today = dayjs()) => {
+  const rank = (info) => (!info.primary ? 2 : info.isUpcoming ? 0 : 1);
+  return bookings
+    .map((record) => ({ record, info: getBookingEventDateInfo(record, today) }))
+    .sort((a, b) => {
+      const ra = rank(a.info);
+      const rb = rank(b.info);
+      if (ra !== rb) return ra - rb;
+      if (ra !== 2) {
+        const diff = a.info.primary.valueOf() - b.info.primary.valueOf();
+        if (diff !== 0) return ra === 0 ? diff : -diff;
+      }
+      return String(a.record.clientName || "").localeCompare(String(b.record.clientName || ""));
+    })
+    .map((x) => x.record);
+};
 
 export const formatDate = (dateString) => {
   if (!dateString) return "-";
