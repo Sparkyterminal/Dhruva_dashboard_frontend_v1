@@ -93,12 +93,12 @@ const CA_NAV = [
   { label: "Budget Report", route: "/user/budgetreport/eventwise", icon: ChartColumn, section: "Accounts & Finance" },
 ];
 
-/** Headings of the site menu, in display order. Home sits above them; Account sits below. */
+/** Headings of the site menu, in display order. Home sits above them; Account sits below. Accounts & Finance is first because it is what people open most. */
 export const NAV_SECTIONS = [
+  "Accounts & Finance",
   "Requests",
   "Bookings & Events",
   "Leads",
-  "Accounts & Finance",
   "Master Data",
 ];
 
