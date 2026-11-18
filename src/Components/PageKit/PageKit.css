@@ -676,3 +676,50 @@
   height: 100%;
   min-height: 320px;
 }
+
+/* ---- Scrollable tab bar (ScrollTabs) ---- */
+.pk-tabs-nav {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+  background: #fbfcfa;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+.pk-tabs-tab {
+  position: relative;
+  flex: none;
+  margin-right: 14px;
+  padding: 14px 6px;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.pk-tabs-tab:hover,
+.pk-tabs-tab[aria-selected="true"] {
+  color: var(--brand);
+}
+
+.pk-tabs-tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--gold-deep);
+}
+
+.pk-tabs-pane[hidden] {
+  display: none;
+}

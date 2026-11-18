@@ -1,6 +1,6 @@
 import axiosClient from "@/api/axiosClient";
 import React, { useCallback, useEffect, useState } from "react";
-import { message, DatePicker, Typography, Tabs } from "antd";
+import { message, DatePicker, Typography } from "antd";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { useSelector } from "react-redux";
@@ -19,7 +19,7 @@ import BalanceSheets from "./clientBookings/BalanceSheets";
 import ClientBookingsLeadsTab from "./clientBookings/ClientBookingsLeadsTab";
 import InprogressCalendarPage from "../../Pages/InprogressCalendarPage";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
-import { PageHero } from "@/Components/PageKit";
+import { PageHero, ScrollTabs } from "@/Components/PageKit";
 import EventDetailsDrawer from "./clientBookings/EventDetailsDrawer";
 import "./clientBookings/Bookings.css";
 
@@ -406,11 +406,12 @@ const ViewClientsBookings = () => {
         />
 
         <section className="pk-panel bk-panel">
-          <Tabs
+          <ScrollTabs
             activeKey={activeTab}
             onChange={setActiveTab}
             items={tabItems}
             className="bk-tabs"
+            ariaLabel="Bookings sections"
           />
         </section>
       </div>

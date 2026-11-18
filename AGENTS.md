@@ -135,7 +135,7 @@ Brand: **forest green** with the logo's **gold** as the single accent; sage-whit
 
 - `Components/AppMenu` + `config/roleNav.js` — the site-wide hamburger menu/drawer. Per-role navigation (with `section` headings) is defined only in `roleNav.js`; add new pages there.
 - `Components/RoleHome` — shared role home: greeting, live clock and a tabbed workspace. A role home defines `TABS` (`{ key, label, content, framed? }`) and renders `<RoleHome tabs defaultTab />`. `framed: false` for content that renders its own card (calendars).
-- `Components/PageKit` (PageHero, StatCard/StatRow, SearchBox, Segmented, EmptyState), `FormKit` (fields, Dialog, Drawer, FormCard…), `AdminKit` (Toaster/`toast`, ConfirmDialog, DataTable), `CalendarKit` — own-code building blocks with `pk-`, `fk-` prefixed CSS. Use these for new screens instead of raw antd; the admin dashboard and small master-data forms use no antd.
+- `Components/PageKit` (PageHero, StatCard/StatRow, SearchBox, Segmented, ScrollTabs = tab bar that scrolls sideways instead of an antd "..." menu, EmptyState), `FormKit` (fields, Dialog, Drawer, FormCard…), `AdminKit` (Toaster/`toast`, ConfirmDialog, DataTable), `CalendarKit` — own-code building blocks with `pk-`, `fk-` prefixed CSS. Use these for new screens instead of raw antd; the admin dashboard and small master-data forms use no antd.
 - `Login/AuthLayout` — shared sign-in / change-password screen.
 - `Components/ExcelDownloadButton` — "Download Excel" button with loading/error handling.
 
