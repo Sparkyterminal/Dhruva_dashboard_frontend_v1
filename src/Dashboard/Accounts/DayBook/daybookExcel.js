@@ -1,6 +1,7 @@
 import dayjs from "dayjs";
 import { downloadExcel } from "@/lib/excel/downloadExcel";
-import { formatEventName, formatEventReference } from "./daybookUtils";
+import { round2 } from "./daybookMath";
+import { formatEventReference } from "./daybookUtils";
 
 // The daybook API sends dates as "YYYY-MM-DD" strings. Parse them as local
 // calendar days so the sheet shows the same date, not a shifted one.
@@ -12,108 +13,71 @@ const ymdToDate = (value) => {
 
 const toYmd = (value) => {
   if (!value) return null;
-  const m = /^(\d{4}-\d{2}-\d{2})$/.exec(String(value));
+  const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(value));
   if (m) return m[1];
   const d = dayjs(value);
   return d.isValid() ? d.format("YYYY-MM-DD") : null;
 };
 
 const clean = (v) => (v === "-" || v === "" || v == null ? null : v);
-const money = (n) => (n === null || n === undefined ? null : Number(n));
 const num = (n) => Number(n) || 0;
+const sum = (rows, pick) => round2(rows.reduce((t, r) => t + num(pick(r)), 0));
+const isAccount = (mode) => String(mode || "").toUpperCase() === "ACCOUNT";
 
 const INFLOW_COLUMNS = [
   { header: "S.No", type: "number", width: 7 },
-  { header: "Received Date", type: "date" },
-  { header: "Name", width: 28 },
-  { header: "Source" },
-  { header: "Received In" },
-  { header: "Account" },
-  { header: "Amount Received", type: "money" },
-  { header: "Received By" },
+  { header: "Received On", type: "date" },
+  { header: "Client", width: 28 },
+  { header: "Event Date", type: "date" },
   { header: "Event Reference", width: 30 },
+  { header: "Received In" },
+  { header: "Account", width: 30 },
+  { header: "Amount Received", type: "money" },
+  { header: "GST", type: "money" },
+  { header: "TDS", type: "money" },
+  { header: "Net Received", type: "money" },
   { header: "Note", wrap: true, width: 36 },
 ];
 
 const OUTFLOW_COLUMNS = [
   { header: "S.No", type: "number", width: 7 },
-  { header: "Paid At", type: "datetime" },
-  { header: "Purpose", wrap: true, width: 32 },
-  { header: "Vendor" },
+  { header: "Paid On", type: "date" },
+  { header: "Vendor", width: 28 },
   { header: "Vendor Code" },
+  { header: "Paid From" },
+  { header: "Account", width: 30 },
   { header: "Amount Paid", type: "money" },
-  { header: "Status" },
-  { header: "Entity Account" },
-  { header: "Required Date", type: "datetime" },
-  { header: "Paid To" },
-  { header: "Client" },
-  { header: "Event" },
-  { header: "Group By" },
-  { header: "Remarks", wrap: true, width: 36 },
+  { header: "TDS", type: "money" },
+  { header: "GST", type: "money" },
+  { header: "Actual Paid", type: "money" },
+  { header: "Note", wrap: true, width: 36 },
 ];
 
-const ACCOUNT_BASE_COLUMNS = [
+const BALANCE_COLUMNS = [
   { header: "Date", type: "date" },
-  { header: "Cash Opening", type: "money" },
-  { header: "Cash Closing", type: "money" },
-  { header: "Account Opening", type: "money" },
-  { header: "Account Closing", type: "money" },
-];
-const ACCOUNT_GROUP_COLUMNS = [
-  { header: "Account Name" },
+  { header: "Account", width: 32 },
   { header: "Opening", type: "money" },
+  { header: "Net Inflow", type: "money" },
+  { header: "Actual Outflow", type: "money" },
   { header: "Closing", type: "money" },
 ];
 
 const DAY_WISE_COLUMNS = [
   { header: "Date", type: "date" },
   { header: "Day", width: 12 },
-  { header: "Inflow", type: "money" },
-  { header: "Cash Inflow", type: "money" },
-  { header: "Account Inflow", type: "money" },
-  { header: "Outflow", type: "money" },
-  { header: "Net (Inflow - Outflow)", type: "money" },
+  { header: "Net Inflow", type: "money" },
+  { header: "Cash Net Inflow", type: "money" },
+  { header: "Account Net Inflow", type: "money" },
+  { header: "Actual Outflow", type: "money" },
+  { header: "Surplus / Deficit", type: "money" },
   { header: "Inflow Entries", type: "number" },
   { header: "Outflow Entries", type: "number" },
   { header: "Cash Opening", type: "money" },
   { header: "Cash Closing", type: "money" },
-  { header: "Account Opening", type: "money" },
-  { header: "Account Closing", type: "money" },
+  { header: "Bank Opening", type: "money" },
+  { header: "Bank Closing", type: "money" },
+  { header: "Total Closing", type: "money" },
 ];
-
-// Older API responses return advance-shaped rows; map them to the unified shape.
-const normalizeInflow = (r) => {
-  const unified =
-    r?.receivedDate !== undefined ||
-    r?.receivedIn !== undefined ||
-    r?.amountReceived !== undefined ||
-    r?.receivedBy !== undefined;
-  if (unified) return r;
-  const adv = r?.advance || {};
-  return {
-    _id: r?._id,
-    name: r?.client?.clientName,
-    receivedDate: adv.receivedDate,
-    receivedIn: String(adv.modeOfPayment || "").toUpperCase() === "ACCOUNT" ? "ACCOUNT" : "CASH",
-    amountReceived: adv.receivedAmount,
-    receivedBy: adv.collectedBy || adv.givenBy,
-    eventReference: r?.event?.eventName?.name || r?.client?.clientName,
-    note: adv.remarks,
-  };
-};
-
-const isBookingAdvance = (r) => String(r?._id ?? "").startsWith("eventadvance:");
-const isAccount = (r) => String(r.receivedIn || "").toUpperCase() === "ACCOUNT";
-
-const eventParts = (ref) => {
-  if (ref && typeof ref === "object") {
-    return {
-      client: clean(ref.clientName),
-      event: clean(formatEventName(ref.eventName ?? ref.name)),
-    };
-  }
-  return { client: null, event: clean(formatEventReference(ref)) };
-};
 
 // Oldest first, like a ledger. Rows without a date go last.
 const byDate = (getKey) => (a, b) => {
@@ -121,37 +85,38 @@ const byDate = (getKey) => (a, b) => {
   const kb = getKey(b) || "9999-99-99";
   return ka < kb ? -1 : ka > kb ? 1 : 0;
 };
-const outflowDay = (r) => toYmd(r.paidAt);
 
-const buildDayWiseSheet = (inflowRows, outflowRows, balances, sub, truncated) => {
-  const days = new Map();
+const bankSum = (day, key) => round2((day?.accounts || []).reduce((t, a) => t + num(a[key]), 0));
+
+const buildDayWiseSheet = (inflowRows, outflowRows, days, sub, truncated) => {
+  const map = new Map();
   const dayOf = (key) => {
-    if (!days.has(key)) {
-      days.set(key, { inflow: 0, cash: 0, account: 0, inflowN: 0, outflow: 0, outflowN: 0, balance: null });
+    if (!map.has(key)) {
+      map.set(key, { inflow: 0, cash: 0, account: 0, inflowN: 0, outflow: 0, outflowN: 0, balance: null });
     }
-    return days.get(key);
+    return map.get(key);
   };
   inflowRows.forEach((r) => {
     const d = dayOf(toYmd(r.receivedDate) || "none");
-    const amount = num(r.amountReceived);
-    d.inflow += amount;
+    const net = num(r.netAmountReceived);
+    d.inflow += net;
     d.inflowN += 1;
-    if (isAccount(r)) d.account += amount;
-    else d.cash += amount;
+    if (isAccount(r.receivedIn)) d.account += net;
+    else d.cash += net;
   });
   outflowRows.forEach((r) => {
-    const d = dayOf(outflowDay(r) || "none");
-    d.outflow += num(r.amountPaid);
+    const d = dayOf(toYmd(r.paidDate) || "none");
+    d.outflow += num(r.actualAmountPaid);
     d.outflowN += 1;
   });
-  balances.forEach((b) => {
-    dayOf(toYmd(b.balanceDate) || "none").balance = b;
+  days.forEach((b) => {
+    dayOf(toYmd(b.date) || "none").balance = b;
   });
 
-  const keys = [...days.keys()].sort((a, b) => (a === "none" ? 1 : b === "none" ? -1 : a < b ? -1 : 1));
+  const keys = [...map.keys()].sort((a, b) => (a === "none" ? 1 : b === "none" ? -1 : a < b ? -1 : 1));
   const totals = { inflow: 0, cash: 0, account: 0, outflow: 0, inflowN: 0, outflowN: 0 };
   const rows = keys.map((k) => {
-    const d = days.get(k);
+    const d = map.get(k);
     Object.keys(totals).forEach((t) => {
       totals[t] += d[t];
     });
@@ -160,17 +125,18 @@ const buildDayWiseSheet = (inflowRows, outflowRows, balances, sub, truncated) =>
     return [
       date,
       k === "none" ? "No date" : dayjs(date).format("dddd"),
-      d.inflow,
-      d.cash,
-      d.account,
-      d.outflow,
-      d.inflow - d.outflow,
+      round2(d.inflow),
+      round2(d.cash),
+      round2(d.account),
+      round2(d.outflow),
+      round2(d.inflow - d.outflow),
       d.inflowN,
       d.outflowN,
-      money(b?.cashOpeningBalance),
-      money(b?.cashClosingBalance),
-      money(b?.accountOpeningBalance),
-      money(b?.accountClosingBalance),
+      b ? num(b.cash?.opening) : null,
+      b ? num(b.cash?.closing) : null,
+      b ? bankSum(b, "opening") : null,
+      b ? bankSum(b, "closing") : null,
+      b ? num(b.totals?.closing) : null,
     ];
   });
 
@@ -178,14 +144,14 @@ const buildDayWiseSheet = (inflowRows, outflowRows, balances, sub, truncated) =>
     name: "Day Wise",
     title: "Day Wise Daybook",
     subtitle: sub(
-      `${rows.length} days with entries`,
+      `${rows.length} days`,
       truncated ? "Some entries were not returned by the server, so day totals may be incomplete" : null,
     ),
     columns: DAY_WISE_COLUMNS,
     rows,
     totals: [
-      "Total", null, totals.inflow, totals.cash, totals.account, totals.outflow,
-      totals.inflow - totals.outflow, totals.inflowN, totals.outflowN, null, null, null, null,
+      "Total", null, round2(totals.inflow), round2(totals.cash), round2(totals.account), round2(totals.outflow),
+      round2(totals.inflow - totals.outflow), totals.inflowN, totals.outflowN, null, null, null, null, null,
     ],
     freezeColumns: 2,
   };
@@ -196,51 +162,51 @@ const buildDayWiseSheet = (inflowRows, outflowRows, balances, sub, truncated) =>
  * shape as GET /daybook). `ctx.mode` picks the first sheet:
  *   "overall"  -> Summary (period totals)
  *   "daywise"  -> Day Wise (one row per day)
- * followed by Inflow, Outflow and Accounts detail sheets. Pure.
+ * followed by Inflow, Outflow and Balances detail sheets. Pure.
  */
 export const buildDaybookSheets = (daybook, ctx = {}) => {
-  const inflowRows = (daybook?.inflow?.data || [])
-    .map(normalizeInflow)
-    .sort(byDate((r) => toYmd(r.receivedDate)));
-  const outflowRows = [...(daybook?.outflow?.data || [])].sort(byDate(outflowDay));
-  const balances = [...(daybook?.accounts?.openCloseBalances || [])].sort(
-    byDate((b) => toYmd(b.balanceDate)),
-  );
+  const inflowRows = [...(daybook?.inflow?.data || [])].sort(byDate((r) => toYmd(r.receivedDate)));
+  const outflowRows = [...(daybook?.outflow?.data || [])].sort(byDate((r) => toYmd(r.paidDate)));
+  const days = [...(daybook?.balances?.days || [])].sort(byDate((b) => toYmd(b.date)));
 
   const generated = dayjs(ctx.generatedAt || new Date()).format("DD MMM YYYY, hh:mm A");
   const period = ctx.periodLabel || "";
   const sub = (...parts) =>
     [period && `Period: ${period}`, ...parts, `Generated on ${generated}`].filter(Boolean).join("   |   ");
 
-  const inflowTotal = num(daybook?.inflow?.total);
   const inflowCount = num(daybook?.inflow?.count) || inflowRows.length;
-  const outflowTotal = num(daybook?.outflow?.total);
   const outflowCount = num(daybook?.outflow?.count) || outflowRows.length;
-  const pl = daybook?.profitAndLoss || {};
-  const net = pl.value != null ? Number(pl.value) : inflowTotal - outflowTotal;
-  const netType = String(pl.type || (net >= 0 ? "PROFIT" : "LOSS")).toUpperCase();
-  const truncated = Boolean(daybook?.truncated) || inflowCount > inflowRows.length || outflowCount > outflowRows.length;
+  const truncated =
+    Boolean(daybook?.truncated) || inflowCount > inflowRows.length || outflowCount > outflowRows.length;
+  const it = daybook?.inflow?.totals || {};
+  const ot = daybook?.outflow?.totals || {};
+  const surplus = daybook?.surplusDeficit?.value != null
+    ? num(daybook.surplusDeficit.value)
+    : round2(num(it.net) - num(ot.actual));
+  const isDeficit = surplus < 0;
 
   const sheets = [];
 
   if (ctx.mode === "daywise") {
-    sheets.push(buildDayWiseSheet(inflowRows, outflowRows, balances, sub, truncated));
+    sheets.push(buildDayWiseSheet(inflowRows, outflowRows, days, sub, truncated));
   } else {
-    const summaryRows = [
-      ["Total inflow", inflowTotal, inflowCount],
-      ["Total outflow", outflowTotal, outflowCount],
-      [`Net ${netType === "LOSS" ? "loss" : "profit"}`, net, null],
+    const first = days[0];
+    const last = days[days.length - 1];
+    const rows = [
+      ["Inflow: amount received", num(it.gross), inflowCount],
+      ["Inflow: GST", num(it.gst), null],
+      ["Inflow: TDS", num(it.tds), null],
+      ["Inflow: net received", num(it.net), inflowCount],
+      ["Outflow: amount paid", num(ot.amountPaid), outflowCount],
+      ["Outflow: TDS", num(ot.tds), null],
+      ["Outflow: GST", num(ot.gst), null],
+      ["Outflow: actual paid", num(ot.actual), outflowCount],
+      [isDeficit ? "Deficit" : "Surplus", Math.abs(surplus), null],
     ];
-    // The cash/account split is only exact when every inflow row was returned.
-    if (!truncated && inflowRows.length > 0) {
-      const sumBy = (wantAccount) =>
-        inflowRows.filter((r) => isAccount(r) === wantAccount).reduce((s, r) => s + num(r.amountReceived), 0);
-      const countBy = (wantAccount) => inflowRows.filter((r) => isAccount(r) === wantAccount).length;
-      summaryRows.splice(
-        1,
-        0,
-        ["   of which received in cash", sumBy(false), countBy(false)],
-        ["   of which received in account", sumBy(true), countBy(true)],
+    if (first && last) {
+      rows.push(
+        ["Opening balance (first day)", num(first.totals?.opening), null],
+        ["Closing balance (last day)", num(last.totals?.closing), null],
       );
     }
     sheets.push({
@@ -252,7 +218,7 @@ export const buildDaybookSheets = (daybook, ctx = {}) => {
         { header: "Amount", type: "money", width: 20 },
         { header: "Count", type: "number", width: 10 },
       ],
-      rows: summaryRows,
+      rows,
     });
   }
 
@@ -262,26 +228,33 @@ export const buildDaybookSheets = (daybook, ctx = {}) => {
       name: "Inflow",
       title: "Inflow",
       subtitle: sub(
-        partial
-          ? `Showing ${inflowRows.length} of ${inflowCount} inflow entries`
-          : `${inflowRows.length} entries`,
+        partial ? `Showing ${inflowRows.length} of ${inflowCount} inflow entries` : `${inflowRows.length} entries`,
       ),
       columns: INFLOW_COLUMNS,
       rows: inflowRows.map((r, i) => [
         i + 1,
         ymdToDate(r.receivedDate),
-        r.name,
-        isBookingAdvance(r) ? "Booking advance" : "Manual entry",
-        String(r.receivedIn || "").toUpperCase(),
-        isAccount(r) ? r.accountName : null,
-        money(r.amountReceived),
-        r.receivedBy,
+        r.clientName,
+        ymdToDate(r.eventDate),
         clean(formatEventReference(r.eventReference)),
+        isAccount(r.receivedIn) ? "Account" : "Cash",
+        isAccount(r.receivedIn) ? r.accountName : null,
+        num(r.amountReceived),
+        num(r.gstAmount),
+        num(r.tdsAmount),
+        num(r.netAmountReceived),
         r.note,
       ]),
       totals: partial
         ? undefined
-        : ["Total", null, null, null, null, null, inflowRows.reduce((s, r) => s + num(r.amountReceived), 0), null, null, null],
+        : [
+            "Total", null, null, null, null, null, null,
+            sum(inflowRows, (r) => r.amountReceived),
+            sum(inflowRows, (r) => r.gstAmount),
+            sum(inflowRows, (r) => r.tdsAmount),
+            sum(inflowRows, (r) => r.netAmountReceived),
+            null,
+          ],
       freezeColumns: 3,
     });
   }
@@ -292,66 +265,54 @@ export const buildDaybookSheets = (daybook, ctx = {}) => {
       name: "Outflow",
       title: "Outflow",
       subtitle: sub(
-        partial
-          ? `Showing ${outflowRows.length} of ${outflowCount} outflow entries`
-          : `${outflowRows.length} entries`,
+        partial ? `Showing ${outflowRows.length} of ${outflowCount} outflow entries` : `${outflowRows.length} entries`,
       ),
       columns: OUTFLOW_COLUMNS,
-      rows: outflowRows.map((r, i) => {
-        const { client, event } = eventParts(r.eventReference);
-        return [
-          i + 1,
-          r.paidAt,
-          r.purpose,
-          r.vendor?.name,
-          r.vendor?.vendor_code,
-          money(r.amountPaid),
-          String(r.status || "").toUpperCase() || null,
-          r.entityAccount,
-          r.requiredDate,
-          clean(typeof r.amountPaidTo === "string" ? r.amountPaidTo : r.amountPaidTo?.name),
-          client,
-          event,
-          r.groupBy?.name,
-          r.remarks,
-        ];
-      }),
+      rows: outflowRows.map((r, i) => [
+        i + 1,
+        ymdToDate(r.paidDate),
+        r.vendor?.name,
+        r.vendor?.vendor_code ? String(r.vendor.vendor_code).toUpperCase() : null,
+        isAccount(r.paidFrom) ? "Account" : "Cash",
+        isAccount(r.paidFrom) ? r.accountName : null,
+        num(r.amountPaid),
+        num(r.tdsAmount),
+        num(r.gstAmount),
+        num(r.actualAmountPaid),
+        r.note,
+      ]),
       totals: partial
         ? undefined
-        : ["Total", null, null, null, null, outflowRows.reduce((s, r) => s + num(r.amountPaid), 0), null, null, null, null, null, null, null, null],
+        : [
+            "Total", null, null, null, null, null,
+            sum(outflowRows, (r) => r.amountPaid),
+            sum(outflowRows, (r) => r.tdsAmount),
+            sum(outflowRows, (r) => r.gstAmount),
+            sum(outflowRows, (r) => r.actualAmountPaid),
+            null,
+          ],
       freezeColumns: 3,
     });
   }
 
-  if (balances.length) {
-    const maxAccounts = Math.max(0, ...balances.map((b) => (b.accountBalances || []).length));
-    const columns = [...ACCOUNT_BASE_COLUMNS];
-    const groups = [{ label: "Daily Balances", from: 0, to: ACCOUNT_BASE_COLUMNS.length - 1 }];
-    for (let k = 1; k <= maxAccounts; k += 1) {
-      groups.push({ label: `Account ${k}`, from: columns.length, to: columns.length + ACCOUNT_GROUP_COLUMNS.length - 1 });
-      columns.push(...ACCOUNT_GROUP_COLUMNS);
-    }
+  if (days.length) {
+    const rows = days.flatMap((day) =>
+      [{ accountName: "Cash", ...day.cash }, ...(day.accounts || [])].map((a) => [
+        ymdToDate(day.date),
+        a.accountName,
+        num(a.opening),
+        num(a.inflow),
+        num(a.outflow),
+        num(a.closing),
+      ]),
+    );
     sheets.push({
-      name: "Accounts",
-      title: "Account Open / Close Balances",
-      subtitle: sub(`${balances.length} records`),
-      columns,
-      groups: maxAccounts ? groups : [],
-      rows: balances.map((b) => {
-        const row = [
-          ymdToDate(b.balanceDate),
-          money(b.cashOpeningBalance),
-          money(b.cashClosingBalance),
-          money(b.accountOpeningBalance),
-          money(b.accountClosingBalance),
-        ];
-        for (let k = 0; k < maxAccounts; k += 1) {
-          const a = (b.accountBalances || [])[k];
-          row.push(...(a ? [a.accountName, money(a.openingBalance), money(a.closingBalance)] : [null, null, null]));
-        }
-        return row;
-      }),
-      freezeColumns: 1,
+      name: "Balances",
+      title: "Daily Balances",
+      subtitle: sub(`${days.length} days, calculated automatically (closing balance carries forward as the next opening)`),
+      columns: BALANCE_COLUMNS,
+      rows,
+      freezeColumns: 2,
     });
   }
 

@@ -1,169 +1,71 @@
-import React, { useMemo } from "react";
-import { Table, Tag, Typography } from "antd";
-import {
-  formatAmountINR,
-  formatDateTime,
-  formatEventName,
-  formatEventReference,
-  statusTag,
-  toSafeText,
-} from "./daybookUtils";
+import React from "react";
+import { DataTable } from "@/Components/AdminKit";
+import { formatAmountINR, formatDate } from "./daybookUtils";
+import { RowActions } from "./DaybookInflowTable";
 
-const { Text } = Typography;
+const money = (v) => <span className="db-num">{formatAmountINR(v)}</span>;
 
-const DaybookOutflowTable = ({ rows }) => {
-  const dataSource = Array.isArray(rows) ? rows : [];
-
-  const columns = useMemo(
-    () => [
-      {
-        title: "Purpose / Vendor",
-        key: "purpose_vendor",
-        width: 360,
-        render: (_, record) => (
-          <div className="space-y-1">
-            <Text strong className="text-slate-800" style={{ display: "block" }}>
-              {record?.purpose || "-"}
-            </Text>
-            <Text className="text-slate-600" style={{ display: "block" }}>
-              {record?.vendor?.name
-                ? record.vendor.name
-                : record?.vendor?.vendor_code
-                  ? `${record.vendor.vendor_code}`
-                  : "-"}
-            </Text>
-          </div>
-        ),
-      },
-      {
-        title: "Amount Paid",
-        dataIndex: "amountPaid",
-        key: "amountPaid",
-        width: 170,
-        align: "right",
-        render: (amt) => (
-          <Text strong className="text-red-700">
-            {formatAmountINR(amt)}
-          </Text>
-        ),
-      },
-      {
-        title: "Status",
-        dataIndex: "status",
-        key: "status",
-        width: 140,
-        render: (s) => {
-          const tag = statusTag(s);
-          return (
-            <Tag
-              color={tag.color}
-              style={{ borderRadius: 999, fontWeight: 700 }}
-            >
-              {tag.text}
-            </Tag>
-          );
-        },
-      },
-      {
-        title: "Entity Account",
-        dataIndex: "entityAccount",
-        key: "entityAccount",
-        width: 200,
-        render: (v) => <Text>{v || "-"}</Text>,
-      },
-      {
-        title: "Paid At",
-        dataIndex: "paidAt",
-        key: "paidAt",
-        width: 190,
-        render: (d) => <Text>{formatDateTime(d)}</Text>,
-      },
-      {
-        title: "Required Date",
-        dataIndex: "requiredDate",
-        key: "requiredDate",
-        width: 190,
-        render: (d) => <Text>{formatDateTime(d)}</Text>,
-      },
-      {
-        title: "Paid To",
-        dataIndex: "amountPaidTo",
-        key: "amountPaidTo",
-        width: 200,
-        render: (v) => <Text>{toSafeText(v)}</Text>,
-      },
-      {
-        title: "Event (Client Ref)",
-        key: "event_reference",
-        width: 240,
-        render: (_, record) => {
-          const ref = record?.eventReference;
-          const clientName =
-            typeof ref === "object" && ref?.clientName
-              ? ref.clientName
-              : null;
-          const eventLabel =
-            typeof ref === "object"
-              ? formatEventName(ref?.eventName ?? ref?.name)
-              : formatEventReference(ref);
-          return (
-            <div>
-              <Text>{clientName || formatEventReference(ref)}</Text>
-              {clientName ? (
-                <Text type="secondary" style={{ fontSize: 12, display: "block" }}>
-                  {eventLabel}
-                </Text>
-              ) : null}
-            </div>
-          );
-        },
-      },
-      {
-        title: "Group By",
-        key: "group_by",
-        width: 180,
-        render: (_, record) => <Text>{record?.groupBy?.name || "-"}</Text>,
-      },
-      {
-        title: "Remarks",
-        key: "remarks",
-        width: 280,
-        render: (_, record) => (
-          <div style={{ whiteSpace: "normal", wordBreak: "break-word" }}>
-            {record?.remarks || "-"}
-          </div>
-        ),
-      },
-    ],
-    [],
-  );
-
-  if (!dataSource.length) {
-    return <div className="db-empty"><strong>No outflow transactions found.</strong><span>Nothing recorded for this period.</span></div>;
-  }
+const DaybookOutflowTable = ({ rows, onEdit, onDelete, deletingId }) => {
+  const columns = [
+    {
+      key: "vendor",
+      title: "Vendor",
+      render: (r) => (
+        <div className="db-cell-main">
+          <strong>{r.vendor?.name || "-"}</strong>
+          {r.vendor?.vendor_code ? <span>{String(r.vendor.vendor_code).toUpperCase()}</span> : null}
+        </div>
+      ),
+    },
+    { key: "paidDate", title: "Paid on", render: (r) => formatDate(r.paidDate) },
+    {
+      key: "paidFrom",
+      title: "Paid from",
+      render: (r) => (
+        <div className="db-cell-main">
+          <strong>{r.paidFrom === "ACCOUNT" ? "Account" : "Cash"}</strong>
+          {r.paidFrom === "ACCOUNT" && r.accountName ? <span>{r.accountName}</span> : null}
+        </div>
+      ),
+    },
+    { key: "amountPaid", title: "Amount paid", align: "right", render: (r) => money(r.amountPaid) },
+    { key: "tdsAmount", title: "TDS", align: "right", render: (r) => (r.tdsAmount ? money(r.tdsAmount) : "-") },
+    { key: "gstAmount", title: "GST", align: "right", render: (r) => (r.gstAmount ? money(r.gstAmount) : "-") },
+    {
+      key: "actual",
+      title: "Actual paid",
+      align: "right",
+      render: (r) => <span className="db-num is-out">{formatAmountINR(r.actualAmountPaid)}</span>,
+    },
+    { key: "note", title: "Note", render: (r) => r.note || "-" },
+    {
+      key: "actions",
+      title: "",
+      width: 90,
+      render: (r) => (
+        <RowActions
+          label={`outflow to ${r.vendor?.name || "vendor"}`}
+          busy={deletingId === r._id}
+          onEdit={() => onEdit(r)}
+          onDelete={() => onDelete(r)}
+        />
+      ),
+    },
+  ];
 
   return (
-    <Table
-      rowKey={(record) =>
-        String(
-          record?._id ??
-            record?.id ??
-            record?.requestId ??
-            `${record?.purpose || "outflow"}-${record?.amountPaid ?? "amt"}-${record?.paidAt || ""}`,
-        )
-      }
+    <DataTable
       columns={columns}
-      dataSource={dataSource}
-      pagination={{
-        pageSize: 10,
-        showSizeChanger: true,
-        pageSizeOptions: ["10", "20", "50"],
-      }}
-      scroll={{ x: 1600 }}
-      size="middle"
+      rows={rows}
+      rowKey="_id"
+      empty={
+        <div className="db-empty">
+          <strong>No outflow in this period</strong>
+          <span>Use “Add outflow” to record a payment to a vendor.</span>
+        </div>
+      }
     />
   );
 };
 
 export default DaybookOutflowTable;
-

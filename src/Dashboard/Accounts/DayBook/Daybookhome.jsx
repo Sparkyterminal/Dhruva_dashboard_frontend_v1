@@ -1,26 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import dayjs from "dayjs";
-import { message, Spin, Switch } from "antd";
-import { ArrowLeft, CalendarDays, Plus } from "lucide-react";
+import { message, Spin } from "antd";
+import { ArrowLeft, CalendarDays, Plus, Settings2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { ConfirmDialog } from "@/Components/AdminKit";
+import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import DaybookDateSelector from "./DaybookDateSelector";
 import DaybookSummaryCards from "./DaybookSummaryCards";
 import DaybookInflowTable from "./DaybookInflowTable";
 import DaybookOutflowTable from "./DaybookOutflowTable";
-import DaybookInflowModal from "./DaybookInflowModal";
-import DaybookAccountsBalanceTable from "./DaybookAccountsBalanceTable";
-import DaybookAccountsBalanceModal from "./DaybookAccountsBalanceModal";
+import DaybookBalancesTable from "./DaybookBalancesTable";
+import DaybookInflowDialog from "./DaybookInflowDialog";
+import DaybookOutflowDialog from "./DaybookOutflowDialog";
+import DaybookOpeningDialog from "./DaybookOpeningDialog";
 import {
   deleteInflow,
-  deleteOpenCloseBalance,
+  deleteOutflow,
   fetchDaybookAll,
   fetchDaybookRange,
+  fetchOpeningBalance,
 } from "./daybookApi";
-import { isEventAdvanceDaybookRow } from "./daybookUtils";
-import "./Daybook.css";
-import ExcelDownloadButton from "@/Components/ExcelDownloadButton";
 import { downloadDaybookExcel } from "./daybookExcel";
+import { formatDate } from "./daybookUtils";
+import "./Daybook.css";
 
 const DEFAULT_DATA_LIMIT = 200;
 // Start of the overall (till date) download when no data cutoff is configured.
@@ -31,53 +34,64 @@ const Daybookhome = () => {
   const user = useSelector((state) => state.user.value);
 
   const [selectedRange, setSelectedRange] = useState(() => [dayjs(), dayjs()]);
-  const [includeEventAdvances, setIncludeEventAdvances] = useState(true);
   const [loading, setLoading] = useState(false);
   const [daybook, setDaybook] = useState(null);
+  const [opening, setOpening] = useState(null);
   const [activeTab, setActiveTab] = useState("inflow");
+
+  const [inflowDialog, setInflowDialog] = useState({ open: false, mode: "add", record: null });
+  const [outflowDialog, setOutflowDialog] = useState({ open: false, mode: "add", record: null });
+  const [openingDialogOpen, setOpeningDialogOpen] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null); // { kind: "inflow" | "outflow", record }
+  const [deleting, setDeleting] = useState(false);
 
   const authHeaders = useMemo(
     () => ({ headers: { Authorization: user?.access_token } }),
     [user?.access_token],
   );
 
-  const startDate = selectedRange?.[0];
-  const endDate = selectedRange?.[1];
+  const startDateStr = selectedRange?.[0]?.isValid?.() ? selectedRange[0].format("YYYY-MM-DD") : "";
+  const endDateStr = selectedRange?.[1]?.isValid?.() ? selectedRange[1].format("YYYY-MM-DD") : "";
 
-  const startDateStr = startDate?.isValid?.() ? startDate.format("YYYY-MM-DD") : "";
-  const endDateStr = endDate?.isValid?.() ? endDate.format("YYYY-MM-DD") : "";
-
-  const normalizedRangeLabel = useMemo(() => {
+  const rangeLabel = useMemo(() => {
     if (!startDateStr || !endDateStr) return "-";
-    if (startDateStr === endDateStr) return startDateStr;
-    return `${startDateStr} to ${endDateStr}`;
+    return startDateStr === endDateStr ? startDateStr : `${startDateStr} to ${endDateStr}`;
   }, [startDateStr, endDateStr]);
 
   const fetchDaybook = useCallback(async () => {
     if (!startDateStr || !endDateStr) return;
     setLoading(true);
     try {
-      const resData = await fetchDaybookRange({
+      const data = await fetchDaybookRange({
         startDate: startDateStr,
         endDate: endDateStr,
         limit: DEFAULT_DATA_LIMIT,
-        includeEventAdvances,
         authHeaders,
       });
-      setDaybook(resData || null);
-    } catch (err) {
+      setDaybook(data || null);
+    } catch {
       message.error("Failed to fetch daybook data");
-       
-      console.error(err);
       setDaybook(null);
     } finally {
       setLoading(false);
     }
-  }, [authHeaders, endDateStr, startDateStr, includeEventAdvances]);
+  }, [authHeaders, endDateStr, startDateStr]);
+
+  const fetchOpening = useCallback(async () => {
+    try {
+      setOpening(await fetchOpeningBalance({ authHeaders }));
+    } catch {
+      message.error("Failed to fetch the starting balance");
+    }
+  }, [authHeaders]);
 
   useEffect(() => {
     fetchDaybook();
   }, [fetchDaybook]);
+
+  useEffect(() => {
+    fetchOpening();
+  }, [fetchOpening]);
 
   // mode: "overall" (everything till today) | "daywise" (the selected dates, per day)
   const downloadDaybook = async (mode) => {
@@ -94,7 +108,6 @@ const Daybookhome = () => {
     try {
       const data = await fetchDaybookAll({
         ...range,
-        includeEventAdvances,
         authHeaders,
         onProgress: (done, total) =>
           total > 1 &&
@@ -107,7 +120,7 @@ const Daybookhome = () => {
       const entries =
         (data.inflow?.data?.length ?? 0) +
         (data.outflow?.data?.length ?? 0) +
-        (data.accounts?.openCloseBalances?.length ?? 0);
+        (data.balances?.days?.length ?? 0);
       if (entries === 0) {
         message.info("No daybook entries to download for this period");
         return;
@@ -118,114 +131,61 @@ const Daybookhome = () => {
     }
   };
 
-  const accountsCount = daybook?.accounts?.openCloseBalances?.length ?? 0;
+  const openInflow = (mode, record = null) => setInflowDialog({ open: true, mode, record });
+  const openOutflow = (mode, record = null) => setOutflowDialog({ open: true, mode, record });
 
-  const [inflowModalOpen, setInflowModalOpen] = useState(false);
-  const [inflowModalMode, setInflowModalMode] = useState("add"); // add | edit
-  const [inflowEditingRecord, setInflowEditingRecord] = useState(null);
-
-  const [balanceModalOpen, setBalanceModalOpen] = useState(false);
-  const [balanceModalMode, setBalanceModalMode] = useState("add"); // add | edit
-  const [balanceEditingRecord, setBalanceEditingRecord] = useState(null);
-
-  const [deletingInflowId, setDeletingInflowId] = useState(null);
-  const [deletingBalanceId, setDeletingBalanceId] = useState(null);
-
-  const handleAddInflow = () => {
-    setInflowModalMode("add");
-    setInflowEditingRecord(null);
-    setInflowModalOpen(true);
-  };
-
-  const handleEditInflow = (record) => {
-    if (isEventAdvanceDaybookRow(record)) {
-      message.warning(
-        "This row is a booking advance from an event. Edit it on the event, not in daybook inflow.",
-      );
-      return;
-    }
-    setInflowModalMode("edit");
-    setInflowEditingRecord(record);
-    setInflowModalOpen(true);
-  };
-
-  const handleDeleteInflow = async (record) => {
-    if (isEventAdvanceDaybookRow(record)) {
-      message.warning(
-        "Booking advances cannot be deleted from daybook. Remove or change the advance on the event.",
-      );
-      return;
-    }
-    const id = record?._id ?? record?.id;
-    if (!id) return;
-    setDeletingInflowId(id);
-    try {
-      await deleteInflow({ id, authHeaders });
-      message.success("Inflow deleted successfully");
-      await fetchDaybook();
-    } catch (err) {
-       
-      console.error(err);
-      message.error("Failed to delete inflow");
-    } finally {
-      setDeletingInflowId(null);
-    }
-  };
-
-  const handleInflowModalSuccess = () => {
-    setInflowModalOpen(false);
+  const afterSave = (kind) => (mode) => {
+    if (kind === "inflow") setInflowDialog((d) => ({ ...d, open: false }));
+    else setOutflowDialog((d) => ({ ...d, open: false }));
     message.success(
-      inflowModalMode === "edit"
-        ? "Inflow updated successfully"
-        : "Inflow added successfully",
+      `${kind === "inflow" ? "Inflow" : "Outflow"} ${mode === "edit" ? "updated" : "added"} successfully`,
     );
     fetchDaybook();
   };
 
-  const handleAddBalance = () => {
-    setBalanceModalMode("add");
-    setBalanceEditingRecord(null);
-    setBalanceModalOpen(true);
+  const afterOpeningSaved = () => {
+    setOpeningDialogOpen(false);
+    message.success("Starting balance saved");
+    fetchOpening();
+    fetchDaybook();
   };
 
-  const handleEditBalance = (record) => {
-    setBalanceModalMode("edit");
-    setBalanceEditingRecord(record);
-    setBalanceModalOpen(true);
-  };
-
-  const handleDeleteBalance = async (record) => {
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { kind, record } = pendingDelete;
     const id = record?._id ?? record?.id;
     if (!id) return;
-    setDeletingBalanceId(id);
+    setDeleting(true);
     try {
-      await deleteOpenCloseBalance({ id, authHeaders });
-      message.success("Balance record deleted successfully");
+      if (kind === "inflow") await deleteInflow({ id, authHeaders });
+      else await deleteOutflow({ id, authHeaders });
+      message.success(`${kind === "inflow" ? "Inflow" : "Outflow"} deleted successfully`);
+      setPendingDelete(null);
       await fetchDaybook();
     } catch (err) {
-       
-      console.error(err);
-      message.error("Failed to delete balance record");
+      message.error(err?.response?.data?.message || `Failed to delete ${kind}`);
     } finally {
-      setDeletingBalanceId(null);
+      setDeleting(false);
     }
   };
 
-  const handleBalanceModalSuccess = () => {
-    setBalanceModalOpen(false);
-    message.success(
-      balanceModalMode === "edit"
-        ? "Balance record updated successfully"
-        : "Balance record added successfully",
-    );
-    fetchDaybook();
-  };
+  const days = daybook?.balances?.days;
+  const openingSet = Boolean(opening?.asOfDate);
+  const inflowRows = daybook?.inflow?.data;
+  const outflowRows = daybook?.outflow?.data;
 
   const tabs = [
     { key: "inflow", label: "Inflow", count: daybook?.inflow?.count ?? 0 },
     { key: "outflow", label: "Outflow", count: daybook?.outflow?.count ?? 0 },
-    { key: "accounts", label: "Accounts", count: accountsCount },
+    { key: "balances", label: "Balances", count: days?.length ?? 0 },
   ];
+
+  const truncatedNote = (list, total) =>
+    Array.isArray(list) && total > list.length ? (
+      <p className="db-truncated">
+        Showing the latest {list.length} of {total} entries. Totals above include all of them; pick a shorter period to see the rest.
+      </p>
+    ) : null;
 
   return (
     <div className="db-page">
@@ -237,35 +197,39 @@ const Daybookhome = () => {
             </button>
             <p className="db-eyebrow">Accounts</p>
             <h1 className="db-title">Daybook</h1>
-            <p className="db-sub">Day-to-day money in, money out and balances.</p>
+            <p className="db-sub">Money in, money out and balances, day by day.</p>
           </div>
           <span className="db-period">
-            <CalendarDays size={16} aria-hidden="true" /> {normalizedRangeLabel}
+            <CalendarDays size={16} aria-hidden="true" /> {rangeLabel}
           </span>
         </header>
 
+        {!openingSet && opening ? (
+          <div className="db-banner" role="status">
+            <div>
+              <strong>Set the starting balance to switch on balances</strong>
+              <span>Enter what cash and each account hold on the first day. After that, balances carry forward on their own.</span>
+            </div>
+            <button type="button" className="db-add" onClick={() => setOpeningDialogOpen(true)}>
+              Set starting balance
+            </button>
+          </div>
+        ) : null}
+
         <section className="db-controls">
-          <DaybookDateSelector
-            value={selectedRange}
-            onChange={setSelectedRange}
-            cutoffDate={user?.dataCutoffDate}
-          />
+          <DaybookDateSelector value={selectedRange} onChange={setSelectedRange} cutoffDate={user?.dataCutoffDate} />
           <div className="db-controls-right">
-            <label
-              className="db-toggle"
-              title="Counts booking advances as inflow when their received date falls in the range"
-            >
-              <Switch
-                size="small"
-                checked={includeEventAdvances}
-                onChange={setIncludeEventAdvances}
-              />
-              Include booking advances
-            </label>
-            <ExcelDownloadButton
-              label="Overall Excel"
-              onDownload={() => downloadDaybook("overall")}
-            />
+            {openingSet ? (
+              <button
+                type="button"
+                className="db-ghost"
+                onClick={() => setOpeningDialogOpen(true)}
+                title={`Balances start on ${formatDate(opening.asOfDate)}`}
+              >
+                <Settings2 size={15} aria-hidden="true" /> Starting balance
+              </button>
+            ) : null}
+            <ExcelDownloadButton label="Overall Excel" onDownload={() => downloadDaybook("overall")} />
             <ExcelDownloadButton
               label="Day-wise Excel"
               onDownload={() => downloadDaybook("daywise")}
@@ -278,31 +242,27 @@ const Daybookhome = () => {
           loading={loading}
           inflow={daybook?.inflow}
           outflow={daybook?.outflow}
-          accounts={daybook?.accounts}
+          surplusDeficit={daybook?.surplusDeficit}
+          days={days}
         />
 
         <section className="db-panel">
           <div className="db-panel-head">
             <div className="db-tabs" role="group" aria-label="Entries">
               {tabs.map((t) => (
-                <button
-                  key={t.key}
-                  type="button"
-                  aria-pressed={activeTab === t.key}
-                  onClick={() => setActiveTab(t.key)}
-                >
+                <button key={t.key} type="button" aria-pressed={activeTab === t.key} onClick={() => setActiveTab(t.key)}>
                   {t.label} <span className="count">{t.count}</span>
                 </button>
               ))}
             </div>
             {activeTab === "inflow" && (
-              <button type="button" className="db-add" onClick={handleAddInflow}>
+              <button type="button" className="db-add" onClick={() => openInflow("add")}>
                 <Plus size={16} strokeWidth={2.4} aria-hidden="true" /> Add inflow
               </button>
             )}
-            {activeTab === "accounts" && (
-              <button type="button" className="db-add" onClick={handleAddBalance}>
-                <Plus size={16} strokeWidth={2.4} aria-hidden="true" /> Add open/close balance
+            {activeTab === "outflow" && (
+              <button type="button" className="db-add" onClick={() => openOutflow("add")}>
+                <Plus size={16} strokeWidth={2.4} aria-hidden="true" /> Add outflow
               </button>
             )}
           </div>
@@ -315,24 +275,26 @@ const Daybookhome = () => {
             )}
 
             {!loading && activeTab === "inflow" && (
-              <DaybookInflowTable
-                rows={daybook?.inflow?.data}
-                onEdit={handleEditInflow}
-                onDelete={handleDeleteInflow}
-                deletingId={deletingInflowId}
-              />
+              <>
+                <DaybookInflowTable
+                  rows={inflowRows}
+                  onEdit={(r) => openInflow("edit", r)}
+                  onDelete={(r) => setPendingDelete({ kind: "inflow", record: r })}
+                />
+                {truncatedNote(inflowRows, daybook?.inflow?.count)}
+              </>
             )}
             {!loading && activeTab === "outflow" && (
-              <DaybookOutflowTable rows={daybook?.outflow?.data} />
+              <>
+                <DaybookOutflowTable
+                  rows={outflowRows}
+                  onEdit={(r) => openOutflow("edit", r)}
+                  onDelete={(r) => setPendingDelete({ kind: "outflow", record: r })}
+                />
+                {truncatedNote(outflowRows, daybook?.outflow?.count)}
+              </>
             )}
-            {!loading && activeTab === "accounts" && (
-              <DaybookAccountsBalanceTable
-                rows={daybook?.accounts?.openCloseBalances}
-                onEdit={handleEditBalance}
-                onDelete={handleDeleteBalance}
-                deletingId={deletingBalanceId}
-              />
-            )}
+            {!loading && activeTab === "balances" && <DaybookBalancesTable days={days} />}
 
             {!loading && !daybook && (
               <div className="db-empty">
@@ -344,23 +306,36 @@ const Daybookhome = () => {
         </section>
       </div>
 
-      <DaybookInflowModal
-        open={inflowModalOpen}
-        mode={inflowModalMode}
-        initialValues={inflowEditingRecord}
+      <DaybookInflowDialog
+        open={inflowDialog.open}
+        mode={inflowDialog.mode}
+        initialValues={inflowDialog.record}
         authHeaders={authHeaders}
-        onCancel={() => setInflowModalOpen(false)}
-        onSuccess={handleInflowModalSuccess}
+        onClose={() => setInflowDialog((d) => ({ ...d, open: false }))}
+        onSaved={afterSave("inflow")}
       />
-
-      <DaybookAccountsBalanceModal
-        open={balanceModalOpen}
-        mode={balanceModalMode}
-        initialValues={balanceEditingRecord}
-        existingBalances={daybook?.accounts?.openCloseBalances}
+      <DaybookOutflowDialog
+        open={outflowDialog.open}
+        mode={outflowDialog.mode}
+        initialValues={outflowDialog.record}
         authHeaders={authHeaders}
-        onCancel={() => setBalanceModalOpen(false)}
-        onSuccess={handleBalanceModalSuccess}
+        onClose={() => setOutflowDialog((d) => ({ ...d, open: false }))}
+        onSaved={afterSave("outflow")}
+      />
+      <DaybookOpeningDialog
+        open={openingDialogOpen}
+        current={opening}
+        authHeaders={authHeaders}
+        onClose={() => setOpeningDialogOpen(false)}
+        onSaved={afterOpeningSaved}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={`Delete ${pendingDelete?.kind ?? "entry"}?`}
+        message="This removes the entry and recalculates the balances from that day onward."
+        busy={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </div>
   );

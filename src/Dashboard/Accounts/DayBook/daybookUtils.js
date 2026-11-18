@@ -1,18 +1,16 @@
 import dayjs from "dayjs";
 
+/** ₹ with Indian digit grouping; paise are shown only when present (₹1,234.50). */
 export const formatAmountINR = (value) => {
   const n = Number(value);
   if (value === null || value === undefined || Number.isNaN(n)) return "₹0";
-  return `₹${n.toLocaleString("en-IN")}`;
+  const sign = n < 0 ? "-" : "";
+  const abs = Math.abs(n);
+  const digits = Number.isInteger(abs) ? 0 : 2;
+  return `${sign}₹${abs.toLocaleString("en-IN", { minimumFractionDigits: digits, maximumFractionDigits: digits })}`;
 };
 
-export const formatDateTime = (value) => {
-  if (!value) return "-";
-  const d = dayjs(value);
-  if (!d.isValid()) return "-";
-  return d.format("DD-MM-YYYY HH:mm");
-};
-
+/** "YYYY-MM-DD" (or ISO) -> "DD-MM-YYYY". Date-only strings are read as local days. */
 export const formatDate = (value) => {
   if (!value) return "-";
   const d = dayjs(value);
@@ -20,15 +18,9 @@ export const formatDate = (value) => {
   return d.format("DD-MM-YYYY");
 };
 
-export const toSafeText = (value) => {
-  if (value === null || value === undefined || value === "") return "-";
-  return typeof value === "string" ? value : String(value);
-};
-
 export const formatEventName = (eventName) => {
   if (!eventName) return "-";
   if (typeof eventName === "string") return eventName;
-  // Nested eventName on a populated event document
   if (eventName.eventName != null && typeof eventName.eventName === "object") {
     return eventName.eventName?.name || eventName.eventName?._id || "-";
   }
@@ -57,27 +49,8 @@ export const formatEventReference = (ref) => {
   const eventLabel = formatEventName(ref.eventName ?? ref.name);
   const id = getEventReferenceId(ref);
 
-  if (client && eventLabel && eventLabel !== "-") {
-    return `${client} — ${eventLabel}`;
-  }
+  if (client && eventLabel && eventLabel !== "-") return `${client} — ${eventLabel}`;
   if (client) return client;
   if (eventLabel && eventLabel !== "-") return eventLabel;
   return id || "-";
 };
-
-/** GET /daybook merges event advances with synthetic ids — not valid for inflow CRUD. */
-export const isEventAdvanceDaybookRow = (record) => {
-  const id = record?._id ?? record?.id;
-  return typeof id === "string" && id.startsWith("eventadvance:");
-};
-
-export const statusTag = (status) => {
-  const s = String(status || "").toUpperCase();
-  if (!s) return { color: "default", text: "-" };
-  if (s === "PENDING") return { color: "orange", text: s };
-  if (s === "REJECTED") return { color: "red", text: s };
-  if (s === "APPROVED" || s === "COMPLETED" || s === "ACCEPTED")
-    return { color: "green", text: s };
-  return { color: "blue", text: s };
-};
-

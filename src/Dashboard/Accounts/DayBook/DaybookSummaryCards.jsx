@@ -6,9 +6,7 @@ import { formatAmountINR } from "./daybookUtils";
 const FlowCard = ({ tone, icon, title, amount, note }) => (
   <div className={`db-flow ${tone}`}>
     <div className="db-flow-head">
-      <span className="db-flow-icon">
-        {icon}
-      </span>
+      <span className="db-flow-icon">{icon}</span>
       {title}
     </div>
     <p className="db-flow-amount">{formatAmountINR(amount)}</p>
@@ -23,15 +21,18 @@ const Balance = ({ label, amount, kind }) => (
   </div>
 );
 
-const DaybookSummaryCards = ({ loading, inflow, outflow, accounts }) => {
-  const inflowTotal = Number(inflow?.total) || 0;
-  const inflowCount = inflow?.count ?? 0;
-  const outflowTotal = Number(outflow?.total) || 0;
-  const outflowCount = outflow?.count ?? 0;
-  const net = inflowTotal - outflowTotal;
-  const currentBalance = Array.isArray(accounts?.openCloseBalances)
-    ? accounts.openCloseBalances[0]
-    : null;
+const DaybookSummaryCards = ({ loading, inflow, outflow, surplusDeficit, days }) => {
+  const netIn = Number(inflow?.totals?.net) || 0;
+  const actualOut = Number(outflow?.totals?.actual) || 0;
+  const value = Number(surplusDeficit?.value) || 0;
+  const isDeficit = surplusDeficit?.type ? surplusDeficit.type === "DEFICIT" : value < 0;
+
+  const first = Array.isArray(days) && days.length ? days[0] : null;
+  const last = Array.isArray(days) && days.length ? days[days.length - 1] : null;
+  const sum = (day, key) =>
+    (Number(day?.cash?.[key]) || 0) +
+    (day?.accounts || []).reduce((t, a) => t + (Number(a[key]) || 0), 0);
+  const bank = (day, key) => (day?.accounts || []).reduce((t, a) => t + (Number(a[key]) || 0), 0);
 
   if (loading) {
     return (
@@ -45,7 +46,9 @@ const DaybookSummaryCards = ({ loading, inflow, outflow, accounts }) => {
     );
   }
 
-  const count = (n) => `${n} ${n === 1 ? "entry" : "entries"}`;
+  const count = (n) => `${n ?? 0} ${n === 1 ? "entry" : "entries"}`;
+  const inNote = `${count(inflow?.count)} · gross ${formatAmountINR(inflow?.totals?.gross)}`;
+  const outNote = `${count(outflow?.count)} · paid ${formatAmountINR(outflow?.totals?.amountPaid)}`;
 
   return (
     <>
@@ -53,47 +56,33 @@ const DaybookSummaryCards = ({ loading, inflow, outflow, accounts }) => {
         <FlowCard
           tone="is-in"
           icon={<ArrowDownLeft size={17} strokeWidth={2} aria-hidden="true" />}
-          title="Money in"
-          amount={inflowTotal}
-          note={count(inflowCount)}
+          title="Money in (net)"
+          amount={netIn}
+          note={inNote}
         />
         <FlowCard
           tone="is-out"
           icon={<ArrowUpRight size={17} strokeWidth={2} aria-hidden="true" />}
-          title="Money out"
-          amount={outflowTotal}
-          note={count(outflowCount)}
+          title="Money out (actual)"
+          amount={actualOut}
+          note={outNote}
         />
         <FlowCard
-          tone={net >= 0 ? "is-net" : "is-net is-loss"}
+          tone={isDeficit ? "is-net is-loss" : "is-net"}
           icon={<Scale size={17} strokeWidth={2} aria-hidden="true" />}
-          title={net >= 0 ? "Net (profit)" : "Net (loss)"}
-          amount={Math.abs(net)}
-          note="Inflow minus outflow"
+          title="Surplus/deficit"
+          amount={Math.abs(value)}
+          note={isDeficit ? "Deficit: money out is more than money in" : "Surplus: money in minus money out"}
         />
       </section>
 
       <section className="db-balances" aria-label="Balances">
-        <Balance
-          label="Cash opening"
-          amount={currentBalance?.cashOpeningBalance}
-          kind="is-cash"
-        />
-        <Balance
-          label="Cash closing"
-          amount={currentBalance?.cashClosingBalance}
-          kind="is-cash"
-        />
-        <Balance
-          label="Account opening"
-          amount={currentBalance?.accountOpeningBalance}
-          kind="is-acct"
-        />
-        <Balance
-          label="Account closing"
-          amount={currentBalance?.accountClosingBalance}
-          kind="is-acct"
-        />
+        <Balance label="Cash opening" amount={first?.cash?.opening} kind="is-cash" />
+        <Balance label="Cash closing" amount={last?.cash?.closing} kind="is-cash" />
+        <Balance label="Bank opening" amount={bank(first, "opening")} kind="is-acct" />
+        <Balance label="Bank closing" amount={bank(last, "closing")} kind="is-acct" />
+        <Balance label="Total opening" amount={sum(first, "opening")} kind="is-total" />
+        <Balance label="Total closing" amount={sum(last, "closing")} kind="is-total" />
       </section>
     </>
   );
