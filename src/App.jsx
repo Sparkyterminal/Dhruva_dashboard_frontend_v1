@@ -80,6 +80,7 @@ import BudgetReportExcelList from "./Dashboard/Accounts/budgetreport/excel/Budge
 import BudgetReportExcelEdit from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelEdit";
 import BudgetReportExcelView from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelView";
 import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
+import EverydayExpensesPage from "./Dashboard/EverydayExpenses/EverydayExpensesPage";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -252,6 +253,7 @@ const App = () => {
                 element={<EditLeads />}
               />
               <Route path="/user" element={<Navigate to="/user" replace />} />
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isMarketing ? (
@@ -314,6 +316,7 @@ const App = () => {
                 element={<BudgetReportExcelEdit />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isDepartment ? (
@@ -366,6 +369,7 @@ const App = () => {
                 element={<BudgetReportExcelEdit />}
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isOwner ? (
@@ -422,6 +426,7 @@ const App = () => {
                 element={<EditLeads />}
               />
 
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isApprover ? (
@@ -478,6 +483,7 @@ const App = () => {
                 element={<EditLeads />}
               />
 
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isCA ? (
@@ -524,6 +530,7 @@ const App = () => {
                 element={<BudgetReportExcelEdit />}
               />
 
+              <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : (

@@ -21,6 +21,7 @@ import {
 import { ROLES } from "./config";
 
 const ACCOUNTS_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Add Requirement", route: "/user/sendrequest", icon: FilePlus2, section: "Requests" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
@@ -33,6 +34,7 @@ const ACCOUNTS_NAV = [
 ];
 
 const MARKETING_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Add Requirement", route: "/user/sendrequest", icon: FilePlus2, section: "Requests" },
   { label: "Client Bookings", route: "/user/viewclient", icon: CalendarCheck, section: "Bookings & Events" },
   { label: "Events Masterdata", route: "/user/viewevents", icon: Layers, section: "Master Data" },
@@ -46,6 +48,7 @@ const MARKETING_NAV = [
 ];
 
 const DEPARTMENT_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Add Requirement", route: "/user/sendrequest", icon: FilePlus2, section: "Requests" },
   { label: "Confirmed Events", route: "/user/confirmed-events", icon: BadgeCheck, section: "Bookings & Events" },
   { label: "In Progress Events", route: "/user/inprogress-events", icon: Hourglass, section: "Bookings & Events" },
@@ -57,6 +60,7 @@ const DEPARTMENT_NAV = [
 ];
 
 const OWNER_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "Requirements", route: "/user/allrequirements", icon: ClipboardList, section: "Requests" },
   { label: "Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },
   { label: "Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
@@ -69,6 +73,7 @@ const OWNER_NAV = [
 ];
 
 const APPROVER_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
   { label: "View Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },
@@ -79,6 +84,7 @@ const APPROVER_NAV = [
 ];
 
 const CA_NAV = [
+  { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
   { label: "EMI's and Interest", route: "/user/viewbills", icon: ReceiptText, section: "Accounts & Finance" },
   { label: "View Vendors", route: "/user/viewvendors", icon: Store, section: "Master Data" },
   { label: "View Daybook", route: "/user/daybook", icon: BookOpen, section: "Accounts & Finance" },
