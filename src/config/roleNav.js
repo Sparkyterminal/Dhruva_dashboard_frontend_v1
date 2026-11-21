@@ -6,6 +6,7 @@ import {
   CalendarDays,
   CalendarRange,
   ChartColumn,
+  ChartNoAxesCombined,
   ClipboardList,
   FilePlus2,
   Hourglass,
@@ -19,6 +20,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { ROLES } from "./config";
+import { canViewEmployeeStats } from "@/utils/employeeStatsAccess";
 
 const ACCOUNTS_NAV = [
   { label: "Everyday Expenses", route: "/user/everyday-expenses", icon: Wallet, section: "Accounts & Finance" },
@@ -97,6 +99,7 @@ const CA_NAV = [
 export const NAV_SECTIONS = [
   "Accounts & Finance",
   "Requests",
+  "Employee activities",
   "Bookings & Events",
   "Leads",
   "Master Data",
@@ -108,11 +111,24 @@ export const groupNavItems = (items) =>
     (g) => g.items.length > 0,
   );
 
+/** Shown to CA, Approver, Owner and the HR department (see utils/employeeStatsAccess.js), whatever their home menu is. */
+const EMPLOYEE_STATS_ITEM = {
+  label: "Employee Statistics",
+  route: "/user/employee-stats",
+  icon: ChartNoAxesCombined,
+  section: "Employee activities",
+};
+
 /**
  * Menu links for the signed-in user. Mirrors the role precedence in App.jsx so the
  * site-wide menu always lists the same links as that role's home screen.
  */
 export const getNavItems = (user) => {
+  const items = baseNavItems(user);
+  return canViewEmployeeStats(user) ? [...items, EMPLOYEE_STATS_ITEM] : items;
+};
+
+const baseNavItems = (user) => {
   const dept = user?.departments?.[0]?.name;
   if (dept === "ACCOUNTS") return ACCOUNTS_NAV;
   if (dept === "MARKETING") return MARKETING_NAV;

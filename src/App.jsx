@@ -81,6 +81,7 @@ import BudgetReportExcelEdit from "./Dashboard/Accounts/budgetreport/excel/Budge
 import BudgetReportExcelView from "./Dashboard/Accounts/budgetreport/excel/BudgetReportExcelView";
 import Daybookhome from "./Dashboard/Accounts/DayBook/Daybookhome";
 import EverydayExpensesPage from "./Dashboard/EverydayExpenses/EverydayExpensesPage";
+import EmployeeStatsPage from "./Dashboard/EmployeeStats/EmployeeStatsPage";
 
 const App = () => {
   const [auth, setAuth] = useState(null);
@@ -370,6 +371,7 @@ const App = () => {
               />
               <Route path="/" element={<Navigate to="/user" replace />} />
               <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
+              <Route path="/user/employee-stats" element={<EmployeeStatsPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isOwner ? (
@@ -427,6 +429,7 @@ const App = () => {
               />
 
               <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
+              <Route path="/user/employee-stats" element={<EmployeeStatsPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isApprover ? (
@@ -484,6 +487,7 @@ const App = () => {
               />
 
               <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
+              <Route path="/user/employee-stats" element={<EmployeeStatsPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : isCA ? (
@@ -531,6 +535,7 @@ const App = () => {
               />
 
               <Route path="/user/everyday-expenses" element={<EverydayExpensesPage />} />
+              <Route path="/user/employee-stats" element={<EmployeeStatsPage />} />
               <Route path="*" element={<Navigate to="/user" replace />} />
             </>
           ) : (
