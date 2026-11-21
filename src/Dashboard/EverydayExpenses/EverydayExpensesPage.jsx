@@ -28,8 +28,10 @@ const EverydayExpensesPage = () => {
   const [tab, setTab] = useState("mine");
 
   const guessReviewer = isExpenseReviewer(user);
-  // The server decides what is allowed. If it does not say (older backend), fall back to the app's own role rule.
-  const reviewer = typeof me?.isReviewer === "boolean" ? me.isReviewer : guessReviewer;
+  // The tabs show when the app's own rule OR the server says reviewer. The server still decides what each call is allowed to do,
+  // so a mismatch shows up as a clear notice (below) instead of the tabs silently disappearing.
+  const reviewer = guessReviewer || me?.isReviewer === true;
+  const serverDisagrees = guessReviewer && me?.isReviewer === false;
 
   const load = useCallback(async () => {
     try {
@@ -102,7 +104,16 @@ const EverydayExpensesPage = () => {
               </div>
             </div>
           ) : (
-            <ScrollTabs items={tabs} activeKey={tab} onChange={setTab} ariaLabel="Everyday Expenses sections" />
+            <>
+              {serverDisagrees ? (
+                <p className="ee-notice" role="status">
+                  <strong>Reviewer access is not switched on at the server for your account yet.</strong> The Overview,
+                  Categories &amp; rates and People &amp; grades tabs are shown, but they will show errors until the backend
+                  treats your department as a reviewer (CA, Approver, Owner and the HR DEPARTMENT).
+                </p>
+              ) : null}
+              <ScrollTabs items={tabs} activeKey={tab} onChange={setTab} ariaLabel="Everyday Expenses sections" />
+            </>
           )}
         </section>
       </div>

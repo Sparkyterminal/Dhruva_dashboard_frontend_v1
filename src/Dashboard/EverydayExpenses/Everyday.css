@@ -1208,3 +1208,21 @@
   font-size: 13px;
   color: #8f3f1c;
 }
+
+/* ---- Notice shown when the server has not confirmed reviewer access ---- */
+.ee-notice {
+  margin: 16px 20px 0;
+  padding: 12px 16px;
+  border: 1px solid #eadfae;
+  border-left: 5px solid var(--gold-deep);
+  border-radius: 12px;
+  background: #fbf6e3;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.ee-notice strong {
+  display: block;
+  color: #7a6220;
+}
