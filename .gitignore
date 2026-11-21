@@ -31,3 +31,6 @@ docs/*.pdf
 # Environment
 .env
 .env.local
+
+# Netlify CLI local state (links this folder to the deploy site)
+.netlify
