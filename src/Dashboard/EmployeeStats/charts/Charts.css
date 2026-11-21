@@ -1,0 +1,464 @@
+/* Employee Statistics charts (prefix ec-). Brand tokens come from styles/theme.css. */
+
+.ec-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---- Card ---- */
+.ec-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+}
+
+.ec-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+
+.ec-card-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.ec-card-head p {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.ec-card-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ec-view {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #f4f6f2;
+}
+
+.ec-view button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.ec-view button[aria-pressed="true"] {
+  background: #fff;
+  color: var(--brand);
+  box-shadow: 0 1px 2px rgba(11, 61, 11, 0.12);
+}
+
+.ec-empty {
+  margin: 0;
+  padding: 44px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+/* ---- Legend ---- */
+.ec-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.ec-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ec-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.ec-legend.is-counts {
+  margin: 12px 0 0;
+}
+
+.ec-legend b {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Tooltip ---- */
+.ec-tip {
+  position: fixed;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 260px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  background: #1d261d;
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.35;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 8px));
+  box-shadow: 0 10px 24px -10px rgba(0, 0, 0, 0.5);
+}
+
+.ec-tip strong {
+  font-size: 13px;
+}
+
+.ec-tip span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ec-tip i {
+  width: 9px;
+  height: 9px;
+  border-radius: 3px;
+}
+
+/* ---- Column chart ---- */
+.ec-scroll-x {
+  overflow-x: auto;
+}
+
+.ec-svg {
+  display: block;
+}
+
+.ec-svg text {
+  font-family: inherit;
+}
+
+.ec-axis {
+  fill: var(--ink-soft);
+  font-size: 11.5px;
+}
+
+.ec-axis-year {
+  fill: var(--ink-soft);
+  font-size: 10.5px;
+  opacity: 0.85;
+}
+
+.ec-peak {
+  fill: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.ec-svg rect[tabindex]:focus-visible {
+  outline: 2px solid var(--brand-action);
+  outline-offset: -2px;
+}
+
+/* ---- Ranking bars ---- */
+.ec-hbar ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ec-hrow {
+  display: grid;
+  grid-template-columns: 22px minmax(88px, 160px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 36px;
+  padding: 3px 6px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  color: var(--ink);
+}
+
+button.ec-hrow {
+  cursor: pointer;
+}
+
+.ec-hrow:hover,
+.ec-hrow:focus-visible {
+  background: #f4f6f2;
+}
+
+.ec-hrank {
+  font-size: 12.5px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.ec-hname {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ec-hname em {
+  font-size: 11.5px;
+  font-style: normal;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+.ec-hrow.is-first .ec-hname {
+  font-weight: 700;
+}
+
+.ec-htrack {
+  display: block;
+  height: 14px;
+}
+
+.ec-htrack i {
+  display: block;
+  height: 100%;
+  border-radius: 0 4px 4px 0;
+}
+
+.ec-hval {
+  min-width: 64px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ec-more {
+  margin: 8px 0 0 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--brand-action);
+  cursor: pointer;
+}
+
+/* ---- Status bar ---- */
+.ec-seg-bar {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+}
+
+.ec-seg {
+  display: flex;
+  align-items: center;
+  min-width: 6px;
+  padding: 0 8px;
+  overflow: hidden;
+  border-radius: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ec-seg:focus-visible {
+  outline: 2px solid var(--brand-action);
+  outline-offset: 2px;
+}
+
+/* ---- Sparkline ---- */
+.ec-spark {
+  display: block;
+  overflow: visible;
+}
+
+/* ---- Heat grid ---- */
+.ec-heat-scroll {
+  overflow-x: auto;
+}
+
+.ec-heat table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 12.5px;
+}
+
+.ec-heat th {
+  padding: 6px 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.ec-heat th small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 500;
+}
+
+.ec-heat td {
+  min-width: 62px;
+  padding: 9px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.ec-heat td:focus-visible {
+  outline: 2px solid var(--brand-action);
+  outline-offset: 1px;
+}
+
+.ec-heat td svg {
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.ec-heat .ec-heat-name {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-width: 130px;
+  max-width: 180px;
+  overflow: hidden;
+  padding: 6px 10px 6px 4px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.ec-heat .ec-heat-name button {
+  max-width: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--brand-action);
+  cursor: pointer;
+}
+
+.ec-heat .ec-heat-total {
+  min-width: 70px;
+  background: #fff;
+  text-align: right;
+  color: var(--ink);
+}
+
+.ec-heat tfoot td {
+  background: #fff;
+  color: var(--ink-soft);
+}
+
+.ec-heat-scale {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+
+.ec-heat-scale i {
+  width: 26px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.ec-heat-scale span:first-child {
+  margin-right: 4px;
+}
+
+.ec-heat-scale span:last-child {
+  margin-left: 4px;
+}
+
+/* ---- Table twin ---- */
+.ec-table-wrap {
+  overflow-x: auto;
+}
+
+.ec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.ec-table th {
+  padding: 8px 12px;
+  background: #f7f9f6;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.ec-table td {
+  padding: 9px 12px;
+  border-top: 1px solid #eef1ec;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+@media (max-width: 560px) {
+  .ec-card {
+    padding: 14px 14px 16px;
+  }
+
+  .ec-hrow {
+    grid-template-columns: 18px minmax(70px, 110px) 1fr auto;
+    gap: 8px;
+  }
+}
