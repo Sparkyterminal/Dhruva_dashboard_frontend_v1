@@ -25,6 +25,7 @@ import dayjs from "dayjs";
 import { getEffectiveCutoffDate } from "../../utils/dataCutoff";
 import { Modal } from "antd";
 import { DeleteOutlined } from "@ant-design/icons";
+import { CheckCheck } from "lucide-react";
 import BulkActionBar from "./bulk/BulkActionBar";
 import BulkConfirmDialog from "./bulk/BulkConfirmDialog";
 import { getRowId, isCaPending, runBulkCaCheck } from "./bulk/bulkCaCheck";
@@ -1194,19 +1195,24 @@ const CARequirementsTable = () => {
         />
 
         {pendingRows.length > 0 ? (
-          <div className="ba-select-all">
+          <div className={`ba-select-all${selectedRows.length > 0 ? " is-active" : ""}`}>
+            <span className="ba-select-icon" aria-hidden="true">
+              <CheckCheck size={22} />
+            </span>
             <Checkbox
+              className="ba-select-check"
               checked={allPendingSelected}
               indeterminate={selectedRows.length > 0 && !allPendingSelected}
               onChange={(e) => setSelectionFor(pendingRows, e.target.checked)}
             >
-              Select all pending ({pendingRows.length})
+              <b className="ba-select-title">Select all pending</b>
+              <b className="ba-select-count">{pendingRows.length}</b>
             </Checkbox>
-            <span>
+            <p className="ba-select-hint">
               {selectedRows.length > 0
-                ? `${selectedRows.length} selected`
-                : "Tick requirements, then approve or reject them together."}
-            </span>
+                ? `${selectedRows.length} selected. Use the Approve or Reject buttons at the bottom of the screen.`
+                : "Tick the requirements you want, then approve or reject them together."}
+            </p>
           </div>
         ) : null}
 

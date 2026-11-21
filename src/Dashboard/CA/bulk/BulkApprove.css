@@ -73,21 +73,85 @@
   color: #ffd9d3;
 }
 
+/* ---- Select all pending: a clear banner above the departments ---- */
 .ba-select-all {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px 16px;
   flex-wrap: wrap;
-  margin-bottom: 14px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
+  margin-bottom: 18px;
+  padding: 16px 20px;
+  border: 1px solid #eadfae;
+  border-left: 6px solid var(--gold-deep);
+  border-radius: 14px;
+  background: #fbf6e3;
 }
 
-.ba-select-all span {
-  font-size: 13px;
-  color: var(--ink-soft);
+.ba-select-all.is-active {
+  border-color: #c5e0cd;
+  border-left-color: #2f8a4b;
+  background: #e6f3ea;
+}
+
+.ba-select-icon {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--brand);
+  color: var(--gold);
+}
+
+.ba-select-all .ant-checkbox-inner {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+  border-color: var(--brand-action);
+}
+
+.ba-select-all .ant-checkbox-inner::after {
+  inset-inline-start: 30%;
+  width: 7px;
+  height: 13px;
+}
+
+.ba-select-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ba-select-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--brand);
+}
+
+.ba-select-count {
+  min-width: 34px;
+  margin-left: 10px;
+  padding: 2px 12px;
+  border-radius: 999px;
+  background: var(--brand);
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  color: #fff;
+}
+
+.ba-select-hint {
+  flex: 1 1 260px;
+  margin: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.ba-select-all.is-active .ba-select-hint {
+  font-weight: 600;
+  color: #1f6a38;
 }
 
 /* ---- Confirmation dialog ---- */
